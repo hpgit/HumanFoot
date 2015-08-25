@@ -188,8 +188,8 @@ typedef _array<SMatrix>					 SMatrixArray;
 typedef _array<vpCollisionInfo>			 vpCollisionInfoArray;
 
 typedef set<vpBodyPair>					 vpBodyPairSet;
-typedef list<int>						 intList;
-typedef list<LUTIndex>					 LUTIndexList;
+typedef std::list<int>						 intList;
+typedef std::list<LUTIndex>					 LUTIndexList;
 typedef _array<LUTIndexList>			 LUTIndexListAry;
 typedef _array<_array<LUTIndex> >		 LUTIndexDbAry;
 typedef set<vpBody *>					 vpBodyPtrSet;

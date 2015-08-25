@@ -375,8 +375,8 @@ protected:
 	int						 m_iRelaxationCount;
 	vpBodyPtrSet			 m_sCollisionBody;
 	vpBodyPtrSet			 m_sContactBody;
-	list<pair<int, int> >	 m_sCollisionPairIdx;
-	list<pair<int, int> >	 m_sContactPairIdx;
+	std::list<pair<int, int> >	 m_sCollisionPairIdx;
+	std::list<pair<int, int> >	 m_sContactPairIdx;
 };
 
 #ifndef VP_PROTECT_SRC
