@@ -27,5 +27,6 @@ libgle3
 5. Run main_MomentumProject.py in MomentumProject/
 
 #### In MAC OS X,
+
 - python-opengl : pip install PyOpenGL PyOpenGL_accelerate
 - 

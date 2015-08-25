@@ -1,8 +1,10 @@
 # Compiler flags...
-CPP_COMPILER = g++
-C_COMPILER = gcc
-#CPP_COMPILER = clang++
-#C_COMPILER = clang++
+#for Linux
+#CPP_COMPILER = g++
+#C_COMPILER = gcc
+#for MAC
+CPP_COMPILER = clang++
+C_COMPILER = clang++
 
 # Include paths...
 Release_Include_Path=-I"../usr/include" 
@@ -14,6 +16,9 @@ Release_Library_Path=
 Release_Libraries=
 
 # Preprocessor definitions...
+#for Linux
+#Release_Preprocessor_Definitions=-D GCC_BUILD -D NDEBUG -D _LIB -fopenmp
+#for MAC
 Release_Preprocessor_Definitions=-D GCC_BUILD -D NDEBUG -D _LIB -fopenmp
 
 # Implictly linked object files...
