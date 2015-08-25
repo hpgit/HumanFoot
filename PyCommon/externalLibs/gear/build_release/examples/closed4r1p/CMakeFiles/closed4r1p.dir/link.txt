@@ -1,0 +1,1 @@
+/usr/bin/g++   -fPIC  -O3 -DNDEBUG    CMakeFiles/closed4r1p.dir/viewer.cpp.o CMakeFiles/closed4r1p.dir/myworld.cpp.o  -o closed4r1p -rdynamic ../../libgear.a -lGLU -lGL -lSM -lICE -lX11 -lXext -lglut -lXmu -lXi 

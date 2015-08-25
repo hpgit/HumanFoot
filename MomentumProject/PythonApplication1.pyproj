@@ -1,0 +1,214 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>f5c170d7-3415-4298-a62a-a91329730abe</ProjectGuid>
+    <ProjectHome>.</ProjectHome>
+    <StartupFile>main_MomentumProject.py</StartupFile>
+    <SearchPath>
+    </SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <Name>PythonApplication1</Name>
+    <RootNamespace>PythonApplication1</RootNamespace>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
+    <IsWindowsApplication>False</IsWindowsApplication>
+    <InterpreterId>{2af0f10d-7135-4994-9156-5d01c9c11b7e}</InterpreterId>
+    <InterpreterVersion>2.5</InterpreterVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="main_MomentumProject.py" />
+    <Compile Include="main_MomentumProject_001.py" />
+    <Compile Include="main_MomentumProject_002.py" />
+    <Compile Include="main_MomentumProject_003.py" />
+    <Compile Include="main_MomentumProject_004.py" />
+    <Compile Include="main_MomentumProject_005.py" />
+    <Compile Include="main_MomentumProject_006.py" />
+    <Compile Include="main_MomentumProject_007.py" />
+    <Compile Include="main_MomentumProject_008.py" />
+    <Compile Include="main_MomentumProject_009.py" />
+    <Compile Include="main_MomentumProject_010.py" />
+    <Compile Include="main_MomentumProject_011.py" />
+    <Compile Include="main_MomentumProject_012.py" />
+    <Compile Include="main_MomentumProject_teaser.py" />
+    <Compile Include="modules\ArticulatedBody\ysControl.py" />
+    <Compile Include="modules\ArticulatedBody\ysJacobian.py" />
+    <Compile Include="modules\ArticulatedBody\ysMomentum.py" />
+    <Compile Include="modules\ArticulatedBody\ysReferencePoints.py" />
+    <Compile Include="modules\ArticulatedBody\__init__.py" />
+    <Compile Include="modules\GUI\tree.py" />
+    <Compile Include="modules\GUI\ysBaseUI.py" />
+    <Compile Include="modules\GUI\ysSimpleViewer.py" />
+    <Compile Include="modules\GUI\ysViewer3.py" />
+    <Compile Include="modules\GUI\__init__.py" />
+    <Compile Include="modules\Math\mmMath.py" />
+    <Compile Include="modules\Math\__init__.py" />
+    <Compile Include="modules\Motion\ysHierarchyEdit.py" />
+    <Compile Include="modules\Motion\ysMotion.py" />
+    <Compile Include="modules\Motion\ysMotionUtil.py" />
+    <Compile Include="modules\Motion\__init__.py" />
+    <Compile Include="modules\Optimization\ysAnalyticConstrainedOpt.py" />
+    <Compile Include="modules\Optimization\__init__.py" />
+    <Compile Include="modules\Renderer\ysRenderer.py" />
+    <Compile Include="modules\Renderer\__init__.py" />
+    <Compile Include="modules\Resource\ysMotionLoader.py" />
+    <Compile Include="modules\Resource\__init__.py" />
+    <Compile Include="modules\Simulator\ysPhysConfig.py" />
+    <Compile Include="modules\Simulator\__init__.py" />
+    <Compile Include="modules\Util\ysPythonEx.py" />
+    <Compile Include="modules\Util\__init__.py" />
+    <Compile Include="modules\__init__.py" />
+    <Compile Include="mtInitialize.py" />
+    <Compile Include="mtInitialize_002.py" />
+    <Compile Include="mtInitialize_003.py" />
+    <Compile Include="mtInitialize_004.py" />
+    <Compile Include="mtInitialize_005.py" />
+    <Compile Include="mtInitialize_007.py" />
+    <Compile Include="mtInitialize_008.py" />
+    <Compile Include="mtInitialize_009.py" />
+    <Compile Include="mtInitialize_010.py" />
+    <Compile Include="mtInitialize_011.py" />
+    <Compile Include="mtInitialize_012.py" />
+    <Compile Include="mtInitialize_teaser.py" />
+    <Compile Include="mtOptimize.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="{2af0f10d-7135-4994-9156-5d01c9c11b7e}\2.5" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="modules\" />
+    <Folder Include="modules\ArticulatedBody\" />
+    <Folder Include="modules\build\" />
+    <Folder Include="modules\build\lib.win32-2.5\" />
+    <Folder Include="modules\build\lib.win32-2.5\Renderer\" />
+    <Folder Include="modules\build\lib.win32-2.5\Simulator\" />
+    <Folder Include="modules\build\temp.win32-2.5\" />
+    <Folder Include="modules\build\temp.win32-2.5\Release\" />
+    <Folder Include="modules\build\temp.win32-2.5\Release\Renderer\" />
+    <Folder Include="modules\build\temp.win32-2.5\Release\Simulator\" />
+    <Folder Include="modules\GUI\" />
+    <Folder Include="modules\Math\" />
+    <Folder Include="modules\Math\__pycache__\" />
+    <Folder Include="modules\Motion\" />
+    <Folder Include="modules\Optimization\" />
+    <Folder Include="modules\release\" />
+    <Folder Include="modules\Renderer\" />
+    <Folder Include="modules\Resource\" />
+    <Folder Include="modules\Resource\__pycache__\" />
+    <Folder Include="modules\Simulator\" />
+    <Folder Include="modules\Util\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="modules\.project" />
+    <Content Include="modules\.pydevproject" />
+    <Content Include="modules\ArticulatedBody\SimpleViewer.settings" />
+    <Content Include="modules\ArticulatedBody\ysControl.pyc" />
+    <Content Include="modules\ArticulatedBody\ysJacobian.pyc" />
+    <Content Include="modules\ArticulatedBody\ysMomentum.pyc" />
+    <Content Include="modules\ArticulatedBody\ysReferencePoints.pyc" />
+    <Content Include="modules\ArticulatedBody\__init__.pyc" />
+    <Content Include="modules\build\lib.win32-2.5\Renderer\csVpRenderer.pyd" />
+    <Content Include="modules\build\lib.win32-2.5\Simulator\csVpModel.pyd" />
+    <Content Include="modules\build\lib.win32-2.5\Simulator\csVpWorld.pyd" />
+    <Content Include="modules\build\temp.win32-2.5\Release\Renderer\csVpRenderer.exp" />
+    <Content Include="modules\build\temp.win32-2.5\Release\Renderer\csVpRenderer.lib" />
+    <Content Include="modules\build\temp.win32-2.5\Release\Renderer\csVpRenderer.obj" />
+    <Content Include="modules\build\temp.win32-2.5\Release\Simulator\csVpModel.exp" />
+    <Content Include="modules\build\temp.win32-2.5\Release\Simulator\csVpModel.lib" />
+    <Content Include="modules\build\temp.win32-2.5\Release\Simulator\csVpModel.obj" />
+    <Content Include="modules\build\temp.win32-2.5\Release\Simulator\csVpWorld.exp" />
+    <Content Include="modules\build\temp.win32-2.5\Release\Simulator\csVpWorld.lib" />
+    <Content Include="modules\build\temp.win32-2.5\Release\Simulator\csVpWorld.obj" />
+    <Content Include="modules\build\temp.win32-2.5\Release\Simulator\VpUtil.obj" />
+    <Content Include="modules\GUI\SimpleViewer.settings" />
+    <Content Include="modules\GUI\tree.pyc" />
+    <Content Include="modules\GUI\ysBaseUI.pyc" />
+    <Content Include="modules\GUI\ysSimpleViewer.pyc" />
+    <Content Include="modules\GUI\ysViewer3.pyc" />
+    <Content Include="modules\GUI\__init__.pyc" />
+    <Content Include="modules\Math\mmMath.pyc" />
+    <Content Include="modules\Math\SmartPlot.settings" />
+    <Content Include="modules\Math\__init__.pyc" />
+    <Content Include="modules\Math\__pycache__\mmMath.cpython-32.pyc" />
+    <Content Include="modules\Math\__pycache__\__init__.cpython-32.pyc" />
+    <Content Include="modules\modules.ncb" />
+    <Content Include="modules\modules.sln" />
+    <Content Include="modules\modules.suo" />
+    <Content Include="modules\modules.vcproj" />
+    <Content Include="modules\Motion\SimpleViewer.settings" />
+    <Content Include="modules\Motion\SmartPlot.settings" />
+    <Content Include="modules\Motion\ysHierarchyEdit.pyc" />
+    <Content Include="modules\Motion\ysMotion.pyc" />
+    <Content Include="modules\Motion\ysMotionUtil.pyc" />
+    <Content Include="modules\Motion\__init__.pyc" />
+    <Content Include="modules\Optimization\ysAnalyticConstrainedOpt.pyc" />
+    <Content Include="modules\Optimization\__init__.pyc" />
+    <Content Include="modules\release\vpLib.lib" />
+    <Content Include="modules\Renderer\csVpRenderer.cpp" />
+    <Content Include="modules\Renderer\csVpRenderer.exp" />
+    <Content Include="modules\Renderer\csVpRenderer.h" />
+    <Content Include="modules\Renderer\csVpRenderer.ilk" />
+    <Content Include="modules\Renderer\csVpRenderer.lib" />
+    <Content Include="modules\Renderer\csVpRenderer.pdb" />
+    <Content Include="modules\Renderer\csVpRenderer.pyd" />
+    <Content Include="modules\Renderer\SimpleViewer.settings" />
+    <Content Include="modules\Renderer\stdafx.cpp" />
+    <Content Include="modules\Renderer\stdafx.h" />
+    <Content Include="modules\Renderer\ysRenderer.pyc" />
+    <Content Include="modules\Renderer\__init__.pyc" />
+    <Content Include="modules\Resource\SimpleViewer.settings" />
+    <Content Include="modules\Resource\ysMotionLoader.pyc" />
+    <Content Include="modules\Resource\__init__.pyc" />
+    <Content Include="modules\Resource\__pycache__\__init__.cpython-32.pyc" />
+    <Content Include="modules\Simulator\csVpModel.cpp" />
+    <Content Include="modules\Simulator\csVpModel.exp" />
+    <Content Include="modules\Simulator\csVpModel.h" />
+    <Content Include="modules\Simulator\csVpModel.ilk" />
+    <Content Include="modules\Simulator\csVpModel.lib" />
+    <Content Include="modules\Simulator\csVpModel.pdb" />
+    <Content Include="modules\Simulator\csVpModel.pyd" />
+    <Content Include="modules\Simulator\csVpWorld.cpp" />
+    <Content Include="modules\Simulator\csVpWorld.cpp.bak" />
+    <Content Include="modules\Simulator\csVpWorld.exp" />
+    <Content Include="modules\Simulator\csVpWorld.h" />
+    <Content Include="modules\Simulator\csVpWorld.h.bak" />
+    <Content Include="modules\Simulator\csVpWorld.ilk" />
+    <Content Include="modules\Simulator\csVpWorld.lib" />
+    <Content Include="modules\Simulator\csVpWorld.pdb" />
+    <Content Include="modules\Simulator\csVpWorld.pyd" />
+    <Content Include="modules\Simulator\SimpleViewer.settings" />
+    <Content Include="modules\Simulator\stdafx.h" />
+    <Content Include="modules\Simulator\VpUtil.cpp" />
+    <Content Include="modules\Simulator\VPUtil.h" />
+    <Content Include="modules\Simulator\ysPhysConfig.pyc" />
+    <Content Include="modules\Simulator\__init__.pyc" />
+    <Content Include="modules\Util\SimpleViewer.settings" />
+    <Content Include="modules\Util\SmartPlot.settings" />
+    <Content Include="modules\Util\ysPythonEx.pyc" />
+    <Content Include="modules\Util\__init__.pyc" />
+  </ItemGroup>
+  <Import Condition="Exists($(PtvsTargetsFile))" Project="$(PtvsTargetsFile)" />
+  <Import Condition="!Exists($(PtvsTargetsFile))" Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
+  <!-- Uncomment the CoreCompile target to enable the Build command in
+       Visual Studio and specify your pre- and post-build commands in
+       the BeforeBuild and AfterBuild targets below. -->
+  <!--<Target Name="CoreCompile" />-->
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+</Project>

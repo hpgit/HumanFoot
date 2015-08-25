@@ -1,0 +1,1 @@
+/usr/bin/g++   -fPIC  -O3 -DNDEBUG    CMakeFiles/twolink.dir/viewer.cpp.o CMakeFiles/twolink.dir/myworld.cpp.o  -o twolink -rdynamic ../../libgear.a -lGLU -lGL -lSM -lICE -lX11 -lXext -lglut -lXmu -lXi 
