@@ -597,13 +597,17 @@ def main():
         #newR = mm.ZYX2R([0, 0, 1*B_CM])
         newR = mm.exp(mm.v3(1.0,0.0,0.0), 3.14*B_CM/100.)
         
-        idxs = ['LeftMetatarsal_1', 'LeftMetatarsal_2', 'LeftMetatarsal_3'  ]
-        idx = motion[0].skeleton.getJointIndex(idxs[0])
-        th_r[idx] = np.dot(th_r[idx], newR)        
-        idx = motion[0].skeleton.getJointIndex(idxs[1])
-        th_r[idx] = np.dot(th_r[idx], newR)
-        idx = motion[0].skeleton.getJointIndex(idxs[2])
-        th_r[idx] = np.dot(th_r[idx], newR)
+        #idxs = ['LeftMetatarsal_1', 'LeftMetatarsal_2', 'LeftMetatarsal_3'  ]
+        idxs = ['LeftMetatarsal_1', 'LeftMetatarsal_2', 'LeftMetatarsal_3', 'RightMetatarsal_1', 'RightMetatarsal_2', 'RightMetatarsal_3']
+        for idx_idxs in range(len(idxs)):
+            idx = motion[0].skeleton.getJointIndex(idxs[idx_idxs])
+            th_r[idx] = np.dot(th_r[idx], newR)        
+        #idx = motion[0].skeleton.getJointIndex(idxs[0])
+        #th_r[idx] = np.dot(th_r[idx], newR)        
+        #idx = motion[0].skeleton.getJointIndex(idxs[1])
+        #th_r[idx] = np.dot(th_r[idx], newR)
+        #idx = motion[0].skeleton.getJointIndex(idxs[2])
+        #th_r[idx] = np.dot(th_r[idx], newR)
         
         print '---------------'
         #print 'ori', th_r_ori[idx]
