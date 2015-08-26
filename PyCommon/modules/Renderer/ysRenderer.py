@@ -199,7 +199,7 @@ class ForcesRenderer(Renderer):
 class RenderContext:
     def __init__(self):
         self.quad = gluNewQuadric()
-        gleSetNumSides(12)
+#gleSetNumSides(12)
         
         self.setPolygonStyle(POLYGON_FILL)
         self.setNormalStyle(NORMAL_FLAT)
@@ -232,10 +232,10 @@ class RenderContext:
         elif self.polygonStyle == POLYGON_FILL:
             glPolygonMode(GL_FRONT, GL_FILL)
         
-        if self.normalStyle == NORMAL_FLAT:
-            gleSetJoinStyle(TUBE_NORM_FACET | TUBE_JN_CAP | TUBE_JN_CUT)
-        elif self.normalStyle == NORMAL_SMOOTH:
-            gleSetJoinStyle(TUBE_NORM_EDGE | TUBE_JN_CAP | TUBE_JN_CUT)
+#if self.normalStyle == NORMAL_FLAT:
+#           gleSetJoinStyle(TUBE_NORM_FACET | TUBE_JN_CAP | TUBE_JN_CUT)
+#        elif self.normalStyle == NORMAL_SMOOTH:
+#            gleSetJoinStyle(TUBE_NORM_EDGE | TUBE_JN_CAP | TUBE_JN_CUT)
             
         glLineWidth(self.lineWidth)
             
@@ -352,8 +352,8 @@ class RenderContext:
         triLength = triWidth * 1.2
         
         # line + cone all parts
-        glePolyCone(((0,0,0), (0,0,0), (length-triLength,0,0), (length-triLength,0,0), (length,0,0), (length,0,0)), None, 
-                    (lineWidth/2., lineWidth/2., lineWidth/2., triWidth/2., 0, 0))
+#        glePolyCone(((0,0,0), (0,0,0), (length-triLength,0,0), (length-triLength,0,0), (length,0,0), (length,0,0)), None, 
+#                    (lineWidth/2., lineWidth/2., lineWidth/2., triWidth/2., 0, 0))
         
         glPopMatrix()
     
@@ -382,16 +382,16 @@ class RenderContext:
 #        gleHelicoid( rToroid , startRadius , drdTheta , startZ , dzdTheta , 
 #                     startXform , dXformdTheta , startTheta , sweepTheta )
         sweepTheta = 2*math.pi*length*mm.DEG
-        gleHelicoid( lineWidth/2., radius,       0.,        0.,    radius,
-                        None,         None,            0.,     sweepTheta)
+#        gleHelicoid( lineWidth/2., radius,       0.,        0.,    radius,
+#                        None,         None,            0.,     sweepTheta)
         
         # cone part
         glPushMatrix()
         glRotatef(sweepTheta, 0,0,1)
         glTranslatef(radius, 0, radius * (sweepTheta/360.))
         glRotatef(-90, 1,0,0)
-        glePolyCone(((0,0,0), (0,0,0), (0,0,triLength), (0,0,triLength)), None, 
-                    (triWidth/2., triWidth/2., 0, 0))
+#        glePolyCone(((0,0,0), (0,0,0), (0,0,triLength), (0,0,triLength)), None, 
+#                    (triWidth/2., triWidth/2., 0, 0))
         glPopMatrix()
         
         glPopMatrix()
