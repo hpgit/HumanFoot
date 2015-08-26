@@ -196,9 +196,9 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 	return make_tuple(bodyIDs, positions, positionLocals, forces);
 }
 
-// @param position ÀÛ¿ëÇÒ ÁöÁ¡(global)
-// @param [out] force ¹ß»ýÇÑ penalty force(global)
-// @return penalty force°¡ ¹ß»ýÇßÀ¸¸é true
+// @param position ï¿½Û¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(global)
+// @param [out] force ï¿½ß»ï¿½ï¿½ï¿½ penalty force(global)
+// @return penalty forceï¿½ï¿½ ï¿½ß»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ true
 bool VpWorld::_calcPenaltyForce( const vpBody* pBody, const Vec3& position, const Vec3& velocity, Vec3& force, scalar Ks, scalar Ds, scalar mu )
 {
 	static Vec3 vRelVel, vNormalRelVel, vTangentialRelVel;
@@ -234,11 +234,11 @@ bool VpWorld::_calcPenaltyForce( const vpBody* pBody, const Vec3& position, cons
 */
 		frictionForce = mu * normalForce;
 
-		// °¡¸¸È÷ ¼­ÀÖÀ» ¶§ ¹Ì²ô·¯Áö´Â Çö»ó ¹æÁöÇÏ±â À§ÇØ
-		// rigid bodyÀÌ¹Ç·Î point lockingÀÌ Èûµé¾î¼­ Á¤Áö¸¶Âû·Â ±¸ÇöÀÌ ¾î·Á¿ò
-		// ¹Ì²ô·¯Áö´Â ¿øÀÎÀÌ ¼ÓµµÀÇ ¹Ý´ë¹æÇâÀ¸·Î Å« ¸¶Âû·ÂÀÌ ÀÛ¿ë¿¡ ´ÙÀ½ step¿¡¼­´Â 
-		// ´Ù½Ã ±× ¹Ý´ë¹æÇâÀ¸·Î ¸¶Âû·ÂÀÌ ÀÛ¿ëÇÏ¸é¼­ Áøµ¿À» ÇÏ¸ç ¹Ì²ô·¯Áö±â ¶§¹®
-		// ÀÌ¸¦ ¹æÁöÇÏ±â À§ÇØ ÀÏÁ¤ ¼Óµµ ÀÌÇÏ¿¡¼­´Â ¸¶Âû·ÂÀÇ ÀÏÁ¤ ºñÀ²¸¸ Àû¿ëÇÏµµ·Ï ÀÓ½Ã ÄÚµù
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ì²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½
+		// rigid bodyï¿½Ì¹Ç·ï¿½ point lockingï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½î¼­ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+		// ï¿½Ì²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Óµï¿½ï¿½ï¿½ ï¿½Ý´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å« ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Û¿ë¿¡ ï¿½ï¿½ï¿½ï¿½ stepï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 
+		// ï¿½Ù½ï¿½ ï¿½ï¿½ ï¿½Ý´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Û¿ï¿½ï¿½Ï¸é¼­ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ï¸ï¿½ ï¿½Ì²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+		// ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Óµï¿½ ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ ï¿½Ó½ï¿½ ï¿½Úµï¿½
 		if(tangentialRelVel < _lockingVel) 
 			frictionForce *= tangentialRelVel/_lockingVel;
 
