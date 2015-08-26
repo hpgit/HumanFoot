@@ -10,7 +10,7 @@ install_dependencies:
 	sudo apt-get install python-dev python-opengl freeglut3-dev pypy g++ python-fltk python-numpy python-pyode libgle3 python-pip liblapack-dev libblas-dev libboost-python-dev
 	pip install cvxopt --user
 	[ -d $(MODULE_INC_DIR) ] || mkdir -p $(MODULE_INC_DIR)
-	cd $(MODULE_INC_DIR);[ -d VP ] || ln -s ../../../../$(VP_DIR)/usr/include/VP ./ ;[ -d $(MODULE_INC_DIR)/gear ] || ln -s ../../../../$(GEAR_DIR)/include ./gear
+	cd $(MODULE_INC_DIR);[ -d VP ] || ln -s ../../../../$(VP_DIR)/usr/include/VP ./ ;[ -d gear ] || ln -s ../../../../$(GEAR_DIR)/include ./gear
 	cd PyCommon/externalLibs/VirtualPhysics2010;make;mkdir ../../modules/usr/lib;cp usr/lib/Win32/gccRelease/libvpLib.a ../../modules/usr/lib/
 
 install_dependencies_mac:
