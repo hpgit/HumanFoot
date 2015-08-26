@@ -311,7 +311,7 @@ def create_biped():
         motion = motion[350:550]
 
     motion[0:0] = [motion[0]]*40
-    motion.extend([motion[-1]]*5000)
+    motion.extend([motion[-1]]*1000)
     
     # world, model
     mcfg = ypc.ModelConfig()
