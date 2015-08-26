@@ -20,7 +20,7 @@ class Observer:
     
 class BaseSettings:
     def __init__(self):
-        self.x = 100; self.y = 100; self.w = 800; self.h = 650
+        self.x = 100; self.y = 100; self.w = 1200; self.h = 1440
     def load(self, fileName):
         try:
             self.__dict__.update(cPickle.load(open(fileName, 'r')).__dict__)
@@ -36,7 +36,7 @@ class BaseSettings:
 
 class BaseWnd(Fl_Window):
     def __init__(self, rect=None, title='BaseWnd', settings=BaseSettings()):
-        Fl_Window.__init__(self, 100, 100, 650, 490, title)
+        Fl_Window.__init__(self, 100, 100, 1200, 900, title)
         
         self.settingsFile = ''
         if rect == None:
@@ -48,7 +48,6 @@ class BaseWnd(Fl_Window):
         self.settings = settings
         self.callback(self.onClose)
     def show(self):
-        print self.settingsFile
         if len(self.settingsFile)>0:
             self.settings.load(self.settingsFile)
             self.settings.setToApp(self)

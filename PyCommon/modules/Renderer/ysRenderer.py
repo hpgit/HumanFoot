@@ -199,7 +199,7 @@ class ForcesRenderer(Renderer):
 class RenderContext:
     def __init__(self):
         self.quad = gluNewQuadric()
-#gleSetNumSides(12)
+#        gleSetNumSides(12)
         
         self.setPolygonStyle(POLYGON_FILL)
         self.setNormalStyle(NORMAL_FLAT)
@@ -232,7 +232,7 @@ class RenderContext:
         elif self.polygonStyle == POLYGON_FILL:
             glPolygonMode(GL_FRONT, GL_FILL)
         
-#if self.normalStyle == NORMAL_FLAT:
+#        if self.normalStyle == NORMAL_FLAT:
 #           gleSetJoinStyle(TUBE_NORM_FACET | TUBE_JN_CAP | TUBE_JN_CUT)
 #        elif self.normalStyle == NORMAL_SMOOTH:
 #            gleSetJoinStyle(TUBE_NORM_EDGE | TUBE_JN_CAP | TUBE_JN_CUT)
@@ -376,7 +376,7 @@ class RenderContext:
         
         # axis
 #        self.drawLine((0,0,0), (0,0,length))
-        glePolyCylinder(((0,0,0), (0,0,0), (0,0,length), (0,0,length)), None, lineWidth/4.)
+#        glePolyCylinder(((0,0,0), (0,0,0), (0,0,length), (0,0,length)), None, lineWidth/4.)
         
         # circular line part
 #        gleHelicoid( rToroid , startRadius , drdTheta , startZ , dzdTheta , 
