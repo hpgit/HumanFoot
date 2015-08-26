@@ -1,10 +1,17 @@
+UNAME := $(shell uname -s)
+ifeq ($(UNAME), Darwin)
+	CPP_COMPILER = clang++
+	C_COMPILER = clang++
+endif
+ifeq ($(UNAME), Linux)
+	CPP_COMPILER = g++
+	C_COMPILER = gcc
+	PREPROCESSOR = -fopenmp
+endif
+
 # Compiler flags...
 #for Linux
-#CPP_COMPILER = g++
-#C_COMPILER = gcc
 #for MAC
-CPP_COMPILER = clang++
-C_COMPILER = clang++
 
 # Include paths...
 Release_Include_Path=-I"../usr/include" 
@@ -16,10 +23,7 @@ Release_Library_Path=
 Release_Libraries=
 
 # Preprocessor definitions...
-#for Linux
-#Release_Preprocessor_Definitions=-D GCC_BUILD -D NDEBUG -D _LIB -fopenmp
-#for MAC
-Release_Preprocessor_Definitions=-D GCC_BUILD -D NDEBUG -D _LIB -fopenmp
+Release_Preprocessor_Definitions=-D GCC_BUILD -D NDEBUG -D _LIB $(PREPROCESSOR)
 
 # Implictly linked object files...
 Release_Implicitly_Linked_Objects=
@@ -33,8 +37,8 @@ build_all_configurations: Release
 
 # Builds the Release configuration...
 .PHONY: Release
-Release: create_folders tmp/Win32/gccRelease/LieGroup.o tmp/Win32/gccRelease/PrimColDet.o tmp/Win32/gccRelease/rmatrix3.o tmp/Win32/gccRelease/vp1DOFJoint.o tmp/Win32/gccRelease/vpBJoint.o tmp/Win32/gccRelease/vpBody.o tmp/Win32/gccRelease/vpCollisionDetector.o tmp/Win32/gccRelease/vpCollisionGraphBuilder.o tmp/Win32/gccRelease/vpCollisionResolver.o tmp/Win32/gccRelease/vpContactResolver.o tmp/Win32/gccRelease/vpDynamics.o tmp/Win32/gccRelease/vpGeom.o tmp/Win32/gccRelease/vpJoint.o tmp/Win32/gccRelease/vpKinematics.o tmp/Win32/gccRelease/vpMaterial.o tmp/Win32/gccRelease/vpNDOFJoint.o tmp/Win32/gccRelease/vpPenetrationRelaxer.o tmp/Win32/gccRelease/vpPJoint.o tmp/Win32/gccRelease/vpPrimitiveCollisionDetector.o tmp/Win32/gccRelease/vpRJoint.o tmp/Win32/gccRelease/vpSingleSystem.o tmp/Win32/gccRelease/vpSJoint.o tmp/Win32/gccRelease/vpSpring.o tmp/Win32/gccRelease/vpSystem.o tmp/Win32/gccRelease/vpTimer.o tmp/Win32/gccRelease/vpUJoint.o tmp/Win32/gccRelease/vpWJoint.o tmp/Win32/gccRelease/vpWorld.o tmp/Win32/gccRelease/wpWorld_IO.o 
-	ar rcs ../usr/lib/Win32/gccRelease/libvpLib.a tmp/Win32/gccRelease/LieGroup.o tmp/Win32/gccRelease/PrimColDet.o tmp/Win32/gccRelease/rmatrix3.o tmp/Win32/gccRelease/vp1DOFJoint.o tmp/Win32/gccRelease/vpBJoint.o tmp/Win32/gccRelease/vpBody.o tmp/Win32/gccRelease/vpCollisionDetector.o tmp/Win32/gccRelease/vpCollisionGraphBuilder.o tmp/Win32/gccRelease/vpCollisionResolver.o tmp/Win32/gccRelease/vpContactResolver.o tmp/Win32/gccRelease/vpDynamics.o tmp/Win32/gccRelease/vpGeom.o tmp/Win32/gccRelease/vpJoint.o tmp/Win32/gccRelease/vpKinematics.o tmp/Win32/gccRelease/vpMaterial.o tmp/Win32/gccRelease/vpNDOFJoint.o tmp/Win32/gccRelease/vpPenetrationRelaxer.o tmp/Win32/gccRelease/vpPJoint.o tmp/Win32/gccRelease/vpPrimitiveCollisionDetector.o tmp/Win32/gccRelease/vpRJoint.o tmp/Win32/gccRelease/vpSingleSystem.o tmp/Win32/gccRelease/vpSJoint.o tmp/Win32/gccRelease/vpSpring.o tmp/Win32/gccRelease/vpSystem.o tmp/Win32/gccRelease/vpTimer.o tmp/Win32/gccRelease/vpUJoint.o tmp/Win32/gccRelease/vpWJoint.o tmp/Win32/gccRelease/vpWorld.o tmp/Win32/gccRelease/wpWorld_IO.o  $(Release_Implicitly_Linked_Objects)
+Release: create_folders tmp/Win32/gccRelease/LieGroup.o tmp/Win32/gccRelease/PrimColDet.o tmp/Win32/gccRelease/rmatrix3.o tmp/Win32/gccRelease/vp1DOFJoint.o tmp/Win32/gccRelease/vpBJoint.o tmp/Win32/gccRelease/vpBody.o tmp/Win32/gccRelease/vpCollisionDetector.o tmp/Win32/gccRelease/vpCollisionGraphBuilder.o tmp/Win32/gccRelease/vpCollisionResolver.o tmp/Win32/gccRelease/vpContactResolver.o tmp/Win32/gccRelease/vpDynamics.o tmp/Win32/gccRelease/vpGeom.o tmp/Win32/gccRelease/vpJoint.o tmp/Win32/gccRelease/vpKinematics.o tmp/Win32/gccRelease/vpMaterial.o tmp/Win32/gccRelease/vpNDOFJoint.o tmp/Win32/gccRelease/vpPenetrationRelaxer.o tmp/Win32/gccRelease/vpPJoint.o tmp/Win32/gccRelease/vpPrimitiveCollisionDetector.o tmp/Win32/gccRelease/vpRJoint.o tmp/Win32/gccRelease/vpSingleSystem.o tmp/Win32/gccRelease/vpSJoint.o tmp/Win32/gccRelease/vpSpring.o tmp/Win32/gccRelease/vpSystem.o tmp/Win32/gccRelease/vpTimer.o tmp/Win32/gccRelease/vpUJoint.o tmp/Win32/gccRelease/vpWJoint.o tmp/Win32/gccRelease/vpWorld.o tmp/Win32/gccRelease/vpWorld_IO.o 
+	ar rcs ../usr/lib/Win32/gccRelease/libvpLib.a tmp/Win32/gccRelease/LieGroup.o tmp/Win32/gccRelease/PrimColDet.o tmp/Win32/gccRelease/rmatrix3.o tmp/Win32/gccRelease/vp1DOFJoint.o tmp/Win32/gccRelease/vpBJoint.o tmp/Win32/gccRelease/vpBody.o tmp/Win32/gccRelease/vpCollisionDetector.o tmp/Win32/gccRelease/vpCollisionGraphBuilder.o tmp/Win32/gccRelease/vpCollisionResolver.o tmp/Win32/gccRelease/vpContactResolver.o tmp/Win32/gccRelease/vpDynamics.o tmp/Win32/gccRelease/vpGeom.o tmp/Win32/gccRelease/vpJoint.o tmp/Win32/gccRelease/vpKinematics.o tmp/Win32/gccRelease/vpMaterial.o tmp/Win32/gccRelease/vpNDOFJoint.o tmp/Win32/gccRelease/vpPenetrationRelaxer.o tmp/Win32/gccRelease/vpPJoint.o tmp/Win32/gccRelease/vpPrimitiveCollisionDetector.o tmp/Win32/gccRelease/vpRJoint.o tmp/Win32/gccRelease/vpSingleSystem.o tmp/Win32/gccRelease/vpSJoint.o tmp/Win32/gccRelease/vpSpring.o tmp/Win32/gccRelease/vpSystem.o tmp/Win32/gccRelease/vpTimer.o tmp/Win32/gccRelease/vpUJoint.o tmp/Win32/gccRelease/vpWJoint.o tmp/Win32/gccRelease/vpWorld.o tmp/Win32/gccRelease/vpWorld_IO.o  $(Release_Implicitly_Linked_Objects)
 
 # Compiles file LieGroup.cpp for the Release configuration...
 -include tmp/Win32/gccRelease/LieGroup.d
@@ -204,11 +208,11 @@ tmp/Win32/gccRelease/vpWorld.o: vpWorld.cpp
 	$(CPP_COMPILER) $(Release_Preprocessor_Definitions) $(Release_Compiler_Flags) -c vpWorld.cpp $(Release_Include_Path) -o tmp/Win32/gccRelease/vpWorld.o
 	$(CPP_COMPILER) $(Release_Preprocessor_Definitions) $(Release_Compiler_Flags) -MM vpWorld.cpp $(Release_Include_Path) > tmp/Win32/gccRelease/vpWorld.d
 
-# Compiles file wpWorld_IO.cpp for the Release configuration...
--include tmp/Win32/gccRelease/wpWorld_IO.d
-tmp/Win32/gccRelease/wpWorld_IO.o: wpWorld_IO.cpp
-	$(CPP_COMPILER) $(Release_Preprocessor_Definitions) $(Release_Compiler_Flags) -c wpWorld_IO.cpp $(Release_Include_Path) -o tmp/Win32/gccRelease/wpWorld_IO.o
-	$(CPP_COMPILER) $(Release_Preprocessor_Definitions) $(Release_Compiler_Flags) -MM wpWorld_IO.cpp $(Release_Include_Path) > tmp/Win32/gccRelease/wpWorld_IO.d
+# Compiles file vpWorld_IO.cpp for the Release configuration...
+-include tmp/Win32/gccRelease/vpWorld_IO.d
+tmp/Win32/gccRelease/vpWorld_IO.o: vpWorld_IO.cpp
+	$(CPP_COMPILER) $(Release_Preprocessor_Definitions) $(Release_Compiler_Flags) -c vpWorld_IO.cpp $(Release_Include_Path) -o tmp/Win32/gccRelease/vpWorld_IO.o
+	$(CPP_COMPILER) $(Release_Preprocessor_Definitions) $(Release_Compiler_Flags) -MM vpWorld_IO.cpp $(Release_Include_Path) > tmp/Win32/gccRelease/vpWorld_IO.d
 
 # Creates the intermediate and output folders for each configuration...
 .PHONY: create_folders

@@ -9,6 +9,7 @@ install_dependencies:
 
 install_dependencies_mac:
 	mkdir -p PyCommon/modules/usr/include;cd PyCommon/modules/usr/include;ln -s ../../../externalLibs/VirtualPhysics2010/usr/include/VP;ln -s ../../../externalLibs/VirtualPhysics2010/usr/include/gear
+	cd PyCommon/externalLibs/VirtualPhysics2010;make;mkdir ../../modules/usr/lib;cp usr/lib/Win32/gccRelease/libvpLib.a ../../modules/usr/lib/
 
 run:
 	cd MomentumProject;python main_MomentumProject.py

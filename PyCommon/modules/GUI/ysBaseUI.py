@@ -30,7 +30,7 @@ class BaseSettings:
         cPickle.dump(self, open(fileName, 'w'))
     def setToApp(self, window):
         window.position(self.x, self.y)
-        window.size(self.w, self.h)
+        #window.size(self.w, self.h)
     def getFromApp(self, window):
         self.x = window.x(); self.y = window.y(); self.w = window.w(); self.h = window.h()
 
@@ -48,6 +48,7 @@ class BaseWnd(Fl_Window):
         self.settings = settings
         self.callback(self.onClose)
     def show(self):
+        print self.settingsFile
         if len(self.settingsFile)>0:
             self.settings.load(self.settingsFile)
             self.settings.setToApp(self)

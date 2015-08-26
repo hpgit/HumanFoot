@@ -547,8 +547,6 @@ def main():
     '''
 
     def simulateCallback(frame):              
-
-        
         if frame%30==1: pt[0] = time.time()
 
         global g_initFlag
