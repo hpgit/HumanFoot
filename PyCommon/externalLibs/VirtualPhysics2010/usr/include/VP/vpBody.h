@@ -287,7 +287,7 @@ public:
 	/*!
 		get a pointer to the ith geometry
 	*/
-	const vpGeom			*GetGeometry(int) const;
+	vpGeom			*GetGeometry(int) const;
 
 	/*!
 		get a unique identifying integer value which is assigned by VirtualPhysics

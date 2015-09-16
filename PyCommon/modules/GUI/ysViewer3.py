@@ -23,6 +23,9 @@ VIEW_RIGHT = 1
 VIEW_TOP = 2
 VIEW_PERSPECTIVE = 3
 
+#Define
+FLAG_SHADOW = 0
+
 #class StateObject:
 #    def getState(self):
 #        return None
@@ -393,7 +396,7 @@ class GlWindow(Fl_Gl_Window):
 
 
         #### SHADOW
-        if 0 :
+        if FLAG_SHADOW :
             glDisable(GL_LIGHTING)
             glDepthMask(GL_FALSE)
     
@@ -583,12 +586,14 @@ class GlWindow(Fl_Gl_Window):
         self.drawScene()
         glEndList()
                 
-        ls2 = glGenLists(1)
-        glNewList(ls2, GL_COMPILE)
-        self.drawScene(yr.RENDER_SHADOW)
-        glEndList()
-        
-        return [ls1, ls2]
+        if FLAG_SHADOW :
+            ls2 = glGenLists(1)
+            glNewList(ls2, GL_COMPILE)
+            self.drawScene(yr.RENDER_SHADOW)
+            glEndList()
+            return [ls1, ls2]
+
+        return [ls1]
     
     def setState(self, state):
         self.sceneList= state

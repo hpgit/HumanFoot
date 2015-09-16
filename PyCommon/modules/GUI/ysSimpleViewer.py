@@ -48,7 +48,7 @@ class SimpleViewer(ybu.BaseWnd):
         self.begin()
         panelWidth = 280
         self.motionViewWnd = MotionViewWnd(0, 0, self.w()-panelWidth, self.h(), self.doc)
-        t = .3
+        t = .2
         self.renderersWnd = RenderersWnd(self.w()-panelWidth, 0, panelWidth, int(self.h()*t), self.doc)
         self.objectInfoWnd = ObjectInfoWnd(self.w()-panelWidth, int(self.h()*t), panelWidth, int(self.h()*(1-t)), self.doc)
         self.end()
@@ -237,6 +237,9 @@ maxFm = 1000
 initCM = 100.0
 maxCM = 200
 
+initToe = 100.0
+maxToe = 200
+
 class ObjectInfoWnd(Fl_Window, ybu.Observer):
     def __init__(self, x, y, w, h, doc):
         Fl_Window.__init__(self, x, y, w, h)
@@ -371,7 +374,7 @@ class ObjectInfoWnd(Fl_Window, ybu.Observer):
         self.sliderFm.callback(self.onChangeSliderFm)
         index += 1
         
-        self.labelCM = Fl_Value_Input(80, 30+offset*index, 60, 10, 'COM  F-B')
+        self.labelCM = Fl_Value_Input(80, 30+offset*index, 60, 10, 'COM F-B')
         self.labelCM.when(FL_WHEN_ENTER_KEY)
         self.labelCM.callback(self.onEnterLabelCM)
         self.labelCM.value(initCM-100)
@@ -382,6 +385,55 @@ class ObjectInfoWnd(Fl_Window, ybu.Observer):
         self.sliderCM.step(1)
         self.sliderCM.callback(self.onChangeSliderCM)
         index += 1
+        
+        self.labelCMSd = Fl_Value_Input(80, 30+offset*index, 60, 10, 'COM S-S')
+        self.labelCMSd.when(FL_WHEN_ENTER_KEY)
+        self.labelCMSd.callback(self.onEnterLabelCMSd)
+        self.labelCMSd.value(initCM-100)
+
+        self.sliderCMSd = Fl_Hor_Nice_Slider(10, 42+offset*index, 250, 10)
+        self.sliderCMSd.bounds(0, maxCM)
+        self.sliderCMSd.value(initCM)
+        self.sliderCMSd.step(1)
+        self.sliderCMSd.callback(self.onChangeSliderCMSd)
+        index += 1
+        
+        self.labelToe = Fl_Value_Input(80, 30+offset*index, 60, 10, 'Toe  ')
+        self.labelToe.when(FL_WHEN_ENTER_KEY)
+        self.labelToe.callback(self.onEnterLabelToe)
+        self.labelToe.value(initToe-100)
+
+        self.sliderToe = Fl_Hor_Nice_Slider(10, 42+offset*index, 250, 10)
+        self.sliderToe.bounds(0, maxToe)
+        self.sliderToe.value(initToe)
+        self.sliderToe.step(1)
+        self.sliderToe.callback(self.onChangeSliderToe)
+        index += 1
+
+        self.labelLeftHip = Fl_Value_Input(80, 30+offset*index, 60, 10, 'LeftHip  ')
+        self.labelLeftHip.when(FL_WHEN_ENTER_KEY)
+        self.labelLeftHip.callback(self.onEnterLabelLeftHip)
+        self.labelLeftHip.value(initToe-100)
+
+        self.sliderLeftHip = Fl_Hor_Nice_Slider(10, 42+offset*index, 250, 10)
+        self.sliderLeftHip.bounds(0, maxToe)
+        self.sliderLeftHip.value(initToe)
+        self.sliderLeftHip.step(1)
+        self.sliderLeftHip.callback(self.onChangeSliderLeftHip)
+        index += 1
+
+        self.comOffsetX = Fl_Value_Input(20, 30+offset*index, 40, 10, 'X')
+        self.comOffsetX.value(0)
+        self.comOffsetY = Fl_Value_Input(80, 30+offset*index, 40, 10, 'Y')
+        self.comOffsetY.value(0)
+        self.comOffsetZ = Fl_Value_Input(140, 30+offset*index, 40, 10, 'Z')
+        self.comOffsetZ.value(0)
+        index+=1
+
+        self.btnLeftHip = Fl_Button(20, 30+offset*index, 50, 30, 'rotate')
+        self.btnLeftHip.callback(self.onClickBtnLeftHip)
+        self.onLeftHip = False
+        index+=1
 
 
         self.end()
@@ -463,9 +515,25 @@ class ObjectInfoWnd(Fl_Window, ybu.Observer):
         self.labelCM.value(int(ptr.value())-100)
     def onEnterLabelCM(self, ptr):        
         self.sliderCM.value(int(ptr.value())+100)        
+        
+    def onChangeSliderCMSd(self, ptr):
+        self.labelCMSd.value(int(ptr.value())-100)
+    def onEnterLabelCMSd(self, ptr):        
+        self.sliderCMSd.value(int(ptr.value())+100)        
+        
+    def onChangeSliderToe(self, ptr):
+        self.labelToe.value(int(ptr.value())-100)
+    def onEnterLabelToe(self, ptr):        
+        self.sliderToe.value(int(ptr.value())+100)     
+    def onChangeSliderLeftHip(self, ptr):
+        self.labelLeftHip.value(int(ptr.value())-100)
+    def onEnterLabelLeftHip(self, ptr):        
+        self.sliderLeftHip.value(int(ptr.value())+100)   
+    def onClickBtnLeftHip(self, ptr):
+        self.onLeftHip = True
 
     def GetParam(self):
-        return self.labelKt.value(), self.labelKk.value(), self.labelKl.value(), self.labelKh.value(), self.labelKs.value(), self.labelBt.value(), self.labelBl.value(), self.labelBh.value(), self.labelCM.value()
+        return self.labelKt.value(), self.labelKk.value(), self.labelKl.value(), self.labelKh.value(), self.labelKs.value(), self.labelBt.value(), self.labelBl.value(), self.labelBh.value(), self.labelCM.value(), self.labelCMSd.value(), self.labelToe.value()
     def GetForceMag(self):
         return self.labelFm.value()
     

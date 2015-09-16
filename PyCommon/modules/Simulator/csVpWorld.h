@@ -21,4 +21,5 @@ public:	// expose to python
 	boost::python::tuple calcPenaltyForce(const bp::list& bodyIDsToCheck, const bp::list& mus, scalar Ks, scalar Ds);
 	void applyPenaltyForce(const bp::list& bodyIDs, const bp::list& positions, const bp::list& forces);
 	int getBodyNum() { return _world.GetNumBody(); }
+	void setOpenMP();
 };

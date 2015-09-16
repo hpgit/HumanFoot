@@ -36,6 +36,17 @@ const vector<Vec3>& _getVerticesGlobal( const vpGeom* pGeom, const vector<Vec3>&
 
 	return verticesGlobal;
 }
+const vector<Vec3>& _getVerticesLocal(const vpGeom* pGeom, const vector<Vec3>& verticesGlobal)
+{
+	static vector<Vec3> verticesLocal;
+
+	//verticesLocal.resize(verticesLocal.size());
+
+	for (int i = 0; i<verticesLocal.size(); ++i)
+		verticesLocal.push_back( Inv(pGeom->GetGlobalFrame()) * verticesGlobal[i]);
+
+	return verticesLocal;
+}
 
 MyBox::MyBox( const Vec3 &size ):vpBox(size)
 {
@@ -149,11 +160,35 @@ MyFoot3::MyFoot3(scalar radius, scalar height) :vpCapsule(radius, height)
 	
 	// top, bottom, left, right
 	scalar l = height / 2. - radius; scalar r = -height / 2. + radius;
-
+	_r = radius;
+	_h = height;
 	int row = 12, col = 6;
 
-	sphere(_verticesLocal, Vec3(0.0, 0.0, l), radius, row, col);
-	sphere(_verticesLocal, Vec3(0.0, 0.0, r), radius, row, col);
+	//sphere(_verticesLocal, Vec3(0.0, 0.0, l), radius, row, col);
+	//sphere(_verticesLocal, Vec3(0.0, 0.0, r), radius, row, col);
+
+}
+
+void MyFoot3::getContactVertices(vector<Vec3>& verticesLocal, vector<Vec3>& verticesGlobal)
+{
+	getContactVerticesGlobal(verticesGlobal);
+	verticesLocal.clear();
+	SE3 globalFrame = this->GetGlobalFrame();
+	verticesLocal.push_back(Inv(globalFrame)*verticesGlobal[0]);
+	verticesLocal.push_back(Inv(globalFrame)*verticesGlobal[1]);
+}
+void MyFoot3::getContactVerticesGlobal(vector<Vec3>& verticesGlobal)
+{
+	scalar l = _h / 2. - _r; scalar r = -_h / 2. + _r;
+
+	Vec3 center[2];
+	scalar depth[2];
+	center[0] = this->GetGlobalFrame()* Vec3(0, 0, l);
+	center[1] = this->GetGlobalFrame()* Vec3(0, 0, r);
+
+	verticesGlobal.clear();
+	verticesGlobal.push_back(center[0] + Vec3(0, -_r, 0));
+	verticesGlobal.push_back(center[1] + Vec3(0, -_r, 0));
 
 }
 

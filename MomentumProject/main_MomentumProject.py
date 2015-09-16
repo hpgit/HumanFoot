@@ -63,6 +63,8 @@ desCOMOffset = 0
 
 contactRendererName = []
 
+leftHipTimer =0
+
 ## Constant
 STATIC_BALANCING = 0
 MOTION_TRACKING = 1
@@ -134,11 +136,21 @@ def getDesFootAngularAcc(refModel, controlModel, footIndex, Kk, Dk, axis = [0,1,
         refAng = [refModel.getBodyOrientationGlobal(footIndex)]
         refAngY2 = np.dot(refAng, np.array([0,1,0]))
         refAngY = refAngY2[0]
-            
+    
     aL = mm.logSO3(mm.getSO3FromVectors(curAngY[0], refAngY))
     desAngularAcc = Kk*aL + Dk*(refAngVel-curAngVel)
 
     return desAngularAcc
+
+def getPartJacobian(_Jsys, _jIdx):
+    # warning : only Jsys works.
+    return _Jsys[6*_jIdx : 6*_jIdx+6].copy()
+
+def getBodyGlobalPos(model, motion, name):
+    return model.getBodyPositionGlobal(motion[0].skeleton.getJointIndex(name))
+
+def getBodyGlobalOri(model, motion, name):
+    return model.getBodyOrientationGlobal(motion[0].skeleton.getJointIndex(name))
 
 def main():
 
@@ -267,10 +279,10 @@ def main():
         
         indexFootL[i] = motion[0].skeleton.getJointIndex(config['FootLPart'][i])
         indexFootR[i] = motion[0].skeleton.getJointIndex(config['FootRPart'][i])
+
         jointMasksFootL[i] = [yjc.getLinkJointMask(motion[0].skeleton, indexFootL[i])]
         jointMasksFootR[i] = [yjc.getLinkJointMask(motion[0].skeleton, indexFootR[i])]       
-   
-
+    
     constJointMasks = [yjc.getLinksJointMask(motion[0].skeleton, [indexFootL[0], indexFootR[0]])]
     #constJointMasks = [yjc.getLinksJointMask(motion[0].skeleton, [indexFootL[0]])]
     #constJointMasks = [yjc.getLinkJointMask(motion[0].skeleton, constBody)]
@@ -340,6 +352,7 @@ def main():
     rd_CM_plane = [None]
     rd_CM_plane_ref = [None]
     rd_CM_ref = [None]
+    rd_CM_des = [None]
     rd_CM = [None]
     rd_CM_vec = [None]
     rd_CM_ref_vec = [None]
@@ -399,16 +412,18 @@ def main():
         #viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(motionModel, (100,100,100), yr.POLYGON_FILL)) #(150,150,255)
         viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL))
         #viewer.doc.addRenderer('rd_footCenter', yr.PointsRenderer(rd_footCenter))    
-        viewer.doc.addRenderer('rd_footCenter_des', yr.PointsRenderer(rd_footCenter_des, (150,0,150))    )
+        #viewer.doc.addRenderer('rd_footCenter_des', yr.PointsRenderer(rd_footCenter_des, (150,0,150))    )
         #viewer.doc.addRenderer('rd_footCenterL', yr.PointsRenderer(rd_footCenterL))  
         #viewer.doc.addRenderer('rd_footCenterR', yr.PointsRenderer(rd_footCenterR))
         viewer.doc.addRenderer('rd_CM_plane', yr.PointsRenderer(rd_CM_plane, (255,255,0)))
-        #viewer.doc.addRenderer('rd_CM', yr.PointsRenderer(rd_CM_plane, (255,255,0)))
+        viewer.doc.addRenderer('rd_CM', yr.PointsRenderer(rd_CM, (255,0,255)))
+        viewer.doc.addRenderer('rd_CM_des', yr.PointsRenderer(rd_CM_des, (64,64,255)))
+        viewer.doc.addRenderer('rd_CM_vec', yr.VectorsRenderer(rd_CM_vec, rd_CM_plane, (255,0,0), 3))
         #viewer.doc.addRenderer('rd_CP_des', yr.PointsRenderer(rd_CP_des, (0,255,0)))
         #viewer.doc.addRenderer('rd_CP_des', yr.PointsRenderer(rd_CP_des, (255,0,255)))
     #    viewer.doc.addRenderer('rd_dL_des_plane', yr.VectorsRenderer(rd_dL_des_plane, rd_CM, (255,255,0)))
     #    viewer.doc.addRenderer('rd_dH_des', yr.VectorsRenderer(rd_dH_des, rd_CM, (0,255,0)))
-        viewer.doc.addRenderer('rd_grf_des', yr.ForcesRenderer(rd_grf_des, rd_CP, (0,255,255), .001))
+        #viewer.doc.addRenderer('rd_grf_des', yr.ForcesRenderer(rd_grf_des, rd_CP, (0,255,255), .001))
 
         viewer.doc.addRenderer('rd_exf_des', yr.ForcesRenderer(rd_exf_des, rd_root_des, (0,255,0), .009, 0.04))
         
@@ -546,7 +561,29 @@ def main():
     print name, '-', pos
     '''
 
+    '''
+    viewer.objectInfoWnd.begin()
+    viewer.objectInfoWnd.comOffsetX = Fl_Value_Input(20, 390, 40, 10, 'X')
+    viewer.objectInfoWnd.comOffsetX.value(0)
+    
+    viewer.objectInfoWnd.comOffsetZ = Fl_Value_Input(80, 390, 40, 10, 'Z')
+    viewer.objectInfoWnd.comOffsetZ.value(0)
+    
+    viewer.objectInfoWnd.end()
+    ''' 
+
+    viewer.objectInfoWnd.comOffsetY.value(-0.05)
+    viewer.objectInfoWnd.comOffsetZ.value(0.00)
+
+    viewer.objectInfoWnd.begin()
+    viewer.objectInfoWnd.Bc = Fl_Value_Input(100, 450, 40, 10, 'Bc')
+    viewer.objectInfoWnd.Bc.value(0.1)
+    viewer.objectInfoWnd.end()
+    viewer.objectInfoWnd.labelKt.value(50)
+    viewer.objectInfoWnd.labelKk.value(17)
     def simulateCallback(frame):              
+
+        
         if frame%30==1: pt[0] = time.time()
 
         global g_initFlag
@@ -563,7 +600,7 @@ def main():
 
         motionModel.update(motion[frame])
 
-        Kt, Kk, Kl, Kh, Ksc, Bt, Bl, Bh, B_CM = viewer.GetParam()
+        Kt, Kk, Kl, Kh, Ksc, Bt, Bl, Bh, B_CM, B_CMSd, B_Toe = viewer.GetParam()
         
         Dt = 2*(Kt**.5)
         Dk = 2*(Kk**.5)
@@ -589,32 +626,95 @@ def main():
         ############################
         #Reference motion modulation
         
+       ############################
+        #Reference motion modulation
+        
         '''
         for i in range (motion[0].skeleton.getJointNum()):
             print(i, motion[0].skeleton.getJointName(i))  
         '''
+        dCM_k = 10.
+        linkVelocities = controlModel.getBodyVelocitiesGlobal()
+        dCM = yrp.getCM(linkVelocities, linkMasses, totalMass)
+        dCM_plane = copy.copy(dCM); dCM_plane[1]=0.
+        #B_CM = dCM_plane[1] * dCM_k
 
         #newR = mm.ZYX2R([0, 0, 1*B_CM])
-        newR = mm.exp(mm.v3(1.0,0.0,0.0), 3.14*B_CM/100.)
+        newR = mm.exp(mm.v3(1.0,0.0,0.0), 3.14*0.5*B_CM/100.)
+        newR2 = mm.exp(mm.v3(1.0,0.0,0.0), -3.14*0.2*B_CM/100.)
+
+        toeR = mm.exp(mm.v3(1.0,0.0,0.0), 3.14*0.25*B_Toe/100.)        
         
-        #idxs = ['LeftMetatarsal_1', 'LeftMetatarsal_2', 'LeftMetatarsal_3'  ]
-        idxs = ['LeftMetatarsal_1', 'LeftMetatarsal_2', 'LeftMetatarsal_3', 'RightMetatarsal_1', 'RightMetatarsal_2', 'RightMetatarsal_3']
-        for idx_idxs in range(len(idxs)):
-            idx = motion[0].skeleton.getJointIndex(idxs[idx_idxs])
-            th_r[idx] = np.dot(th_r[idx], newR)        
-        #idx = motion[0].skeleton.getJointIndex(idxs[0])
-        #th_r[idx] = np.dot(th_r[idx], newR)        
-        #idx = motion[0].skeleton.getJointIndex(idxs[1])
-        #th_r[idx] = np.dot(th_r[idx], newR)
-        #idx = motion[0].skeleton.getJointIndex(idxs[2])
-        #th_r[idx] = np.dot(th_r[idx], newR)
+        if B_CM < 0.0:
+            idxs = ['LeftTalus_1', 'LeftTalus_2', 'LeftTalus_3', 'RightTalus_1', 'RightTalus_2', 'RightTalus_3' ]
+            idxs = ['LeftMetatarsal_1', 'LeftMetatarsal_2', 'LeftMetatarsal_3', 'RightMetatarsal_1', 'RightMetatarsal_2', 'RightMetatarsal_3' ]        
+            #idxs = ['LeftPhalange_1', 'LeftPhalange_2', 'LeftPhalange_3', 'RightPhalange_1', 'RightPhalange_2', 'RightPhalange_3' ]
+            idxs2 = ['LeftMetatarsal_1', 'LeftMetatarsal_2', 'LeftMetatarsal_3', 'RightMetatarsal_1', 'RightMetatarsal_2', 'RightMetatarsal_3' ]        
+        else :            
+            idxs = ['LeftTalus_1', 'LeftTalus_2', 'LeftTalus_3', 'RightTalus_1', 'RightTalus_2', 'RightTalus_3' ]
+            idxs = ['LeftMetatarsal_1', 'LeftMetatarsal_2', 'LeftMetatarsal_3', 'RightMetatarsal_1', 'RightMetatarsal_2', 'RightMetatarsal_3' ]        
+            #idxs = ['LeftPhalange_1', 'LeftPhalange_2', 'LeftPhalange_3', 'RightPhalange_1', 'RightPhalange_2', 'RightPhalange_3' ]
+            idxs2 = ['LeftPhalange_1', 'LeftPhalange_2', 'LeftPhalange_3', 'RightPhalange_1', 'RightPhalange_2', 'RightPhalange_3' ]
+
+        idxs2 = ['LeftTalus_1', 'LeftTalus_2', 'LeftTalus_3', 'RightTalus_1', 'RightTalus_2', 'RightTalus_3' ]
+        idxs = ['LeftMetatarsal_1', 'LeftMetatarsal_2', 'LeftMetatarsal_3', 'RightMetatarsal_1', 'RightMetatarsal_2', 'RightMetatarsal_3' ]        
+        idxs3 = ['LeftPhalange_1', 'LeftPhalange_2', 'LeftPhalange_3', 'RightPhalange_1', 'RightPhalange_2', 'RightPhalange_3' ]
+
+        #idxs2 = ['LeftTalus_1', 'LeftTalus_3', 'RightTalus_1', 'RightTalus_3' ]
+        #idxs = ['LeftMetatarsal_1', 'LeftMetatarsal_3', 'RightMetatarsal_1', 'RightMetatarsal_3' ]
+        #idxs3 = ['LeftPhalange_1', 'LeftPhalange_3', 'RightPhalange_1', 'RightPhalange_3' ]
+
+        for i in range(len(idxs)):
+            idx = motion[0].skeleton.getJointIndex(idxs[i])
+            th_r[idx] = np.dot(th_r[idx], newR)
+            idx2 = motion[0].skeleton.getJointIndex(idxs2[i])
+            th_r[idx2] = np.dot(th_r[idx2], newR2)
+            
+            idx3 = motion[0].skeleton.getJointIndex(idxs3[i])
+            th_r[idx3] = np.dot(th_r[idx3], toeR)
+
+            
+        newR1 = mm.exp(mm.v3(1.0,0.0,0.0), 3.14*0.5*B_CMSd/100.)
+        newR2 = mm.exp(mm.v3(1.0,0.0,0.0), 3.14*0.25*B_CMSd/100.)
+        newR3 = mm.exp(mm.v3(1.0,0.0,0.0), 3.14*0.125*B_CMSd/100.)
         
-        print '---------------'
+        #idxs = ['LeftMetatarsal_1', 'LeftMetatarsal_2', 'LeftMetatarsal_3', 'RightMetatarsal_3', 'RightMetatarsal_2', 'RightMetatarsal_1' ]
+
+        if B_CMSd > 0.0:
+            idxs = ['LeftTalus_1', 'LeftTalus_2', 'LeftTalus_3', 'LeftCalcaneus_1', 'LeftCalcaneus_2', 'LeftCalcaneus_3']
+        else:
+            idxs = ['RightTalus_3', 'RightTalus_2', 'RightTalus_1', 'RightCalcaneus_3', 'RightCalcaneus_2', 'RightCalcaneus_1']
+        
+        for i in range(0, len(idxs), 3):
+            idx = motion[0].skeleton.getJointIndex(idxs[i])
+            th_r[idx] = np.dot(th_r[idx], newR1)
+            idx = motion[0].skeleton.getJointIndex(idxs[i+1])
+            th_r[idx] = np.dot(th_r[idx], newR2)
+            idx = motion[0].skeleton.getJointIndex(idxs[i+2])
+            th_r[idx] = np.dot(th_r[idx], newR3)
+        
+        global leftHipTimer
+        if viewer.objectInfoWnd.onLeftHip:
+            leftHipTimer = 45
+            viewer.objectInfoWnd.onLeftHip = False
+        if leftHipTimer > 0:
+            viewer.objectInfoWnd.comOffsetX.value(0.04*np.sin(2*3.14*leftHipTimer/45.))
+            viewer.objectInfoWnd.comOffsetZ.value(0.02*np.cos(2*3.14*leftHipTimer/45.))
+            #B_Hipd = viewer.objectInfoWnd.labelLeftHip.value()
+            #newR1 = mm.exp(mm.v3(0.0,1.0,0.0), 3.14*0.5*B_Hipd/100.)
+            #idx = motion[0].skeleton.getJointIndex('LeftUpLeg')
+            #th_r[idx] = np.dot(th_r[idx], newR1)
+            #idx = motion[0].skeleton.getJointIndex('RightUpLeg')
+            #th_r[idx] = np.dot(th_r[idx], newR1)
+            leftHipTimer -= 1
+
+    
+        
+        #print '---------------'
         #print 'ori', th_r_ori[idx]
         #print 'mod', th_r[idx]
-        #print B_CM
+        #print 3.14*0.5*B_CM/100.
         #B_CM
-
         #######################################
 
         th = controlModel.getDOFPositions()
@@ -666,18 +766,6 @@ def main():
 
         yjc.computeJacobian2(Jsys, DOFs, jointPositions, jointAxeses, linkPositions, allLinkJointMasks)       
         yjc.computeJacobianDerivative2(dJsys, DOFs, jointPositions, jointAxeses, linkAngVelocities, linkPositions, allLinkJointMasks)
-                
-        yjc.computeJacobian2(jFootL[0], DOFs, jointPositions, jointAxeses, [positionFootL[0]], jointMasksFootL[0])
-        yjc.computeJacobianDerivative2(dJFootL[0], DOFs, jointPositions, jointAxeses, linkAngVelocities, [positionFootL[0]], jointMasksFootL[0], False)
-        
-        yjc.computeJacobian2(jFootR[0], DOFs, jointPositions, jointAxeses, [positionFootR[0]], jointMasksFootR[0])
-        yjc.computeJacobianDerivative2(dJFootR[0], DOFs, jointPositions, jointAxeses, linkAngVelocities, [positionFootR[0]], jointMasksFootR[0], False)
-                
-        yjc.computeAngJacobian2(jAngFootL[0], DOFs, jointPositions, jointAxeses, [positionFootL[0]], jointMasksFootL[0])
-        yjc.computeAngJacobianDerivative2(dJAngFootL[0], DOFs, jointPositions, jointAxeses, linkAngVelocities, [positionFootL[0]], jointMasksFootL[0], False)
-        
-        yjc.computeAngJacobian2(jAngFootR[0], DOFs, jointPositions, jointAxeses, [positionFootR[0]], jointMasksFootR[0])
-        yjc.computeAngJacobianDerivative2(dJAngFootR[0], DOFs, jointPositions, jointAxeses, linkAngVelocities, [positionFootR[0]], jointMasksFootR[0], False)
         
         bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
         CP = yrp.getCP(contactPositions, contactForces)
@@ -722,95 +810,27 @@ def main():
 
         contactFlagFootL = [0]*footPartNum
         contactFlagFootR = [0]*footPartNum
-
         partialDOFIndex = [22, 22]
+
         for i in range(len(bodyIDs)) :
             controlModel.SetBodyColor(bodyIDs[i], 255, 105, 105, 200)
             index = controlModel.id2index(bodyIDs[i])
             for j in range(len(indexFootL)):
                 if index == indexFootL[j]:
                     contactFlagFootL[j] = 1
-                    if j != 0:
-                        yjc.computePartialJacobian2(jFootL[j], DOFs, jointPositions, jointAxeses, [positionFootL[j]], jointMasksFootL[j], partialDOFIndex)
-                        yjc.computePartialJacobianDerivative2(dJFootL[j], DOFs, jointPositions, jointAxeses, linkAngVelocities, [positionFootL[j]], jointMasksFootL[j], False, partialDOFIndex)
-
-                        yjc.computeAngJacobian2(jAngFootL[j], DOFs, jointPositions, jointAxeses, [positionFootL[j]], jointMasksFootL[j])
-                        yjc.computeAngJacobianDerivative2(dJAngFootL[j], DOFs, jointPositions, jointAxeses, linkAngVelocities, [positionFootL[j]], jointMasksFootL[j], False)            
-
-                    break
             for j in range(len(indexFootR)):
                 if index == indexFootR[j]:
                     contactFlagFootR[j] = 1
-                    if j != 0:
-                        yjc.computePartialJacobian2(jFootR[j], DOFs, jointPositions, jointAxeses, [positionFootR[j]], jointMasksFootR[j], partialDOFIndex)
-                        yjc.computePartialJacobianDerivative2(dJFootR[j], DOFs, jointPositions, jointAxeses, linkAngVelocities, [positionFootR[j]], jointMasksFootR[j], False, partialDOFIndex)
 
-                        yjc.computeAngJacobian2(jAngFootR[j], DOFs, jointPositions, jointAxeses, [positionFootR[j]], jointMasksFootR[j])
-                        yjc.computeAngJacobianDerivative2(dJAngFootR[j], DOFs, jointPositions, jointAxeses, linkAngVelocities, [positionFootR[j]], jointMasksFootR[j], False)
-
-                    break
-                
-        '''
-        for j in range(len(indexFootL)):
-            yjc.computeAngJacobian2(jAngFootL[j], DOFs, jointPositions, jointAxeses, [positionFootL[j]], jointMasksFootL[j])
-            yjc.computeAngJacobianDerivative2(dJAngFootL[j], DOFs, jointPositions, jointAxeses, linkAngVelocities, [positionFootL[j]], jointMasksFootL[j], False)            
-            yjc.computeAngJacobian2(jAngFootR[j], DOFs, jointPositions, jointAxeses, [positionFootR[j]], jointMasksFootR[j])
-            yjc.computeAngJacobianDerivative2(dJAngFootR[j], DOFs, jointPositions, jointAxeses, linkAngVelocities, [positionFootR[j]], jointMasksFootR[j], False)
-        '''
-
-        '''
-        if footPartNum == 1:
-             footCenterL = controlModel.getBodyPositionGlobal(supL)
-             footCenterR = controlModel.getBodyPositionGlobal(supR)             
-        else:
-            if ((contactFlagFootL[3] == 1 or contactFlagFootL[4] == 1) and contactFlagFootL[0] == 0) or ((contactFlagFootR[3] == 1 or contactFlagFootR[4] == 1) and contactFlagFootR[0] == 0):
-                r = 0.8
-                footCenterL = (controlModel.getBodyPositionGlobal(supL)*r + controlModel.getBodyPositionGlobal(indexFootL[1])*(1.0-r))
-                footCenterR = (controlModel.getBodyPositionGlobal(supR)*r + controlModel.getBodyPositionGlobal(indexFootR[1])*(1.0-r))
-                #footCenterL = controlModel.getBodyPositionGlobal(indexFootL[1]) 
-                #footCenterR = controlModel.getBodyPositionGlobal(indexFootR[1])                 
-            else :
-                #footCenterL = (controlModel.getBodyPositionGlobal(supL) + controlModel.getBodyPositionGlobal(indexFootL[1]))/2.0
-                #footCenterR = (controlModel.getBodyPositionGlobal(supR) + controlModel.getBodyPositionGlobal(indexFootR[1]))/2.0
-                #footCenterL = controlModel.getBodyPositionGlobal(indexFootL[1])                    
-                #footCenterR = controlModel.getBodyPositionGlobal(indexFootR[1])
-                r = 0.8
-                footCenterL = (controlModel.getBodyPositionGlobal(indexFootL[1])*r + controlModel.getBodyPositionGlobal(indexFootL[3])*(1.0-r))
-                footCenterR = (controlModel.getBodyPositionGlobal(indexFootR[1])*r + controlModel.getBodyPositionGlobal(indexFootR[3])*(1.0-r))
-        '''
-        
-        '''
-        if stage == POWERFUL_BALANCING:
-            footCenterL = controlModel.getBodyPositionGlobal(indexFootL[1])        
-            footCenterR = controlModel.getBodyPositionGlobal(indexFootR[1])
-        else:
-            footCenterL = (controlModel.getBodyPositionGlobal(indexFootL[1]) + controlModel.getBodyPositionGlobal(indexFootL[3]) )/2.0       
-            footCenterR = (controlModel.getBodyPositionGlobal(indexFootR[1]) + controlModel.getBodyPositionGlobal(indexFootR[3]))/2.0
-        '''
-        '''
-        p1 = controlModel.getBodyPositionGlobal(indexFootL[0])
-        p2 = controlModel.getBodyPositionGlobal(indexFootR[0])
-        p3 = controlModel.getBodyPositionGlobal(indexFootL[1])
-        p4 = controlModel.getBodyPositionGlobal(indexFootR[1])
-        print(frame, "supL", p1[1])
-        print(frame, "supR", p2[1])
-        print(frame, "metatarL", p3[1])
-        print(frame, "metatarR", p4[1])        
-        '''
-                
-        #footCenter = footCenterL + (footCenterR - footCenterL)/2.0
-        #footCenter[1] = 0.     
-        
-        #
-        '''
-        if checkAll(contactFlagFootL, 0) == 1 and checkAll(contactFlagFootR, 0) == 1:
-            footCenter = footCenter
-        elif checkAll(contactFlagFootL, 0) == 1 :
-            footCenter = footCenterR
-        elif checkAll(contactFlagFootR, 0) == 1 :
-            footCenter = footCenterL
-        '''
-
+        for j in range(0, footPartNum):
+            jAngFootR[j] = Jsys[6*indexFootR[j] : 6*indexFootR[j]+6][3:]#.copy()
+            jAngFootL[j] = Jsys[6*indexFootL[j] : 6*indexFootL[j]+6][3:]#.copy()
+            dJAngFootR[j] = dJsys[6*indexFootR[j] : 6*indexFootR[j]+6][3:]#.copy()
+            dJAngFootL[j] = dJsys[6*indexFootL[j] : 6*indexFootL[j]+6][3:]#.copy()
+            jFootR[j] = Jsys[6*indexFootR[j] : 6*indexFootR[j]+6]#.copy()
+            jFootL[j] = Jsys[6*indexFootL[j] : 6*indexFootL[j]+6]#.copy()
+            dJFootR[j] = dJsys[6*indexFootR[j] : 6*indexFootR[j]+6]#.copy()
+            dJFootL[j] = dJsys[6*indexFootL[j] : 6*indexFootL[j]+6]#.copy()
         if footPartNum == 1:
             desFCL = (controlModel.getBodyPositionGlobal(supL))
             desFCR = (controlModel.getBodyPositionGlobal(supR))
@@ -819,19 +839,6 @@ def main():
             desFCL = (controlModel.getBodyPositionGlobal(indexFootL[0])*r + controlModel.getBodyPositionGlobal(indexFootL[1])*(1.0-r))#controlModel.getBodyPositionGlobal(indexFootL[1])
             desFCR = (controlModel.getBodyPositionGlobal(indexFootR[0])*r + controlModel.getBodyPositionGlobal(indexFootR[1])*(1.0-r))#controlModel.getBodyPositionGlobal(indexFootR[1])
         desFC = desFCL + (desFCR - desFCL)/2.0  
-           
-        '''
-        if checkAll(contactFlagFootL, 0) == 1 and checkAll(contactFlagFootR, 0) == 1:
-            desFC = desFC
-        elif checkAll(contactFlagFootL, 0) == 1 :
-            desFC = desFCR
-        elif checkAll(contactFlagFootR, 0) == 1 :
-            desFC = desFCL
-        '''
-           
-        #if stage == MOTION_TRACKING:
-        #    desFC = desFCL
-        
         desFC[1] = 0
         rd_footCenter_des[0] = desFC.copy()
         curRelCMVec = CM_plane - desFC
@@ -839,10 +846,14 @@ def main():
         #print(frame, vecRatio)
         footCenter = desFC - curRelCMVec*(vecRatio)#/10.0
 
+        footCenter = (getBodyGlobalPos(controlModel, motion, 'LeftCalcaneus_1') + getBodyGlobalPos(controlModel, motion, 'LeftPhalange_1') + getBodyGlobalPos(controlModel, motion, 'RightCalcaneus_1') + getBodyGlobalPos(controlModel, motion, 'RightPhalange_1'))/4.
+        #footCenter = (getBodyGlobalPos(controlModel, motion, 'LeftCalcaneus_1') + getBodyGlobalPos(controlModel, motion, 'LeftTalus_1') + getBodyGlobalPos(controlModel, motion, 'RightCalcaneus_1') + getBodyGlobalPos(controlModel, motion, 'RightTalus_1'))/4.
+
         footCenter_ref = refFootL + (refFootR - refFootL)/2.0
         #footCenter_ref[1] = 0.    
         footCenter[1] = 0.  
-
+        footCenterOffset = np.array([viewer.objectInfoWnd.comOffsetX.value(), 0, viewer.objectInfoWnd.comOffsetZ.value()])
+        #footCenter += footCenterOffset
         
         vecRatio = mm.length(curRelCMVec)*0.
         softConstPointOffset = -curRelCMVec*(vecRatio)#/10.0
@@ -860,12 +871,15 @@ def main():
                                    
         #print((totalMass*mm.s2v(wcfg.gravity))[1])
 
+        footCenterOffset = np.array([viewer.objectInfoWnd.comOffsetX.value(), viewer.objectInfoWnd.comOffsetY.value(), viewer.objectInfoWnd.comOffsetZ.value()])
+
         # linear momentum
-        CM_ref_plane = footCenter
+        CM_ref_plane = footCenter + footCenterOffset
         dL_des_plane = Kl*totalMass*(CM_ref_plane - CM_plane) - Dl*totalMass*dCM_plane
+        dL_des_plane[1] = Kl*totalMass*(CM_ref[1] + footCenterOffset[1] - CM[1]) - Dl*totalMass*dCM[1]
     
         # angular momentum
-        CP_ref = footCenter
+        CP_ref = footCenter + footCenterOffset
 
         timeStep = 30.
         if CP_old[0]==None or CP==None:
@@ -881,7 +895,6 @@ def main():
             dH_des = np.cross((CP_des - CM_plane), (dL_des_plane + totalMass*mm.s2v(wcfg.gravity)))
         else:
             dH_des = None
-                        
  
         # momentum matrix
         RS = np.dot(P, Jsys)
@@ -998,9 +1011,9 @@ def main():
                 mot.addLinearTerms(problem, totalDOF, Bl, dL_des_plane, R, r_bias) 
                 mot.addAngularTerms(problem, totalDOF, Bh, dH_des, S, s_bias)
             
-        a_sup_2 = [None]
-        Jsup_2 = [None]
-        dJsup_2 = [None]
+        a_sup_2 = None
+        Jsup_2  = None
+        dJsup_2 = None
 
         ##############################
         # Hard constraint        
@@ -1035,155 +1048,117 @@ def main():
         #footPos = controlModel.getBodyPositionGlobal((indexFootL[0]))
         #print("y", footPos[1])
         
+        ##############################
         
+        ##############################
+        # Additional constraint      
 
         if stage != MOTION_TRACKING:
             idx = 0 #LEFT/RIGHT_TOES 
-                        
-            if stage != MOTION_TRACKING:
-                if mit.FOOT_PART_NUM == 1 :
-                    yOffset = 0.03
-                else :
-                    yOffset = 0.069
-                ankleOffset = 0.
-                
-                desLinearAccL, desPosL = getDesFootLinearAcc(motionModel, controlModel, indexFootL[idx], ModelOffset, CM_ref, CM, Kk2, Dk2, yOffset)#0.076) #0.14)
-                desLinearAccR, desPosR = getDesFootLinearAcc(motionModel, controlModel, indexFootR[idx], ModelOffset, CM_ref, CM, Kk2, Dk2, yOffset)
-                                
-                ax = [0,0,-1]
-                if mit.FOOT_PART_NUM == 1 :
-                    ax = [0,1,0]
-                
-                desAngularAccL = getDesFootAngularAcc(motionModel, controlModel, indexFootL[idx], Kk2, Dk2, ax, [0,1,ankleOffset])
-                desAngularAccR = getDesFootAngularAcc(motionModel, controlModel, indexFootR[idx], Kk2, Dk2, ax, [0,1,ankleOffset])
-                                
-                if 0:#contactFlagFootL[3] == 1 and contactFlagFootL[2] != 1:
-                    a_sup_2 = np.hstack(( desAngularAccL, desAngularAccR))
-                    Jsup_2 = np.vstack((jAngFootL[idx], jAngFootR[idx]))
-                    dJsup_2 = np.vstack((dJAngFootL[idx], dJAngFootR[idx])) 
-                    desCOMOffset = 0.
-                else:
-                    a_sup_2 = np.hstack(( np.hstack((desLinearAccL, desAngularAccL)), np.hstack((desLinearAccR, desAngularAccR)) )) 
-                    Jsup_2 = np.vstack((jFootL[idx], jFootR[idx]))
-                    dJsup_2 = np.vstack((dJFootL[idx], dJFootR[idx]))   
-                    desCOMOffset = 0.0
-
-                '''
-                idx = 4             
-                desLinearAccL, desPosL = getDesFootLinearAcc(motionModel, controlModel, indexFootL[idx], ModelOffset, CM_ref, CM, Kk2, Dk2, 0.04)#0.076) #0.14)
-                desLinearAccR, desPosR = getDesFootLinearAcc(motionModel, controlModel, indexFootR[idx], ModelOffset, CM_ref, CM, Kk2, Dk2,0.04)
-                desAngularAccL = getDesFootAngularAcc(motionModel, controlModel, indexFootL[idx], Kk2, Dk2, [0,1,0], [0,1,ankleOffset])
-                desAngularAccR = getDesFootAngularAcc(motionModel, controlModel, indexFootR[idx], Kk2, Dk2, [0,1,0], [0,1,ankleOffset])
-                
-                a_sup_2 = np.hstack(( a_sup_2, np.hstack(( np.hstack((desLinearAccL, desAngularAccL)), np.hstack((desLinearAccR, desAngularAccR)) )) ))                
-                Jsup_2 = np.vstack(( Jsup_2, np.vstack((jFootL[idx], jFootR[idx]))))
-                dJsup_2 = np.vstack(( dJsup_2, np.vstack((dJFootL[idx], dJFootR[idx])) ))
-                '''
-                
-                '''
-                idx = 4
-                desAngularAccL = getDesFootAngularAcc(motionModel, controlModel, indexFootL[idx], Kk2, Dk2, [0,1,0], [0,1,ankleOffset])
-                desAngularAccR = getDesFootAngularAcc(motionModel, controlModel, indexFootR[idx], Kk2, Dk2, [0,1,0], [0,1,ankleOffset])
-                
-                a_sup_2 = np.hstack(( a_sup_2, np.hstack(( desAngularAccL, desAngularAccR)) ))
-                Jsup_2 = np.vstack(( Jsup_2, np.vstack((jAngFootL[idx], jAngFootR[idx]))))
-                dJsup_2 = np.vstack(( dJsup_2, np.vstack((dJAngFootL[idx], dJAngFootR[idx])) ))
-                '''
-                
+            if mit.FOOT_PART_NUM == 1 :
+                yOffset = 0.03
+            else :
+                yOffset = 0.069
+            ankleOffset = (footCenter - CM_plane)*2.
+            ankleOffset[1] = 0.
+            ankleOffsetL = ankleOffset.copy()
+            ankleOffsetR = ankleOffset.copy()
+            #ankleOffset= np.array((0,0,0))
+            if ankleOffset[0] > 0.0:
+                ankleOffsetR[0] = 0.
             else:
-                desLinearAccL, desPosL = getDesFootLinearAcc(motionModel, controlModel, indexFootL[idx], ModelOffset, CM_ref, CM, Kk2, Dk2, 0.040) 
-                desLinearAccR, desPosR = getDesFootLinearAcc(motionModel, controlModel, indexFootR[idx], ModelOffset, CM_ref, CM, Kk2, Dk2, 0.040) 
+                ankleOffsetL[0] = 0.
 
-                desAngularAccL = getDesFootAngularAcc(motionModel, controlModel, indexFootL[idx], Kk2, Dk2)
-                    
-                a_sup_2 = np.hstack((desLinearAccL, desAngularAccL))
- 
-                Jsup_2 = jFootL[idx] 
-                dJsup_2 = dJFootL[idx]
+            #print 'ankleOffset=', ankleOffset
+                
+            desLinearAccL, desPosL = getDesFootLinearAcc(motionModel, controlModel, indexFootL[idx], ModelOffset, CM_ref, CM, Kk2, Dk2, yOffset)#0.076) #0.14)
+            desLinearAccR, desPosR = getDesFootLinearAcc(motionModel, controlModel, indexFootR[idx], ModelOffset, CM_ref, CM, Kk2, Dk2, yOffset)
+                                
+            ax = [0,0,-1]
+            if mit.FOOT_PART_NUM == 1 :
+                ax = [0,1,0]
+                
+            desAngularAccL = getDesFootAngularAcc(motionModel, controlModel, indexFootL[idx], Kk2, Dk2, ax, [0,1,0]+ankleOffsetL)
+            desAngularAccR = getDesFootAngularAcc(motionModel, controlModel, indexFootR[idx], Kk2, Dk2, ax, [0,1,0]+ankleOffsetR)
+                                
+            a_sup_2 = np.hstack(( np.hstack((desLinearAccL, desAngularAccL)), np.hstack((desLinearAccR, desAngularAccR)) )) 
+            Jsup_2 = np.vstack((jFootL[idx], jFootR[idx]))
+            dJsup_2 = np.vstack((dJFootL[idx], dJFootR[idx]))   
+            #mot.addConstraint(problem, totalDOF, Jsup_2, dJsup_2, dth_flat, a_sup_2)
+            #mot.addConstraint(problem, totalDOF, Jsup_2[:1], dJsup_2[:1], dth_flat, a_sup_2[:1])
+            #mot.addConstraint(problem, totalDOF, Jsup_2[2:], dJsup_2[2:], dth_flat, a_sup_2[2:])
+            #mot.addConstraint(problem, totalDOF, Jsup_2[3:], dJsup_2[3:], dth_flat, a_sup_2[3:])
+            mot.addAnotherTerms(problem, totalDOF, viewer.objectInfoWnd.Bc.value(), Jsup_2[3:], a_sup_2[3:] - np.dot(dJsup_2[3:] , dth_flat))
+            desCOMOffset = 0.0
             
             rd_DesPosL[0] = desPosL.copy()
             rd_DesPosR[0] = desPosR.copy()
-        else:
-            if footPartNum != 5:
-                idx = 0
-                desLinearAccL, desPosL = getDesFootLinearAcc(motionModel, controlModel, indexFootL[idx], ModelOffset, CM_ref, CM, Kk2, Dk2, 0.045) 
-                desAngularAccL = getDesFootAngularAcc(motionModel, controlModel, indexFootL[idx], Kk2, Dk2)
-        
-                a_sup_2 = np.hstack(( desLinearAccL, desAngularAccL))
- 
-                Jsup_2 = (jFootL[idx])
-                dJsup_2 = (dJFootL[idx])  
-                '''
-                idx = 4
-                desAngularAccL = getDesFootAngularAcc(motionModel, controlModel, indexFootL[idx], Kk2, Dk2)
-        
-                a_sup_2 = np.hstack(( a_sup_2, desAngularAccL))
- 
-                Jsup_2 = np.vstack(( Jsup_2, jAngFootL[idx]))
-                dJsup_2 = np.vstack(( dJsup_2, dJAngFootL[idx]))
-                '''
-                '''                
-                idx = 1
-                desAngularAccL = getDesFootAngularAcc(motionModel, controlModel, indexFootL[idx], Kk2, Dk2)        
-                a_sup_2 = np.hstack(( a_sup_2, desAngularAccL))
- 
-                Jsup_2 = np.vstack(( Jsup_2, jAngFootL[idx]))
-                dJsup_2 = np.vstack(( dJsup_2, dJAngFootL[idx]))
-                '''
-            else:                
-                idx = 0
-                desAngularAccL = getDesFootAngularAcc(motionModel, controlModel, indexFootL[idx], Kk2, Dk2)
-                desAngularAccR = getDesFootAngularAcc(motionModel, controlModel, indexFootR[idx], Kk2, Dk2)
-        
-                a_sup_2 = np.hstack(( desAngularAccL, desAngularAccR ))
- 
-                Jsup_2 = np.vstack((jAngFootL[idx], jAngFootR[idx]))
-                dJsup_2 = np.vstack((dJAngFootL[idx], dJAngFootR[idx]))             
-                       
 
-        ##############################
+    
         
-        ##############################
-        # Additional constraint          
-
-        if stage == MOTION_TRACKING+10:
+        if stage == STATIC_BALANCING:
             #Kk2 = Kk * 2.5
-            Kk2 = Kk * 1.5
+            Kk2 = Kk #* 1.5
             Dk2 = 2*(Kk2**.5)
             desForePosL = [0,0,0]
             desForePosR = [0,0,0]
             desRearPosL = [0,0,0]
             desRearPosR = [0,0,0]
+            footPartPos = []
+            footPartPos.append(controlModel.getBodyPositionGlobal(motion[0].skeleton.getJointIndex('LeftCalcaneus_1')))
+            footPartPos.append(controlModel.getBodyPositionGlobal(motion[0].skeleton.getJointIndex('LeftPhalange_1')))
+            footPartPos.append(controlModel.getBodyPositionGlobal(motion[0].skeleton.getJointIndex('RightCalcaneus_1')))
+            footPartPos.append(controlModel.getBodyPositionGlobal(motion[0].skeleton.getJointIndex('RightPhalange_1')))
+            for i in range(1, 4) : 
+                # Calcaneus
+                contactFlagFootL[i] = 0
+                contactFlagFootR[i] = 0
+            for i in range(4, 7) : 
+                # Talus
+                contactFlagFootL[i] = 0
+                contactFlagFootR[i] = 0
+            for i in range(7, 10) : 
+                # Metatarsal
+                contactFlagFootL[i] = 0
+                contactFlagFootR[i] = 0
+            for i in range(10, footPartNum) : 
+                # Phalange
+                contactFlagFootL[i] = 1
+                contactFlagFootR[i] = 1
+            SupPts = np.vstack((np.array((footPartPos[0][0], footPartPos[1][0], footPartPos[2][0], footPartPos[3][0])), 
+                   np.array((footPartPos[0][2], footPartPos[1][2], footPartPos[2][2], footPartPos[3][2])), 
+                   np.array((1., 1., 1., 1.))))
             
+            SupUV = np.vstack((np.array((0., 0., 1., 1.)), np.array((0., 1., 0., 1.)), np.array((1., 1., 1., 1.))))
+            SupMap = np.dot(np.dot(SupUV, SupUV.T), np.linalg.inv(np.dot(SupPts, SupUV.T)))
+            #print SupMap
+            footCenterPts = np.array((footCenter[0], footCenter[2], 1))
+            #print np.dot(SupMap, footCenterPts)
+            #print np.dot(getBodyGlobalOri(controlModel, motion, 'LeftMetatarsal_1'), np.array((0,1,0)))
             for i in range(1, footPartNum) :
-                if stage != MOTION_TRACKING:
-                    axis = [0,1,0]
-                    desAng = [0,1,0]
-                    desY = 0.05
+                axis = [0,1,0]
+                desAng = [0,1,0]
+                desY = 0.03
+                if contactFlagFootL[i] == 1:
+                    desLinearAccL, desForePosL = getDesFootLinearAcc(motionModel, controlModel, indexFootL[i], ModelOffset, CM_ref, CM, Kk2, Dk2, desY) 
+                    desAngularAccL = getDesFootAngularAcc(motionModel, controlModel, indexFootL[i], Kk2, Dk2, axis, desAng)
+                    a_sup_2 = np.hstack((desLinearAccL, desAngularAccL))
+                    Jsup_2 = jFootL[i].copy()
+                    dJsup_2 = dJFootL[i].copy()
+                    #mot.addConstraint(problem, totalDOF, Jsup_2, dJsup_2, dth_flat, a_sup_2)      
+                    mot.addAnotherTerms(problem, totalDOF, viewer.objectInfoWnd.Bc.value(), Jsup_2, a_sup_2 - np.dot(dJsup_2, dth_flat))
+                    #mot.addAnotherTerms(problem, totalDOF, viewer.objectInfoWnd.Bc.value(), Jsup_2[3:], a_sup_2[3:] - np.dot(dJsup_2[3:] , dth_flat))
 
-                    if contactFlagFootL[i] == 1:
-                        desLinearAccL, desForePosL = getDesFootLinearAcc(motionModel, controlModel, indexFootL[i], ModelOffset, CM_ref, CM, Kk2, Dk2, desY) 
-                        desAngularAccL = getDesFootAngularAcc(motionModel, controlModel, indexFootL[i], Kk2, Dk2, axis, desAng)
-                        a_sup_2 = np.hstack(( a_sup_2, np.hstack((desLinearAccL, desAngularAccL)) ))
-                        Jsup_2 = np.vstack(( Jsup_2, jFootL[i] ))
-                        dJsup_2 = np.vstack(( dJsup_2, dJFootL[i] ))                
-                    if contactFlagFootR[i] == 1:
-                        desLinearAccR, desForePosR = getDesFootLinearAcc(motionModel, controlModel, indexFootR[i], ModelOffset, CM_ref, CM, Kk2, Dk2, desY) 
-                        desAngularAccR = getDesFootAngularAcc(motionModel, controlModel, indexFootR[i], Kk2, Dk2, axis, desAng)
-                        a_sup_2 = np.hstack(( a_sup_2, np.hstack((desLinearAccR, desAngularAccR)) ))            
-                        Jsup_2 = np.vstack(( Jsup_2, jFootR[i] ))
-                        dJsup_2 = np.vstack(( dJsup_2, dJFootR[i] ))
-                else:
-                    if contactFlagFootL[i] == 1:
-                        desAngularAccL = getDesFootAngularAcc(motionModel, controlModel, indexFootL[i], Kk2, Dk2)
-                        a_sup_2 = np.hstack(( a_sup_2, desAngularAccL ))
-                        Jsup_2 = np.vstack(( Jsup_2, jAngFootL[i] ))
-                        dJsup_2 = np.vstack(( dJsup_2, dJAngFootL[i] ))                
-                    if contactFlagFootR[i] == 1:
-                        desAngularAccR = getDesFootAngularAcc(motionModel, controlModel, indexFootR[i], Kk2, Dk2)
-                        a_sup_2 = np.hstack(( a_sup_2, desAngularAccR ))            
-                        Jsup_2 = np.vstack(( Jsup_2, jAngFootR[i] ))
-                        dJsup_2 = np.vstack(( dJsup_2, dJAngFootR[i] ))
+                if contactFlagFootR[i] == 1:
+                    desLinearAccR, desForePosR = getDesFootLinearAcc(motionModel, controlModel, indexFootR[i], ModelOffset, CM_ref, CM, Kk2, Dk2, desY) 
+                    desAngularAccR = getDesFootAngularAcc(motionModel, controlModel, indexFootR[i], Kk2, Dk2, axis, desAng)
+                    a_sup_2 = np.hstack((desLinearAccR, desAngularAccR))
+                    Jsup_2 = jFootR[i].copy()
+                    dJsup_2 = dJFootR[i].copy()
+                    #mot.addConstraint(problem, totalDOF, Jsup_2, dJsup_2, dth_flat, a_sup_2)      
+                    mot.addAnotherTerms(problem, totalDOF, viewer.objectInfoWnd.Bc.value(), Jsup_2, a_sup_2 - np.dot(dJsup_2, dth_flat))
+                    #mot.addAnotherTerms(problem, totalDOF, viewer.objectInfoWnd.Bc.value(), Jsup_2[3:], a_sup_2[3:] - np.dot(dJsup_2[3:], dth_flat))
+                    
 
             '''
             for i in range(1, footPartNum) :
@@ -1206,8 +1181,8 @@ def main():
             rd_DesRearPosR[0] = desRearPosR
         ##############################
         
-
-        mot.setConstraint(problem, totalDOF, Jsup_2, dJsup_2, dth_flat, a_sup_2)
+        #if Jsup_2 != None:
+        #    mot.addConstraint(problem, totalDOF, Jsup_2, dJsup_2, dth_flat, a_sup_2)
         
 
         r = problem.solve()
@@ -1364,7 +1339,8 @@ def main():
         rd_CM_plane_ref[0] = CM_ref.copy()
         rd_CM_ref[0] = CM_ref.copy()
         rd_CM_ref_vec[0] = (CM_ref - footCenter_ref)*3.
-        rd_CM_vec[0] = (CM - footCenter)*3
+        rd_CM_vec[0] = (CM - CM_plane)
+        rd_CM_des[0] = CM_ref_plane.copy()
 
         #rd_CM_plane[0][1] = 0.
         

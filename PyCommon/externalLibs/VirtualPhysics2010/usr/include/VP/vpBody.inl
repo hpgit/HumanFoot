@@ -170,7 +170,7 @@ VP_INLINE int vpBody::GetNumGeometry(void) const
 	return m_pGeom.size();
 }
 
-VP_INLINE const vpGeom *vpBody::GetGeometry(int i) const
+VP_INLINE vpGeom *vpBody::GetGeometry(int i) const
 {
 	assert(i < m_pGeom.size() && i >= 0 && "vpBody::GetGeometry(int)");
 	return m_pGeom[i];

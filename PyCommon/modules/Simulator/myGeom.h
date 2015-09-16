@@ -28,8 +28,8 @@ private:
 	vector<Vec3> _verticesLocal;
 public:
 	MyBox(const Vec3 &size);
-	virtual const vector<Vec3>& getVerticesLocal() const { return _verticesLocal; }
-	virtual const vector<Vec3>& getVerticesGlobal() const { return _getVerticesGlobal(this, _verticesLocal); }
+	virtual const vector<Vec3>& getVerticesLocal() { return _verticesLocal; }
+	virtual const vector<Vec3>& getVerticesGlobal() { return _getVerticesGlobal(this, _verticesLocal); }
 };
 
 class MyFoot1: public vpBox
@@ -38,9 +38,9 @@ private:
 	vector<Vec3> _verticesLocal;
 public:
 	MyFoot1(const Vec3 &size);
-	virtual const vector<Vec3>& getVerticesLocal() const { return _verticesLocal; }
-	virtual const vector<Vec3>& getVerticesGlobal() const { return _getVerticesGlobal(this, _verticesLocal); }
-	virtual void GetShape(char *type, scalar *data) const { vpBox::GetShape(type, data); type[0] = 'M';}
+	virtual const vector<Vec3>& getVerticesLocal() { return _verticesLocal; }
+	virtual const vector<Vec3>& getVerticesGlobal() { return _getVerticesGlobal(this, _verticesLocal); }
+	virtual void GetShape(char *type, scalar *data)const { vpBox::GetShape(type, data); type[0] = 'M';}
 };
 
 class MyFoot2: public vpBox
@@ -49,8 +49,8 @@ private:
 	vector<Vec3> _verticesLocal;
 public:
 	MyFoot2(const Vec3 &size);
-	virtual const vector<Vec3>& getVerticesLocal() const { return _verticesLocal; }
-	virtual const vector<Vec3>& getVerticesGlobal() const { return _getVerticesGlobal(this, _verticesLocal); }
+	virtual const vector<Vec3>& getVerticesLocal() { return _verticesLocal; }
+	virtual const vector<Vec3>& getVerticesGlobal() { return _getVerticesGlobal(this, _verticesLocal); }
 	virtual void GetShape(char *type, scalar *data) const { vpBox::GetShape(type, data); type[0] = 'M';}
 };
 
@@ -59,9 +59,24 @@ class MyFoot3 : public vpCapsule
 private:
 	vector<Vec3> _verticesLocal;
 public:
+	scalar _r, _h;
 	MyFoot3(scalar radius, scalar height);
-	virtual const vector<Vec3>& getVerticesLocal() const { return _verticesLocal; }
-	virtual const vector<Vec3>& getVerticesGlobal() const { return _getVerticesGlobal(this, _verticesLocal); }
+	//virtual const vector<Vec3>& getVerticesLocal() const { return _verticesLocal; }
+	//virtual const vector<Vec3>& getVerticesGlobal() const { return _getVerticesGlobal(this, _verticesLocal); }
+	virtual const vector<Vec3>& getVerticesLocal() 
+	{ 
+		vector<Vec3> verticesGlobal;
+		getContactVertices(_verticesLocal, verticesGlobal);
+		return _verticesLocal; 
+	}
+	virtual const vector<Vec3>& getVerticesGlobal() 
+	{
+		vector<Vec3> verticesGlobal;
+		getContactVertices(_verticesLocal, verticesGlobal);
+		return _getVerticesGlobal(this, _verticesLocal); 
+	}
+	void getContactVertices(vector<Vec3>& verticesLocal, vector<Vec3>& verticesGlobal);
+	void getContactVerticesGlobal(vector<Vec3>& verticesGlobal);
 	virtual void GetShape(char *type, scalar *data) const { vpCapsule::GetShape(type, data); type[0] = 'C'; }
 };
 
@@ -71,7 +86,7 @@ private:
 	vector<Vec3> _verticesLocal;
 public:
 	MyShin(const Vec3 &size);
-	virtual const vector<Vec3>& getVerticesLocal() const { return _verticesLocal; }
-	virtual const vector<Vec3>& getVerticesGlobal() const { return _getVerticesGlobal(this, _verticesLocal); }
+	virtual const vector<Vec3>& getVerticesLocal() { return _verticesLocal; }
+	virtual const vector<Vec3>& getVerticesGlobal() { return _getVerticesGlobal(this, _verticesLocal); }
 	virtual void GetShape(char *type, scalar *data) const { vpBox::GetShape(type, data); type[0] = 'Q';}
 };

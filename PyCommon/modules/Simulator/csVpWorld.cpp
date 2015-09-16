@@ -6,8 +6,6 @@
 #include "csVpModel.h"
 #include "csVpWorld.h"
 
-#include "myGeom.h"
-
 #define make_tuple boost::python::make_tuple
 
 #define MAX_X 1	// 0001
@@ -51,8 +49,26 @@ void VpWorld::step()
 void VpWorld::initialize()
 {
 	_world.Initialize();
+
 	//_world.SetIntegrator(VP::IMPLICIT_EULER);
+	//_world.SetIntegrator(VP::IMPLICIT_EULER_FAST);
+#ifndef __APPLE__
+	setOpenMP();
+#endif
 }
+
+#ifndef __APPLE__
+void VpWorld::setOpenMP()
+{
+	int a = 1;
+
+
+	#pragma omp parallel 
+		_world.SetNumThreads((a = omp_get_num_threads()));
+	std::cout << "parallelized with " << a << " cores" << std::endl;
+
+}
+#endif
 
 // @return ( bodyIDs, positions, postionLocals, forces)
 boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, const bp::list& mus, scalar Ks, scalar Ds )
@@ -61,7 +77,7 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 	int bodyID;
 	static numeric::array O_Vec3(make_tuple(0., 0., 0.));
 	const vpBody* pBody;
-	const vpGeom* pGeom;
+	vpGeom* pGeom;
 	char type;
 	scalar data[3];
 	static Vec3 position, velocity, force, positionLocal;
@@ -76,12 +92,10 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 			pGeom = pBody->GetGeometry(j);
 			
 			pGeom->GetShape(&type, data);
-
 			if (type == 'C')
 			{
 				const vector<Vec3>& verticesLocal = pGeom->getVerticesLocal();
 				const vector<Vec3>& verticesGlobal = pGeom->getVerticesGlobal();
-
 				for (int k = 0; k < verticesLocal.size(); ++k)
 				{
 					positionLocal = verticesLocal[k];
@@ -107,7 +121,7 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 					}
 				}
 			}
-			else
+			else if (true)
 			{
 				const SE3& geomFrame = pGeom->GetGlobalFrame();
 
@@ -196,9 +210,9 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 	return make_tuple(bodyIDs, positions, positionLocals, forces);
 }
 
-// @param position ï¿½Û¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(global)
-// @param [out] force ï¿½ß»ï¿½ï¿½ï¿½ penalty force(global)
-// @return penalty forceï¿½ï¿½ ï¿½ß»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ true
+// @param position ÀÛ¿ëÇÒ ÁöÁ¡(global)
+// @param [out] force ¹ß»ýÇÑ penalty force(global)
+// @return penalty force°¡ ¹ß»ýÇßÀ¸¸é true
 bool VpWorld::_calcPenaltyForce( const vpBody* pBody, const Vec3& position, const Vec3& velocity, Vec3& force, scalar Ks, scalar Ds, scalar mu )
 {
 	static Vec3 vRelVel, vNormalRelVel, vTangentialRelVel;
@@ -234,11 +248,11 @@ bool VpWorld::_calcPenaltyForce( const vpBody* pBody, const Vec3& position, cons
 */
 		frictionForce = mu * normalForce;
 
-		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ì²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½
-		// rigid bodyï¿½Ì¹Ç·ï¿½ point lockingï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½î¼­ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-		// ï¿½Ì²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Óµï¿½ï¿½ï¿½ ï¿½Ý´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å« ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Û¿ë¿¡ ï¿½ï¿½ï¿½ï¿½ stepï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 
-		// ï¿½Ù½ï¿½ ï¿½ï¿½ ï¿½Ý´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Û¿ï¿½ï¿½Ï¸é¼­ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ï¸ï¿½ ï¿½Ì²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
-		// ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Óµï¿½ ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ ï¿½Ó½ï¿½ ï¿½Úµï¿½
+		// °¡¸¸È÷ ¼­ÀÖÀ» ¶§ ¹Ì²ô·¯Áö´Â Çö»ó ¹æÁöÇÏ±â À§ÇØ
+		// rigid bodyÀÌ¹Ç·Î point lockingÀÌ Èûµé¾î¼­ Á¤Áö¸¶Âû·Â ±¸ÇöÀÌ ¾î·Á¿ò
+		// ¹Ì²ô·¯Áö´Â ¿øÀÎÀÌ ¼ÓµµÀÇ ¹Ý´ë¹æÇâÀ¸·Î Å« ¸¶Âû·ÂÀÌ ÀÛ¿ë¿¡ ´ÙÀ½ step¿¡¼­´Â 
+		// ´Ù½Ã ±× ¹Ý´ë¹æÇâÀ¸·Î ¸¶Âû·ÂÀÌ ÀÛ¿ëÇÏ¸é¼­ Áøµ¿À» ÇÏ¸ç ¹Ì²ô·¯Áö±â ¶§¹®
+		// ÀÌ¸¦ ¹æÁöÇÏ±â À§ÇØ ÀÏÁ¤ ¼Óµµ ÀÌÇÏ¿¡¼­´Â ¸¶Âû·ÂÀÇ ÀÏÁ¤ ºñÀ²¸¸ Àû¿ëÇÏµµ·Ï ÀÓ½Ã ÄÚµù
 		if(tangentialRelVel < _lockingVel) 
 			frictionForce *= tangentialRelVel/_lockingVel;
 

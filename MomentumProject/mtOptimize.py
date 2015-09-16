@@ -13,7 +13,9 @@ import Util.ysPythonEx as ype
 def getTrackingWeight(DOFs, skeleton, weightMap, rootPositionWeight=0.):
     weights = [1.]*skeleton.getJointNum()
     for name, weight in weightMap.items():
+        
         index = skeleton.getJointIndex(name)
+        print name, index
         weights[index] = weight
     
     totalDOF = 0
@@ -41,7 +43,11 @@ def addAngularTerms(problem, totalDOF, weight, dH_des, S, s_bias):
 def addSoftPointConstraintTerms(problem, totalDOF, weight, ddP_des, Q, q_bias):
     # min | ddP_des - (Q*ddth + q_bias) |^2
     problem.addObjective_matrix(Q, ddP_des - q_bias, weight)
-        
+
+def addAnotherTerms(problem, totalDOF, weight, C, d):
+    # min | C * ddth - d | ^2
+    problem.addObjective_matrix(C, d, weight)
+
 def addConstraint(problem, totalDOF, J, dJ, dth_flat, a_sup):
     # subject to J_sup*ddth + dJ_sup*dth_flat = a_sup
     #problem.setConstraint_matrix(J, a_sup - np.dot(dJ, dth_flat))

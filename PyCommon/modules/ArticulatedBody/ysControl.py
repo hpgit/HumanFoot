@@ -34,12 +34,12 @@ def getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt):
     dth0 = dth[0][3:6]
     ddth_r0 = ddth_r[0][3:6]
     
-    a_des0 = Kt*(p_r0 - p0) + Dt*(v_r0 - v0) + a_r0
-    ddth_des0 = Kt*(mm.logSO3(np.dot(th0.transpose(), th_r0))) + Dt*(dth_r0 - dth0) + ddth_r0
+    a_des0 = Kt*(p_r0 - p0) + Dt*(v_r0 - v0) #+ a_r0
+    ddth_des0 = Kt*(mm.logSO3(np.dot(th0.transpose(), th_r0))) + Dt*(dth_r0 - dth0) #+ ddth_r0
     ddth_des[0] = np.concatenate((a_des0, ddth_des0))
     
     for i in range(1, len(th_r)):
-        ddth_des[i] = Kt*(mm.logSO3(np.dot(th[i].transpose(), th_r[i]))) + Dt*(dth_r[i] - dth[i]) + ddth_r[i]
+        ddth_des[i] = Kt*(mm.logSO3(np.dot(th[i].transpose(), th_r[i]))) + Dt*(dth_r[i] - dth[i]) #+ ddth_r[i]
 
     return ddth_des
 

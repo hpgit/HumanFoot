@@ -59,9 +59,16 @@ class LSE:
             print 'consNum misnatched'
             return
         '''
-        self.A.append(A)
-        self.b.append(b)
-
+        #self.A.append(A)
+        #self.b.append(b)
+        if self.A == None:
+            self.A = A
+            self.b = b
+        else:
+            self.A = np.vstack((self.A, A))
+            self.b = np.append(self.b, b)
+        
+        
     def solve(self):
 #        \underset{x}{\operatorname{min}}\left \|  C_{1}x-d_{1}\right \|^{2} + \cdots  + \left \|  C_{n}x-d_{n)}\right \|^{2} \newline
 #        subject \; to : Ax-b=0 \newline
@@ -109,6 +116,7 @@ class LSE:
         
         #x_large = npl.solve(A_large, b_large)
         x_large = npl.lstsq(A_large, b_large)
+        #x_large = npl.lstsq(A11, b1)
         
         result = {}
         result['x'] = x_large[0][:self.varNum]

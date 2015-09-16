@@ -100,8 +100,8 @@ public:
 	virtual bool			 DetectCollision(const vpTorus *, vpCollisionInfoArray &) const = 0;
 
 	//ys
-	virtual const vector<Vec3>& getVerticesLocal() const { vector<Vec3> v; return v;}
-	virtual const vector<Vec3>& getVerticesGlobal() const { vector<Vec3> v; return v;}
+	virtual const vector<Vec3>& getVerticesLocal() { vector<Vec3> v; return v;}
+	virtual const vector<Vec3>& getVerticesGlobal() { vector<Vec3> v; return v;}
 
 	virtual void draw(void) const {}
 
