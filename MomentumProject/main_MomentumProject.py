@@ -467,110 +467,11 @@ def main():
     for i in range (motion[0].skeleton.getJointNum()):
         print(i, motion[0].skeleton.getJointName(i))       
     
-    '''
-    phalangeJoint = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex('LeftPhalange_1'))
-    print("Joint Phalange", phalangeJoint)    
-    phalangeBody = controlModel.getBodyPositionGlobal(motion[0].skeleton.getJointIndex('LeftPhalange_1'))
-    print("Body Phalange", phalangeBody)    
-    phalangeBodyVert = controlModel.getBodyVerticesPositionGlobal(motion[0].skeleton.getJointIndex('LeftPhalange_1'))    
-    print("Body Vertex Phalange", phalangeBodyVert)
-    
-    metatarJoint = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex('LeftMetatarsal_1'))
-    print("Joint Metatar", metatarJoint) 
-    metatarBody = controlModel.getBodyPositionGlobal(motion[0].skeleton.getJointIndex('LeftMetatarsal_1'))
-    print("Body Metatar", metatarBody)
-    metatarVert = controlModel.getBodyVerticesPositionGlobal(motion[0].skeleton.getJointIndex('LeftMetatarsal_1'))    
-    print("Body Vertex Metatar", metatarVert)
-
-    
-    print("r=", phalangeJoint[1]- metatarVert[0][1], metatarVert[2][1] - phalangeJoint[1])
-    print("x=", metatarVert[4][2] - phalangeJoint[2], ", y=", phalangeJoint[1]-phalangeBodyVert[0][1])
-    print("sqr2r=", (phalangeJoint[1]- metatarVert[0][1])*(2**.5), (metatarVert[2][1] - phalangeJoint[1])*(2**.5))
-
-    
-    phalangeJoint = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex('LeftPhalange_3'))
-    print("Joint Phalange3", phalangeJoint)    
-    phalangeBody = controlModel.getBodyPositionGlobal(motion[0].skeleton.getJointIndex('LeftPhalange_3'))
-    print("Body Phalange3", phalangeBody)    
-    phalangeBodyVert = controlModel.getBodyVerticesPositionGlobal(motion[0].skeleton.getJointIndex('LeftPhalange_3'))    
-    print("Body Vertex Phalange3", phalangeBodyVert)
-    metatarJoint = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex('LeftMetatarsal_3'))
-    print("Joint Metatar", metatarJoint) 
-    metatarBody = controlModel.getBodyPositionGlobal(motion[0].skeleton.getJointIndex('LeftMetatarsal_3'))
-    print("Body Metatar3", metatarBody)
-    metatarVert = controlModel.getBodyVerticesPositionGlobal(motion[0].skeleton.getJointIndex('LeftMetatarsal_3'))    
-    print("Body Vertex Metatar3", metatarVert)    
-    print("r2=", phalangeBodyVert[4][2]- phalangeJoint[2], phalangeJoint[2] - metatarVert[4][2] )
- 
-
-    curAng = [controlModel.getBodyOrientationGlobal(motion[0].skeleton.getJointIndex('RightMetatarsal_1'))]
-    axis = [0,1,0]     
-    desAng = [0,1,0]                   
-    curAngY = np.dot(curAng, np.array(axis))
-    refAngY = np.array(desAng)               
-    aL = mm.logSO3(mm.getSO3FromVectors(curAngY[0], refAngY))
-    print("R", aL)
-    '''
-
     desCOMOffset = 0.0
     
     pt = [0.]
-    '''
-    name = 'LeftFoot'
-    pos = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex(name))
-    print name, '-', pos
-    
-    name = 'LeftTalus_1'
-    pos = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex(name))
-    print name, '-', pos
-    name = 'LeftTalus_2'
-    pos = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex(name))
-    print name, '-', pos
-    name = 'LeftTalus_3'
-    pos = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex(name))
-    print name, '-', pos
-    
-    name = 'LeftMetatarsal_1'
-    pos = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex(name))
-    print name, '-', pos    
-    name = 'LeftMetatarsal_2'
-    pos = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex(name))
-    print name, '-', pos
-    name = 'LeftMetatarsal_3'
-    pos = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex(name))
-    print name, '-', pos
-    
-    name = 'LeftPhalange_1'
-    pos = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex(name))
-    print name, '-', pos
-    name = 'LeftPhalange_2'
-    pos = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex(name))
-    print name, '-', pos
-    name = 'LeftPhalange_3'
-    pos = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex(name))
-    print name, '-', pos
-    
-    name = 'LeftCalcaneus_1'
-    pos = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex(name))
-    print name, '-', pos
-    name = 'LeftCalcaneus_2'
-    pos = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex(name))
-    print name, '-', pos
-    name = 'LeftCalcaneus_3'
-    pos = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex(name))
-    print name, '-', pos
-    '''
 
-    '''
-    viewer.objectInfoWnd.begin()
-    viewer.objectInfoWnd.comOffsetX = Fl_Value_Input(20, 390, 40, 10, 'X')
-    viewer.objectInfoWnd.comOffsetX.value(0)
-    
-    viewer.objectInfoWnd.comOffsetZ = Fl_Value_Input(80, 390, 40, 10, 'Z')
-    viewer.objectInfoWnd.comOffsetZ.value(0)
-    
-    viewer.objectInfoWnd.end()
-    ''' 
+    timeReport = [0.]*7
 
     viewer.objectInfoWnd.comOffsetY.value(-0.05)
     viewer.objectInfoWnd.comOffsetZ.value(0.00)
@@ -583,7 +484,9 @@ def main():
     viewer.objectInfoWnd.labelKk.value(17)
     def simulateCallback(frame):              
 
-        
+        curTime = time.time()
+
+
         if frame%30==1: pt[0] = time.time()
 
         global g_initFlag
@@ -623,9 +526,7 @@ def main():
         th_r_ori = motion.getDOFPositions(frame)
         th_r = copy.copy(th_r_ori)
 
-        ############################
-        #Reference motion modulation
-        
+
        ############################
         #Reference motion modulation
         
@@ -708,15 +609,10 @@ def main():
             #th_r[idx] = np.dot(th_r[idx], newR1)
             leftHipTimer -= 1
 
-    
-        
-        #print '---------------'
-        #print 'ori', th_r_ori[idx]
-        #print 'mod', th_r[idx]
-        #print 3.14*0.5*B_CM/100.
-        #B_CM
-        #######################################
 
+        timeReport[0] += time.time() -curTime
+        curTime = time.time()
+    
         th = controlModel.getDOFPositions()
         dth_r = motion.getDOFVelocities(frame)
         dth = controlModel.getDOFVelocities()
@@ -760,52 +656,36 @@ def main():
         CM_ref = yrp.getCM(linkPositions_ref, linkMasses, totalMass)
         CM_plane_ref = copy.copy(CM_ref)
         CM_plane_ref[1] = 0.
+
+        
         
         P = ymt.getPureInertiaMatrix(TO, linkMasses, linkPositions, CM, linkInertias)
         dP = ymt.getPureInertiaMatrixDerivative(dTO, linkMasses, linkVelocities, dCM, linkAngVelocities, linkInertias)
 
+        timeReport[1] += time.time() -curTime
+        curTime = time.time()
+
         yjc.computeJacobian2(Jsys, DOFs, jointPositions, jointAxeses, linkPositions, allLinkJointMasks)       
-        yjc.computeJacobianDerivative2(dJsys, DOFs, jointPositions, jointAxeses, linkAngVelocities, linkPositions, allLinkJointMasks)
+        timeReport[2] += time.time() -curTime
+        curTime = time.time()
         
+        # yjc.computeJacobianDerivative2(dJsys, DOFs, jointPositions, jointAxeses, linkAngVelocities, linkPositions, allLinkJointMasks)
+        if frame > 0:
+            dJsys = (Jsys - JsysPre)*30.
+        else:
+            dJsys = (Jsys - Jsys)
+        JsysPre = Jsys.copy()
+
+        timeReport[3] += time.time() -curTime
+        curTime = time.time()
+
+
         bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
         CP = yrp.getCP(contactPositions, contactForces)
 
         for i in range(len(bodyIDsToCheck)) :
             controlModel.SetBodyColor(bodyIDsToCheck[i], 0, 0, 0, 255)
         
-        ##########################################
-        
-        '''
-        for i in range(len(rd_contactPositions)):
-            rd_contactPositions[i] = [0,0,0]
-            rd_contactForces[i] = [0,0,0]
-
-        for i in range(len(contactPositions)):
-            rd_contactPositions[i] = np.copy(contactPositions[i])
-            rd_contactForces[i] = np.copy(contactForces[i])
-        '''
-        '''
-        if len(contactPositions) > 0:
-            rd_contactPositions = np.copy(contactPositions)
-            rd_contactForces = np.copy(contactForces)
-            print("rd_contactPositions", rd_contactPositions)
-            print("contactPositions", contactPositions)
-        '''
-        '''
-        for i in range(len(contactRendererName)):
-                viewer.doc.removeRenderer(contactRendererName[i])
-                
-        del contactRendererName[:]
-
-        for i in range(len(contactPositions)):
-            contactRendererName.append(str(i))
-            #viewer.doc.addRenderer(str(i), yr.PointsRenderer([contactPositions[i]], (0,255,0)))
-            viewer.doc.addRenderer(str(i), yr.ForcesRenderer([contactForces[i]], [contactPositions[i]], (0,255,0), .009, 0.009))
-
-
-        viewer.motionViewWnd.update(1, viewer.doc)
-        '''
-        ##########################################
 
 
         contactFlagFootL = [0]*footPartNum
@@ -873,6 +753,12 @@ def main():
 
         footCenterOffset = np.array([viewer.objectInfoWnd.comOffsetX.value(), viewer.objectInfoWnd.comOffsetY.value(), viewer.objectInfoWnd.comOffsetZ.value()])
 
+
+
+        ######################
+        # optimization terms
+        ######################
+
         # linear momentum
         CM_ref_plane = footCenter + footCenterOffset
         dL_des_plane = Kl*totalMass*(CM_ref_plane - CM_plane) - Dl*totalMass*dCM_plane
@@ -903,39 +789,6 @@ def main():
         rs = np.dot((np.dot(dP, Jsys) + np.dot(P, dJsys)), dth_flat)
         r_bias, s_bias = np.hsplit(rs, 2)
 
-
-        '''
-        ##############################
-        # soft point constraint
-
-        #####################################################
-        P_cur = controlModel.getBodyPositionGlobal(constBody)
-        constBodyVec = P_cur - footCenter
-        softConstPoint = [footCenter[0]+softConstPointOffset[0], mm.length(constBodyVec), footCenter[2]+softConstPointOffset[2]]
-        #####################################################
-
-        P_des = softConstPoint
-        #P_cur = controlModel.getBodyPositionGlobal(constBody)
-        dP_des = [0, 0, 0]
-        dP_cur = controlModel.getBodyVelocityGlobal(constBody)
-        ddP_des1 = Ksc*(-(P_des - P_cur)) - Dsc*(-(dP_cur - dP_des))
-
-        r = -(P_des - P_cur)
-        I = np.vstack(([1,0,0],[0,1,0],[0,0,1]))
-        Z = np.hstack((I, mm.getCrossMatrixForm(-r)))
-          
-        yjc.computeJacobian2(Jconst, DOFs, jointPositions, jointAxeses, [P_cur], constJointMasks)
-        JL, JA = np.vsplit(Jconst, 2)
-        Q1 = np.dot(Z, Jconst)
-                  
-        q1 = np.dot(JA, dth_flat)
-        q2 = np.dot(mm.getCrossMatrixForm(q1), np.dot(mm.getCrossMatrixForm(q1), r))
-        
-        yjc.computeJacobianDerivative2(dJconst, DOFs, jointPositions, jointAxeses, linkAngVelocities, [P_cur], constJointMasks, False)
-        q_bias1 = np.dot(np.dot(Z, dJconst), dth_flat) + q2
-        
-        ##############################
-        '''
          
         flagContact = True
         if dH_des==None or np.any(np.isnan(dH_des)) == True:
@@ -1024,29 +877,11 @@ def main():
                     
         Dk2 = 2*(Kk2**.5)
 
-        '''
-        desLinearAccL, desPosL = getDesFootLinearAcc(motionModel, controlModel, supL, ModelOffset, CM_ref, CM, Kk2, Dk2) 
-        desLinearAccR, desPosR = getDesFootLinearAcc(motionModel, controlModel, supR, ModelOffset, CM_ref, CM, Kk2, Dk2) 
-
-        desAngularAccL = getDesFootAngularAcc(motionModel, controlModel, supL, Kk2, Dk2)
-        desAngularAccR = getDesFootAngularAcc(motionModel, controlModel, supR, Kk2, Dk2)
-        '''
-        #L = ymt.getLinearMomentum(linkMasses, linkVelocities)
-        #H = ymt.getAngularMomentum(CM, linkInertias, linkAngVelocities, linkPositions, linkMasses, linkVelocities)
-        #print("L", L)
-        #print("H", H)
-        #print(curRelCMVec[2])
         ankleW = 0
         ankleOffset = ankleW*curRelCMVec[2]
-        #print("ankleOffset", ankleOffset)
         metatarW = 0
         metatarOffset = metatarW*curRelCMVec[2]
-        #print("metatarOffset", metatarOffset)
         
-        
-        
-        #footPos = controlModel.getBodyPositionGlobal((indexFootL[0]))
-        #print("y", footPos[1])
         
         ##############################
         
@@ -1054,22 +889,27 @@ def main():
         # Additional constraint      
 
         if stage != MOTION_TRACKING:
+            # ankle strategy
             idx = 0 #LEFT/RIGHT_TOES 
             if mit.FOOT_PART_NUM == 1 :
                 yOffset = 0.03
             else :
                 yOffset = 0.069
-            ankleOffset = (footCenter - CM_plane)*2.
+            # ankleOffset = (footCenter - CM_plane)*4.
+            ankleOffset = -footCenterOffset*10.
             ankleOffset[1] = 0.
             ankleOffsetL = ankleOffset.copy()
             ankleOffsetR = ankleOffset.copy()
             #ankleOffset= np.array((0,0,0))
-            if ankleOffset[0] > 0.0:
-                ankleOffsetR[0] = 0.
-            else:
-                ankleOffsetL[0] = 0.
 
-            #print 'ankleOffset=', ankleOffset
+            ankleOffsetL[0] = - ankleOffsetL[0]
+            ankleOffsetR[0] = - ankleOffsetR[0]
+            if footCenterOffset[0] > 0.0:
+                ankleOffsetL[0] = 0.
+            else:
+                ankleOffsetR[0] = 0.
+
+            print 'ankleOffset=', ankleOffset
                 
             desLinearAccL, desPosL = getDesFootLinearAcc(motionModel, controlModel, indexFootL[idx], ModelOffset, CM_ref, CM, Kk2, Dk2, yOffset)#0.076) #0.14)
             desLinearAccR, desPosR = getDesFootLinearAcc(motionModel, controlModel, indexFootR[idx], ModelOffset, CM_ref, CM, Kk2, Dk2, yOffset)
@@ -1088,7 +928,9 @@ def main():
             #mot.addConstraint(problem, totalDOF, Jsup_2[:1], dJsup_2[:1], dth_flat, a_sup_2[:1])
             #mot.addConstraint(problem, totalDOF, Jsup_2[2:], dJsup_2[2:], dth_flat, a_sup_2[2:])
             #mot.addConstraint(problem, totalDOF, Jsup_2[3:], dJsup_2[3:], dth_flat, a_sup_2[3:])
-            mot.addAnotherTerms(problem, totalDOF, viewer.objectInfoWnd.Bc.value(), Jsup_2[3:], a_sup_2[3:] - np.dot(dJsup_2[3:] , dth_flat))
+            #mot.addAnotherTerms(problem, totalDOF, viewer.objectInfoWnd.Bc.value(), Jsup_2[3:], a_sup_2[3:] - np.dot(dJsup_2[3:] , dth_flat))
+            mot.addAnotherTerms(problem, totalDOF, viewer.objectInfoWnd.Bc.value(), Jsup_2[0:0], a_sup_2[0:0] - np.dot(dJsup_2[0:0] , dth_flat))
+            mot.addAnotherTerms(problem, totalDOF, viewer.objectInfoWnd.Bc.value(), Jsup_2[2:], a_sup_2[2:] - np.dot(dJsup_2[2:] , dth_flat))
             desCOMOffset = 0.0
             
             rd_DesPosL[0] = desPosL.copy()
@@ -1097,6 +939,7 @@ def main():
     
         
         if stage == STATIC_BALANCING:
+            # foot strategy
             #Kk2 = Kk * 2.5
             Kk2 = Kk #* 1.5
             Dk2 = 2*(Kk2**.5)
@@ -1146,7 +989,7 @@ def main():
             CM_plane_2D = np.array( (CM[0], CM[2], 1) )
             # CM_plane_UV = np.dot(SupMap, CM_plane_2D)
             CM_plane_UV = np.dot(SupMap, footCenterPts)
-            print CM_plane_UV
+            # print CM_plane_UV
             # for i in range(1, footPartNum):
             if CM_plane_UV[1] > 1.:
                 for i in range(1, 7):
@@ -1167,14 +1010,14 @@ def main():
                 # CM_plane_UV[0] = -CM_plane_UV[0]
 
             if abs(CM_plane_UV[0]) > 1.:
-                contactFlagFoot[1,4,7,10] = 0
+                for j in range(0, 4):
+                    contactFlagFoot[3*j+3] = 0
             if abs(CM_plane_UV[0]) > 2.:
-                contactFlagFoot[2,5,8,11] = 0
+                for j in range(0, 4):
+                    contactFlagFoot[3*j+2] = 0
 
-
-
-            print 'footL : ',contactFlagFootL
-            print 'footR : ',contactFlagFootR
+            # print 'footL : ',contactFlagFootL
+            # print 'footR : ',contactFlagFootR
 
             for i in range(1, footPartNum) :
                 axis = [0,1,0]
@@ -1201,21 +1044,6 @@ def main():
                     #mot.addAnotherTerms(problem, totalDOF, viewer.objectInfoWnd.Bc.value(), Jsup_2[3:], a_sup_2[3:] - np.dot(dJsup_2[3:], dth_flat))
                     
 
-            '''
-            for i in range(1, footPartNum) :
-                if contactFlagFootL[i] == 1:
-                    desLinearAccL, desForePosL = getDesFootLinearAcc(motionModel, controlModel, indexFootL[i], ModelOffset, CM_ref, CM, Kk2, Dk2, 0.034) 
-                    desAngularAccL = getDesFootAngularAcc(motionModel, controlModel, indexFootL[i], Kk2, Dk2)
-                    a_sup_2 = np.hstack(( a_sup_2, np.hstack((desLinearAccL, desAngularAccL)) ))
-                    Jsup_2 = np.vstack(( Jsup_2, jFootL[i] ))
-                    dJsup_2 = np.vstack(( dJsup_2, dJFootL[i] ))                
-                if contactFlagFootR[i] == 1:
-                    desLinearAccR, desForePosR = getDesFootLinearAcc(motionModel, controlModel, indexFootR[i], ModelOffset, CM_ref, CM, Kk2, Dk2, 0.034) 
-                    desAngularAccR = getDesFootAngularAcc(motionModel, controlModel, indexFootR[i], Kk2, Dk2)
-                    a_sup_2 = np.hstack(( a_sup_2, np.hstack((desLinearAccR, desAngularAccR)) ))            
-                    Jsup_2 = np.vstack(( Jsup_2, jFootR[i] ))
-                    dJsup_2 = np.vstack(( dJsup_2, dJFootR[i] ))
-            '''
             rd_DesForePosL[0] = desForePosL
             rd_DesForePosR[0] = desForePosR
             rd_DesRearPosL[0] = desRearPosL
@@ -1226,6 +1054,10 @@ def main():
         #    mot.addConstraint(problem, totalDOF, Jsup_2, dJsup_2, dth_flat, a_sup_2)
         
 
+        timeReport[4] += time.time() -curTime
+        curTime = time.time()
+
+
         r = problem.solve()
         problem.clear()
         ype.nested(r['x'], ddth_sol)
@@ -1233,10 +1065,6 @@ def main():
         rootPos[0] = controlModel.getBodyPositionGlobal(selectedBody)
         localPos = [[0, 0, 0]]   
 
-        #rd_Joint[0] = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex('LeftMetatarsal_1'))
-        #rd_Joint2[0] = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex('LeftMetatarsal_3'))
-        #rd_Joint3[0] = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex('LeftPhalange_1'))
-        #rd_Joint4[0] = controlModel.getJointPositionGlobal(motion[0].skeleton.getJointIndex('LeftPhalange_3'))
 
         ###########################################
         ##Jacobian Transpose control
@@ -1281,6 +1109,11 @@ def main():
         yjc.computeAngJacobian2(JcomAng, DOFs, jointPositions, jointAxeses, [headPos], comUpperJointMasks)        
         TauAM = np.dot(JcomAng.T, Tam)                        
         
+
+        timeReport[5] += time.time() -curTime
+        curTime = time.time()
+
+
         for i in range(stepsPerFrame):
             # apply penalty force
             bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
@@ -1382,6 +1215,7 @@ def main():
         rd_CM_ref_vec[0] = (CM_ref - footCenter_ref)*3.
         rd_CM_vec[0] = (CM - CM_plane)
         rd_CM_des[0] = CM_ref_plane.copy()
+        rd_CM_des[0][1] = .01
 
         #rd_CM_plane[0][1] = 0.
         
@@ -1422,9 +1256,13 @@ def main():
         if (forceApplyFrame == 0) :
             applyedExtraForce[0] = [0, 0, 0]
 
+
+        timeReport[6] += time.time() -curTime
+        # print timeReport
+
     viewer.setSimulateCallback(simulateCallback)
     
-    viewer.startTimer(1/60.)
+    viewer.startTimer(1/30.)
     viewer.show()
     
     Fl.run()

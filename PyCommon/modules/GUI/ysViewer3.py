@@ -287,7 +287,7 @@ class GlWindow(Fl_Gl_Window):
             yp = minY 
         
             i = 0
-            h = .1
+            h = .0
            
             glBegin(GL_QUADS)
             

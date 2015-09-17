@@ -221,8 +221,10 @@ maxKt = 1000
 initKk = 35
 #initKk = 21#300
 
-initKl = 37
-initKh = 35
+#initKl = 37
+#initKh = 35
+initKl = 100
+initKh = 1000
 initKs = 50
         
 initBk = 0.0#3.5
