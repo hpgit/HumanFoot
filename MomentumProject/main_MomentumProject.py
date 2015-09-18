@@ -409,7 +409,7 @@ def main():
     #    viewer.record(False)
     #    viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,255,255), yr.LINK_BONE))
         viewer.doc.addObject('motion', motion)
-        #viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(motionModel, (100,100,100), yr.POLYGON_FILL)) #(150,150,255)
+        viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(motionModel, (100,100,100), yr.POLYGON_FILL)) #(150,150,255)
         viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL))
         #viewer.doc.addRenderer('rd_footCenter', yr.PointsRenderer(rd_footCenter))    
         #viewer.doc.addRenderer('rd_footCenter_des', yr.PointsRenderer(rd_footCenter_des, (150,0,150))    )
@@ -501,7 +501,7 @@ def main():
         global contactRendererName
         global desCOMOffset
 
-        motionModel.update(motion[frame])
+        motionModel.update(motion[0])
 
         Kt, Kk, Kl, Kh, Ksc, Bt, Bl, Bh, B_CM, B_CMSd, B_Toe = viewer.GetParam()
         
@@ -896,14 +896,16 @@ def main():
             else :
                 yOffset = 0.069
             # ankleOffset = (footCenter - CM_plane)*4.
-            ankleOffset = -footCenterOffset*10.
+            ankleOffset = footCenterOffset*10.
+
             ankleOffset[1] = 0.
+            ankleOffset[2] = 0.
+            #ankleOffset[2] = ankleOffset[2]*10.
             ankleOffsetL = ankleOffset.copy()
             ankleOffsetR = ankleOffset.copy()
-            #ankleOffset= np.array((0,0,0))
+           
+            # ankleOffset= np.array((0,0,0))
 
-            ankleOffsetL[0] = - ankleOffsetL[0]
-            ankleOffsetR[0] = - ankleOffsetR[0]
             if footCenterOffset[0] > 0.0:
                 ankleOffsetL[0] = 0.
             else:
@@ -915,6 +917,8 @@ def main():
             desLinearAccR, desPosR = getDesFootLinearAcc(motionModel, controlModel, indexFootR[idx], ModelOffset, CM_ref, CM, Kk2, Dk2, yOffset)
                                 
             ax = [0,0,-1]
+            aaa = getBodyGlobalOri(controlModel, motion, 'RightFoot')
+            print np.dot(aaa, ax)
             if mit.FOOT_PART_NUM == 1 :
                 ax = [0,1,0]
                 
@@ -1061,6 +1065,8 @@ def main():
         r = problem.solve()
         problem.clear()
         ype.nested(r['x'], ddth_sol)
+
+        print frame, ddth_sol
                       
         rootPos[0] = controlModel.getBodyPositionGlobal(selectedBody)
         localPos = [[0, 0, 0]]   
