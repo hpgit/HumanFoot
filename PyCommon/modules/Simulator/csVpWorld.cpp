@@ -34,6 +34,9 @@ VpWorld::VpWorld(const object& config)
 
 	if(XB(config.attr("useDefaultContactModel")))
 	{
+		vpMaterial::GetDefaultMaterial()->SetRestitution(0.01);
+		vpMaterial::GetDefaultMaterial()->SetDynamicFriction(100);
+		vpMaterial::GetDefaultMaterial()->SetStaticFriction(100);
 		_ground.AddGeometry(new vpBox(Vec3(100, 0, 100)));
 		_ground.SetFrame(Vec3(0, _planeHeight, 0));
 		_ground.SetGround();

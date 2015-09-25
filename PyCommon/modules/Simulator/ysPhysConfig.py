@@ -7,8 +7,8 @@ class WorldConfig:
         self.gravity = (0, -9.8, 0)
         self.planeHeight = 0.0
         self.useDefaultContactModel = True
-        #self.lockingVel = 0.02
-        self.lockingVel = 0.05
+        self.lockingVel = 0.02
+        #self.lockingVel = 0.05
         
         
         ##########################################33
@@ -35,7 +35,7 @@ class ModelConfig:
             self.jointHiStop = ode.Infinity
             
             self.density = 1000 # 1000 kg/m^3 = 1 g/cm^3 : density of liquid water at 4'C
-            self.boneRatio = 1
+            self.boneRatio = 1.
             self.Kp = 100
             self.Kd = 5
             

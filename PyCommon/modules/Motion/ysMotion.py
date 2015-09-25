@@ -679,12 +679,17 @@ class JointPosture(Posture):
     def getInternalJointOrientationsGlobal(self):
         return [self.getGlobalR(self.skeleton.jointElementIndexes[i]) for i in range(1, len(self.skeleton.jointElementIndexes))]
 
-
     #########################
     ## Additional
     def addJoint(self, skeleton, localR) :
         self.skeleton = skeleton
         self.localRs.append(localR)
         self.globalTs.append(localR)
-
-    
+    def getDOFPositions(self):
+        return [(self.rootPos, self.getLocalR(0))] + self.getInternalJointOrientationsLocal()
+    def getDOFAxeses(self):
+        return [np.concatenate((mm.I_SO3(), self.getJointOrientationGlobal(0).transpose()))] + [R.transpose() for R in self.getInternalJointOrientationsGlobal()]
+    def setDOFPositions(self, DOFPositions):
+        self.rootPos = DOFPositions[0][0]
+        self.setJointOrientationsLocal([DOFPositions[0][1]]+DOFPositions[1:])
+        

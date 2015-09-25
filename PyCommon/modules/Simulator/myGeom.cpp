@@ -185,10 +185,28 @@ void MyFoot3::getContactVerticesGlobal(vector<Vec3>& verticesGlobal)
 	scalar depth[2];
 	center[0] = this->GetGlobalFrame()* Vec3(0, 0, l);
 	center[1] = this->GetGlobalFrame()* Vec3(0, 0, r);
-
 	verticesGlobal.clear();
 	verticesGlobal.push_back(center[0] + Vec3(0, -_r, 0));
 	verticesGlobal.push_back(center[1] + Vec3(0, -_r, 0));
+
+}
+
+void MyFoot4::getContactVertices(vector<Vec3>& verticesLocal, vector<Vec3>& verticesGlobal)
+{
+	getContactVerticesGlobal(verticesGlobal);
+	verticesLocal.clear();
+	SE3 globalFrame = this->GetGlobalFrame();
+	verticesLocal.push_back(Inv(globalFrame)*verticesGlobal[0]);
+}
+void MyFoot4::getContactVerticesGlobal(vector<Vec3>& verticesGlobal)
+{
+	scalar l = _h / 2. - _r; scalar r = -_h / 2. + _r;
+
+	Vec3 center[2];
+	scalar depth[2];
+	center[0] = this->GetGlobalFrame()* Vec3(0, 0, l);
+	verticesGlobal.clear();
+	verticesGlobal.push_back(center[0] + Vec3(0, -_r, 0));
 
 }
 

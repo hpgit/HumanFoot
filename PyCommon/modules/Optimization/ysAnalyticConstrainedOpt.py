@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.linalg as npl
+#import scipy.linalg as npl
 
 # Equality Constrained Least Square
 # minimize |C1x-d1|^2 + ... + |Cnx-dn|^2
@@ -116,6 +117,9 @@ class LSE:
         
         #x_large = npl.solve(A_large, b_large)
         x_large = npl.lstsq(A_large, b_large)
+        if np.isnan(x_large[0][0]):
+            print 'nan!!'
+            x_large = npl.lstsq(A11, b1)
         #x_large = npl.lstsq(A11, b1)
         
         result = {}
@@ -174,9 +178,12 @@ class LSE:
         b3 = self.b[1]
         #b_large = np.hstack((b1,b2))
         b_large = np.hstack((b1,b2, b3))
-        
-        #x_large = npl.solve(A_large, b_large)
-        x_large = npl.lstsq(A_large, b_large)
+        x_large = None
+        try:
+            x_large = npl.solve(A_large, b_large)
+        except:
+            print "exception!"
+            x_large = npl.lstsq(A_large, b_large)
         
         result = {}
         result['x'] = x_large[0][:self.varNum]

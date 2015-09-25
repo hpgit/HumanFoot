@@ -258,7 +258,10 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 
 		string geomType = XS(cfgNode.attr("geom"));
 		if (geomType == "MyFoot3")
-			pNode->body.AddGeometry(new MyFoot3(width, length));
+			pNode->body.AddGeometry(new MyFoot3(width, length+width));
+		else if(geomType == "MyFoot4")
+			pNode->body.AddGeometry(new MyFoot4(width, length));
+			//pNode->body.AddGeometry(new MyFoot4(width, length), Vec3(0,0,-width));
 		else
 			pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)));
 //		pNode->body.SetInertia(BoxInertia(density, Vec3(width,height,length)));
