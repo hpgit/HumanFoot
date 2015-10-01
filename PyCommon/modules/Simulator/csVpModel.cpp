@@ -2197,6 +2197,10 @@ void VpControlModel::stepKinematics(double dt, const bp::list& accs)
 		q = joint->GetOrientation() * Exp(Axis(dq*dt));
 		joint->SetOrientation(q);
 	}
+
+	for(int i=0; i<_nodes.size(); ++i)
+		_nodes[i]->body.UpdateGeomFrame();
+	
 	se3 zero_se3(0.0);
 	Hip->ResetForce();
 	//for(int i=0; i<_nodes.size(); i++)

@@ -492,15 +492,17 @@ def main():
                             motion[0].skeleton.getJointIndex('RightCalcaneus_1'),\
                             motion[0].skeleton.getJointIndex('RightCalcaneus_2')]
     pose = motion[0].copy()
+    timeReport = [0.]*2
 
     def simulateCallback(frame):
+        curTime = time.time()
         Ke = 0.0      
         Kt, Kk, Kl, Kh, Ksc, Bt, Bl, Bh, B_CM, B_CMSd, B_Toe = viewer.GetParam()        
         motionModel.update(motion[frame])
-        #controlToMotionOffset = [-2.0, 0., 0.]
-        #motionModel.translateByOffset(controlToMotionOffset)
+        controlToMotionOffset = [-2.0, 0., 0.]
+        motionModel.translateByOffset(controlToMotionOffset)
         
-        stepsPerFrame = 1
+        stepsPerFrame = 5
         for i in range(stepsPerFrame):
             Kt, Kk, Kl, Kh, Ksc, Bt, Bl, Bh, B_CM, B_CMSd, B_Toe = viewer.GetParam()
             #Kt, Kl, Kh, Bl, Bh, Ke = viewer.GetParam()
@@ -508,7 +510,8 @@ def main():
             qps.setupWeight(Kt, Kl, Kh, Ke, 10., .1, .1, Bl, Bh, 10.)
             cPositions, CP, CM, footCenter, dL_des, CM_ref= qps.setupQP(frame, motion, mcfg, controlModel, vpWorld, config, 1./(30.*stepsPerFrame))
             CM_ref[1] = 0.
-
+            timeReport[0] += time.time() - curTime
+            curTime = time.time()
             #forceforce = np.array([viewer.objectInfoWnd.labelForceX.value(), viewer.objectInfoWnd.labelForceY.value(), viewer.objectInfoWnd.labelForceZ.value()])
             #extraForce[0] = viewer.objectInfoWnd.labelFm.value() * mm.normalize2(forceforce)
             #extraForcePos[0] = controlModel.getBodyPositionGlobal(selectedBody)
@@ -516,7 +519,10 @@ def main():
             #    qps.addExternalForces(extraForce[0], selectedBody, viewer.objectInfoWnd.labelForceDur.value());
             #    viewer.ResetForceState()
             x, cForce = qps.stepQP(controlModel, 1./(30.*stepsPerFrame))
-            
+            timeReport[1] += time.time() - curTime
+            curTime = time.time()
+
+        print timeReport
             
         if frame%30==0: print 'elapsed time for 30 frames:', time.time()-pt[0]
         # rendering        

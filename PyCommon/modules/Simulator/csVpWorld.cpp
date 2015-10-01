@@ -89,17 +89,14 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 	{
 		bodyID = XI(bodyIDsToCheck[i]);
 		pBody = _world.GetBody(bodyID);
-		std::cout << bodyID <<std::endl;
 
 		for (int j = 0; j<pBody->GetNumGeometry(); ++j)
 		{
 			pGeom = pBody->GetGeometry(j);
 			
 			pGeom->GetShape(&type, data);
-			std::cout << type <<std::endl;
 			if (type == 'C')
 			{
-				std::cout << "hehe" << std::endl;
 				const vector<Vec3>& verticesLocal = pGeom->getVerticesLocal();
 				const vector<Vec3>& verticesGlobal = pGeom->getVerticesGlobal();
 				for (int k = 0; k < verticesLocal.size(); ++k)
@@ -107,14 +104,11 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 					
 					positionLocal = verticesLocal[k];
 					position = verticesGlobal[k];
-					//std::cout << positionLocal;
 					velocity = pBody->GetLinVelocity(positionLocal);
-					std::cout << "hehe1"<< verticesLocal.size() << position << std::endl;
 
 					bool penentrated = _calcPenaltyForce(pBody, position, velocity, force, Ks, Ds, XD(mus[i]));
 					if (penentrated)
 					{
-						std::cout << "hehe2" << std::endl;
 						bodyIDs.append(bodyID);
 
 						object pyPosition = O_Vec3.copy();

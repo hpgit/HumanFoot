@@ -333,6 +333,8 @@ public:
 	string					 m_szName;
 	unsigned int			 m_iDisplayList;
 
+	void					 UpdateGeomFrame(void);
+
 protected:
 
 	void					 ApplyLocalImpulse(const Vec3 &, const Vec3 &);
@@ -341,8 +343,7 @@ protected:
 	Vec3					 GetLinAccWithZeroVel(const Vec3 &) const;
 	Vec3					 GetLinAcceleration(const Vec3 &) const;	
 	const dse3				&GetImpulse(void) const;
-	void					 Initialize(void);
-	void					 UpdateGeomFrame(void);
+	void					 Initialize(void);	
 	void					 RemoveJoint(vpJoint *);
 	void					 AddSpring(vpSpring *);
 	void					 RemoveSpring(vpSpring *);

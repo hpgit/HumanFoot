@@ -510,6 +510,7 @@ def create_biped():
                     RIGHT_CALCANEUS_1:.7, LEFT_CALCANEUS_1:.7, RIGHT_CALCANEUS_2:.7, LEFT_CALCANEUS_2:.7, 
                     LEFT_PHALANGE_1:.4, LEFT_PHALANGE_2:.4, RIGHT_PHALANGE_1:.4, RIGHT_PHALANGE_2:.4}
 
+
     config['supLink'] = LEFT_FOOT
     config['supLink2'] = RIGHT_FOOT
     #config['end'] = HIP

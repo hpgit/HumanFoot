@@ -18,6 +18,10 @@ import ArticulatedBody.ysReferencePoints as yrp
 import ArticulatedBody.ysMomentum as ymt
 import ArticulatedBody.ysControl as yct
 
+def getPartJacobian(_Jsys, _jIdx):
+    # warning : only Jsys works.
+    return _Jsys[6*_jIdx : 6*_jIdx+6].copy()
+
 class QPSimulator:
 	def __init__(self):
 		self.qp = yac.QP()
@@ -43,7 +47,7 @@ class QPSimulator:
 		self.Be = 100.
 
 		# constants
-		self.mu = 2.
+		self.mu = 5.
 		self.contactPerSide = 4 # vertices of boxes always checked
 
 		# flat data structure
@@ -68,6 +72,10 @@ class QPSimulator:
 
 		#self.dH_des = None
 		#self.dL_des_plane = None
+
+		# jacobian
+		self.Jsys = None
+		self.dJsys = None
 
 	def setupWeight(self, Kt, Kl, Kh, Ke, Bt, Btau, Bcon, Bl=0., Bh=0., Be=0.):
 		self.Kt = Kt
@@ -116,13 +124,7 @@ class QPSimulator:
 		# optimization 
 		self.qp.clear()
 
-		# jacobian
-		Jsup = yjc.makeEmptyJacobian(DOFs, 1)
-		dJsup = Jsup.copy()
 		
-		Jsys = yjc.makeEmptyJacobian(DOFs, model.getBodyNum())
-		dJsys = Jsys.copy()
-
 		Vc_tmp = self.Vc_tmp
 
 
@@ -131,7 +133,6 @@ class QPSimulator:
 
 		th_r = motion.getDOFPositionsLocal(frame)
 		th = model.getDOFPositionsLocal()
-		print th[0][0]
 		dth_r = motion.getDOFVelocitiesLocal(frame)
 		dth = model.getDOFVelocitiesLocal()
 		ddth_r = motion.getDOFAccelerationsLocal(frame)
@@ -167,6 +168,28 @@ class QPSimulator:
 		P = ymt.getPureInertiaMatrix(TO, linkMasses, linkPositions, CM, linkInertias)
 		dP = ymt.getPureInertiaMatrixDerivative(dTO, linkMasses, linkVelocities, dCM, linkAngVelocities, linkInertias)
 
+
+		# jacobian
+		Jsup = yjc.makeEmptyJacobian(DOFs, 1)
+		dJsup = Jsup.copy()
+		Jsys_old = None
+
+		if self.Jsys != None:
+			Jsys_old = self.Jsys.copy()
+		
+		if self.Jsys == None:
+			self.Jsys = yjc.makeEmptyJacobian(DOFs, model.getBodyNum())
+			self.dJsys = self.Jsys.copy()
+
+		allLinkJointMasks = yjc.getAllLinkJointMasks(motion[0].skeleton)
+		
+		yjc.computeJacobian2(self.Jsys, DOFs, jointPositions, jointAxeses, linkPositions, allLinkJointMasks)
+		if Jsys_old ==None:
+			self.dJsys = self.Jsys-self.Jsys
+		else:
+			self.dJsys = (self.Jsys - Jsys_old)*invdt
+		#yjc.computeJacobianDerivative2(self.dJsys, DOFs, jointPositions, jointAxeses, linkAngVelocities, linkPositions, allLinkJointMasks)
+
 		#CM_ref = yrp.getCM(linkPositions_ref, linkMasses, totalMass)
 		#dCM_ref = yrp.getCM(linkVelocities_ref, linkMasses, totalMass)
 		#CM_ref_plane = copy.copy(CM_ref); CM_ref_plane[1]=0.
@@ -191,7 +214,7 @@ class QPSimulator:
 		supR = motion[0].skeleton.getJointIndex('RightFoot')
 		supL = motion[0].skeleton.getJointIndex('LeftFoot')
 		bodyIDsToCheck = range(world.getBodyNum())
-		print bodyIDsToCheck
+		#print bodyIDsToCheck
 		#bodyIDsToCheck = [supsupR, supsupL]
 		#bodyIDsToCheck = [supR, supL]
 		mus = [.5]*len(bodyIDsToCheck)
@@ -265,7 +288,7 @@ class QPSimulator:
 				##dH_des *= (contactChangeCount)/(maxContactChangeCount)*.9+.1
 		else:
 			dH_des = None
-		H = np.dot(P, np.dot(Jsys, self.dth_flat))
+		H = np.dot(P, np.dot(self.Jsys, self.dth_flat))
 		dH_des = -self.Kh*H[3:]
 
 
@@ -287,8 +310,10 @@ class QPSimulator:
 			if preSup != sup:
 				bodyPos = linkPositions[sup]
 				bodyVel = linkVelocities[sup]
-				yjc.computeJacobian2(Jsup, DOFs, jointPositions, jointAxeses, [bodyPos], supJointMasks)
-				yjc.computeJacobianDerivative2(dJsup, DOFs, jointPositions, jointAxeses, linkAngVelocities, [bodyPos], supJointMasks)
+				#yjc.computeJacobian2(Jsup, DOFs, jointPositions, jointAxeses, [bodyPos], supJointMasks)
+				#yjc.computeJacobianDerivative2(dJsup, DOFs, jointPositions, jointAxeses, linkAngVelocities, [bodyPos], supJointMasks)
+				Jsup = getPartJacobian(self.Jsys, sup)
+				dJsup = getPartJacobian(self.dJsys, sup)
 
 			R_dAd = np.hstack( (np.vstack( (np.eye(3), mm.getCrossMatrixForm(-bodyPos)) ), np.vstack( (np.zeros((3,3)), np.eye(3)) ) ) )
 			dR_dAd = np.hstack( (np.vstack( (np.eye(3), mm.getCrossMatrixForm(-bodyVel)) ), np.vstack( (np.zeros((3,3)), np.eye(3)) ) ) )
