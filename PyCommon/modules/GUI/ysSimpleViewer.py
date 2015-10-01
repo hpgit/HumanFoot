@@ -218,7 +218,7 @@ class RenderersWnd(Fl_Window, ybu.Observer):
          
 initKt = 50
 maxKt = 1000
-initKk = 35
+initKk = 17
 #initKk = 21#300
 
 initKl = 37
@@ -275,7 +275,7 @@ class ObjectInfoWnd(Fl_Window, ybu.Observer):
         
         self.sliderKk = Fl_Hor_Nice_Slider(10, 42+offset*index, 250, 10)
         self.sliderKk.bounds(0, 1000)
-        self.sliderKk.value(initKk)
+        self.sliderKk.value(initKk*10)
         self.sliderKk.step(1)
         self.sliderKk.callback(self.onChangeSliderKk)
         index += 1
@@ -484,9 +484,9 @@ class ObjectInfoWnd(Fl_Window, ybu.Observer):
         self.sliderKs.value(int(ptr.value()))
         
     def onChangeSliderKk(self, ptr):
-        self.labelKk.value(int(ptr.value()))
+        self.labelKk.value(int(ptr.value()/10.0))
     def onEnterLabelKk(self, ptr):        
-        self.sliderKk.value(int(ptr.value()))
+        self.sliderKk.value(int(ptr.value()*10))
                 
     def onChangeSliderBt(self, ptr):
         self.labelBt.value(int(ptr.value())/10.0)

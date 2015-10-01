@@ -189,6 +189,17 @@ public:	// expose to python
 	// [I<vmerge>R_g[0], R_l[1]^t, R_l[2]^t, ... R_l[n-1]^t]
 	bp::list getDOFAxeses();
 
+	// [T_l[0], R_l[1], R_l[2], ... ,R_l[n-1]]
+	bp::list getDOFPositionsLocal();
+
+	// [lv_l[0]<hmerge>av_l[0], av_l[1], av_l[2], ... av_l[n-1]]
+	bp::list getDOFVelocitiesLocal();
+
+	// [la_l[0]<hmerge>aa_l[0], aa_l[1], aa_l[2], ... aa_l[n-1]]
+	bp::list getDOFAccelerationsLocal();
+
+	// [I<vmerge>R_l[0], R_l[1]^t, R_l[2]^t, ... R_l[n-1]^t]
+	bp::list getDOFAxesesLocal();
 
 	void setDOFAccelerations(const bp::list& dofaccs);
 
@@ -205,6 +216,9 @@ public:	// expose to python
 	object getJointAngVelocityGlobal( int index );
 	object getJointAngAccelerationGlobal( int index );
 
+
+	object getJointVelocityLocal(int index);
+	object getJointAccelerationLocal(int index);
 
 	bp::list getJointOrientationsLocal();
 	bp::list getJointAngVelocitiesLocal();
@@ -262,4 +276,9 @@ public:	// expose to python
 	// Additional
 	//void addBody();
 	void setSpring(int body1Index, int body2Index, scalar elasticity, scalar damping, const object& p1, const object& p2, scalar initialDistance = 0.0);
+
+	bp::list getInverseEquationOfMotion(object& invM, object& invMb); // use this
+	bp::list getEquationOfMotion(object& M, object& b);// buggy
+	//void stepKinematics( double dt, const object& acc);
+	void stepKinematics( double dt, const bp::list& accs);
 };

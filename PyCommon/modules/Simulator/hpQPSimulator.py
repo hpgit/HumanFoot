@@ -131,6 +131,7 @@ class QPSimulator:
 
 		th_r = motion.getDOFPositionsLocal(frame)
 		th = model.getDOFPositionsLocal()
+		print th[0][0]
 		dth_r = motion.getDOFVelocitiesLocal(frame)
 		dth = model.getDOFVelocitiesLocal()
 		ddth_r = motion.getDOFAccelerationsLocal(frame)
@@ -180,6 +181,7 @@ class QPSimulator:
 		invM = np.zeros((totalActuator,totalDOF))
 		invMc = np.zeros(totalDOF)
 		model.getInverseEquationOfMotion(invM, invMc)
+		#print invMc
 
 		# contact detection
 		Ks = 1
@@ -188,12 +190,16 @@ class QPSimulator:
 		supsupL = motion[0].skeleton.getJointIndex('LeftLeg')
 		supR = motion[0].skeleton.getJointIndex('RightFoot')
 		supL = motion[0].skeleton.getJointIndex('LeftFoot')
-		#bodyIDsToCheck = range(world.getBodyNum())
+		bodyIDsToCheck = range(world.getBodyNum())
+		print bodyIDsToCheck
 		#bodyIDsToCheck = [supsupR, supsupL]
-		bodyIDsToCheck = [supR, supL]
+		#bodyIDsToCheck = [supR, supL]
 		mus = [.5]*len(bodyIDsToCheck)
-		bodyIDs, contactPositions, contactPositionLocals, contactForces, contactVelocities = world.calcManyPenaltyForce(self.contactPerSide, bodyIDsToCheck, mus, Ks, Ds)
+		bodyIDs, contactPositions, contactPositionLocals, contactForces, contactVelocities = world.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+		#bodyIDs, contactPositions, contactPositionLocals, contactForces, contactVelocities = world.calcManyPenaltyForce(self.contactPerSide, bodyIDsToCheck, mus, Ks, Ds)
 		#bodyIDs, contactPositions, contactPositionLocals, contactForces, contactVelocities = world.calcOnePenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+
+		#print bodyIDs, contactPositions
 
 		footCenterL = model.getBodyPositionGlobal(supL)
 		footCenterR = model.getBodyPositionGlobal(supR)
@@ -355,11 +361,11 @@ class QPSimulator:
 		self.addQPTorqueTerms(totalProblem, totalDOF, totalActuator, self.Btau, w)
 		if totalContact > 0:
 			self.addQPContactForceTerms(totalProblem, totalDOF+totalActuator, totalContact, self.Bcon)
-			if dH_des !=None:
-				allLinkJointMasks = yjc.getAllLinkJointMasks(motion[0].skeleton)
-				yjc.computeJacobian2(Jsys, DOFs, jointPositions, jointAxeses, linkPositions, allLinkJointMasks)
-				yjc.computeJacobianDerivative2(dJsys, DOFs, jointPositions, jointAxeses, linkAngVelocities, linkPositions, allLinkJointMasks)
-				self.addLinearAndAngularBalancigTerms(totalProblem, 0, totalDOF, self.Bl, self.Bh, P, Jsys, self.dth_flat, dP, dJsys, dL_des_plane, dH_des)
+			#if dH_des !=None:
+			#	allLinkJointMasks = yjc.getAllLinkJointMasks(motion[0].skeleton)
+			#	yjc.computeJacobian2(Jsys, DOFs, jointPositions, jointAxeses, linkPositions, allLinkJointMasks)
+			#	yjc.computeJacobianDerivative2(dJsys, DOFs, jointPositions, jointAxeses, linkAngVelocities, linkPositions, allLinkJointMasks)
+			#	self.addLinearAndAngularBalancigTerms(totalProblem, 0, totalDOF, self.Bl, self.Bh, P, Jsys, self.dth_flat, dP, dJsys, dL_des_plane, dH_des)
 
 		# end effector
 		#TODO:

@@ -226,7 +226,7 @@ def create_biped():
     width4  = width1
     mass4   = 0.4
     
-    width1 = 0.02
+    width1 = 0.03
 
     yme.addJoint(motion, LEFT_FOOT, LEFT_TALUS_1,   (-0.025, -0.06, -0.05))
     yme.addJoint(motion, LEFT_FOOT, LEFT_TALUS_2,   ( 0.025, -0.06, -0.05))

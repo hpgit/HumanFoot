@@ -1,3 +1,4 @@
+from cvxopt import matrix, solvers
 import numpy as np
 import numpy.linalg as npl
 #import scipy.linalg as npl
@@ -198,6 +199,80 @@ class LSE:
         self.b = None
         #del self.A[:]
         #del self.b[:]
+
+# Equality and Inequality Constrained Least Square
+# minimize |C1x-d1|^2 + ... + |Cnx-dn|^2
+# subject to Gx <= h
+#            Ax  = b
+
+class QP:
+    def __init__(self):
+        self.Cs = []
+        self.ds = []
+        self.G = None
+        self.h = None
+        self.A = None
+        self.b = None
+
+    # add |Cix-di|^2
+    # C: matrix, d: vector
+    # all Ci has to be agree both rows and cols
+    def addObjective(self, Ci, di, w=1.): 
+        self.Cs.append(w*Ci)
+        self.ds.append(w*di)
+        
+    # subject to Ax=b
+    # A: matrix, b: vector
+    def addEqualityConstraint(self, A, b):
+        if self.A == None:
+            self.A = A
+            self.b = b
+        else:
+            self.A = np.vstack((self.A, A))
+            self.b = np.append(self.b, b)
+
+    # subject to Gx<=h
+    # G: matrix, h: vector
+    def addInequalityConstraint(self, G, h):
+        if self.G == None:
+            self.G = G
+            self.h = h
+        else:
+            self.G = np.vstack((self.G, G))
+            self.h = np.append(self.h, h)
+
+    def solve(self):
+        # build system
+        Q_np = sum([np.dot(Ci.T, Ci) for Ci in self.Cs])
+        p_np = sum([(-1.)*np.dot(self.Cs[i].T, self.ds[i]) for i in range(len(self.Cs))])
+        
+        Q = matrix(Q_np)
+        p = matrix(p_np)
+        G = matrix(self.G)
+        h = matrix(self.h)
+        A = matrix(self.A)
+        b = matrix(self.b)
+        
+        solvers.options['show_progress'] = False
+        solvers.options['maxiter'] = 1000
+        x_large = solvers.qp(Q, p, G, h, A, b)['x']
+        return x_large
+            
+        
+        #result = {}
+        #result['x'] = x_large[:self.varNum]
+        #if self.A!=None:
+            #result['lambda'] = x_large[self.varNum:]
+        #return result
+    
+    def clear(self):
+        del self.Cs[:]
+        del self.ds[:]
+        self.G = None
+        self.h = None
+        self.A = None
+        self.b = None
+
     
     
 if __name__ == '__main__':

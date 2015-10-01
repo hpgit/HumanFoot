@@ -76,7 +76,7 @@ void VpWorld::setOpenMP()
 // @return ( bodyIDs, positions, postionLocals, forces)
 boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, const bp::list& mus, scalar Ks, scalar Ds )
 {
-	bp::list bodyIDs, positions, forces, positionLocals;
+	bp::list bodyIDs, positions, forces, positionLocals, velocities;
 	int bodyID;
 	static numeric::array O_Vec3(make_tuple(0., 0., 0.));
 	const vpBody* pBody;
@@ -89,25 +89,32 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 	{
 		bodyID = XI(bodyIDsToCheck[i]);
 		pBody = _world.GetBody(bodyID);
+		std::cout << bodyID <<std::endl;
 
 		for (int j = 0; j<pBody->GetNumGeometry(); ++j)
 		{
 			pGeom = pBody->GetGeometry(j);
 			
 			pGeom->GetShape(&type, data);
+			std::cout << type <<std::endl;
 			if (type == 'C')
 			{
+				std::cout << "hehe" << std::endl;
 				const vector<Vec3>& verticesLocal = pGeom->getVerticesLocal();
 				const vector<Vec3>& verticesGlobal = pGeom->getVerticesGlobal();
 				for (int k = 0; k < verticesLocal.size(); ++k)
 				{
+					
 					positionLocal = verticesLocal[k];
 					position = verticesGlobal[k];
+					//std::cout << positionLocal;
 					velocity = pBody->GetLinVelocity(positionLocal);
+					std::cout << "hehe1"<< verticesLocal.size() << position << std::endl;
 
 					bool penentrated = _calcPenaltyForce(pBody, position, velocity, force, Ks, Ds, XD(mus[i]));
 					if (penentrated)
 					{
+						std::cout << "hehe2" << std::endl;
 						bodyIDs.append(bodyID);
 
 						object pyPosition = O_Vec3.copy();
@@ -117,6 +124,10 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 						object pyForce = O_Vec3.copy();
 						Vec3_2_pyVec3(force, pyForce);
 						forces.append(pyForce);
+
+						object pyVelocity = O_Vec3.copy();
+						Vec3_2_pyVec3(velocity, pyVelocity);
+						velocities.append(pyVelocity);
 
 						object pyPositionLocal = O_Vec3.copy();
 						Vec3_2_pyVec3(positionLocal, pyPositionLocal);
@@ -145,6 +156,10 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 						object pyPosition = O_Vec3.copy();
 						Vec3_2_pyVec3(position, pyPosition);
 						positions.append(pyPosition);
+
+						object pyVelocity = O_Vec3.copy();
+						Vec3_2_pyVec3(velocity, pyVelocity);
+						velocities.append(pyVelocity);
 
 						object pyForce = O_Vec3.copy();
 						Vec3_2_pyVec3(force, pyForce);
@@ -210,7 +225,7 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 		}
 	}
 	*/
-	return make_tuple(bodyIDs, positions, positionLocals, forces);
+	return make_tuple(bodyIDs, positions, positionLocals, forces, velocities);
 }
 
 // @param position 작용할 지점(global)

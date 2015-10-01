@@ -185,6 +185,19 @@ class JointMotion(Motion):
 #        return [self[frame].getGlobalT(0)] + self.getInternalJointOrientationsLocal(frame)
         return [(self[frame].rootPos, self[frame].getLocalR(0))] + self.getInternalJointOrientationsLocal(frame)
     
+    # [(p_l[0], R_l[0]), R_l[1], R_l[2], ... ,R_l[n-1]]
+    def getDOFPositionsLocal(self, frame):
+#        return [self[frame].getGlobalT(0)] + self.getInternalJointOrientationsLocal(frame)
+        return [(np.dot(self[frame].getLocalR(0).T, self[frame].rootPos), self[frame].getLocalR(0))] + self.getInternalJointOrientationsLocal(frame)
+
+    def getDOFPositionsEuler(self, frame):
+        positions = self.getDOFPositions(frame)
+        positionsEuler = []
+        positionsEuler.append(np.concatenate((positions[0][0],mm.R2ZXY(positions[0][1]))))
+        for i in range(1,len(positions)): 
+            positionsEuler.append(mm.R2ZXY(positions[i]))
+        return positionsEuler
+
     # [lv_g[0]<hmerge>av_l[0], av_l[1], av_l[2], ... av_l[n-1]]
     def getDOFVelocities(self, frame):
 #        return [np.concatenate( (self.getJointVelocityGlobal(0, frame), self.getJointAngVelocityGlobal(0, frame)) )]\
@@ -192,6 +205,33 @@ class JointMotion(Motion):
         return [np.concatenate( (self.getJointVelocityGlobal(0, frame), self.getJointAngVelocityLocal(0, frame)) )]\
                 + self.getInternalJointAngVelocitiesLocal(frame)
                 
+    # [lv_l[0]<hmerge>av_l[0], av_l[1], av_l[2], ... av_l[n-1]]
+    def getDOFVelocitiesLocal(self, frame):
+        return [np.concatenate( (np.dot(self[frame].getLocalR(0).T, self.getJointVelocityGlobal(0, frame)), self.getJointAngVelocityLocal(0, frame)) )]\
+                + self.getInternalJointAngVelocitiesLocal(frame)
+
+    def getDOFVelocitiesEuler(self, frame):
+        #if frame == 0:
+            #frame = frame+1
+        #positionEuler0 = self.getDOFPositionsEuler(frame-1)
+        #positionEuler1 = self.getDOFPositionsEuler(frame)
+        #position0 = self.getDOFVelocities(frame)
+        #dotR = np.dot(self[frame].getLocalR(0), self[frame].getLocalR(0))
+        #velocities = []
+        #for i in range(0,len(position0)):
+            #velocities.append(30.*(positionEuler1[i]-positionEuler0[i]))
+        velocities = self.getDOFVelocities(frame)
+        velocityRoot = velocities[0].copy()
+        velocities[0][3] = velocityRoot[5] #Z
+        velocities[0][4] = velocityRoot[3] #X
+        velocities[0][5] = velocityRoot[4] #Y
+        for i in range(1, len(velocities)):
+            velocity = velocities[i].copy()
+            velocities[i][0] = velocity[2]
+            velocities[i][1] = velocity[0]
+            velocities[i][2] = velocity[1]
+        return velocities
+
     # [la_g[0]<hmerge>aa_l[0], aa_l[1], aa_l[2], ... aa_l[n-1]] 
     def getDOFAccelerations(self, frame):
 #        return [np.concatenate( (self.getJointAccelerationGlobal(0, frame), self.getJointAngAccelerationGlobal(0, frame)) )]\
@@ -199,8 +239,39 @@ class JointMotion(Motion):
         return [np.concatenate( (self.getJointAccelerationGlobal(0, frame), self.getJointAngAccelerationLocal(0, frame)) )]\
                 + self.getInternalJointAngAccelerationsLocal(frame)
                  
+    # [la_l[0]<hmerge>aa_l[0], aa_l[1], aa_l[2], ... aa_l[n-1]] 
+    def getDOFAccelerationsLocal(self, frame):
+        return [np.concatenate( (np.dot(self[frame].getLocalR(0).T, self.getJointAccelerationGlobal(0, frame)), self.getJointAngAccelerationLocal(0, frame)) )]\
+                + self.getInternalJointAngAccelerationsLocal(frame)
+
+    def getDOFAccelerationsEuler(self, frame):
+        #if frame == 0:
+            #frame = frame+1
+        #velocity0 = self.getDOFVelocitiesEuler(frame-1)
+        #velocity1 = self.getDOFVelocitiesEuler(frame)
+        #accelerations = []
+        #for i in range(0,len(velocity0)):
+            #accelerations.append(30.*(velocity1[i]-velocity1[i]))
+        #return accelerations
+        accelerations = self.getDOFAccelerations(frame)
+        accelerationRoot = accelerations[0].copy()
+        accelerations[0][3] = accelerationRoot[5] #Z
+        accelerations[0][4] = accelerationRoot[3] #X
+        accelerations[0][5] = accelerationRoot[4] #Y
+        for i in range(1, len(accelerations)):
+            acceleration = accelerations[i].copy()
+            accelerations[i][0] = acceleration[2]
+            accelerations[i][1] = acceleration[0]
+            accelerations[i][2] = acceleration[1]
+        return accelerations
+
     # [I<vmerge>R_g[0], R_l[1]^t, R_l[2]^t, ... R_l[n-1]^t]
     def getDOFAxeses(self, frame):
+#        return [np.concatenate((mm.I_SO3(), mm.I_SO3()))] + [R.transpose() for R in self.getInternalJointOrientationsGlobal(frame)] 
+        return [np.concatenate((mm.I_SO3(), self[frame].getJointOrientationGlobal(0).transpose()))] + [R.transpose() for R in self.getInternalJointOrientationsGlobal(frame)]
+    
+    # [I<vmerge>R_g[0], R_l[1]^t, R_l[2]^t, ... R_l[n-1]^t]
+    def getDOFAxesesLocal(self, frame):
 #        return [np.concatenate((mm.I_SO3(), mm.I_SO3()))] + [R.transpose() for R in self.getInternalJointOrientationsGlobal(frame)] 
         return [np.concatenate((mm.I_SO3(), self[frame].getJointOrientationGlobal(0).transpose()))] + [R.transpose() for R in self.getInternalJointOrientationsGlobal(frame)]
     

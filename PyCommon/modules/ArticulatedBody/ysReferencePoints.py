@@ -41,3 +41,15 @@ def getCMP(contactForces, CM):
     CMP[0] = CM[0] - f[0]*CM[1]
     CMP[2] = CM[2] - f[2]*CM[1]
     return CMP
+
+def getSimpleCP(contactPositions):
+    if(len(contactPositions) == 0): 
+        return None
+    
+    CP = mm.Vec3(0.,0.,0.)
+    
+    for i in range(len(contactPositions)):
+        CP += (contactPositions[i])
+    
+    CP /= len(contactPositions)
+    return CP

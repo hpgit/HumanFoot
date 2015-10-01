@@ -462,6 +462,14 @@ def main():
     viewer.objectInfoWnd.begin()
     viewer.objectInfoWnd.Bc = Fl_Value_Input(100, 450, 40, 10, 'Bc')
     viewer.objectInfoWnd.Bc.value(0.1)
+
+    viewer.objectInfoWnd.ankleAngleX = Fl_Value_Input(50,  510, 40, 10, 'Ankle X')
+    viewer.objectInfoWnd.ankleAngleX.value(0)
+    viewer.objectInfoWnd.ankleAngleY = Fl_Value_Input(110,  510, 40, 10, 'Y')
+    viewer.objectInfoWnd.ankleAngleY.value(1)
+    viewer.objectInfoWnd.ankleAngleZ = Fl_Value_Input(170, 510, 40, 10, 'Z')
+    viewer.objectInfoWnd.ankleAngleZ.value(0)
+
     viewer.objectInfoWnd.end()
     viewer.objectInfoWnd.labelKt.value(50)
     viewer.objectInfoWnd.labelKk.value(17)
@@ -583,16 +591,19 @@ def main():
         IKdesPos = [motionOriModel.getBodyPositionGlobal(indexFootL[0]), motionOriModel.getBodyPositionGlobal(indexFootR[0])]
         for i in range(0, 2):
             #IKdesPos[i] += ModelOffset
-            IKdesPos[i][1] = 0.069
-        IKori = [motionOriModel.getBodyOrientationGlobal(indexFootL[0]), motionOriModel.getBodyOrientationGlobal(indexFootR[0])]
+            IKdesPos[i][1] = 0.06
+        #IKori = [motionOriModel.getBodyOrientationGlobal(indexFootL[0]), motionOriModel.getBodyOrientationGlobal(indexFootR[0])]
         IKdesOri = [None]*2
         for i in range(0, 2):
+            ankleAngle = np.array((viewer.objectInfoWnd.ankleAngleX.value(), viewer.objectInfoWnd.ankleAngleY.value(), viewer.objectInfoWnd.ankleAngleZ.value()))
             #IKdesOri[i] = mm.I_SO3()
-            IKdesOri[i] = mm.getSO3FromVectors([0,1,0], [0, 0.866, 0.5])
+            IKdesOri[i] = mm.getSO3FromVectors([0,1,0], ankleAngle)
+            pass
 
         IKidxs.append(motion[0].skeleton.getJointIndex(config['trunk']))
         IKdesPos.append(None)
         IKdesOri.append(mm.I_SO3())
+
         #IKidxs = config['Phalange'][0:1] + config['Phalange'][3:4]
         #print IKidxs
         #IKdesPos = [None]*len(IKidxs)

@@ -13,6 +13,8 @@
 #define MAX_Y 2	// 0010
 #define MAX_Z 4	// 0100
 
+#define QP
+
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(getBodyPositionGlobal_py_overloads, getBodyPositionGlobal_py, 1, 2);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(getBodyVelocityGlobal_py_overloads, getBodyVelocityGlobal_py, 1, 2);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(getBodyAccelerationGlobal_py_overloads, getBodyAccelerationGlobal_py, 1, 2);
@@ -97,6 +99,11 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getDOFAccelerations", &VpControlModel::getDOFAccelerations)
 		.def("getDOFAxeses", &VpControlModel::getDOFAxeses)
 
+		.def("getDOFPositionsLocal", &VpControlModel::getDOFPositionsLocal)
+		.def("getDOFVelocitiesLocal", &VpControlModel::getDOFVelocitiesLocal)
+		.def("getDOFAccelerationsLocal", &VpControlModel::getDOFAccelerationsLocal)
+		.def("getDOFAxesesLocal", &VpControlModel::getDOFAxesesLocal)
+
 		.def("setDOFAccelerations", &VpControlModel::setDOFAccelerations)
 
 		.def("getJointOrientationLocal", &VpControlModel::getJointOrientationLocal)
@@ -152,7 +159,12 @@ BOOST_PYTHON_MODULE(csVpModel)
 
 		.def("setJointTorqueLocal", &VpControlModel::setJointTorqueLocal)
 		.def("setInternalJointTorquesLocal", &VpControlModel::setInternalJointTorquesLocal)
+		
 		.def("setSpring", &VpControlModel::setSpring)
+
+		.def("getInverseEquationOfMotion", &VpControlModel::getInverseEquationOfMotion)
+		.def("getEquationOfMotion", &VpControlModel::getEquationOfMotion)
+		.def("stepKinematics", &VpControlModel::stepKinematics)
 		;
 }
 
@@ -222,10 +234,17 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 
 
 		SE3 boneT(offset*.5);
-
+#ifdef QP
+		if(!joint_name.compare("Hips"))
+			boneT=SE3();
+#endif
 		Vec3 defaultBoneV(0,0,1);
 		SE3 boneR = getSE3FromVectors(defaultBoneV, offset);
-		boneT = boneT * boneR;
+
+#ifdef QP
+		if(joint_name.compare("Hips"))
+#endif
+			boneT = boneT * boneR;
 
 		Node* pNode = new Node(joint_name);
 		_nodes[joint_index] = pNode;
@@ -1224,6 +1243,87 @@ bp::list VpControlModel::getDOFAxeses()
 	return ls;
 }
 
+bp::list VpControlModel::getDOFPositionsLocal()
+{
+//	static numeric::array rootFrame( make_tuple(make_tuple(1.,0.,0.,0.), make_tuple(0.,1.,0.,0.), make_tuple(0.,0.,1.,0.), make_tuple(0.,0.,0.,1.)) );
+//
+//	bp::list ls = getInternalJointOrientationsLocal();
+//	SE3_2_pySE3(_nodes[0]->body.GetFrame() * Inv(_boneTs[0]), rootFrame);
+//	ls.insert(0, rootFrame );
+//	return ls;
+
+	static numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+	static numeric::array O(make_tuple(0.,0.,0.));
+	static SE3 rootFrame;
+
+	object pyR = I.copy();
+	object pyV = O.copy();
+
+	bp::list ls = getInternalJointOrientationsLocal();
+
+	rootFrame = _nodes[0]->body.GetFrame() * Inv(_boneTs[0]);
+
+	Vec3_2_pyVec3(-Inv(rootFrame).GetPosition(), pyV);
+	SE3_2_pySO3(rootFrame, pyR);
+
+	ls.insert(0, make_tuple(pyV, pyR));
+	return ls;
+}
+
+bp::list VpControlModel::getDOFVelocitiesLocal()
+{
+	static numeric::array rootGenVel(make_tuple(0.,0.,0.,0.,0.,0.));
+	
+	//rootGenVel.slice(0,3) = getJointVelocityGlobal(0);
+	//rootGenVel.slice(3,6) = getJointAngVelocityGlobal(0);
+	rootGenVel.slice(0,3) = getJointVelocityLocal(0);
+	rootGenVel.slice(3,6) = getJointAngVelocityLocal(0);
+
+	bp::list ls = getInternalJointAngVelocitiesLocal();
+	ls.insert(0, rootGenVel);
+	return ls;
+}
+
+bp::list VpControlModel::getDOFAccelerationsLocal()
+{
+	static numeric::array rootGenAcc(make_tuple(0.,0.,0.,0.,0.,0.));
+	
+	//rootGenAcc.slice(0,3) = getJointAccelerationGlobal(0);
+	//rootGenAcc.slice(3,6) = getJointAngAccelerationGlobal(0);
+	rootGenAcc.slice(0,3) = getJointAccelerationLocal(0);
+	rootGenAcc.slice(3,6) = getJointAngAccelerationLocal(0);
+
+	bp::list ls = getInternalJointAngAccelerationsLocal();
+
+	ls.insert(0, rootGenAcc);
+	return ls;
+}
+
+bp::list VpControlModel::getDOFAxesesLocal()
+{
+	static numeric::array rootAxeses( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.),
+										make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+
+	numeric::array rootAxesTmp = (numeric::array)getJointOrientationGlobal(0);
+	numeric::array rootAxes = transpose_pySO3(rootAxesTmp);
+	rootAxeses[0] = rootAxes[0];
+	rootAxeses[1] = rootAxes[1];
+	rootAxeses[2] = rootAxes[2];
+	rootAxeses[3] = rootAxes[0];
+	rootAxeses[4] = rootAxes[1];
+	rootAxeses[5] = rootAxes[2];
+
+	bp::list ls = getInternalJointOrientationsGlobal();
+	for(int i=0; i<len(ls); ++i)
+	{
+		numeric::array lsTmp = (numeric::array)ls[i];
+		ls[i] = transpose_pySO3(lsTmp);
+	}
+
+	ls.insert(0, rootAxeses);
+	return ls;
+}
+
 void VpControlModel::setDOFAccelerations( const bp::list& dofaccs)
 {
 	static numeric::array O(make_tuple(0.,0.,0.));
@@ -1377,6 +1477,28 @@ boost::python::object VpControlModel::getJointAngAccelerationGlobal( int index )
 {
 	return getBodyAngAccelerationGlobal(index);
 }
+
+object VpControlModel::getJointVelocityLocal( int index )
+{
+	static numeric::array O(make_tuple(0.,0.,0.));
+	object pyV = O.copy();
+	SE3 jointFrame = _nodes[index]->body.GetFrame() * Inv(_boneTs[index]);
+
+	Vec3_2_pyVec3(InvRotate(jointFrame, getBodyVelocityGlobal(index, Inv(_boneTs[index]).GetPosition())), pyV);
+	return pyV;
+}
+
+object VpControlModel::getJointAccelerationLocal( int index )
+{
+	static numeric::array O(make_tuple(0.,0.,0.));
+	object pyV = O.copy();
+	Vec3 pospos = Inv(_boneTs[index]).GetPosition();
+	SE3 jointFrame = _nodes[index]->body.GetFrame() * Inv(_boneTs[index]);
+
+	Vec3_2_pyVec3(InvRotate(jointFrame, getBodyAccelerationGlobal(index, &(pospos))), pyV);
+	return pyV;
+}
+
 
 bp::list VpControlModel::getJointOrientationsLocal()
 {
@@ -1742,4 +1864,345 @@ void VpControlModel::setSpring(int body1Index, int body2Index, scalar elasticity
 }
 
 
+
+
+bp::list VpControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
+{
+	bp::list ls;
+	ls.append(_nodes.size());
+
+
+	// M^-1 * tau - M^-1 * b = ddq
+	// ddq^T = [rootjointLin^T rootjointAng^T joints^T]^T
+	
+	
+	//vpBody *Hip = &(_nodes.at(0)->body);
+	//Hip->ResetForce();
+	//for(size_t i=0; i<_nodes.size(); i++)
+	//{
+		//_nodes.at(i)->body.ResetForce();
+		//_nodes.at(i)->joint.SetTorque(Vec3(0,0,0));
+	//}
+	//Hip->GetSystem()->ForwardDynamics();
+	//std::cout << Hip->GetGenAccelerationLocal();
+	//for(size_t i=1; i<_nodes.size(); i++)
+	//{
+		//std::cout << _nodes[i]->joint.GetAcceleration();
+	//}
+
+	int n = _nodes.size()-1;
+	int N = 6+3*n;
+	dse3 zero_dse3(0.0);
+	Vec3 zero_Vec3(0.0);
+
+	vpBody *Hip = &(_nodes.at(0)->body);
+
+	//save current ddq and tau
+	std::vector<Vec3> accBackup;
+	std::vector<Vec3> torBackup;
+	for(int i=0; i<n; i++)
+	{
+		vpBJoint *joint = &(_nodes.at(i+1)->joint);
+		accBackup.push_back(joint->GetAcceleration());
+		torBackup.push_back(joint->GetTorque());
+	}
+	se3 hipAccBackup = Hip->GetGenAcceleration();
+	dse3 hipTorBackup = Hip->GetForce();
+
+	Hip->ResetForce();
+	for(int i=0; i<_nodes.size(); i++)
+	{
+		_nodes.at(i)->body.ResetForce();
+		_nodes.at(i)->joint.SetTorque(Vec3(0,0,0));
+	}
+
+	//get invMb
+	Hip->ApplyLocalForce(zero_dse3, zero_Vec3);
+	for(int i=0; i<n; i++)
+	{
+		vpBJoint *joint = &(_nodes.at(i+1)->joint);
+		joint->SetTorque(zero_Vec3);
+	}
+	Hip->GetSystem()->ForwardDynamics();
+	se3 hipAcc_tmp = Hip->GetGenAccelerationLocal(); // represented in body frame
+	//SE3 hipFrame = Hip->GetFrame();
+	{
+		invMb[0] = -hipAcc_tmp[3];
+		invMb[1] = -hipAcc_tmp[4];
+		invMb[2] = -hipAcc_tmp[5];
+		invMb[3] = -hipAcc_tmp[0];
+		invMb[4] = -hipAcc_tmp[1];
+		invMb[5] = -hipAcc_tmp[2];
+	}
+	//std::cout << "Hip velocity: " << Hip->GetGenVelocity();
+	for(int i=0; i<n; i++)
+	{
+		Vec3 acc(0,0,0);
+		vpBJoint *joint = &(_nodes.at(i+1)->joint);
+		acc = joint->GetAcceleration();
+		for(int j=0; j<3; j++)
+		{
+			invMb[6+3*i+j] = -acc[j];
+		}
+	}
+
+	//get M
+	for(int i=0; i<N; i++)
+	{
+		Hip->ResetForce();
+		for(size_t i=0; i<_nodes.size(); i++)
+		{
+			_nodes.at(i)->body.ResetForce();
+			_nodes.at(i)->joint.SetTorque(Vec3(0,0,0));
+		}
+
+		dse3 genForceLocal(0.0);
+		if (i < 3) genForceLocal[i+3] = 1.0;
+		else if(i<6) genForceLocal[i-3] = 1.0;
+		for(int j=0; j<n; j++)
+		{
+			Vec3 torque(0., 0., 0.);
+			if ( i >= 6 && (i-6)/3 == j )
+				torque[ (i-6)%3 ] = 1.;
+			vpBJoint *joint = &(_nodes.at(j+1)->joint);
+			joint->SetTorque(torque);
+		}
+		Hip->ApplyLocalForce(genForceLocal, zero_Vec3);
+
+		Hip->GetSystem()->ForwardDynamics();
+		se3 hipAcc_tmp = Hip->GetGenAccelerationLocal();
+		for (int j = 0; j < 3; j++)
+		{
+			invM[j][i] = hipAcc_tmp[j+3] + invMb[j];
+		}
+		for (int j = 3; j < 6; j++)
+		{
+			invM[j][i] = hipAcc_tmp[j-3] + invMb[j];
+		}
+		for(int j=0; j<n; j++)
+		{
+			Vec3 acc(0,0,0);
+			vpBJoint *joint = &(_nodes.at(j+1)->joint);
+			acc = joint->GetAcceleration();
+			for(int k=0; k<3; k++)
+			{
+				invM[6+3*j+k][i] = acc[k] + invMb[6+3*j+k];
+			}
+		}
+	}
+
+	// restore ddq and tau
+	for(int i=0; i<n; i++)
+	{
+		vpBJoint *joint = &(_nodes.at(i+1)->joint);
+		joint->SetAcceleration(accBackup.at(i));
+		joint->SetTorque(torBackup.at(i));
+	}
+	Hip->SetGenAcceleration(hipAccBackup);
+	Hip->ResetForce();
+	Hip->ApplyGlobalForce(hipTorBackup, zero_Vec3);
+	return ls;
+}
+
+bp::list VpControlModel::getEquationOfMotion(object& M, object& b)
+{
+	bp::list ls;
+	ls.append(_nodes.size());
+	//for(int i=0; i<_nodes.size(); i++)
+	//{
+		//ls.append(_nodes.at(i)->name);
+		//ls.append(_nodes.at(i)->dof);
+	//}
+	//
+	//RMatrix ddq = get_ddq(), tau = get_tau(); // save current ddq and tau
+	//int n = getNumCoordinates();
+	//M.ReNew(n,n);
+	//set_ddq(Zeros(n,1));
+	//GSystem::calcInverseDynamics();
+	//b = get_tau();
+	//for (int i=0; i<n; i++) {
+	//	RMatrix unit = Zeros(n,1);
+	//	unit[i] = 1;
+	//	set_ddq(unit);
+	//	GSystem::calcInverseDynamics();
+	//	get_tau(&M[i*n]);
+	//	for (int j=0; j<n; j++) {
+	//		M[i*n+j] -= b[j];
+	//	}
+	//}
+	//set_ddq(ddq); set_tau(tau); // restore ddq and tau
+
+
+	// M * ddq + b = tau
+	// ddq^T = [rootjointLin^T rootjointAng^T joints^T]^T
+	
+	
+	int n = _nodes.size()-1;
+	int N = 6+3*n;
+
+	vpBody *Hip = &(_nodes.at(0)->body);
+
+	//save current ddq and tau
+	std::vector<Vec3> accBackup;
+	std::vector<Vec3> torBackup;
+	for(int i=0; i<n; i++)
+	{
+		vpBJoint *joint = &(_nodes.at(i+1)->joint);
+		accBackup.push_back(joint->GetAcceleration());
+		torBackup.push_back(joint->GetTorque());
+	}
+	se3 hipAccBackup = Hip->GetGenAcceleration();
+	dse3 hipTorBackup = Hip->GetForce();
+
+	//Hip->ResetForce();
+	//for(int i=0; i<_nodes.size(); i++)
+	//{
+		////_nodes.at(i)->body.ResetForce();
+		//_nodes.at(i)->joint.SetTorque(Vec3(0,0,0));
+	//}
+
+	//get b
+	se3 zero_se3(0.0);
+	Vec3 zero_Vec3(0.0);
+	Hip->SetGenAccelerationLocal(zero_se3);
+	for(int i=0; i<n; i++)
+	{
+		vpBJoint *joint = &(_nodes.at(i+1)->joint);
+		joint->SetAcceleration(zero_Vec3);
+	}
+	Hip->GetSystem()->InverseDynamics();
+	dse3 hipTorque_tmp_b = Hip->GetForce(); // represented in body frame
+	SE3 hipFrame = Hip->GetFrame();
+	{
+		b[0] = hipTorque_tmp_b[3];
+		b[1] = hipTorque_tmp_b[4];
+		b[2] = hipTorque_tmp_b[5];
+		b[3] = hipTorque_tmp_b[0];
+		b[4] = hipTorque_tmp_b[1];
+		b[5] = hipTorque_tmp_b[2];
+	}
+	//std::cout << "Hip velocity: " << Hip->GetGenVelocity();
+	for(int i=0; i<n; i++)
+	{
+		Vec3 torque(0,0,0);
+		vpBJoint *joint = &(_nodes.at(i+1)->joint);
+		torque = joint->GetTorque();
+		//std::cout << "name: " << _nodes[i+1]->name <<std::endl;
+		//std::cout << "torque: " << joint->GetTorque(); 
+		//std::cout << "velocity: " << joint->GetVelocity();
+		for(int j=0; j<3; j++)
+		{
+			b[6+3*i+j] = torque[j];
+		}
+	}
+
+	//get M
+	for(int i=0; i<N; i++)
+	{
+		//Hip->ResetForce();
+		//for(int i=0; i<_nodes.size(); i++)
+		//{
+			////_nodes.at(i)->body.ResetForce();
+			//_nodes.at(i)->joint.SetTorque(Vec3(0,0,0));
+		//}
+		Vec3 acc_hip(0.0);
+		Axis accang_hip(0.0);
+		if (i < 3) acc_hip[i] = 1.0;
+		else if(i<6) accang_hip[i-3] = 1.0;
+		for(int j=0; j<n; j++)
+		{
+			Vec3 acc(0., 0., 0.);
+			if ( i >= 6 && (i-6)/3 == j )
+				acc[ (i-6)%3 ] = 1.;
+			vpBJoint *joint = &(_nodes.at(j+1)->joint);
+			joint->SetAcceleration(acc);
+		}
+		{
+			se3 genAccBodyLocal(accang_hip, acc_hip);
+			Hip->SetGenAccelerationLocal(genAccBodyLocal);
+		}
+
+		Hip->GetSystem()->InverseDynamics();
+		dse3 hipTorque_tmp = Hip->GetForce();
+		for (int j = 0; j < 3; j++)
+		{
+			M[j][i] = hipTorque_tmp[j+3] - hipTorque_tmp_b[j+3];
+		}
+		for (int j = 3; j < 6; j++)
+		{
+			M[j][i] = hipTorque_tmp[j-3] - hipTorque_tmp_b[j-3];
+		}
+		//for (int j = 0; j < 6; j++)
+			//M[j][i] = hipTorque_tmp[j] - hipTorque_tmp_b[j];
+		for(int j=0; j<n; j++)
+		{
+			Vec3 torque(0,0,0);
+			vpBJoint *joint = &(_nodes.at(j+1)->joint);
+			torque = joint->GetTorque();
+			for(int k=0; k<3; k++)
+			{
+				M[6+3*j+k][i] = torque[k] - b[6+3*j+k];
+			}
+		}
+	}
+
+	// restore ddq and tau
+	
+	for(int i=0; i<n; i++)
+	{
+		vpBJoint *joint = &(_nodes.at(i+1)->joint);
+		joint->SetAcceleration(accBackup.at(i));
+		joint->SetTorque(torBackup.at(i));
+	}
+	Hip->SetGenAcceleration(hipAccBackup);
+	Hip->ResetForce();
+	Hip->ApplyGlobalForce(hipTorBackup, zero_Vec3);
+	return ls;
+}
+
+//void VpControlModel::stepKinematics(double dt, const object& acc)
+//{
+	//Vec3 ddq = pyVec3_2_Vec3(acc);
+	//Vec3 dq(0.0);
+	//SE3 q;
+	//vpBJoint *joint = &(_nodes.at(2)->joint);
+	//dq = joint->GetVelocity() + ddq * dt;
+	//joint->SetVelocity(dq);
+	////q = joint->GetOrientation() * Exp(Axis(dq*dt));
+	//q = Exp(Axis(dq*dt))*joint->GetOrientation(); 
+	//joint->SetOrientation(q);
+//}
+#include <VP/vpWorld.h>
+void VpControlModel::stepKinematics(double dt, const bp::list& accs)
+{
+	vpBody *Hip = &(_nodes.at(0)->body);
+	Vec3 hipacc = pyVec3_2_Vec3(accs[0].slice(0,3));
+	Axis hipangacc(pyVec3_2_Vec3(accs[0].slice(3,6)));
+	{
+		se3 genAccBodyLocal(hipangacc, hipacc);
+		se3 genVelBodyLocal = Hip->GetGenVelocityLocal() + genAccBodyLocal*dt ;
+		Hip->SetGenVelocityLocal(genVelBodyLocal);
+		SE3 rootFrame = Hip->GetFrame() * Exp(dt*genVelBodyLocal);
+		Hip->SetFrame(rootFrame);
+	}
+
+	Vec3 ddq(0.0), dq(0.0), zero_Vec3(0.0);
+	SE3 q;
+	for(int i=1; i<_nodes.size(); ++i)
+	{
+		ddq = pyVec3_2_Vec3(accs[i]);
+		vpBJoint *joint = &(_nodes[i]->joint);
+		dq = joint->GetVelocity() + ddq * dt;
+		joint->SetVelocity(dq);
+		q = joint->GetOrientation() * Exp(Axis(dq*dt));
+		joint->SetOrientation(q);
+	}
+	se3 zero_se3(0.0);
+	Hip->ResetForce();
+	//for(int i=0; i<_nodes.size(); i++)
+	//{
+		////_nodes.at(i)->body.ResetForce();
+		//_nodes.at(i)->body.SetGenAcceleration(zero_se3);
+	//}
+}
 
