@@ -185,7 +185,8 @@ def main():
         
     
     vpWorld.initialize()
-    controlModel.initializeHybridDynamics()
+    controlModel.initializeForwardDynamics()
+    #controlModel.initializeHybridDynamics()
     
     #ModelOffset = (1.5, -0.01, 0)
     ModelOffset = (1.5, 0.04, 0)
@@ -479,19 +480,6 @@ def main():
     viewer.objectInfoWnd.footOffsetZ = Fl_Value_Input(170, 560, 40, 10, 'Z')
     viewer.objectInfoWnd.footOffsetZ.value(0)
 
-    viewer.objectInfoWnd.footAngleLabel = Fl_Value_Input(80,  610, 60, 10, 'Foot angle')
-    viewer.objectInfoWnd.footAngleLabel.value(0)
-    viewer.objectInfoWnd.footAngleSlider = Fl_Hor_Nice_Slider(10,  640, 250, 10)
-    viewer.objectInfoWnd.footAngleSlider.bounds(0, 1000)
-    viewer.objectInfoWnd.footAngleSlider.value(500)
-    viewer.objectInfoWnd.footAngleSlider.step(1)
-    def onChangeFootAngleSlider(ptr):
-        viewer.objectInfoWnd.footAngleLabel.value((ptr.value()-500)*10./500.)
-    def onChangeFootLabelSlider(ptr):
-        viewer.objectInfoWnd.footAngleSlider.value(int(ptr.value()*500./10. + 500))
-
-    viewer.objectInfoWnd.footAngleSlider.callback(onChangeFootAngleSlider)
-
     viewer.objectInfoWnd.end()
     viewer.objectInfoWnd.labelKt.value(50)
     viewer.objectInfoWnd.labelKk.value(17)
@@ -543,8 +531,8 @@ def main():
         Dsc = 2*(Ksc**.5)
         
         
-        #pose = motion[frame]
-        #motionModel.update(pose)
+        pose = motion[frame]
+        motionModel.update(pose)
 
         def solveIK(desComPos, desIdxs, desPos, desOri, cmW = 10., posW = 1., oriW = 1.):
             numItr = 100
@@ -613,7 +601,7 @@ def main():
         IKdesPos = []
         IKdesOri = []
 
-        ## ankle IK
+        # ankle IK
         footOffset = np.array([viewer.objectInfoWnd.footOffsetX.value(), viewer.objectInfoWnd.footOffsetY.value(), viewer.objectInfoWnd.footOffsetZ.value()])
         IKidxs = [indexFootL[0], indexFootR[0]]
         IKdesPos = [motionOriModel.getBodyPositionGlobal(indexFootL[0]), motionOriModel.getBodyPositionGlobal(indexFootR[0])]
@@ -675,8 +663,7 @@ def main():
         #Reference motion modulation
 
         
-        if False:
-            # setting desired ankle orientation
+        if True:
             ankleOriTemp = getBodyGlobalOri(motionModel, motion, 'RightFoot')
             ankleAngle = mm.normalize2(np.array((viewer.objectInfoWnd.ankleAngleX.value(), viewer.objectInfoWnd.ankleAngleY.value(), viewer.objectInfoWnd.ankleAngleZ.value())))
             newR3 = mm.getSO3FromVectors(np.dot(ankleOriTemp, [0,0,-1]), ankleAngle)
@@ -688,43 +675,6 @@ def main():
             idx = motion[0].skeleton.getJointIndex('LeftFoot')
             th_r[idx] = np.dot(th_r[idx], newR3)
 
-        if True:
-            # setting foot reference motion
-            footAngle = viewer.objectInfoWnd.footAngleLabel.value()
-            newR1 = mm.exp(np.array((3.14/180.*footAngle, 0., 0.)))
-
-            ankleOriTemp = getBodyGlobalOri(motionModel, motion, 'RightPhalange_1')
-            idx = motion[0].skeleton.getJointIndex('RightPhalange_1')
-            th_r[idx] = np.dot(th_r[idx], newR1)
-
-            ankleOriTemp = getBodyGlobalOri(motionModel, motion, 'RightPhalange_2')
-            idx = motion[0].skeleton.getJointIndex('RightPhalange_2')
-            th_r[idx] = np.dot(th_r[idx], newR1)
-
-            ankleOriTemp = getBodyGlobalOri(motionModel, motion, 'LeftPhalange_1')
-            idx = motion[0].skeleton.getJointIndex('LeftPhalange_1')
-            th_r[idx] = np.dot(th_r[idx], newR1)
-
-            ankleOriTemp = getBodyGlobalOri(motionModel, motion, 'LeftPhalange_2')
-            idx = motion[0].skeleton.getJointIndex('LeftPhalange_2')
-            th_r[idx] = np.dot(th_r[idx], newR1)
-
-            newR2 = mm.exp(np.array((-3.14/180.*footAngle, 0., 0.)))
-            ankleOriTemp = getBodyGlobalOri(motionModel, motion, 'RightTalus_1')
-            idx = motion[0].skeleton.getJointIndex('RightTalus_1')
-            th_r[idx] = np.dot(th_r[idx], newR2)
-
-            ankleOriTemp = getBodyGlobalOri(motionModel, motion, 'RightTalus_2')
-            idx = motion[0].skeleton.getJointIndex('RightTalus_2')
-            th_r[idx] = np.dot(th_r[idx], newR2)
-
-            ankleOriTemp = getBodyGlobalOri(motionModel, motion, 'LeftTalus_1')
-            idx = motion[0].skeleton.getJointIndex('LeftTalus_1')
-            th_r[idx] = np.dot(th_r[idx], newR2)
-
-            ankleOriTemp = getBodyGlobalOri(motionModel, motion, 'LeftTalus_2')
-            idx = motion[0].skeleton.getJointIndex('LeftTalus_2')
-            th_r[idx] = np.dot(th_r[idx], newR2)
 
         
         isStretching = False
@@ -1323,7 +1273,6 @@ def main():
         timeReport[5] += time.time() -curTime
         curTime = time.time()
 
-
         for i in range(stepsPerFrame):
             # apply penalty force
             bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
@@ -1341,10 +1290,10 @@ def main():
                 viewer.ResetForce()
                 forceApplyFrame = 0            
             #print ddth_sol
-            controlModel.setDOFAccelerations(ddth_sol)
+            #controlModel.setDOFAccelerations(ddth_sol)
             
-            controlModel.solveHybridDynamics()            
-            
+            #controlModel.solveHybridDynamics()            
+            controlModel.setInternalJointTorquesLocal(ddth_des[1:])
             vpWorld.step()                    
             
             

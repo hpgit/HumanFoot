@@ -90,6 +90,7 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("fixBody", &VpControlModel::fixBody)
 
 		.def("initializeHybridDynamics", &VpControlModel::initializeHybridDynamics, initializeHybridDynamics_overloads())
+		.def("initializeForwardDynamics", &VpControlModel::initializeForwardDynamics)
 		.def("solveHybridDynamics", &VpControlModel::solveHybridDynamics)
 		.def("solveForwardDynamics", &VpControlModel::solveForwardDynamics)
 		.def("solveInverseDynamics", &VpControlModel::solveInverseDynamics)
@@ -1149,6 +1150,12 @@ void VpControlModel::initializeHybridDynamics(bool floatingBase)
 		else
 			_nodes[i]->joint.SetHybridDynamicsType(VP::KINEMATIC);
 	}
+}
+
+void VpControlModel::initializeForwardDynamics()
+{
+	for(int i=0; i<_nodes.size(); ++i)
+		_nodes[i]->body.SetHybridDynamicsType(VP::DYNAMIC);
 }
 
 void VpControlModel::solveHybridDynamics()

@@ -170,6 +170,7 @@ public:	// expose to python
 	/////////////////////////////////////////////////////////////////
 	// hybrid dynamics
 	void initializeHybridDynamics(bool floatingBase=true);
+	void initializeForwardDynamics();
 	void solveHybridDynamics();
 	void solveForwardDynamics();
 	void solveInverseDynamics();

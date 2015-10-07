@@ -509,7 +509,34 @@ def create_biped():
                     LEFT_TALUS_1:.7, RIGHT_TALUS_1:.7, LEFT_TALUS_2:.7, RIGHT_TALUS_2:.7, 
                     RIGHT_CALCANEUS_1:.7, LEFT_CALCANEUS_1:.7, RIGHT_CALCANEUS_2:.7, LEFT_CALCANEUS_2:.7, 
                     LEFT_PHALANGE_1:.4, LEFT_PHALANGE_2:.4, RIGHT_PHALANGE_1:.4, RIGHT_PHALANGE_2:.4}
-
+    '''                    
+    (1, 'RightUpLeg')
+    (2, 'RightLeg')
+    (3, 'RightFoot')
+    (4, 'Spine')
+    (5, 'Spine1')
+    (6, 'LeftArm')
+    (7, 'LeftForeArm')
+    (8, 'RightArm')
+    (9, 'RightForeArm')
+    (10, 'LeftUpLeg')
+    (11, 'LeftLeg')
+    (12, 'LeftFoot')
+    (13, 'LeftTalus_1')
+    (14, 'LeftTalus_2')
+    (15, 'RightTalus_1')
+    (16, 'RightTalus_2')
+    (17, 'LeftPhalange_1')
+    (18, 'LeftPhalange_2')
+    (19, 'RightPhalange_1')
+    (20, 'RightPhalange_2')
+    (21, 'LeftCalcaneus_1')
+    (22, 'LeftCalcaneus_2')
+    (23, 'RightCalcaneus_1')
+    (24, 'RightCalcaneus_2')
+    '''
+    config['trackWMap']={10, 5, .1, 20, 10, 5, 2, 10, 5, .1, 
+                        0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.10, 0.01}
 
     config['supLink'] = LEFT_FOOT
     config['supLink2'] = RIGHT_FOOT
