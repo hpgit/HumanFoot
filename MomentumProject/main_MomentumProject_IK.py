@@ -87,7 +87,8 @@ def getDesFootLinearAcc(refModel, controlModel, footIndex, ModelOffset, CM_ref, 
 
     refPos = refModel.getBodyPositionGlobal(footIndex)  
     curPos = controlModel.getBodyPositionGlobal(footIndex)
-    refPos[0] += ModelOffset[0]
+    #refPos[0] += ModelOffset[0]
+    refPos += ModelOffset
                                 
     refVel = refModel.getBodyVelocityGlobal(footIndex) 
     curVel = controlModel.getBodyVelocityGlobal(footIndex)
@@ -366,8 +367,8 @@ def main():
     rd_Joint4 = [None]
     rd_desPoints = [None]
         
-    #rd_contactForces = [None]*10000
-    #rd_contactPositions = [None]*10000
+    rd_contactForces = [None]
+    rd_contactPositions = [None]
     rd_virtualForce = [None]
 
     rootPos = [None]
@@ -432,6 +433,7 @@ def main():
         #viewer.doc.addRenderer('rd_curNormalVec', yr.VectorsRenderer(normalVector, rd_footCenter, (255,0,0), 3))
         #viewer.doc.addRenderer('rd_CMVec', yr.VectorsRenderer(rd_CM_vec, rd_footCenter, (255,0,255), 3))
             
+        viewer.doc.addRenderer('rd_contactForces', yr.VectorsRenderer(rd_contactForces, rd_contactPositions, (0,255,0), 3))
         #viewer.doc.addRenderer('rd_contactForces', yr.ForcesRenderer(rd_contactForces, rd_contactPositions, (0,255,0), .009, 0.009))
     
         #viewer.doc.addRenderer('rd_virtualForce', yr.ForcesRenderer(rd_virtualForce, rd_CM, (50,255,0), 0.5, 0.02))
@@ -469,6 +471,13 @@ def main():
     viewer.objectInfoWnd.ankleAngleY.value(1)
     viewer.objectInfoWnd.ankleAngleZ = Fl_Value_Input(170, 510, 40, 10, 'Z')
     viewer.objectInfoWnd.ankleAngleZ.value(0)
+
+    viewer.objectInfoWnd.footOffsetX = Fl_Value_Input(50,  560, 40, 10, 'Foot X')
+    viewer.objectInfoWnd.footOffsetX.value(0)
+    viewer.objectInfoWnd.footOffsetY = Fl_Value_Input(110,  560, 40, 10, 'Y')
+    viewer.objectInfoWnd.footOffsetY.value(0)
+    viewer.objectInfoWnd.footOffsetZ = Fl_Value_Input(170, 560, 40, 10, 'Z')
+    viewer.objectInfoWnd.footOffsetZ.value(0)
 
     viewer.objectInfoWnd.end()
     viewer.objectInfoWnd.labelKt.value(50)
@@ -510,7 +519,7 @@ def main():
         global contactRendererName
         global desCOMOffset
 
-        motionOriModel.update(motion[0])
+        motionOriModel.update(motion[frame])
 
         Kt, Kk, Kl, Kh, Ksc, Bt, Bl, Bh, B_CM, B_CMSd, B_Toe = viewer.GetParam()
         
@@ -521,7 +530,8 @@ def main():
         Dsc = 2*(Ksc**.5)
         
         
-        #pose = motion[0]
+        pose = motion[frame]
+        motionModel.update(pose)
 
         def solveIK(desComPos, desIdxs, desPos, desOri, cmW = 10., posW = 1., oriW = 1.):
             numItr = 100
@@ -559,7 +569,7 @@ def main():
                     if desOri[j] != None:
                         J_IK = np.vstack((  J_IK, jPart_IK[j][3:6]  ))
                         ori_IK = motionModel.getBodyOrientationGlobal(desIdxs[j])
-                        dv_IK = np.append(dv_IK, oriW*mm.logSO3(desOri[j]*ori_IK.T))
+                        dv_IK = np.append(dv_IK, oriW*mm.logSO3(np.dot(desOri[j],ori_IK.T)))
                 #print dv_IK[0:3]
                 dth_IK_solve = npl.lstsq(J_IK, dv_IK)
                 dth_IK_x = dth_IK_solve[0][:totalDOF]
@@ -586,23 +596,49 @@ def main():
         #CM_IK_ref[1] = CM_ref[1] + footCenterOffset[1]
 
         motion[0].skeleton.getJointIndex(config['supLink'])
+        IKidxs = []
+        IKdesPos = []
+        IKdesOri = []
 
+        # ankle IK
+        footOffset = np.array([viewer.objectInfoWnd.footOffsetX.value(), viewer.objectInfoWnd.footOffsetY.value(), viewer.objectInfoWnd.footOffsetZ.value()])
         IKidxs = [indexFootL[0], indexFootR[0]]
         IKdesPos = [motionOriModel.getBodyPositionGlobal(indexFootL[0]), motionOriModel.getBodyPositionGlobal(indexFootR[0])]
         for i in range(0, 2):
             #IKdesPos[i] += ModelOffset
             IKdesPos[i][1] = 0.06
+            IKdesPos[i] += footOffset
         #IKori = [motionOriModel.getBodyOrientationGlobal(indexFootL[0]), motionOriModel.getBodyOrientationGlobal(indexFootR[0])]
         IKdesOri = [None]*2
-        for i in range(0, 2):
-            ankleAngle = np.array((viewer.objectInfoWnd.ankleAngleX.value(), viewer.objectInfoWnd.ankleAngleY.value(), viewer.objectInfoWnd.ankleAngleZ.value()))
-            #IKdesOri[i] = mm.I_SO3()
-            IKdesOri[i] = mm.getSO3FromVectors([0,1,0], ankleAngle)
-            pass
+        #for i in range(0, 2):
+        #    ankleAngle = np.array((viewer.objectInfoWnd.ankleAngleX.value(), viewer.objectInfoWnd.ankleAngleY.value(), viewer.objectInfoWnd.ankleAngleZ.value()))
+        #    IKdesOri[i] = mm.I_SO3()
+        #    IKdesOri[i] = mm.exp(np.array((3.14/2. + (3.14/180.) *40., 0, 0)))
+        #    #IKdesOri[i] = mm.getSO3FromVectors([0,0,-1], ankleAngle)
+        #    pass
 
-        IKidxs.append(motion[0].skeleton.getJointIndex(config['trunk']))
+        IKidxs.append(motion[0].skeleton.getJointIndex('Hips'))
         IKdesPos.append(None)
         IKdesOri.append(mm.I_SO3())
+
+        # trunk IK
+        IKidxs.append(motion[0].skeleton.getJointIndex(config['trunk']))
+        IKdesPos.append(None)
+        #IKdesOri.append(mm.I_SO3())
+        IKdesOri.append(mm.exp(np.array((-3.14/2. + (3.14/180.) *40., 0, 0))))
+
+        # Phalange IK
+        for i in range(0, len(config['Phalange'])):
+            IKidx = config['Phalange'][i]
+            IKidxs.append(IKidx)
+            
+            IKdesPosition = motionOriModel.getBodyPositionGlobal(IKidx)
+            IKdesPosition[1] = 0.013
+            IKdesPosition += footOffset
+            IKdesPos.append(IKdesPosition)
+            IKdesOri.append(mm.I_SO3())
+            pass
+
 
         #IKidxs = config['Phalange'][0:1] + config['Phalange'][3:4]
         #print IKidxs
@@ -614,8 +650,8 @@ def main():
         #    IKdesPos[i][1] = 0.03
         #    IKdesOri[i] = mm.I_SO3()
         #print IKdesPos
-
-        solveIK(CM_IK_ref, IKidxs, IKdesPos, IKdesOri)
+        #solveIK(CM_IK_ref, IKidxs, IKdesPos, IKdesOri)
+        #print motionModel.getBodyOrientationGlobal(motion[0].skeleton.getJointIndex(config['trunk']))
                        
         # tracking
         th_r_ori = pose.getDOFPositions()
@@ -624,6 +660,21 @@ def main():
 
         ############################
         #Reference motion modulation
+
+        
+        if True:
+            ankleOriTemp = getBodyGlobalOri(motionModel, motion, 'RightFoot')
+            ankleAngle = mm.normalize2(np.array((viewer.objectInfoWnd.ankleAngleX.value(), viewer.objectInfoWnd.ankleAngleY.value(), viewer.objectInfoWnd.ankleAngleZ.value())))
+            newR3 = mm.getSO3FromVectors(np.dot(ankleOriTemp, [0,0,-1]), ankleAngle)
+            idx = motion[0].skeleton.getJointIndex('RightFoot')
+            th_r[idx] = np.dot(th_r[idx], newR3)
+            ankleOriTemp = getBodyGlobalOri(motionModel, motion, 'LeftFoot')
+            ankleAngle = mm.normalize2(np.array((viewer.objectInfoWnd.ankleAngleX.value(), viewer.objectInfoWnd.ankleAngleY.value(), viewer.objectInfoWnd.ankleAngleZ.value())))
+            newR3 = mm.getSO3FromVectors(np.dot(ankleOriTemp, [0,0,-1]), ankleAngle)
+            idx = motion[0].skeleton.getJointIndex('LeftFoot')
+            th_r[idx] = np.dot(th_r[idx], newR3)
+
+
         
         isStretching = False
 
@@ -755,6 +806,15 @@ def main():
 
         bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
         CP = yrp.getCP(contactPositions, contactForces)
+
+        totalContactForces = np.array((0,0,0))
+        for i in range(0, len(contactForces)):
+            totalContactForces += contactForces[i]
+        totalTorque = np.array((0,0,0))
+        if CP != None:
+            totalTorque = np.cross( CP-CM, totalContactForces)
+        print totalContactForces, totalTorque, CP
+        
         if CP != None:
             CP[1] = 0.
 
@@ -1012,7 +1072,7 @@ def main():
 
     
         
-        if (stage == STATIC_BALANCING) and frame > 10:
+        if (stage == STATIC_BALANCING) and frame > 5:
             del rd_desPoints[:]
             # foot strategy
             #Kk2 = Kk * 2.5
@@ -1078,9 +1138,12 @@ def main():
 
             # print 'footL : ',contactFlagFootL
             # print 'footR : ',contactFlagFootR
+            for i in range(1, 5):
+                contactFlagFootL[i] = 0
+                contactFlagFootR[i] = 0
 
             for i in range(1, footPartNum) :
-
+                #print i
                 axis = [0,0,1]
                 if i == 1 or i == 2:
                     axis = [0,0,-1]
@@ -1092,14 +1155,16 @@ def main():
                     desAng = [0, -0.707, 0.707]
                     #desAng = [0.0, -1., 0]
                 
-                desY = 0.026
+                desY = 0.028
+                ModelOffsetTemp = controlModel.getBodyPositionGlobal(0) - motionModel.getBodyPositionGlobal(0)
                 if contactFlagFootL[i] == 1:
-                    desLinearAccL, desForePosL = getDesFootLinearAcc(motionModel, controlModel, indexFootL[i], ModelOffset, CM_ref, CM, Kk2, Dk2, desY) 
+                    #desLinearAccL, desForePosL = getDesFootLinearAcc(motionModel, controlModel, indexFootL[i], ModelOffset, CM_ref, CM, Kk2, Dk2, desY) 
+                    desLinearAccL, desForePosL = getDesFootLinearAcc(motionModel, controlModel, indexFootL[i], ModelOffsetTemp, CM_ref, CM, Kk2, Dk2, desY) 
                     desAngularAccL = getDesFootAngularAcc(motionModel, controlModel, indexFootL[i], Kk2, Dk2, axis, desAng)
                     a_sup_2 = np.hstack((desLinearAccL, desAngularAccL))
                     Jsup_2 = jFootL[i].copy()
                     dJsup_2 = dJFootL[i].copy()
-                    mot.addConstraint(problem, totalDOF, Jsup_2, dJsup_2, dth_flat, a_sup_2)
+                    #mot.addConstraint(problem, totalDOF, Jsup_2, dJsup_2, dth_flat, a_sup_2)
                     #if isStretching:
                     #    mot.addAnotherTerms(problem, totalDOF, viewer.objectInfoWnd.Bc.value(), Jsup_2[3:], a_sup_2[3:] - np.dot(dJsup_2[3:] , dth_flat))
                     #else:
@@ -1108,12 +1173,13 @@ def main():
                     rd_desPoints.append(desForePosL.copy())
 
                 if contactFlagFootR[i] == 1:
-                    desLinearAccR, desForePosR = getDesFootLinearAcc(motionModel, controlModel, indexFootR[i], ModelOffset, CM_ref, CM, Kk2, Dk2, desY) 
+                    #desLinearAccR, desForePosR = getDesFootLinearAcc(motionModel, controlModel, indexFootR[i], ModelOffset, CM_ref, CM, Kk2, Dk2, desY) 
+                    desLinearAccR, desForePosR = getDesFootLinearAcc(motionModel, controlModel, indexFootR[i], ModelOffsetTemp, CM_ref, CM, Kk2, Dk2, desY) 
                     desAngularAccR = getDesFootAngularAcc(motionModel, controlModel, indexFootR[i], Kk2, Dk2, axis, desAng)
                     a_sup_2 = np.hstack((desLinearAccR, desAngularAccR))
                     Jsup_2 = jFootR[i].copy()
                     dJsup_2 = dJFootR[i].copy()
-                    mot.addConstraint(problem, totalDOF, Jsup_2, dJsup_2, dth_flat, a_sup_2)      
+                    #mot.addConstraint(problem, totalDOF, Jsup_2, dJsup_2, dth_flat, a_sup_2)      
                     #if isStretching:
                     #    mot.addAnotherTerms(problem, totalDOF, viewer.objectInfoWnd.Bc.value(), Jsup_2[3:], a_sup_2[3:] - np.dot(dJsup_2[3:] , dth_flat))
                     #else:
@@ -1228,68 +1294,6 @@ def main():
             
             controlModel.solveHybridDynamics()            
             
-            '''
-            if (frame > 5):
-                tau = controlModel.getJointTorqueLocal(indexFootL[3])
-                tau2 = controlModel.getJointTorqueLocal(indexFootL[4])
-                tau3 = controlModel.getJointTorqueLocal(indexFootR[3])
-                tau4 = controlModel.getJointTorqueLocal(indexFootR[4])
-                
-                torques = controlModel.getInternalJointTorquesLocal()   
-            
-                if (frame > 100 and frame < 110) or (frame > 165 and frame < 190):
-                    Wcal1 = 0.05
-                    Wcal2 = 0.05
-                    dC = fCom[2]*Wcal1-dCM[2]*Wcal2
-                    print("dC", dC)
-                    torques[indexFootL[5]-1]+= (dC, 0.0, 0.0)
-                    torques[indexFootR[5]-1]+= (dC, 0.0, 0.0)
-
-                if (frame > 50 and frame < 75) or (frame > 110 and frame <140) or (frame > 185 and frame < 220):
-                    
-                    metatarR = [controlModel.getBodyOrientationGlobal(indexFootL[1])]
-                    phalangeR = [controlModel.getBodyOrientationGlobal(indexFootL[3])]
-                    metatarR2 = np.dot(metatarR, np.array([0,0,1]))
-                    phalangeR2 = np.dot(phalangeR, np.array([0,0,1]))
-
-                    metatarRZ = mm.normalize(metatarR2[0])
-                    phalangeRZ = mm.normalize(phalangeR2[0])
-                    lean = np.dot(metatarRZ, phalangeRZ)
-                    Wlean = 2
-                    
-                    dt = -0.02*(lean)*Wlean
-                    torques[indexFootL[3]-1]+= (dt, 0.0, 0.0)
-                    torques[indexFootL[4]-1]+= (dt, 0.0, 0.0)
-                    torques[indexFootR[3]-1]+= (dt, 0.0, 0.0)
-                    torques[indexFootR[4]-1]+= (dt, 0.0, 0.0)
-                       
-                                               
-                i = 0
-                t = 6
-                while t < len(TauJT) :
-                    torques[i] += (TauJT[t]+TauAM[t], TauJT[t+1]+TauAM[t+1], TauJT[t+2]+TauAM[t+2])
-                    i+=1
-                    t+=3
-
-                #totalTorques = [a + b for a, b in zip(torques, TauJT)]
-                #print("torques2", torques)
-                #print("TauJT", TauJT[16], TauJT[17], TauJT[18])
-                #print("torques", torques[16])
-                #print("totalTorques", totalTorques[16])
-                controlModel.setInternalJointTorquesLocal(torques)
-            '''
-
-            '''
-            extraForce[0] = viewer.GetForce()
-            if (extraForce[0][0] != 0 or extraForce[0][1] != 0 or extraForce[0][2] != 0) :
-                forceApplyFrame += 1
-                vpWorld.applyPenaltyForce(selectedBodyId, localPos, extraForce)
-                applyedExtraForce[0] = extraForce[0]
-            
-            if forceApplyFrame*wcfg.timeStep > 0.1:
-                viewer.ResetForce()
-                forceApplyFrame = 0            
-            '''
             vpWorld.step()                    
             
             
@@ -1298,9 +1302,15 @@ def main():
 
         rd_footCenter[0] = footCenter
         
-        rd_CM[0] = CM.copy()
+        del rd_CM[:]
+        rd_CM.append(CM.copy())
+        rd_CM.append(CM_ref.copy())
         
-        rd_CM_plane[0] = CM_plane.copy()
+        
+        del rd_CM_plane[:]
+        rd_CM_plane.append(CM_plane.copy())
+        rd_CM_plane.append(CM_plane_ref.copy())
+        
         
         rd_footCenter_ref[0] = footCenter_ref
         rd_CM_plane_ref[0] = CM_ref.copy()
@@ -1349,6 +1359,15 @@ def main():
         if (forceApplyFrame == 0) :
             applyedExtraForce[0] = [0, 0, 0]
 
+        del rd_contactForces[:]
+        del rd_contactPositions[:]
+        if CP!=None:
+            rd_contactForces.append(totalContactForces.copy()/200.)
+            rd_contactPositions.append(CP.copy())
+        #for i in range(0,len(contactForces)):
+        #    rd_contactForces.append(contactForces[i]/50.)
+        #    rd_contactPositions.append(contactPositions[i])
+    
 
         timeReport[6] += time.time() -curTime
         # print timeReport

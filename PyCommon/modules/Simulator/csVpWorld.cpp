@@ -219,7 +219,7 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 		}
 	}
 	*/
-	return make_tuple(bodyIDs, positions, positionLocals, forces, velocities);
+	return make_tuple(bodyIDs, positions, positionLocals, forces);
 }
 
 // @param position 작용할 지점(global)
@@ -238,7 +238,7 @@ bool VpWorld::_calcPenaltyForce( const vpBody* pBody, const Vec3& position, cons
 	vNormalRelVel = normalRelVel * vNormal;
 	vTangentialRelVel = vRelVel - vNormalRelVel;
 	tangentialRelVel = Norm(vTangentialRelVel);
-
+	//_planeHeight = .01;
 	if(position[1] > _planeHeight)
 		return false;
 	else

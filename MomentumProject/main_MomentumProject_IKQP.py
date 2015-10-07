@@ -502,7 +502,7 @@ def main():
         controlToMotionOffset = [-2.0, 0., 0.]
         motionModel.translateByOffset(controlToMotionOffset)
         
-        stepsPerFrame = 5
+        stepsPerFrame = 10
         for i in range(stepsPerFrame):
             Kt, Kk, Kl, Kh, Ksc, Bt, Bl, Bh, B_CM, B_CMSd, B_Toe = viewer.GetParam()
             #Kt, Kl, Kh, Bl, Bh, Ke = viewer.GetParam()

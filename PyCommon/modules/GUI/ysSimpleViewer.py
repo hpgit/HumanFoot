@@ -229,7 +229,7 @@ initKs = 50
         
 initBk = 0.0#3.5
 initBt = 1.0
-initBl = 0.1
+initBl = 0.0
 initBh = 0.0
 initBs = 0
 

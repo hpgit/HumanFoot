@@ -166,6 +166,7 @@ def create_biped():
     if MOTION == STAND:
         #motionName = 'wd2_stand.bvh'
         motionName = 'wd2_stand2.bvh'
+        #motionName = 'woddy2_jump0_short.bvh'
     elif MOTION == STAND2:
         motionName = 'ww13_41_V001.bvh'
     elif MOTION == FORWARD_JUMP:
@@ -280,7 +281,6 @@ def create_biped():
        
     yme.updateGlobalT(motion)
     
-
     ################
     if MOTION == FORWARD_JUMP:        
         motion = motion[515:555]
@@ -427,12 +427,12 @@ def create_biped():
     node.mass = mass3_2     
     
     node = mcfg.getNode(LEFT_CALCANEUS_1)
-    node.length = length4 - width4
+    node.length = length4# - width4
     node.width = width4
     node.mass = mass4
      
     node = mcfg.getNode(LEFT_CALCANEUS_2)
-    node.length = length4 - width4
+    node.length = length4# - width4
     node.width = width4
     node.mass = mass4
      
@@ -470,13 +470,13 @@ def create_biped():
     node.geom = 'MyFoot4'
 
     node = mcfg.getNode(RIGHT_CALCANEUS_1)
-    node.geom = 'MyFoot3'
+    node.geom = 'MyFoot4'
     node = mcfg.getNode(RIGHT_CALCANEUS_2)
-    node.geom = 'MyFoot3'
+    node.geom = 'MyFoot4'
     node = mcfg.getNode(LEFT_CALCANEUS_1)
-    node.geom = 'MyFoot3'
+    node.geom = 'MyFoot4'
     node = mcfg.getNode(LEFT_CALCANEUS_2)
-    node.geom = 'MyFoot3'
+    node.geom = 'MyFoot4'
         
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.

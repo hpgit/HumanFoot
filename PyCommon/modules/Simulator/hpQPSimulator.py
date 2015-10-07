@@ -47,7 +47,7 @@ class QPSimulator:
 		self.Be = 100.
 
 		# constants
-		self.mu = 5.
+		self.mu = 1.
 		self.contactPerSide = 4 # vertices of boxes always checked
 
 		# flat data structure
@@ -349,10 +349,10 @@ class QPSimulator:
 			#VcTdJc_list.append( np.dot(VcT, dJsup) )
 			#dVcTJc_list.append( np.dot(dVcT, Jsup) )
 
-			penDepth = -0.5-contactPositions[i][1]
+			penDepth = -0.05-contactPositions[i][1]
 			if penDepth < 0.:
 				penDepth = 0.
-			penDepth = 0.
+			#penDepth = 0.
 			ac_offset = 1000.*penDepth*np.ones(4)
 			ac_offset_list.append(ac_offset)
 			preSup = sup
@@ -390,11 +390,12 @@ class QPSimulator:
 			#	allLinkJointMasks = yjc.getAllLinkJointMasks(motion[0].skeleton)
 			#	yjc.computeJacobian2(Jsys, DOFs, jointPositions, jointAxeses, linkPositions, allLinkJointMasks)
 			#	yjc.computeJacobianDerivative2(dJsys, DOFs, jointPositions, jointAxeses, linkAngVelocities, linkPositions, allLinkJointMasks)
-			#	self.addLinearAndAngularBalancigTerms(totalProblem, 0, totalDOF, self.Bl, self.Bh, P, Jsys, self.dth_flat, dP, dJsys, dL_des_plane, dH_des)
+			#	self.addLinearAndAngularBalancigTerms(totalProblem, 0, totalDOF, self.Bl, self.Bh, P, self.Jsys, self.dth_flat, dP, self.dJsys, dL_des_plane, dH_des)
 
 		# end effector
 		#TODO:
 		eeList = [supR, supL]
+		#eeList = []
 
 		#if totalContact > 0:
 		for ee in eeList:
@@ -425,8 +426,8 @@ class QPSimulator:
 
 			ddp_des = np.hstack( (ddp_des_pos, ddp_des_ang) )
 
-			self.addEndEffectorTerms(totalProblem, 0, totalDOF, Jsup, dJsup, self.dth_flat, ddp_des, self.Be)
-			#self.addEqualityEndEffectorTerms(totalProblem, 0, totalDOF, Jsup, dJsup, self.dth_flat, ddp_des, self.Be)
+			#self.addEndEffectorTerms(totalProblem, 0, totalDOF, Jsup, dJsup, self.dth_flat, ddp_des, self.Be)
+			self.addEqualityEndEffectorTerms(totalProblem, 0, totalDOF, Jsup, dJsup, self.dth_flat, ddp_des, self.Be)
 
 		return contactPositions, CP, CM, footCenter, dL_des_plane, CM_ref
 
