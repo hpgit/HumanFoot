@@ -858,10 +858,10 @@ def main():
         bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
         CP = yrp.getCP(contactPositions, contactForces)
 
-        totalContactForces = np.array((0,0,0))
+        totalContactForces = np.array((0.,0.,0.))
         for i in range(0, len(contactForces)):
             totalContactForces += contactForces[i]
-        totalTorque = np.array((0,0,0))
+        totalTorque = np.array((0.,0.,0.))
         if CP != None:
             totalTorque = np.cross( CP-CM, totalContactForces)
         print totalContactForces, totalTorque, CP
