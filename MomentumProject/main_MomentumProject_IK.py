@@ -120,6 +120,7 @@ def getDesFootAngularAcc(refModel, controlModel, footIndex, Kk, Dk, axis = [0,1,
     
     aL = mm.logSO3(mm.getSO3FromVectors(curAngY[0], refAngY))
     desAngularAcc = Kk*aL + Dk*(refAngVel-curAngVel)
+    
 
     return desAngularAcc
 

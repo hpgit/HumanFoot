@@ -1,6 +1,6 @@
 UNAME := $(shell uname -s)
 ifeq ($(UNAME), Darwin)
-	MACVER := $(shell sw_vers -productVersion)
+	MACVER := $(shell sw_vers -productVersion | sed "s:.[[:digit:]]*.$$::g")
 	FOLDER := lib.macosx-$(MACVER)-x86_64-2.7
 	SETUPFILE := setup_mac.py
 endif

@@ -4,7 +4,7 @@ module_csVpRenderer = Extension('csVpRenderer',
 		include_dirs = ['../usr/include/'],
 		extra_compile_args=['-fopenmp'],
 		extra_link_args=['-lgomp'],
-		libraries = ['boost_python','vpLib'],
+		libraries = ['boost_python', 'vpLib'],
 		library_dirs = ['../usr/lib'],
 		sources = ['csVpRenderer.cpp'])
 	

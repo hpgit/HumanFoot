@@ -1001,11 +1001,11 @@ void VpControlModel::_createJoint( const object& joint, const object& posture )
 		Node* pParentNode = _nodes[parent_index];
 		object parentCfgNode = _config.attr("getNode")(parent_name);
 
-		object offset = cfgNode.attr("offset");
-		SE3 offsetT = SE3(pyVec3_2_Vec3(offset));
+		//object offset = cfgNode.attr("offset");
+		//SE3 offsetT = SE3(pyVec3_2_Vec3(offset));
 
-		object parentOffset = parentCfgNode.attr("offset");
-		SE3 parentOffsetT = SE3(pyVec3_2_Vec3(parentOffset));
+		//object parentOffset = parentCfgNode.attr("offset");
+		//SE3 parentOffsetT = SE3(pyVec3_2_Vec3(parentOffset));
 
 		pParentNode->body.SetJoint(&pNode->joint, Inv(_boneTs[parent_index])*Inv(invLocalT));
 		pNode->body.SetJoint(&pNode->joint, Inv(_boneTs[joint_index]));
@@ -1140,7 +1140,7 @@ void VpControlModel::initializeHybridDynamics(bool floatingBase)
 	
 	for(int i=0; i<_nodes.size(); ++i)
 	{
-		if(i == 0)
+		if(i == rootIndex)
 		{
 			if(floatingBase)
 				_nodes[i]->body.SetHybridDynamicsType(VP::DYNAMIC);

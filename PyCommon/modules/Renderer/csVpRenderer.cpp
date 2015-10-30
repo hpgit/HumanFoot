@@ -1,5 +1,3 @@
-#pragma once
-
 #include "stdafx.h"
 
 #ifdef WIN32
@@ -22,7 +20,9 @@
 
 static scalar _T[16];
 #define _SLICE_SIZE		24
-#define M_PI_2			M_2PI
+#ifndef M_PI_2	
+#define M_PI_2		1.57079632679489661923
+#endif
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(render_overloads, render, 0, 1);
 

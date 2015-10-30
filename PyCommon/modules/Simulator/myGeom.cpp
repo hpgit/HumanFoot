@@ -23,7 +23,9 @@
 #define MAX_Y 2	// 0010
 #define MAX_Z 4	// 0100
 
+#ifndef M_PI_2
 #define M_PI_2     1.57079632679489661923
+#endif
 
 const vector<Vec3>& _getVerticesGlobal( const vpGeom* pGeom, const vector<Vec3>& verticesLocal )
 {
@@ -70,11 +72,11 @@ void sphere(vector<Vec3>& verticesLocal,const Vec3& center, const scalar &rad, i
 	for ( int i = 0; i < int(row * height_ratio); i++ )
 	{
 		scalar t = (scalar)i / (scalar)(row);
-		scalar t2 = (scalar)(i + 1) / (scalar)(row);
+		//scalar t2 = (scalar)(i + 1) / (scalar)(row);
 		scalar cp = cos((scalar)M_PI * t - (scalar)M_PI_2);
 		scalar sp = sin((scalar)M_PI * t - (scalar)M_PI_2);
-		scalar cp2 = cos((scalar)M_PI * t2 - (scalar)M_PI_2);
-		scalar sp2 = sin((scalar)M_PI * t2 - (scalar)M_PI_2);
+		//scalar cp2 = cos((scalar)M_PI * t2 - (scalar)M_PI_2);
+		//scalar sp2 = sin((scalar)M_PI * t2 - (scalar)M_PI_2);
 
 		col_real = i==0 ? 1 : col;
 		for ( int j = 0; j < col_real; j++ )
@@ -94,11 +96,11 @@ void sphere2(vector<Vec3>& verticesLocal,const Vec3& center, const scalar &rad, 
 	for ( int i = int(row * start_height_ratio); i < int(row * end_height_ratio); i++ )
 	{
 		scalar t = (scalar)i / (scalar)(row);
-		scalar t2 = (scalar)(i + 1) / (scalar)(row);
+		//scalar t2 = (scalar)(i + 1) / (scalar)(row);
 		scalar cp = cos((scalar)M_PI * t - (scalar)M_PI_2);
 		scalar sp = sin((scalar)M_PI * t - (scalar)M_PI_2);
-		scalar cp2 = cos((scalar)M_PI * t2 - (scalar)M_PI_2);
-		scalar sp2 = sin((scalar)M_PI * t2 - (scalar)M_PI_2);
+		//scalar cp2 = cos((scalar)M_PI * t2 - (scalar)M_PI_2);
+		//scalar sp2 = sin((scalar)M_PI * t2 - (scalar)M_PI_2);
 
 		col_real = i==0 ? 1 : col;
 		for ( int j = 0; j < col_real; j++ )
@@ -159,10 +161,10 @@ MyFoot3::MyFoot3(scalar radius, scalar height) :vpCapsule(radius, height)
 	_verticesLocal.clear();
 	
 	// top, bottom, left, right
-	scalar l = height / 2. - radius; scalar r = -height / 2. + radius;
-	_r = radius;
-	_h = height;
-	int row = 12, col = 6;
+	//scalar l = height / 2. - radius; scalar r = -height / 2. + radius;
+	//_r = radius;
+	//_h = height;
+	//int row = 12, col = 6;
 
 	//sphere(_verticesLocal, Vec3(0.0, 0.0, l), radius, row, col);
 	//sphere(_verticesLocal, Vec3(0.0, 0.0, r), radius, row, col);
@@ -182,7 +184,7 @@ void MyFoot3::getContactVerticesGlobal(vector<Vec3>& verticesGlobal)
 	scalar l = _h / 2. - _r; scalar r = -_h / 2. + _r;
 
 	Vec3 center[2];
-	scalar depth[2];
+	//scalar depth[2];
 	center[0] = this->GetGlobalFrame()* Vec3(0, 0, l);
 	center[1] = this->GetGlobalFrame()* Vec3(0, 0, r);
 	verticesGlobal.clear();
@@ -200,10 +202,10 @@ void MyFoot4::getContactVertices(vector<Vec3>& verticesLocal, vector<Vec3>& vert
 }
 void MyFoot4::getContactVerticesGlobal(vector<Vec3>& verticesGlobal)
 {
-	scalar l = _h / 2. - _r; scalar r = -_h / 2. + _r;
+	scalar l = _h / 2. - _r; //scalar r = -_h / 2. + _r;
 
 	Vec3 center[2];
-	scalar depth[2];
+	//scalar depth[2];
 	center[0] = this->GetGlobalFrame()* Vec3(0, 0, l);
 	verticesGlobal.clear();
 	verticesGlobal.push_back(center[0] + Vec3(0, -_r, 0));

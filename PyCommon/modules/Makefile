@@ -1,5 +1,5 @@
 .PHONY: all
-all: Renderer Simulator
+all: Renderer Simulator Optimization
 
 .PHONY: Renderer
 Renderer:
@@ -9,7 +9,12 @@ Renderer:
 Simulator:
 	make --directory="Simulator/" --file=Simulator.makefile
 
+.PHONY: Optimization
+Optimization:
+	make --directory="Optimization/" --file=Optimization.makefile
+
 .PHONY: clean
 clean:
 	rm -rf Renderer/build
 	rm -rf Simulator/build
+	rm -rf Optimization/build
