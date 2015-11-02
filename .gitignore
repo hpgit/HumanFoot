@@ -2,3 +2,5 @@
 *.so
 *.DS_Store
 *.settings
+*.o
+*.d
