@@ -2,8 +2,8 @@ from distutils.core import setup, Extension
 
 module_csVpRenderer = Extension('csLCPLemkeSolver',
 		include_dirs = ['../usr/include/', '/usr/local/include/bullet/'],
-#extra_compile_args=['-fopenmp'],
-#extra_link_args=['-lgomp'],
+		extra_compile_args=['-fopenmp'],
+		extra_link_args=['-lgomp'],
 		libraries = ['boost_python', 'LinearMath', 'BulletDynamics'],
 		library_dirs = ['../usr/lib'],
 		sources = ['csLCPLemkeSolver.cpp'])

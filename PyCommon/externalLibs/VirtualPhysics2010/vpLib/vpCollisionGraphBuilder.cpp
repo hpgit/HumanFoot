@@ -420,7 +420,7 @@ void vpWorld::BuildCollisionGraph(void)
 	for ( int i = 0; i < m_sCollisionPair.size(); i++ ) m_sCollisionPair[i].clear();
 	m_sCollisionPair.resize(m_sCollisionPairL.size());
 
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 	#pragma omp parallel for
 #endif
 	for ( int i = 0; i < m_sCollisionPairL.size(); i++ )
@@ -473,7 +473,7 @@ void vpWorld::BuildCollisionGraph(void)
 	for ( int i = 0; i < m_sContactPair.size(); i++ ) m_sContactPair[i].clear();
 	m_sContactPair.resize(m_sContactPairL.size());
 
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 	#pragma omp parallel for
 #endif
 	for ( int i = 0; i < m_sContactPair.size(); i++ )

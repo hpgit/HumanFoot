@@ -3,6 +3,7 @@ MODULE_LIB_DIR := PyCommon/modules/usr/lib
 VP_DIR := PyCommon/externalLibs/VirtualPhysics2010
 GEAR_DIR := PyCommon/externalLibs/gear
 PYTHON_FILE := main_MomentumProject_SimpleLCP.py
+#PYTHON_FILE := ompTest.py
 
 all:
 	cd PyCommon/modules;make

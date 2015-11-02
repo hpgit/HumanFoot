@@ -89,7 +89,7 @@ vpWorld::vpWorld()
 void vpWorld::SetNumThreads(int n)
 {
 	int available_cores;
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 	#pragma omp parallel 
 		available_cores = omp_get_num_threads();
 
@@ -186,7 +186,7 @@ void vpWorld::FindAdjacentBodies(vpJoint *pJointPrev, vpBody *pBodyCurrent, vpBo
 
 void vpWorld::Initialize(void)
 {
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 	omp_set_num_threads(m_iNumThreads);
 #endif
 
@@ -369,7 +369,7 @@ void vpWorld::StepAhead(void)
 	m_rTime += m_rTimeStep;
 	m_iFrameCount++;
 
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 	#pragma omp parallel for
 #endif
 	for ( int i = 0; i < m_pSystem.size(); i++ )
@@ -381,7 +381,7 @@ void vpWorld::StepAhead(void)
 	}
 
 	VP_TIMER_ACTION(m_sDynamicsTimer, Resume);
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 	#pragma omp parallel for
 #endif
 	for ( int i = 0; i < m_pSystem.size(); i++ ) (m_pSystem[i]->*IntegrateDynamics)(m_rTimeStep);

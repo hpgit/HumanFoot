@@ -56,7 +56,7 @@ void vpWorld::ResolveCollision(void)
 	m_sDelV.resize(n);
 	m_sP.resize(n);
 
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 	#pragma omp parallel for
 #endif
 	for ( int i = 0; i < n; i++ )
@@ -90,7 +90,7 @@ void vpWorld::ResolveCollision(void)
 		m_sCollisionK[i].clear((int)m_sCollisionPair[i].size(), (int)m_sCollisionPair[i].size());
 		m_sDelV[i].ReNew((int)m_sCollisionPair[i].size(), 1);
 		
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 		#pragma omp parallel for
 #endif
 		for ( int j = 0; j < m_sCollisionPair[i].size(); j++ )
@@ -225,13 +225,13 @@ void vpWorld::ResolveCollision(void)
 
 #ifdef VP_PROFILING_STATISTICS
 		if ( 0 < iter && iter < m_iMaxIterSolver ) 
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 			#pragma omp atomic
 #endif
 			m_iSuccessfulSolveAxEqualB++;
 
 		int slot = (int)log10((scalar)m_sP[i].RowSize());
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 		#pragma omp critical
 #endif
 		{
@@ -250,7 +250,7 @@ void vpWorld::ResolveCollision(void)
 				SORSolveAxEqualB(m_sCollisionK[i], m_sP[i], m_sDelV[i], 1.0, m_iMaxIterSolver, 1e-3);
 
 	#ifdef VP_PROFILING_STATISTICS
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 				#pragma omp atomic
 #endif
 				m_iNumCallSecondSolveAxEqualB++;
@@ -259,7 +259,7 @@ void vpWorld::ResolveCollision(void)
 		}
 		VP_TIMER_ACTION(m_sProfilingTimer[4], Halt);
 
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 		#pragma omp parallel for
 #endif
 		for ( int j = 0; j < m_sCollisionPair[i].size(); j++ )
@@ -305,7 +305,7 @@ void vpWorld::ResolveCollision(void)
 			}
 		}
 
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 		#pragma omp parallel for
 #endif
 		for ( int j = 0; j < m_pCollisionSystem[i].size(); j++ )
@@ -319,7 +319,7 @@ void vpWorld::ResolveCollision(void)
 			m_pCollisionSystem[i][j]->m_pRoot->m_sV += m_pCollisionSystem[i][j]->m_pRoot->m_sDV;
 		}
 
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 		#pragma omp parallel for
 #endif
 		for ( int j = 0; j < m_sCollisionPair[i].size(); j++ )

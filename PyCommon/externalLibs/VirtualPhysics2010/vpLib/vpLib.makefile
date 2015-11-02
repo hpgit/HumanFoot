@@ -1,8 +1,16 @@
 UNAME := $(shell uname -s)
 ifeq ($(UNAME), Darwin)
+	MAC_OMP := $(shell clang-omp++ --version 2>/dev/null)
+ifdef MAC_OMP
+	CPP_COMPILER = clang-omp++
+	C_COMPILER = clang-omp++
+	PREPROCESSOR = -D __APPLE_OMP__ -fopenmp
+else
 	CPP_COMPILER = clang++
 	C_COMPILER = clang++
 endif
+endif
+
 ifeq ($(UNAME), Linux)
 	CPP_COMPILER = g++
 	C_COMPILER = gcc

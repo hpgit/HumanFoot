@@ -56,7 +56,7 @@ void vpPrimitiveCollisionDetector::DetectCollision(void)
 	m_sCollisionList.resize(m_pWorld->GetNumThreads());
 	
 	int total = 0;
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 	#pragma omp parallel for reduction(+ : total)
 #endif
 	for ( int i = 0; i < m_sCollisionLUT.size(); i++ )
@@ -72,7 +72,7 @@ void vpPrimitiveCollisionDetector::DetectCollision(void)
 			pair.pLeftBody->GetGeometry(j)->DetectCollision(pair.pRightBody->GetGeometry(k), pair.colInfo);
 		
 		if ( pair.colInfo.size() > 0 )
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 			m_sCollisionList[omp_get_thread_num()].push_back(i);
 #else
 			m_sCollisionList[0].push_back(i);

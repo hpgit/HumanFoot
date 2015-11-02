@@ -55,16 +55,15 @@ void VpWorld::initialize()
 
 	//_world.SetIntegrator(VP::IMPLICIT_EULER);
 	//_world.SetIntegrator(VP::IMPLICIT_EULER_FAST);
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 	setOpenMP();
 #endif
 }
 
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 void VpWorld::setOpenMP()
 {
 	int a = 1;
-
 
 	#pragma omp parallel 
 		_world.SetNumThreads((a = omp_get_num_threads()));
@@ -222,9 +221,6 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 	return make_tuple(bodyIDs, positions, positionLocals, forces);
 }
 
-// @param position ÀÛ¿ëÇÒ ÁöÁ¡(global)
-// @param [out] force ¹ß»ıÇÑ penalty force(global)
-// @return penalty force°¡ ¹ß»ıÇßÀ¸¸é true
 bool VpWorld::_calcPenaltyForce( const vpBody* pBody, const Vec3& position, const Vec3& velocity, Vec3& force, scalar Ks, scalar Ds, scalar mu )
 {
 	static Vec3 vRelVel, vNormalRelVel, vTangentialRelVel;
@@ -260,11 +256,11 @@ bool VpWorld::_calcPenaltyForce( const vpBody* pBody, const Vec3& position, cons
 */
 		frictionForce = mu * normalForce;
 
-		// °¡¸¸È÷ ¼­ÀÖÀ» ¶§ ¹Ì²ô·¯Áö´Â Çö»ó ¹æÁöÇÏ±â À§ÇØ
-		// rigid bodyÀÌ¹Ç·Î point lockingÀÌ Èûµé¾î¼­ Á¤Áö¸¶Âû·Â ±¸ÇöÀÌ ¾î·Á¿ò
-		// ¹Ì²ô·¯Áö´Â ¿øÀÎÀÌ ¼ÓµµÀÇ ¹İ´ë¹æÇâÀ¸·Î Å« ¸¶Âû·ÂÀÌ ÀÛ¿ë¿¡ ´ÙÀ½ step¿¡¼­´Â 
-		// ´Ù½Ã ±× ¹İ´ë¹æÇâÀ¸·Î ¸¶Âû·ÂÀÌ ÀÛ¿ëÇÏ¸é¼­ Áøµ¿À» ÇÏ¸ç ¹Ì²ô·¯Áö±â ¶§¹®
-		// ÀÌ¸¦ ¹æÁöÇÏ±â À§ÇØ ÀÏÁ¤ ¼Óµµ ÀÌÇÏ¿¡¼­´Â ¸¶Âû·ÂÀÇ ÀÏÁ¤ ºñÀ²¸¸ Àû¿ëÇÏµµ·Ï ÀÓ½Ã ÄÚµù
+		// ?????? ????À» ?? ?Ì²??????? ???? ?????Ï±? À§??
+		// rigid body?Ì¹Ç·? point locking?? ?????î¼­ Á¤???????? ?????? ???Á¿?
+		// ?Ì²??????? ?????? ?Óµ??? ?İ´?????À¸?? Å« ???????? ?Û¿ë¿¡ ??À½ step?????? 
+		// ?Ù½? ?? ?İ´?????À¸?? ???????? ?Û¿??Ï¸é¼­ ????À» ?Ï¸? ?Ì²??????? ????
+		// ?Ì¸? ?????Ï±? À§?? ??Á¤ ?Óµ? ???Ï¿????? ???????? ??Á¤ ??À²?? ?????Ïµ??? ?Ó½? ?Úµ?
 		if(tangentialRelVel < _lockingVel) 
 			frictionForce *= tangentialRelVel/_lockingVel;
 

@@ -182,7 +182,7 @@ def main():
     controlModel.initializeHybridDynamics()
     
     #ModelOffset = (1.5, -0.01, 0)
-    ModelOffset = (1.5, 0.4, 0)
+    ModelOffset = (1.5, 0.04, 0)
     controlModel.translateByOffset(ModelOffset)
     
     totalDOF = controlModel.getTotalDOF()
@@ -585,6 +585,7 @@ def main():
 
 
         bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+        print frame, contactPositions
         CP = yrp.getCP(contactPositions, contactForces)
         if CP != None:
             CP[1] = 0.

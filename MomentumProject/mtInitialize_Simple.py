@@ -481,7 +481,7 @@ def create_biped():
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
-    stepsPerFrame = 60
+    stepsPerFrame = 30
     wcfg.timeStep = (1/30.)/(stepsPerFrame)
     #stepsPerFrame = 10
     #wcfg.timeStep = (1/120.)/(stepsPerFrame)

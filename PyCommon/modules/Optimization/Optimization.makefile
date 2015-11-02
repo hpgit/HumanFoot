@@ -2,7 +2,12 @@ UNAME := $(shell uname -s)
 ifeq ($(UNAME), Darwin)
 	MACVER := $(shell sw_vers -productVersion | sed "s:.[[:digit:]]*.$$::g")
 	FOLDER := lib.macosx-$(MACVER)-x86_64-2.7
+	MAC_OMP := $(shell clang-omp++ --version 2>/dev/null)
+ifdef MAC_OMP
+	SETUPFILE := setup_mac_omp.py
+else
 	SETUPFILE := setup_mac.py
+endif
 endif
 ifeq ($(UNAME), Linux)
 	FOLDER := lib.linux-x86_64-2.7

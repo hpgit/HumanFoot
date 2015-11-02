@@ -52,7 +52,7 @@ OF SUCH DAMAGE.
 #include <set>
 #include <vector>
 #include <list>
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 #include <omp.h>
 #endif
 
