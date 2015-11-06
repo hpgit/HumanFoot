@@ -13,7 +13,7 @@
 #define MAX_Y 2	// 0010
 #define MAX_Z 4	// 0100
 
-#define QP
+//#define QP
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(getBodyPositionGlobal_py_overloads, getBodyPositionGlobal_py, 1, 2);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(getBodyVelocityGlobal_py_overloads, getBodyVelocityGlobal_py, 1, 2);

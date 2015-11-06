@@ -66,7 +66,7 @@ class JointMotionRenderer(Renderer):
                 glColor3ubv(self.shadowColor)
             else:
                 glColor3ubv(self.totalColor)
-            if self.renderFrames==None:
+            if self.renderFrames is None:
                 posture = self.motion[self.motion.frame]
                 self.renderJointPosture(posture)
             else:
@@ -151,7 +151,7 @@ class PointsRenderer(Renderer):
         self.rc.beginDraw()
         glColor3ubv(self.totalColor)
         for point in self.points:
-            if point!=None:
+            if point is not None:
                 if self.pointStyle==POINT_POINT:
                     self.rc.drawPoint(point)
                 elif self.pointStyle==POINT_CROSS:
@@ -170,7 +170,7 @@ class VectorsRenderer(Renderer):
         glColor3ubv(self.totalColor)
         self.rc.beginDraw()
         for i in range(len(self.vectors)):
-            if self.vectors[i] != None and self.origins[i] != None:
+            if (self.vectors[i] is not None) and (self.origins[i] is not None):
                 origin = self.origins[i]; vector = self.vectors[i]
                 self.rc.drawLine(origin, (origin[0]+vector[0],origin[1]+vector[1],origin[2]+vector[2]))
             
@@ -187,7 +187,7 @@ class ForcesRenderer(Renderer):
         self.rc.beginDraw()
         glColor3ubv(self.totalColor)
         for i in range(len(self.forces)):
-            if self.forces[i]!=None and self.points[i]!=None:
+            if (self.forces[i] is not None) and (self.points[i] is not None):
                 if self.fromPoint==False:
                     self.rc.drawArrow(None, self.points[i], mm.v3_scale(self.forces[i], self.ratio), self.lineWidth)
                 else:
@@ -295,9 +295,9 @@ class RenderContext:
         glEnd()
         
     def draw2DArrow(self, startPos, endPos, vector=None, lineWidth=.02):
-        if vector==None:
+        if vector is None:
             vector = [endPos[i]-startPos[i] for i in range(3)]
-        elif startPos==None:
+        elif startPos is None:
             startPos = [endPos[i]-vector[i] for i in range(3)]
         
 #        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
@@ -335,9 +335,9 @@ class RenderContext:
         glEnable(GL_CULL_FACE)
         
     def drawArrow(self, startPos, endPos, vector=None, lineWidth=.02):
-        if vector==None:
+        if vector is None:
             vector = [endPos[i]-startPos[i] for i in range(3)]
-        elif startPos==None:
+        elif startPos is None:
             startPos = [endPos[i]-vector[i] for i in range(3)]
         
         length = mm.length(vector)
@@ -358,9 +358,9 @@ class RenderContext:
         glPopMatrix()
     
     def drawCircularArrow(self, startPos, endPos, rotVec=None, lineWidth=.02, radius=.1):
-        if rotVec==None:
+        if rotVec is None:
             rotVec = [endPos[i]-startPos[i] for i in range(3)]
-        elif startPos==None:
+        elif startPos is None:
             startPos = [endPos[i]-rotVec[i] for i in range(3)]
         
         length = mm.length(rotVec)

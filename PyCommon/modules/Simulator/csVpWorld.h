@@ -22,4 +22,6 @@ public:	// expose to python
 	void applyPenaltyForce(const bp::list& bodyIDs, const bp::list& positions, const bp::list& forces);
 	int getBodyNum() { return _world.GetNumBody(); }
 	void setOpenMP();
+
+	boost::python::tuple getContactPoints(const bp::list& bodyIDsToCheck);
 };

@@ -197,7 +197,7 @@ def main():
     Bt = config['Bt']
     Bl = config['Bl']
     Bh = config['Bh']
-        
+    
     w = mot.getTrackingWeight(DOFs, motion[0].skeleton, config['weightMap'])
     w2 = mot.getTrackingWeight(DOFs, motion[0].skeleton, config['weightMap2'])
     #w_IK = mot.getTrackingWeight(DOFs, motion[0].skeleton, config['IKweightMap'])
@@ -208,7 +208,7 @@ def main():
     selectedBody = motion[0].skeleton.getJointIndex(config['end'])
     #constBody = motion[0].skeleton.getJointIndex('LeftForeArm')
     constBody = motion[0].skeleton.getJointIndex(config['const'])
-    
+
     # jacobian 
     Jsup = yjc.makeEmptyJacobian(DOFs, 1)
     dJsup = Jsup.copy()
@@ -279,7 +279,8 @@ def main():
                 maskArray[j][0][i] = 1
             else :
                 maskArray[j][0][i] = 0
-    '''     
+    ''' 
+
     # momentum matrix
     linkMasses = controlModel.getBodyMasses()
     totalMass = controlModel.getTotalMass()
@@ -436,8 +437,11 @@ def main():
 
     contactRendererName = []
     
-    for i in range (motion[0].skeleton.getJointNum()):
-        print(i, motion[0].skeleton.getJointName(i))       
+    #for i in range (motion[0].skeleton.getJointNum()):
+    #    print(i, motion[0].skeleton.getJointName(i))       
+    print "(index, id, name)"
+    for i in range(controlModel.getBodyNum()):
+        print (i, controlModel.index2id(i), controlModel.index2name(i))
     
     desCOMOffset = 0.0
     
@@ -583,17 +587,15 @@ def main():
         timeReport[3] += time.time() -curTime
         curTime = time.time()
 
-
+        # bodyIDs : IDs for Virtual Physics, not VpModel !!!
         bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
-        print frame, contactPositions
         CP = yrp.getCP(contactPositions, contactForces)
-        if CP != None:
+        if (CP is not None):
             CP[1] = 0.
 
-        for i in range(len(bodyIDsToCheck)) :
-            controlModel.SetBodyColor(bodyIDsToCheck[i], 0, 0, 0, 255)
-        
 
+        for i in range(controlModel.getBodyNum()) :
+            controlModel.SetBodyColor(bodyIDsToCheck[i], 0, 0, 0, 255)
 
         contactFlagFootL = [0]*footPartNum
         contactFlagFootR = [0]*footPartNum
@@ -673,13 +675,13 @@ def main():
         CP_ref[1] = 0.
 
         timeStep = 30.
-        if CP_old[0]==None or CP==None:
+        if (CP_old[0] is None) or (CP is None):
             dCP = None
         else:
             dCP = (CP - CP_old[0])*timeStep
         CP_old[0] = CP            
         
-        if CP!=None and dCP!=None:
+        if (CP is not None) and (dCP is not None):
             ddCP_des = Kh*(CP_ref - CP) - Dh*(dCP)
             CP_des = CP + dCP*(1/timeStep) + .5*ddCP_des*((1/timeStep)**2)
             #print 'dCP: ', dCP
@@ -699,7 +701,7 @@ def main():
 
          
         flagContact = True
-        if dH_des==None or np.any(np.isnan(dH_des)) == True:
+        if (dH_des is None) or np.any(np.isnan(dH_des)) == True:
             flagContact = False 
             #viewer.doc.showRenderer('rd_grf_des', False)
             #viewer.motionViewWnd.update(1, viewer.doc)
@@ -955,7 +957,7 @@ def main():
         
         ##############################
         
-        #if Jsup_2 != None:
+        #if Jsup_2 is not None:
         #    mot.addConstraint(problem, totalDOF, Jsup_2, dJsup_2, dth_flat, a_sup_2)
         
 
@@ -1049,70 +1051,7 @@ def main():
             #print ddth_sol
             controlModel.setDOFAccelerations(ddth_sol)
             
-            controlModel.solveHybridDynamics()            
-            
-            '''
-            if (frame > 5):
-                tau = controlModel.getJointTorqueLocal(indexFootL[3])
-                tau2 = controlModel.getJointTorqueLocal(indexFootL[4])
-                tau3 = controlModel.getJointTorqueLocal(indexFootR[3])
-                tau4 = controlModel.getJointTorqueLocal(indexFootR[4])
-                
-                torques = controlModel.getInternalJointTorquesLocal()   
-            
-                if (frame > 100 and frame < 110) or (frame > 165 and frame < 190):
-                    Wcal1 = 0.05
-                    Wcal2 = 0.05
-                    dC = fCom[2]*Wcal1-dCM[2]*Wcal2
-                    print("dC", dC)
-                    torques[indexFootL[5]-1]+= (dC, 0.0, 0.0)
-                    torques[indexFootR[5]-1]+= (dC, 0.0, 0.0)
-
-                if (frame > 50 and frame < 75) or (frame > 110 and frame <140) or (frame > 185 and frame < 220):
-                    
-                    metatarR = [controlModel.getBodyOrientationGlobal(indexFootL[1])]
-                    phalangeR = [controlModel.getBodyOrientationGlobal(indexFootL[3])]
-                    metatarR2 = np.dot(metatarR, np.array([0,0,1]))
-                    phalangeR2 = np.dot(phalangeR, np.array([0,0,1]))
-
-                    metatarRZ = mm.normalize(metatarR2[0])
-                    phalangeRZ = mm.normalize(phalangeR2[0])
-                    lean = np.dot(metatarRZ, phalangeRZ)
-                    Wlean = 2
-                    
-                    dt = -0.02*(lean)*Wlean
-                    torques[indexFootL[3]-1]+= (dt, 0.0, 0.0)
-                    torques[indexFootL[4]-1]+= (dt, 0.0, 0.0)
-                    torques[indexFootR[3]-1]+= (dt, 0.0, 0.0)
-                    torques[indexFootR[4]-1]+= (dt, 0.0, 0.0)
-                       
-                                               
-                i = 0
-                t = 6
-                while t < len(TauJT) :
-                    torques[i] += (TauJT[t]+TauAM[t], TauJT[t+1]+TauAM[t+1], TauJT[t+2]+TauAM[t+2])
-                    i+=1
-                    t+=3
-
-                #totalTorques = [a + b for a, b in zip(torques, TauJT)]
-                #print("torques2", torques)
-                #print("TauJT", TauJT[16], TauJT[17], TauJT[18])
-                #print("torques", torques[16])
-                #print("totalTorques", totalTorques[16])
-                controlModel.setInternalJointTorquesLocal(torques)
-            '''
-
-            '''
-            extraForce[0] = viewer.GetForce()
-            if (extraForce[0][0] != 0 or extraForce[0][1] != 0 or extraForce[0][2] != 0) :
-                forceApplyFrame += 1
-                vpWorld.applyPenaltyForce(selectedBodyId, localPos, extraForce)
-                applyedExtraForce[0] = extraForce[0]
-            
-            if forceApplyFrame*wcfg.timeStep > 0.1:
-                viewer.ResetForce()
-                forceApplyFrame = 0            
-            '''
+            controlModel.solveHybridDynamics()
             vpWorld.step()                    
             
             
@@ -1135,7 +1074,7 @@ def main():
 
         #rd_CM_plane[0][1] = 0.
         
-        if CP!=None and dCP!=None:
+        if (CP is not None) and (dCP is not None):
             rd_CP[0] = CP
             rd_CP_des[0] = CP_des
         

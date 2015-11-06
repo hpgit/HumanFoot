@@ -162,8 +162,8 @@ MyFoot3::MyFoot3(scalar radius, scalar height) :vpCapsule(radius, height)
 	
 	// top, bottom, left, right
 	//scalar l = height / 2. - radius; scalar r = -height / 2. + radius;
-	//_r = radius;
-	//_h = height;
+	_r = radius;
+	_h = height;
 	//int row = 12, col = 6;
 
 	//sphere(_verticesLocal, Vec3(0.0, 0.0, l), radius, row, col);
@@ -203,7 +203,6 @@ void MyFoot4::getContactVertices(vector<Vec3>& verticesLocal, vector<Vec3>& vert
 void MyFoot4::getContactVerticesGlobal(vector<Vec3>& verticesGlobal)
 {
 	scalar l = _h / 2. - _r; //scalar r = -_h / 2. + _r;
-
 	Vec3 center[2];
 	//scalar depth[2];
 	center[0] = this->GetGlobalFrame()* Vec3(0, 0, l);

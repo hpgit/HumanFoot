@@ -20,6 +20,7 @@ BOOST_PYTHON_MODULE(csVpWorld)
 		.def("calcPenaltyForce", &VpWorld::calcPenaltyForce)
 		.def("applyPenaltyForce", &VpWorld::applyPenaltyForce)
 		.def("getBodyNum", &VpWorld::getBodyNum)
+		.def("getContactPoints", &VpWorld::getContactPoints)
 	;
 }
 
@@ -67,7 +68,7 @@ void VpWorld::setOpenMP()
 
 	#pragma omp parallel 
 		_world.SetNumThreads((a = omp_get_num_threads()));
-	std::cout << "parallelized with " << a << " cores" << std::endl;
+	std::cout << "csVpWorld: parallelized with " << a << " cores" << std::endl;
 
 }
 #endif
@@ -108,6 +109,7 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 					bool penentrated = _calcPenaltyForce(pBody, position, velocity, force, Ks, Ds, XD(mus[i]));
 					if (penentrated)
 					{
+						
 						bodyIDs.append(bodyID);
 
 						object pyPosition = O_Vec3.copy();
@@ -128,7 +130,7 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 					}
 				}
 			}
-			else if (true)
+			else if (false)
 			{
 				const SE3& geomFrame = pGeom->GetGlobalFrame();
 
@@ -286,4 +288,94 @@ void VpWorld::applyPenaltyForce( const bp::list& bodyIDs, const bp::list& positi
 		pBody = _world.GetBody(bodyID);
 		pBody->ApplyGlobalForce(force, position);
 	}
+}
+
+
+// @return ( bodyIDs, positions, postionLocals)
+boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
+{
+	bp::list bodyIDs, positions, forces, positionLocals, velocities;
+	int bodyID;
+	static numeric::array O_Vec3(make_tuple(0., 0., 0.));
+	const vpBody* pBody;
+	vpGeom* pGeom;
+	char type;
+	scalar data[3];
+	static Vec3 position, velocity, force, positionLocal;
+
+	for (int i = 0; i<len(bodyIDsToCheck); ++i)
+	{
+		bodyID = XI(bodyIDsToCheck[i]);
+		pBody = _world.GetBody(bodyID);
+
+		for (int j = 0; j<pBody->GetNumGeometry(); ++j)
+		{
+			pGeom = pBody->GetGeometry(j);
+			pGeom->GetShape(&type, data);
+			if (type == 'C')
+			{
+				const vector<Vec3>& verticesLocal = pGeom->getVerticesLocal();
+				const vector<Vec3>& verticesGlobal = pGeom->getVerticesGlobal();
+				for (int k = 0; k < verticesLocal.size(); ++k)
+				{
+					position = verticesGlobal[k];
+					positionLocal = verticesLocal[k];
+					bool penentrated = position[1] <= _planeHeight;
+					if (penentrated)
+					{
+						velocity = pBody->GetLinVelocity(positionLocal);
+						
+						bodyIDs.append(bodyID);
+
+						object pyPosition = O_Vec3.copy();
+						Vec3_2_pyVec3(position, pyPosition);
+						positions.append(pyPosition);
+
+						object pyVelocity = O_Vec3.copy();
+						Vec3_2_pyVec3(velocity, pyVelocity);
+						velocities.append(pyVelocity);
+
+						object pyPositionLocal = O_Vec3.copy();
+						Vec3_2_pyVec3(positionLocal, pyPositionLocal);
+						positionLocals.append(pyPositionLocal);
+					}
+				}
+			}
+			else if (false)
+			{
+				const SE3& geomFrame = pGeom->GetGlobalFrame();
+
+				for (int p = 0; p<8; ++p)
+				{
+					positionLocal[0] = (p & MAX_X) ? data[0] / 2. : -data[0] / 2.;
+					positionLocal[1] = (p & MAX_Y) ? data[1] / 2. : -data[1] / 2.;
+					positionLocal[2] = (p & MAX_Z) ? data[2] / 2. : -data[2] / 2.;
+					position = geomFrame * positionLocal;
+
+					velocity = pBody->GetLinVelocity(positionLocal);
+
+					bool penentrated = position[1] <= _planeHeight;
+					if (penentrated)
+					{
+						bodyIDs.append(bodyID);
+
+						object pyPosition = O_Vec3.copy();
+						Vec3_2_pyVec3(position, pyPosition);
+						positions.append(pyPosition);
+
+						object pyVelocity = O_Vec3.copy();
+						Vec3_2_pyVec3(velocity, pyVelocity);
+						velocities.append(pyVelocity);
+
+						object pyPositionLocal = O_Vec3.copy();
+						Vec3_2_pyVec3(positionLocal, pyPositionLocal);
+						positionLocals.append(pyPositionLocal);
+					}
+				}
+			}
+		}
+	}
+
+
+	return make_tuple(bodyIDs, positions, positionLocals);
 }

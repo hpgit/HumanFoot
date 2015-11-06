@@ -63,7 +63,7 @@ class LSE:
         '''
         #self.A.append(A)
         #self.b.append(b)
-        if self.A == None:
+        if self.A is None:
             self.A = A
             self.b = b
         else:
@@ -103,7 +103,7 @@ class LSE:
         A11 = sum([2*np.dot(Ci.T, Ci) for Ci in self.Cs])
 
         A = self.A
-        if self.A == None:
+        if self.A is None:
             A = np.zeros((1, A11.shape[0]))
         A12 = A.T
         A21 = A
@@ -112,7 +112,7 @@ class LSE:
 
         b1 = sum([2*np.dot(self.Cs[i].T, self.ds[i]) for i in range(len(self.Cs))])
         b2 = self.b
-        if self.b == None:
+        if self.b is None:
             b2 = (0)
         b_large = np.hstack((b1,b2))        
         
@@ -224,7 +224,7 @@ class QP:
     # subject to Ax=b
     # A: matrix, b: vector
     def addEqualityConstraint(self, A, b):
-        if self.A == None:
+        if self.A is None:
             self.A = A
             self.b = b
         else:
@@ -234,7 +234,7 @@ class QP:
     # subject to Gx<=h
     # G: matrix, h: vector
     def addInequalityConstraint(self, G, h):
-        if self.G == None:
+        if self.G is None:
             self.G = G
             self.h = h
         else:
