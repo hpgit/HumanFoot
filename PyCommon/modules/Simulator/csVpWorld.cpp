@@ -21,6 +21,7 @@ BOOST_PYTHON_MODULE(csVpWorld)
 		.def("applyPenaltyForce", &VpWorld::applyPenaltyForce)
 		.def("getBodyNum", &VpWorld::getBodyNum)
 		.def("getContactPoints", &VpWorld::getContactPoints)
+		.def("getTimeStep", &VpWorld::getTimeStep)
 	;
 }
 
@@ -72,6 +73,12 @@ void VpWorld::setOpenMP()
 
 }
 #endif
+
+scalar VpWorld::getTimeStep()
+{
+	return _world.GetTimeStep();
+}
+
 
 // @return ( bodyIDs, positions, postionLocals, forces)
 boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, const bp::list& mus, scalar Ks, scalar Ds )

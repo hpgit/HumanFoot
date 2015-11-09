@@ -23,5 +23,6 @@ public:	// expose to python
 	int getBodyNum() { return _world.GetNumBody(); }
 	void setOpenMP();
 
+	scalar getTimeStep();
 	boost::python::tuple getContactPoints(const bp::list& bodyIDsToCheck);
 };

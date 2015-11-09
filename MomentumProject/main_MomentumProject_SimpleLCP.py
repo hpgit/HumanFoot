@@ -16,6 +16,7 @@ import Renderer.ysRenderer as yr
 import Renderer.csVpRenderer as cvr
 import Simulator.csVpWorld as cvw
 import Simulator.csVpModel as cvm
+import Simulator.hpLCPSimulator as hls
 import GUI.ysSimpleViewer as ysv
 import Optimization.ysAnalyticConstrainedOpt as yac
 import ArticulatedBody.ysJacobian as yjc
@@ -458,7 +459,9 @@ def main():
     viewer.objectInfoWnd.end()
     viewer.objectInfoWnd.labelKt.value(50)
     viewer.objectInfoWnd.labelKk.value(17)
+
     def simulateCallback(frame):              
+        print "main:frame : ", frame
 
         curTime = time.time()
 
@@ -587,6 +590,7 @@ def main():
         timeReport[3] += time.time() -curTime
         curTime = time.time()
 
+        hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., 8, None)
         # bodyIDs : IDs for Virtual Physics, not VpModel !!!
         bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
         CP = yrp.getCP(contactPositions, contactForces)
@@ -964,7 +968,6 @@ def main():
         timeReport[4] += time.time() -curTime
         curTime = time.time()
 
-        #print np.NAN
         r = problem.solve()
         #print frame
         #Ashape = np.shape(problem.A)
@@ -1055,7 +1058,7 @@ def main():
             vpWorld.step()                    
             
             
-        if frame%30==0: print 'elapsed time for 30 frames:', time.time()-pt[0]
+        #if frame%30==0: print 'elapsed time for 30 frames:', time.time()-pt[0]
         # rendering        
 
         rd_footCenter[0] = footCenter
@@ -1114,12 +1117,14 @@ def main():
 
         timeReport[6] += time.time() -curTime
         # print timeReport
+    for i in range(4):
+        simulateCallback(i)
 
-    viewer.setSimulateCallback(simulateCallback)
+    #viewer.setSimulateCallback(simulateCallback)
     
-    viewer.startTimer(1/30.)
-    viewer.show()
+    #viewer.startTimer(1/30.)
+    #viewer.show()
     
-    Fl.run()
+    #Fl.run()
     
 main()

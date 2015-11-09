@@ -30,20 +30,26 @@ int LemkeSolver::solve(int dim, const object& A, const object& b, object& x, con
 	bthi.resize(dim);
 	btlo.resize(dim);
 
+
+	btAlignedObjectArray<int> limitDependency;
+	limitDependency.resize(dim);
+	
 	for(int i=0; i<dim; i++)
 	{
 		for(int j=0; j<dim;j++)
 		{
-			btA.setElem(i, j, XD(A[i][j]));
+			btA.setElem(j, i, XD(A[i][j]));
 		}
 		btx[i]  = XD(x[i]);
 		btb[i]  = XD(b[i]);
 		bthi[i] = XD(hi[i]);
 		btlo[i] = XD(lo[i]);
+		limitDependency[i] = 0;
 	}
 
-	btAlignedObjectArray<int> limitDependency;
-	
+
+	//printf("hehe\n");
+	//printf("heheheh\n");
 	if( true == solveMLCP(btA, btb, btx, btlo, bthi, limitDependency, 0) )
 	{
 		for(int i=0; i<dim; i++)
@@ -52,5 +58,7 @@ int LemkeSolver::solve(int dim, const object& A, const object& b, object& x, con
 		}
 		return 1;
 	}
+	else
+		printf("solveMLCP failed!\n");
 	return 0;
 }
