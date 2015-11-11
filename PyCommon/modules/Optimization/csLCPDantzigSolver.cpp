@@ -1,17 +1,17 @@
-#include "csLCPLemkeSolver.h"
+#include "csLCPDantzigSolver.h"
 #include "../../../PyCommon/externalLibs/common/boostPythonUtil.h"
 
-BOOST_PYTHON_MODULE(csLCPLemkeSolver)
+BOOST_PYTHON_MODULE(csLCPDantzigSolver)
 {
 	numeric::array::set_module_and_type("numpy", "ndarray");
 
-	class_<LemkeSolver>("LemkeSolver", init< >())
+	class_<DantzigSolver>("DantzigSolver", init< >())
 		.def(init< >())
-		.def("solve", &LemkeSolver::solve)
+		.def("solve", &DantzigSolver::solve)
 		;
 }
 
-int LemkeSolver::solve(int dim, const object& A, const object& b, object& x, const object& lo,const object& hi)
+int DantzigSolver::solve(int dim, const object& A, const object& b, object& x, const object& lo,const object& hi)
 {
 	if ( 0 >= dim )
 	{
@@ -51,11 +51,11 @@ int LemkeSolver::solve(int dim, const object& A, const object& b, object& x, con
 	//printf("hehe\n");
 	//printf("heheheh\n");
 
-	if( true == solveMLCP(btA, btb, btx, btlo, bthi, limitDependency, 1000, false) )
+	if( true == solveMLCP(btA, btb, btx, btlo, bthi, limitDependency, 0, false) )
 	
 	{
 		//BT_PROFILE("lemke.solve");
-		//btLemkeAlgorithm lemke(btA,btb);
+		//btLemkeAlgorithm lemke(btA,btb,1);
 		//btx = lemke.solve(m_maxLoops);
 		for(int i=0; i<dim; i++)
 		{

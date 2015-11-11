@@ -163,13 +163,13 @@ bool btLemkeSolver::solveMLCP(const btMatrixXu & A, const btVectorXu & b, btVect
 		btMatrixXu x1;
 
 		x1 = B*(y1_b1);
-		//	printf("(");
+
 		for (int row=0;row<n;row++)
 		{
-			solution[row] = x1(row,0);//n];
-		//	printf("%lf, ", solution[row]);
+			solution[row] = x1(row,0);
+
 		}
-		//printf(")\n");
+
 
 		int errorIndexMax = -1;
 		int errorIndexMin = -1;
@@ -218,21 +218,21 @@ bool btLemkeSolver::solveMLCP(const btMatrixXu & A, const btVectorXu & b, btVect
 			if (errorIndexMax<0)
 				errorValueMax = 0.f;
 			m_errorCountTimes++;
-		//	printf("Error (x[%d] = %f, x[%d] = %f), resetting %d times\n", errorIndexMin,errorValueMin, errorIndexMax, errorValueMax, errorCountTimes++);
+			printf("Error (x[%d] = %f, x[%d] = %f), resetting %d times\n", errorIndexMin,errorValueMin, errorIndexMax, errorValueMax, m_errorCountTimes++);
 			for (int i=0;i<n;i++)
 			{
 				x[i]=0.f;
 			}
 		}
 		return !fail;
-	} else
-		
-	{
+	} 
+
+	else {
 			int dimension = A.rows();
 		if (0==dimension)
 			return true;
 		
-//		printf("================ solving using Lemke/Newton/Fixpoint\n");
+		//printf("================ solving using Lemke/Newton/Fixpoint\n");
 
 		btVectorXu q;
 		q.resize(dimension);

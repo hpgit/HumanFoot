@@ -85,12 +85,12 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 {
 	bp::list bodyIDs, positions, forces, positionLocals, velocities;
 	int bodyID;
-	static numeric::array O_Vec3(make_tuple(0., 0., 0.));
+	numeric::array O_Vec3(make_tuple(0., 0., 0.));
 	const vpBody* pBody;
 	vpGeom* pGeom;
 	char type;
 	scalar data[3];
-	static Vec3 position, velocity, force, positionLocal;
+	Vec3 position, velocity, force, positionLocal;
 
 	for (int i = 0; i<len(bodyIDsToCheck); ++i)
 	{
@@ -232,10 +232,10 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 
 bool VpWorld::_calcPenaltyForce( const vpBody* pBody, const Vec3& position, const Vec3& velocity, Vec3& force, scalar Ks, scalar Ds, scalar mu )
 {
-	static Vec3 vRelVel, vNormalRelVel, vTangentialRelVel;
-	static scalar normalRelVel, tangentialRelVel;
-	static const Vec3 vNormal(0,1,0);
-	static Vec3 vNormalForce, vFrictionForce;
+	Vec3 vRelVel, vNormalRelVel, vTangentialRelVel;
+	scalar normalRelVel, tangentialRelVel;
+	const Vec3 vNormal(0,1,0);
+	Vec3 vNormalForce, vFrictionForce;
 	scalar normalForce=0., frictionForce=0.;
 
 	vRelVel = velocity;
@@ -284,7 +284,7 @@ void VpWorld::applyPenaltyForce( const bp::list& bodyIDs, const bp::list& positi
 {
 	int bodyID;
 	vpBody* pBody;
-	static Vec3 position, force;
+	Vec3 position, force;
 
 	for(int i=0; i<len(bodyIDs); ++i)
 	{
@@ -303,12 +303,12 @@ boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
 {
 	bp::list bodyIDs, positions, forces, positionLocals, velocities;
 	int bodyID;
-	static numeric::array O_Vec3(make_tuple(0., 0., 0.));
+	numeric::array O_Vec3(make_tuple(0., 0., 0.));
 	const vpBody* pBody;
 	vpGeom* pGeom;
 	char type;
 	scalar data[3];
-	static Vec3 position, velocity, force, positionLocal;
+	Vec3 position, velocity, force, positionLocal;
 
 	for (int i = 0; i<len(bodyIDsToCheck); ++i)
 	{

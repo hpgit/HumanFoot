@@ -43,7 +43,7 @@ public:
 	btLemkeSolver()
 		:m_maxValue(100000),
 		m_debugLevel(0),
-		m_maxLoops(1000),
+		m_maxLoops(100),
 		m_useLoHighBounds(true)
 	{
 	}

@@ -356,6 +356,9 @@ def main():
     rd_Joint3 = [None]
     rd_Joint4 = [None]
     rd_desPoints = [None]
+
+    rd_contactForces = [None]
+    rd_contactPositions = [None]
         
     #rd_contactForces = [None]*10000
     #rd_contactPositions = [None]*10000
@@ -423,7 +426,7 @@ def main():
         #viewer.doc.addRenderer('rd_curNormalVec', yr.VectorsRenderer(normalVector, rd_footCenter, (255,0,0), 3))
         #viewer.doc.addRenderer('rd_CMVec', yr.VectorsRenderer(rd_CM_vec, rd_footCenter, (255,0,255), 3))
             
-        #viewer.doc.addRenderer('rd_contactForces', yr.ForcesRenderer(rd_contactForces, rd_contactPositions, (0,255,0), .009, 0.009))
+        viewer.doc.addRenderer('rd_contactForces', yr.VectorsRenderer(rd_contactForces, rd_contactPositions, (0,255,0), .1))
     
         #viewer.doc.addRenderer('rd_virtualForce', yr.ForcesRenderer(rd_virtualForce, rd_CM, (50,255,0), 0.5, 0.02))
     
@@ -432,7 +435,7 @@ def main():
         #viewer.doc.addRenderer('rd_Joint3', yr.PointsRenderer(rd_Joint3, (0,0,255)))
         #viewer.doc.addRenderer('rd_Joint4', yr.PointsRenderer(rd_Joint4, (255,255,0)))
 
-        viewer.doc.addRenderer('rd_desPoints', yr.PointsRenderer(rd_desPoints, (255,0,0)))
+        #viewer.doc.addRenderer('rd_desPoints', yr.PointsRenderer(rd_desPoints, (255,0,0)))
 
     stage = STATIC_BALANCING
 
@@ -590,7 +593,7 @@ def main():
         timeReport[3] += time.time() -curTime
         curTime = time.time()
 
-        hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., 8, None)
+        lcpBodyIDs, lcpContactPositions, lcpContactPositionLocals, lcpContactForces = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., 4, None)
         # bodyIDs : IDs for Virtual Physics, not VpModel !!!
         bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
         CP = yrp.getCP(contactPositions, contactForces)
@@ -1093,38 +1096,23 @@ def main():
 
         rd_soft_const_vec[0] = controlModel.getBodyPositionGlobal(constBody)-softConstPoint
 
-
-        #indexL = motion[0].skeleton.getJointIndex('Hips')
-        #indexR = motion[0].skeleton.getJointIndex('Spine1')
-        indexL = indexFootL[0]        
-        indexR = indexFootR[0]
-
-        curAng = [controlModel.getBodyOrientationGlobal(indexL)]                        
-        curAngY = np.dot(curAng, np.array([0,0,1]))
-
-        rd_footL_vec[0] = np.copy(curAngY[0])
-        rd_footCenterL[0] = controlModel.getBodyPositionGlobal(indexL)
-                
-        curAng = [controlModel.getBodyOrientationGlobal(indexR)]                        
-        curAngY = np.dot(curAng, np.array([0,0,1]))
-
-        rd_footR_vec[0] = np.copy(curAngY[0])
-        rd_footCenterR[0] = controlModel.getBodyPositionGlobal(indexR)
-        
-        if (forceApplyFrame == 0) :
-            applyedExtraForce[0] = [0, 0, 0]
+        del rd_contactForces[:]
+        del rd_contactPositions[:]
+        if CP is not None:
+            for i in range(len(lcpBodyIDs)):
+                rd_contactForces.append(lcpContactForces[i].copy()/200.)
+                rd_contactPositions.append(lcpContactPositions[i].copy())
 
 
         timeReport[6] += time.time() -curTime
         # print timeReport
-    for i in range(4):
-        simulateCallback(i)
 
-    #viewer.setSimulateCallback(simulateCallback)
+    viewer.setSimulateCallback(simulateCallback)
     
-    #viewer.startTimer(1/30.)
-    #viewer.show()
+    viewer.startTimer(1/30.)
+    viewer.show()
     
-    #Fl.run()
-    
+    Fl.run()
+
 main()
+

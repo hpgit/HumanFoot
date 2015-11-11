@@ -370,7 +370,7 @@ scalar VpModel::getTotalMass()
 
 object VpModel::getBodyShape(int index)
 {
-	static numeric::array O(make_tuple(0.,0.,0.));
+	numeric::array O(make_tuple(0.,0.,0.));
 	char type;
 	scalar data[3];
 
@@ -386,7 +386,7 @@ object VpModel::getBodyShape(int index)
 
 bp::list VpModel::getBodyVerticesPositionGlobal(int index)
 {
-	static numeric::array O(make_tuple(0.,0.,0.));
+	numeric::array O(make_tuple(0.,0.,0.));
 
 	const vpGeom *pGeom;
 	char type;
@@ -498,8 +498,8 @@ void VpModel::getBodyInertiaLocal(int index, SE3& Tin)
 
 boost::python::object VpModel::getBodyInertiaLocal_py( int index )
 {
-	static numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
-	static SE3 Tin;
+	numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+	SE3 Tin;
 	object pyIn = I.copy();
 
 	getBodyInertiaLocal(index, Tin);
@@ -509,8 +509,8 @@ boost::python::object VpModel::getBodyInertiaLocal_py( int index )
 
 boost::python::object VpModel::getBodyInertiaGlobal_py( int index )
 {
-	static numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
-	static SE3 Tin_local, bodyFrame;
+	numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+	SE3 Tin_local, bodyFrame;
 	object pyIn = I.copy();
 
 	getBodyInertiaLocal(index, Tin_local);
@@ -538,9 +538,9 @@ bp::list VpModel::getBodyInertiasGlobal()
 
 object VpModel::getBodyPositionGlobal_py( int index, const object& positionLocal/*=object() */ )
 {
-	static numeric::array O(make_tuple(0.,0.,0.));
+	numeric::array O(make_tuple(0.,0.,0.));
 	object pyV = O.copy();
-	static Vec3 positionLocal_;
+	Vec3 positionLocal_;
 
 	if(positionLocal==object())
 		Vec3_2_pyVec3(getBodyPositionGlobal(index), pyV);
@@ -553,9 +553,9 @@ object VpModel::getBodyPositionGlobal_py( int index, const object& positionLocal
 }
 object VpModel::getBodyVelocityGlobal_py( int index, const object& positionLocal/*=object() */ )
 {
-	static numeric::array O(make_tuple(0.,0.,0.));
+	numeric::array O(make_tuple(0.,0.,0.));
 	object pyV = O.copy();
-	static Vec3 positionLocal_;
+	Vec3 positionLocal_;
 	
 	if(positionLocal==object())
 		Vec3_2_pyVec3(getBodyVelocityGlobal(index), pyV);
@@ -577,8 +577,8 @@ bp::list VpModel::getBodyVelocitiesGlobal()
 
 object VpModel::getBodyAngVelocityGlobal( int index )
 {
-	static se3 genVel;
-	static numeric::array O(make_tuple(0.,0.,0.));
+	se3 genVel;
+	numeric::array O(make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 
 	genVel = _nodes[index]->body.GetGenVelocity();
@@ -598,9 +598,9 @@ bp::list VpModel::getBodyAngVelocitiesGlobal()
 
 object VpModel::getBodyAccelerationGlobal_py(int index, const object& positionLocal )
 {
-	static se3 genAcc;
-	static Vec3 positionLocal_;
-	static numeric::array O(make_tuple(0.,0.,0.));
+	se3 genAcc;
+	Vec3 positionLocal_;
+	numeric::array O(make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 
 	if(positionLocal==object())
@@ -615,8 +615,8 @@ object VpModel::getBodyAccelerationGlobal_py(int index, const object& positionLo
 
 object VpModel::getBodyOrientationGlobal(int index)
 {
-	static numeric::array I(make_tuple(make_tuple(1., 0., 0.), make_tuple(0., 1., 0.), make_tuple(0., 0., 1.)));
-	static SE3 bodyFrame;
+	numeric::array I(make_tuple(make_tuple(1., 0., 0.), make_tuple(0., 1., 0.), make_tuple(0., 0., 1.)));
+	SE3 bodyFrame;
 	object pyR = I.copy();
 
 	bodyFrame = _nodes[index]->body.GetFrame();
@@ -634,7 +634,7 @@ bp::list VpModel::getBodyAccelerationsGlobal()
 
 void VpModel::setBodyPositionGlobal_py( int index, const object& pos )
 {
-	static Vec3 position;
+	Vec3 position;
 
 	pyVec3_2_Vec3(pos, position);
 	setBodyPositionGlobal(index, position); 
@@ -642,7 +642,7 @@ void VpModel::setBodyPositionGlobal_py( int index, const object& pos )
 
 void VpModel::setBodyVelocityGlobal_py( int index, const object& vel )
 {
-	static se3 genVel;
+	se3 genVel;
 	genVel = _nodes[index]->body.GetGenVelocity();
 	genVel[3] = XD(vel[0]);
 	genVel[4] = XD(vel[1]);
@@ -652,7 +652,7 @@ void VpModel::setBodyVelocityGlobal_py( int index, const object& vel )
 
 void VpModel::setBodyAccelerationGlobal_py( int index, const object& acc )
 {
-	static se3 genAcc;
+	se3 genAcc;
 	genAcc = _nodes[index]->body.GetGenAcceleration();
 	genAcc[3] = XD(acc[0]);
 	genAcc[4] = XD(acc[1]);
@@ -662,7 +662,7 @@ void VpModel::setBodyAccelerationGlobal_py( int index, const object& acc )
 
 void VpModel::setBodyAngVelocityGlobal( int index, const object& angvel )
 {
-	static se3 genVel;
+	se3 genVel;
 	genVel = _nodes[index]->body.GetGenVelocity();
 	genVel[0] = XD(angvel[0]);
 	genVel[1] = XD(angvel[1]);
@@ -672,7 +672,7 @@ void VpModel::setBodyAngVelocityGlobal( int index, const object& angvel )
 
 void VpModel::setBodyAngAccelerationGlobal( int index, const object& angacc )
 {
-	static se3 genAcc;
+	se3 genAcc;
 	genAcc = _nodes[index]->body.GetGenAcceleration();
 	genAcc[0] = XD(angacc[0]);
 	genAcc[1] = XD(angacc[1]);
@@ -690,8 +690,8 @@ bp::list VpModel::getBodyPositionsGlobal()
 
 object VpModel::getBodyAngAccelerationGlobal( int index )
 {
-	static se3 genAcc;
-	static numeric::array O(make_tuple(0.,0.,0.));
+	se3 genAcc;
+	numeric::array O(make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 
 	genAcc = _nodes[index]->body.GetGenAcceleration();
@@ -711,7 +711,7 @@ bp::list VpModel::getBodyAngAccelerationsGlobal()
 
 void VpModel::translateByOffset( const object& offset )
 {
-	static Vec3 v;
+	Vec3 v;
 	pyVec3_2_Vec3(offset, v);
 
 	for(int i=0; i<_nodes.size(); ++i)
@@ -720,7 +720,7 @@ void VpModel::translateByOffset( const object& offset )
 
 void VpModel::rotate( const object& rotation )
 {
-	static SE3 R, bodyFrame;
+	SE3 R, bodyFrame;
 	pySO3_2_SE3(rotation, R);
 
 	bodyFrame = _nodes[0]->body.GetFrame();
@@ -732,7 +732,7 @@ void VpModel::rotate( const object& rotation )
 
 Vec3 VpModel::getBodyPositionGlobal( int index, const Vec3* pPositionLocal )
 {
-	static SE3 bodyFrame;
+	SE3 bodyFrame;
 	bodyFrame = _nodes[index]->body.GetFrame();
 	if(!pPositionLocal)
 		return bodyFrame.GetPosition();
@@ -752,7 +752,7 @@ Vec3 VpModel::getBodyVelocityGlobal( int index, const Vec3& positionLocal)
 
 Vec3 VpModel::getBodyAccelerationGlobal( int index, const Vec3* pPositionLocal)
 {
-	static se3 genAccLocal, genAccGlobal;
+	se3 genAccLocal, genAccGlobal;
 
 	genAccLocal = _nodes[index]->body.GetGenAccelerationLocal();
 	if(pPositionLocal)
@@ -765,7 +765,7 @@ Vec3 VpModel::getBodyAccelerationGlobal( int index, const Vec3* pPositionLocal)
 
 void VpModel::setBodyPositionGlobal( int index, const Vec3& position )
 {
-	static SE3 bodyFrame;
+	SE3 bodyFrame;
 	bodyFrame = _nodes[index]->body.GetFrame();
 	bodyFrame.SetPosition(position);
 	_nodes[index]->body.SetFrame(bodyFrame);
@@ -776,7 +776,7 @@ void VpModel::setBodyAccelerationGlobal( int index, const Vec3& acc, const Vec3*
 //	if(pPositionLocal)
 //		cout << "pPositionLocal : not implemented functionality yet" << endl;
 
-	static se3 genAcc;
+	se3 genAcc;
 	genAcc = _nodes[index]->body.GetGenAcceleration();
 	genAcc[3] = acc[0];
 	genAcc[4] = acc[1];
@@ -835,7 +835,7 @@ void VpMotionModel::_updateBody( const object& joint, const SE3& parentT, const 
 
 		if(_recordVelByFiniteDiff)
 		{
-			static SE3 oldT, diffT;
+			SE3 oldT, diffT;
 			oldT = pNode->body.GetFrame();
 			diffT = newT * Inv(oldT);
 
@@ -1182,9 +1182,9 @@ bp::list VpControlModel::getDOFPositions()
 //	ls.insert(0, rootFrame );
 //	return ls;
 
-	static numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
-	static numeric::array O(make_tuple(0.,0.,0.));
-	static SE3 rootFrame;
+	numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+	numeric::array O(make_tuple(0.,0.,0.));
+	SE3 rootFrame;
 
 	object pyR = I.copy();
 	object pyV = O.copy();
@@ -1202,7 +1202,7 @@ bp::list VpControlModel::getDOFPositions()
 
 bp::list VpControlModel::getDOFVelocities()
 {
-	static numeric::array rootGenVel(make_tuple(0.,0.,0.,0.,0.,0.));
+	numeric::array rootGenVel(make_tuple(0.,0.,0.,0.,0.,0.));
 	
 	rootGenVel.slice(0,3) = getJointVelocityGlobal(0);
 //	rootGenVel.slice(3,6) = getJointAngVelocityGlobal(0);
@@ -1210,12 +1210,13 @@ bp::list VpControlModel::getDOFVelocities()
 
 	bp::list ls = getInternalJointAngVelocitiesLocal();
 	ls.insert(0, rootGenVel);
+
 	return ls;
 }
 
 bp::list VpControlModel::getDOFAccelerations()
 {
-	static numeric::array rootGenAcc(make_tuple(0.,0.,0.,0.,0.,0.));
+	numeric::array rootGenAcc(make_tuple(0.,0.,0.,0.,0.,0.));
 	
 	rootGenAcc.slice(0,3) = getJointAccelerationGlobal(0);
 //	rootGenAcc.slice(3,6) = getJointAngAccelerationGlobal(0);
@@ -1229,7 +1230,7 @@ bp::list VpControlModel::getDOFAccelerations()
 
 bp::list VpControlModel::getDOFAxeses()
 {
-	static numeric::array rootAxeses( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.),
+	numeric::array rootAxeses( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.),
 										make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
 
 	numeric::array rootAxesTmp = (numeric::array)getJointOrientationGlobal(0);
@@ -1259,9 +1260,9 @@ bp::list VpControlModel::getDOFPositionsLocal()
 //	ls.insert(0, rootFrame );
 //	return ls;
 
-	static numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
-	static numeric::array O(make_tuple(0.,0.,0.));
-	static SE3 rootFrame;
+	numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+	numeric::array O(make_tuple(0.,0.,0.));
+	SE3 rootFrame;
 
 	object pyR = I.copy();
 	object pyV = O.copy();
@@ -1279,7 +1280,7 @@ bp::list VpControlModel::getDOFPositionsLocal()
 
 bp::list VpControlModel::getDOFVelocitiesLocal()
 {
-	static numeric::array rootGenVel(make_tuple(0.,0.,0.,0.,0.,0.));
+	numeric::array rootGenVel(make_tuple(0.,0.,0.,0.,0.,0.));
 	
 	//rootGenVel.slice(0,3) = getJointVelocityGlobal(0);
 	//rootGenVel.slice(3,6) = getJointAngVelocityGlobal(0);
@@ -1287,13 +1288,14 @@ bp::list VpControlModel::getDOFVelocitiesLocal()
 	rootGenVel.slice(3,6) = getJointAngVelocityLocal(0);
 
 	bp::list ls = getInternalJointAngVelocitiesLocal();
+
 	ls.insert(0, rootGenVel);
 	return ls;
 }
 
 bp::list VpControlModel::getDOFAccelerationsLocal()
 {
-	static numeric::array rootGenAcc(make_tuple(0.,0.,0.,0.,0.,0.));
+	numeric::array rootGenAcc(make_tuple(0.,0.,0.,0.,0.,0.));
 	
 	//rootGenAcc.slice(0,3) = getJointAccelerationGlobal(0);
 	//rootGenAcc.slice(3,6) = getJointAngAccelerationGlobal(0);
@@ -1308,7 +1310,7 @@ bp::list VpControlModel::getDOFAccelerationsLocal()
 
 bp::list VpControlModel::getDOFAxesesLocal()
 {
-	static numeric::array rootAxeses( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.),
+	numeric::array rootAxeses( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.),
 										make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
 
 	numeric::array rootAxesTmp = (numeric::array)getJointOrientationGlobal(0);
@@ -1333,7 +1335,7 @@ bp::list VpControlModel::getDOFAxesesLocal()
 
 void VpControlModel::setDOFAccelerations( const bp::list& dofaccs)
 {
-	static numeric::array O(make_tuple(0.,0.,0.));
+	numeric::array O(make_tuple(0.,0.,0.));
 
 	setJointAccelerationGlobal(0, dofaccs[0].slice(0,3));
 
@@ -1345,7 +1347,7 @@ void VpControlModel::setDOFAccelerations( const bp::list& dofaccs)
 
 boost::python::object VpControlModel::getJointOrientationLocal( int index )
 {
-	static numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+	numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
 
 	if(index == 0)
 		return getJointOrientationGlobal(index);
@@ -1359,12 +1361,12 @@ boost::python::object VpControlModel::getJointOrientationLocal( int index )
 
 boost::python::object VpControlModel::getJointAngVelocityLocal( int index )
 {
-	static numeric::array O(make_tuple(0.,0.,0.));
+	numeric::array O(make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 
 	if(index == 0)
 	{
-		static se3 genVelBodyLocal, genVelJointLocal;
+		se3 genVelBodyLocal, genVelJointLocal;
 
 		genVelBodyLocal = _nodes[index]->body.GetGenVelocityLocal();
 		genVelJointLocal = InvAd(Inv(_boneTs[index]), genVelBodyLocal);
@@ -1381,12 +1383,12 @@ boost::python::object VpControlModel::getJointAngVelocityLocal( int index )
 
 boost::python::object VpControlModel::getJointAngAccelerationLocal( int index )
 {
-	static numeric::array O(make_tuple(0.,0.,0.));
+	numeric::array O(make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 
 	if(index == 0)
 	{
-		static se3 genAccBodyLocal, genAccJointLocal;
+		se3 genAccBodyLocal, genAccJointLocal;
 
 		genAccBodyLocal = _nodes[index]->body.GetGenAccelerationLocal();
 		genAccJointLocal = InvAd(Inv(_boneTs[index]), genAccBodyLocal);
@@ -1402,8 +1404,8 @@ boost::python::object VpControlModel::getJointAngAccelerationLocal( int index )
 
 object VpControlModel::getJointPositionGlobal( int index )
 {
-	static numeric::array O(make_tuple(0.,0.,0.));
-	static SE3 bodyFrame;
+	numeric::array O(make_tuple(0.,0.,0.));
+	SE3 bodyFrame;
 	object pyV = O.copy();
 
 	// body frame에 Inv(boneT)로 원래 joint 위치 찾는다.
@@ -1431,7 +1433,7 @@ object VpControlModel::getJointPositionGlobal( int index )
 }
 object VpControlModel::getJointVelocityGlobal( int index )
 {
-	static numeric::array O(make_tuple(0.,0.,0.));
+	numeric::array O(make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 
 	Vec3_2_pyVec3(getBodyVelocityGlobal(index, Inv(_boneTs[index]).GetPosition()), pyV);
@@ -1440,7 +1442,7 @@ object VpControlModel::getJointVelocityGlobal( int index )
 
 object VpControlModel::getJointAccelerationGlobal( int index )
 {
-	static numeric::array O(make_tuple(0.,0.,0.));
+	numeric::array O(make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 	Vec3 pospos = Inv(_boneTs[index]).GetPosition();
 
@@ -1450,8 +1452,8 @@ object VpControlModel::getJointAccelerationGlobal( int index )
 
 boost::python::object VpControlModel::getJointOrientationGlobal( int index )
 {
-	static numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
-	static SE3 bodyFrame;
+	numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+	SE3 bodyFrame;
 	object pyR = I.copy();
 
 	// body frame에 Inv(boneT)로 원래 joint frame 구한다
@@ -1487,7 +1489,7 @@ boost::python::object VpControlModel::getJointAngAccelerationGlobal( int index )
 
 object VpControlModel::getJointVelocityLocal( int index )
 {
-	static numeric::array O(make_tuple(0.,0.,0.));
+	numeric::array O(make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 	SE3 jointFrame = _nodes[index]->body.GetFrame() * Inv(_boneTs[index]);
 
@@ -1497,7 +1499,7 @@ object VpControlModel::getJointVelocityLocal( int index )
 
 object VpControlModel::getJointAccelerationLocal( int index )
 {
-	static numeric::array O(make_tuple(0.,0.,0.));
+	numeric::array O(make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 	Vec3 pospos = Inv(_boneTs[index]).GetPosition();
 	SE3 jointFrame = _nodes[index]->body.GetFrame() * Inv(_boneTs[index]);
@@ -1623,7 +1625,7 @@ void VpControlModel::setJointAngVelocityLocal( int index, const object& angvel )
 {
 	if(index == 0)
 	{
-		static se3 genVelBodyLocal, genVelJointLocal;
+		se3 genVelBodyLocal, genVelJointLocal;
 		
 		genVelBodyLocal = _nodes[index]->body.GetGenVelocityLocal();
 
@@ -1643,7 +1645,7 @@ void VpControlModel::setJointAngAccelerationLocal( int index, const object& anga
 {
 	if(index == 0)
 	{
-		static se3 genAccBodyLocal, genAccJointLocal;
+		se3 genAccBodyLocal, genAccJointLocal;
 		
 		genAccBodyLocal = _nodes[index]->body.GetGenAccelerationLocal();
 
@@ -1689,7 +1691,7 @@ void VpControlModel::setInternalJointAngAccelerationsLocal( const bp::list& anga
 
 boost::python::object VpControlModel::getJointTorqueLocal( int index )
 {
-	static numeric::array O(make_tuple(0.,0.,0.));
+	numeric::array O(make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 
 	if(index==0) return object();
@@ -1728,7 +1730,7 @@ void VpControlModel::setInternalJointTorquesLocal( const bp::list& torques )
 
 void VpControlModel::applyBodyGenForceGlobal( int index, const object& torque, const object& force, const object& positionLocal/*=object()*/ )
 {
-	static Vec3 zero(0,0,0);
+	Vec3 zero(0,0,0);
 	if(positionLocal==object())
 		_nodes[index]->body.ApplyGlobalForce(dse3(XD(torque[0]), XD(torque[1]), XD(torque[2]), XD(force[0]), XD(force[1]), XD(force[2])), zero);
 	else
@@ -1737,7 +1739,7 @@ void VpControlModel::applyBodyGenForceGlobal( int index, const object& torque, c
 
 void VpControlModel::applyBodyForceGlobal( int index, const object& force, const object& positionLocal/*=object()*/ )
 {
-	static Vec3 zero(0,0,0);
+	Vec3 zero(0,0,0);
 	if(positionLocal==object())
 		_nodes[index]->body.ApplyGlobalForce(dse3(0.,0.,0., XD(force[0]), XD(force[1]), XD(force[2])), zero);
 	else
@@ -1746,14 +1748,14 @@ void VpControlModel::applyBodyForceGlobal( int index, const object& force, const
 
 void VpControlModel::applyBodyTorqueGlobal( int index, const object& torque )
 {
-	static Vec3 zero(0,0,0);
+	Vec3 zero(0,0,0);
 	_nodes[index]->body.ApplyGlobalForce(dse3(XD(torque[0]), XD(torque[1]), XD(torque[2]), 0.,0.,0.), zero);
 }
 
 object VpControlModel::getBodyForceLocal( int index )
 {
-	static dse3 genForce;
-	static numeric::array O(make_tuple(0.,0.,0.));
+	dse3 genForce;
+	numeric::array O(make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 
 	genForce = _nodes[index]->body.GetForce();
@@ -1766,8 +1768,8 @@ object VpControlModel::getBodyForceLocal( int index )
 
 object VpControlModel::getBodyNetForceLocal( int index )
 {
-	static dse3 genForce;
-	static numeric::array O(make_tuple(0.,0.,0.));
+	dse3 genForce;
+	numeric::array O(make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 
 	genForce = _nodes[index]->body.GetNetForce();
@@ -1779,8 +1781,8 @@ object VpControlModel::getBodyNetForceLocal( int index )
 
 object VpControlModel::getBodyGravityForceLocal( int index )
 {
-	static dse3 genForce;
-	static numeric::array O(make_tuple(0.,0.,0.));
+	dse3 genForce;
+	numeric::array O(make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 
 	genForce = _nodes[index]->body.GetGravityForce();

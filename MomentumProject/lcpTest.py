@@ -18,7 +18,7 @@ def main():
 	b = np.array( (30., -1.) )
 	lo = np.array( (0., 0.) )
 	hi = np.array( (100000000000., 100000000000.) )
-	lcpSolver.solve(2, A, -b, x, lo, hi)
+	lcpSolver.solve(2, A, b, x, lo, hi)
 
 	print x, np.dot(A, x) + b
 

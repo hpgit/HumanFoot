@@ -1,5 +1,5 @@
 .PHONY: all
-all: Renderer Simulator Optimization
+all: Simulator Renderer Optimization
 
 .PHONY: Renderer
 Renderer:
