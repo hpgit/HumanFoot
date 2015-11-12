@@ -112,13 +112,16 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, numFrictionBases, ta
 
     tau = np.zeros(np.shape(qdot_0))
 
+    print "invMc: ", invMc
+
+
     b1 = N.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau)
     b2 = D.T.dot(qdot_0 - h*invMc) + h*temp_DM.dot(tau)
     b3 = np.zeros(mus.shape[0])
 
     b  = np.hstack((np.hstack((b1, b2)), b3))
 
-    print "b: ", b
+    #print "b: ", b
 
     #print "np.shape(A): ", np.shape(A)
     #print "np.shape(b): ", np.shape(b)
@@ -128,9 +131,9 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, numFrictionBases, ta
     
     #lo = np.zeros(A.shape[0])
     lo = 0. * np.ones(A.shape[0])
-    hi = 100000. * np.ones(A.shape[0])
+    hi = 1000000. * np.ones(A.shape[0])
 
-    x = 0.*np.ones(A.shape[0])
+    x = 10.*np.ones(A.shape[0])
     lcpSolver = lcp.LemkeSolver()
     #lcpSolver = lcpD.DantzigSolver()
     lcpSolver.solve(A.shape[0], A, b, x, lo, hi)
@@ -139,11 +142,11 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, numFrictionBases, ta
     tangenForce = x[contactNum:contactNum + numFrictionBases*contactNum]
     minTangenVel = x[contactNum + numFrictionBases*contactNum:]
     #print "x: ", x
-    print "normalForce: ", normalForce
-    print "tangenForce: ", tangenForce
-    print "minTangenVel: ", minTangenVel
+    #print "normalForce: ", normalForce
+    #print "tangenForce: ", tangenForce
+    #print "minTangenVel: ", minTangenVel
     z = np.dot(A,x) + b
-    print "z: ", z
+    #print "z: ", z
     print "np.dot(x,z): ", np.dot(x,z)
 
     forces = []
@@ -154,7 +157,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, numFrictionBases, ta
         for fcIdx in range(numFrictionBases):
             d = np.array((math.cos(2.*math.pi*fcIdx/numFrictionBases), 0., math.sin(2.*math.pi*fcIdx/numFrictionBases)))
             force += tangenForce[cIdx*numFrictionBases + fcIdx] * d
-        #print force
+        print force
     	forces.append(force) 
 
     #print forces

@@ -5,6 +5,7 @@ GEAR_DIR := PyCommon/externalLibs/gear
 PYTHON_FILE := main_MomentumProject_SimpleLCP.py
 #PYTHON_FILE := ompTest.py
 #PYTHON_FILE := main_Test.py
+#PYTHON_FILE := lcpTest2.py
 
 all:
 	cd PyCommon/modules;make
