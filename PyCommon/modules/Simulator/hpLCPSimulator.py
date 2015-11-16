@@ -31,14 +31,12 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
     DOFs = model.getDOFs()
     Jic = yjc.makeEmptyJacobian(DOFs, 1)
     jointPositions = model.getJointPositionsGlobal()
-    #jointAxeses = model.getDOFAxeses()
     jointAxeses = model.getDOFAxesesLocal()
 
     for vpidx in range(len(contactVpBodyIds)):
         bodyidx = model.id2index(contactVpBodyIds[vpidx])
         contactJointMasks = [yjc.getLinkJointMask(skeleton, bodyidx)]
         yjc.computeJacobian2(Jic, DOFs, jointPositions, jointAxeses, [contactPositions[vpidx]], contactJointMasks)
-        #pdb.set_trace()
         n = np.array([[0.,1.,0.,0.,0.,0.]]).T
         JTn = Jic.T.dot(n)
         if N is None:
@@ -51,7 +49,6 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
                 D = JTd
             else:
                 D = np.hstack( (D, JTd) )
-        #pdb.set_trace()
     
     E = np.zeros((contactNum*numFrictionBases,contactNum))
     for cIdx in range(contactNum):
@@ -98,6 +95,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, numFrictionBases, ta
         return bodyIDs, contactPositions, contactPositionsLocal, None
 
     h = world.getTimeStep()
+    invh = 1./h
     mus = mu * np.eye(contactNum)
     temp_NM = N.T.dot(invM)
     temp_DM = D.T.dot(invM)
@@ -126,6 +124,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, numFrictionBases, ta
     A2 = np.hstack((np.hstack((A21, A22)), E ))
     A3 = np.hstack((np.hstack((mus,-E.T)), np.zeros((mus.shape[0], E.shape[1])) ))
     A = np.vstack((np.vstack((A1, A2)), A3)) * factor
+    #print npl.eigvals(A)
     #pdb.set_trace()
     #A = A + 0.0001*np.eye(A.shape[0])
 
@@ -140,7 +139,18 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, numFrictionBases, ta
     if tau is None:
         tau = np.zeros(np.shape(qdot_0))
 
-    b1 = N.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau)
+    # non-penentration condition
+    #b1 = N.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau)
+    
+    # improved non-penentration condition : add position condition
+    penDepth = 0.003
+    bPenDepth = np.zeros(A1.shape[0])
+    for i in range(contactNum):
+        if abs(contactPositions[i][1]) > penDepth:
+            bPenDepth[i] = contactPositions[i][1] + penDepth
+
+    b1 = N.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau) + 0.01*invh*bPenDepth
+    #print b1
     b2 = D.T.dot(qdot_0 - h*invMc) + h*temp_DM.dot(tau)
     b3 = np.zeros(mus.shape[0])
 
@@ -158,42 +168,34 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, numFrictionBases, ta
     lo = 0.*np.ones(A.shape[0])
     hi = 1000000. * np.ones(A.shape[0])
     x = 100.*np.ones(A.shape[0])
-    #try:
-    #    Aqp = cvxMatrix(2*A)
-    #    bqp = cvxMatrix(b)
-    #    Gqp = cvxMatrix(np.vstack((-A,-np.eye(A.shape[0]))))
-    #    hqp = cvxMatrix(np.hstack((b.T,np.zeros(A.shape[0]))))
-    #    cvxSolvers.options['show_progress'] = False
-    #    cvxSolvers.options['maxiter'] = 100000
-    #    x = np.array(cvxSolvers.qp(Aqp, bqp, Gqp, hqp)['x']).flatten()
-    #    print "x: ", x
-    #    z = np.dot(A,x).T +b
-    #    #print z
-    #    print "QP!"
-    #except Exception, e:
-    #    print e
+
     lcpSolver = lcp.LemkeSolver()
     #lcpSolver = lcpD.DantzigSolver()
-    lcpSolver.solve(A.shape[0], A, b, x, lo, hi)
+    #lcpSolver.solve(A.shape[0], A, b, x, lo, hi)
     z = np.dot(A,x) + b
     
-    if abs(np.dot(x,z)) > 100.:
+    #if abs(np.dot(x,z)) > 100.:
+    if True:
         try:
-            print "prev z: ", np.dot(x, z)
+            #print "prev z: ", np.dot(x, z)
             Aqp = cvxMatrix(2*A)
             bqp = cvxMatrix(b)
             Gqp = cvxMatrix(np.vstack((-A,-np.eye(A.shape[0]))))
             hqp = cvxMatrix(np.hstack((b.T,np.zeros(A.shape[0]))))
             cvxSolvers.options['show_progress'] = False
-            cvxSolvers.options['maxiter'] = 100000
+            cvxSolvers.options['maxiter'] = 100
+            #cvxSolvers.options['refinement'] = 10
             xqp = np.array(cvxSolvers.qp(Aqp, bqp, Gqp, hqp)['x']).flatten()
             #print "x: ", x
-            zqp = np.dot(A,x).T +b
-            print "QP z: ", np.dot(xqp, zqp)
-            if np.dot(xqp, zqp) < np.dot(x, z):
+            zqp = np.dot(A,xqp).T +b
+            #print "QP z: ", np.dot(xqp, zqp)
+            #if np.dot(xqp, zqp) < np.dot(x, z):
+            if True:
                 x = xqp.copy()
         except Exception, e:
-            print e
+            #print e
+            pass
+            
 
 
 
@@ -221,7 +223,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, numFrictionBases, ta
             force += tangenForce[cIdx*numFrictionBases + fcIdx] * d
         #print force
     	forces.append(force) 
-    repairForces(forces, contactPositions)
+    #repairForces(forces, contactPositions)
     #print forces
     return bodyIDs, contactPositions, contactPositionsLocal, forces
 

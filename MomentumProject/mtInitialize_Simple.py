@@ -140,7 +140,7 @@ def create_vchain_5():
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
-    stepsPerFrame = 60
+    stepsPerFrame = 120
     wcfg.timeStep = (1/30.)/stepsPerFrame
     
     # parameter
@@ -177,8 +177,8 @@ def create_vchain_1():
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
-    stepsPerFrame = 30
-    wcfg.timeStep = (1/60.)/stepsPerFrame
+    stepsPerFrame = 120
+    wcfg.timeStep = (1/30.)/stepsPerFrame
     
     # parameter
     config = {}

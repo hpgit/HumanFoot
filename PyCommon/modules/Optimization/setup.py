@@ -1,6 +1,6 @@
 from distutils.core import setup, Extension
 
-module_csVpRenderer = Extension('csLCPLemkeSolver',
+module_csLCPLemkeSolver = Extension('csLCPLemkeSolver',
 		include_dirs = ['../usr/include/', '/usr/local/include/bullet/'],
 		extra_compile_args=['-fopenmp'],
 		extra_link_args=['-lgomp'],

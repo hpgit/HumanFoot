@@ -135,8 +135,8 @@ def main():
 
     np.set_printoptions(precision=4, linewidth=200)
     #motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_1()
-    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_5()
-    #motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
+    #motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_5()
+    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
     mcfg_motion = mit.normal_mcfg()
         
     vpWorld = cvw.VpWorld(wcfg)
@@ -170,7 +170,7 @@ def main():
         print "main:frame : ", frame
         # motionModel.update(motion[0])
 
-        Kt, Kk, Kl, Kh, Ksc, Bt, Bl, Bh, B_CM, B_CMSd, B_Toe = 200.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.
+        Kt, Kk, Kl, Kh, Ksc, Bt, Bl, Bh, B_CM, B_CMSd, B_Toe = 0.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.
         
         Dt = 2*(Kt**.5)
         Dk = 2*(Kk**.5)
@@ -191,7 +191,9 @@ def main():
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
         ddth_c = controlModel.getDOFAccelerations()
         ype.flatten(ddth_des, ddth_des_flat)
-        lcpBodyIDs, lcpContactPositions, lcpContactPositionLocals, lcpContactForces = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, .5, 8, None)
+        for i in range(6):
+            ddth_des_flat[i] = 0.
+        lcpBodyIDs, lcpContactPositions, lcpContactPositionLocals, lcpContactForces = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., 8, ddth_des_flat)
 
         #print "lcpContactPositions: ", lcpContactPositions
         #print "lcpContactPositionLocals: ", lcpContactPositionLocals      
@@ -199,7 +201,7 @@ def main():
             # apply penalty force
             #bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
             #print frame, bodyIDs, contactPositions, contactPositionLocals, contactForces
-            lcpBodyIDs, lcpContactPositions, lcpContactPositionLocals, lcpContactForces = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., 4, None)
+            lcpBodyIDs, lcpContactPositions, lcpContactPositionLocals, lcpContactForces = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., 8, ddth_des_flat)
             if len(lcpBodyIDs) >0:
                 vpWorld.applyPenaltyForce(lcpBodyIDs, lcpContactPositionLocals, lcpContactForces)                      
                 for idx in range(len(lcpContactForces)):
@@ -207,7 +209,7 @@ def main():
                         print frame, lcpContactForces[idx]
             #print ddth_sol
             #controlModel.setDOFAccelerations(ddth_des)
-            #controlModel.setDOFTorques(ddth_des[1:])
+            controlModel.setDOFTorques(ddth_des[1:])
             
             #controlModel.solveHybridDynamics()
             vpWorld.step()                    
