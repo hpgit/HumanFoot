@@ -74,6 +74,12 @@ def repairForces(forces, contactPositions):
         #    force[2] /= norm
         pass
 
+def normalizeMatrix(A, b):
+    for i in range(A.shape[0]):
+        n = npl.norm(A[0])
+        A[0] /= n
+        b[0] /= n
+
 
 def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, numFrictionBases, tau):
     #model = VpControlModel
@@ -168,6 +174,10 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, numFrictionBases, ta
     lo = 0.*np.ones(A.shape[0])
     hi = 1000000. * np.ones(A.shape[0])
     x = 100.*np.ones(A.shape[0])
+
+    normalizeMatrix(A, b)
+    print A, b
+    pdb.set_trace()
 
     lcpSolver = lcp.LemkeSolver()
     #lcpSolver = lcpD.DantzigSolver()
