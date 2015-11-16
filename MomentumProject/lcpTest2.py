@@ -37,7 +37,7 @@ def main():
         (r ,0.,-r ,0. ),
         ))
 
-    c = m*np.matrix((0.,-9.8, 0., 0., 0., 0.)).T #+ np.matrix(np.hstack((np.zeros(3), np.cross(w.T, I*w.T))).T
+    c = m*np.matrix((0.,9.8, 0., 0., 0., 0.)).T #+ np.matrix(np.hstack((np.zeros(3), np.cross(w.T, I*w.T))).T
 
     invMc = np.dot(invM, c)
     E = np.matrix((1., 1., 1., 1.)).T
@@ -98,6 +98,21 @@ def main():
     #lcpSolver = lcpD.DantzigSolver()
     lcpSolver.solve(A.shape[0], A.A, b.A1, x, lo, hi)
     x = np.matrix(x).T
+
+    try:
+        Aqp = cvxMatrix(2*A)
+        bqp = cvxMatrix(b)
+        Gqp = cvxMatrix(np.vstack((-A,-np.eye(A.shape[0]))))
+        hqp = cvxMatrix(np.hstack((b.T,np.zeros(A.shape[0]))))
+        cvxSolvers.options['show_progress'] = False
+        cvxSolvers.options['maxiter'] = 100000
+        x = np.array(cvxSolvers.qp(Aqp, bqp, Gqp, hqp)['x']).flatten()
+        print "x: ", x
+        z = np.dot(A,x).T +b
+        #print z
+        print "QP!"
+    except Exception, e:
+        print e
     print "A: ", A
     print "b: ", b
     print "x: ", x

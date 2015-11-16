@@ -13,6 +13,7 @@ BOOST_PYTHON_MODULE(csLCPLemkeSolver)
 
 int LemkeSolver::solve(int dim, const object& A, const object& b, object& x, const object& lo,const object& hi)
 {
+	//solve x^T *(Ax+b) = 0 , x>= 0 , Ax+b >= 0
 	if ( 0 >= dim )
 	{
 		return 0;
@@ -51,7 +52,7 @@ int LemkeSolver::solve(int dim, const object& A, const object& b, object& x, con
 	//printf("hehe\n");
 	//printf("heheheh\n");
 
-	if( true == solveMLCP(btA, btb, btx, btlo, bthi, limitDependency, 1000, false) )
+	if( true == solveMLCP(btA, btb, btx, btlo, bthi, limitDependency, 0, false) )
 	
 	{
 		//BT_PROFILE("lemke.solve");

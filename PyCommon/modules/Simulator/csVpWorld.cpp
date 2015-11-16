@@ -56,7 +56,7 @@ void VpWorld::initialize()
 	_world.Initialize();
 
 	//_world.SetIntegrator(VP::IMPLICIT_EULER);
-	//_world.SetIntegrator(VP::IMPLICIT_EULER_FAST);
+	_world.SetIntegrator(VP::IMPLICIT_EULER_FAST);
 #if !defined(__APPLE__) || defined(__APPLE_OMP__)
 	setOpenMP();
 #endif
@@ -137,7 +137,7 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 					}
 				}
 			}
-			else if (false)
+			else if (true)
 			{
 				const SE3& geomFrame = pGeom->GetGlobalFrame();
 
@@ -243,7 +243,7 @@ bool VpWorld::_calcPenaltyForce( const vpBody* pBody, const Vec3& position, cons
 	vNormalRelVel = normalRelVel * vNormal;
 	vTangentialRelVel = vRelVel - vNormalRelVel;
 	tangentialRelVel = Norm(vTangentialRelVel);
-	//_planeHeight = .01;
+	//_planeHeight = .0;
 	if(position[1] > _planeHeight)
 		return false;
 	else
@@ -309,6 +309,7 @@ boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
 	char type;
 	scalar data[3];
 	Vec3 position, velocity, force, positionLocal;
+	scalar planeHeight = .000;
 
 	for (int i = 0; i<len(bodyIDsToCheck); ++i)
 	{
@@ -327,7 +328,7 @@ boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
 				{
 					position = verticesGlobal[k];
 					positionLocal = verticesLocal[k];
-					bool penentrated = position[1] <= _planeHeight;
+					bool penentrated = position[1] <= planeHeight;
 					if (penentrated)
 					{
 						velocity = pBody->GetLinVelocity(positionLocal);
@@ -348,7 +349,7 @@ boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
 					}
 				}
 			}
-			else if (false)
+			else if (true)
 			{
 				const SE3& geomFrame = pGeom->GetGlobalFrame();
 
@@ -361,7 +362,7 @@ boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
 
 					velocity = pBody->GetLinVelocity(positionLocal);
 
-					bool penentrated = position[1] <= _planeHeight;
+					bool penentrated = position[1] <= planeHeight;
 					if (penentrated)
 					{
 						bodyIDs.append(bodyID);

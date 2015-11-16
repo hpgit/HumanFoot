@@ -72,31 +72,31 @@ class LSE:
         
         
     def solve(self):
-#        \underset{x}{\operatorname{min}}\left \|  C_{1}x-d_{1}\right \|^{2} + \cdots  + \left \|  C_{n}x-d_{n)}\right \|^{2} \newline
-#        subject \; to : Ax-b=0 \newline
-#        \newline
-#        FONC : \newline
-#        2C_{1}^{T}C_{1}x-2C_{1}^{T}d_{1} + \cdots + 2C_{n}^{T}C_{n}x-2C_{n}^{T}d_{n} 
-#        
-#        + A^
-#        
-#        {T}\lambda =0 \newline
-#        Ax-b=0 \newline
-#        \newline
-#        \Rightarrow
-#        \begin{pmatrix}
-#         2C_{1}^{T}C_{1} + \cdots + 2C_{n}^{T}C_{n} & A^{T} \\ 
-#         A & 0
-#        \end{pmatrix}
-#        \begin{pmatrix}
-#        x\\ 
-#        \lambda
-#        \end{pmatrix}
-#        =
-#        \begin{pmatrix}
-#        2C_{1}^{T}d_{1} + \cdots + 2C_{n}^{T}d_{n} \\ 
-#        b
-#        \end{pmatrix}
+        #        \underset{x}{\operatorname{min}}\left \|  C_{1}x-d_{1}\right \|^{2} + \cdots  + \left \|  C_{n}x-d_{n)}\right \|^{2} \newline
+        #        subject \; to : Ax-b=0 \newline
+        #        \newline
+        #        FONC : \newline
+        #        2C_{1}^{T}C_{1}x-2C_{1}^{T}d_{1} + \cdots + 2C_{n}^{T}C_{n}x-2C_{n}^{T}d_{n} 
+        #        
+        #        + A^
+        #        
+        #        {T}\lambda =0 \newline
+        #        Ax-b=0 \newline
+        #        \newline
+        #        \Rightarrow
+        #        \begin{pmatrix}
+        #         2C_{1}^{T}C_{1} + \cdots + 2C_{n}^{T}C_{n} & A^{T} \\ 
+        #         A & 0
+        #        \end{pmatrix}
+        #        \begin{pmatrix}
+        #        x\\ 
+        #        \lambda
+        #        \end{pmatrix}
+        #        =
+        #        \begin{pmatrix}
+        #        2C_{1}^{T}d_{1} + \cdots + 2C_{n}^{T}d_{n} \\ 
+        #        b
+        #        \end{pmatrix}
 
         # build system
         # A_large * x_large = b_large
@@ -129,31 +129,31 @@ class LSE:
         return result
 
     def solve2(self):
-#        \underset{x}{\operatorname{min}}\left \|  C_{1}x-d_{1}\right \|^{2} + \cdots  + \left \|  C_{n}x-d_{n)}\right \|^{2} \newline
-#        subject \; to : Ax-b=0 \newline
-#        \newline
-#        FONC : \newline
-#        2C_{1}^{T}C_{1}x-2C_{1}^{T}d_{1} + \cdots + 2C_{n}^{T}C_{n}x-2C_{n}^{T}d_{n} 
-#        
-#        + A^
-#        
-#        {T}\lambda =0 \newline
-#        Ax-b=0 \newline
-#        \newline
-#        \Rightarrow
-#        \begin{pmatrix}
-#         2C_{1}^{T}C_{1} + \cdots + 2C_{n}^{T}C_{n} & A^{T} \\ 
-#         A & 0
-#        \end{pmatrix}
-#        \begin{pmatrix}
-#        x\\ 
-#        \lambda
-#        \end{pmatrix}
-#        =
-#        \begin{pmatrix}
-#        2C_{1}^{T}d_{1} + \cdots + 2C_{n}^{T}d_{n} \\ 
-#        b
-#        \end{pmatrix}
+        #        \underset{x}{\operatorname{min}}\left \|  C_{1}x-d_{1}\right \|^{2} + \cdots  + \left \|  C_{n}x-d_{n)}\right \|^{2} \newline
+        #        subject \; to : Ax-b=0 \newline
+        #        \newline
+        #        FONC : \newline
+        #        2C_{1}^{T}C_{1}x-2C_{1}^{T}d_{1} + \cdots + 2C_{n}^{T}C_{n}x-2C_{n}^{T}d_{n} 
+        #        
+        #        + A^
+        #        
+        #        {T}\lambda =0 \newline
+        #        Ax-b=0 \newline
+        #        \newline
+        #        \Rightarrow
+        #        \begin{pmatrix}
+        #         2C_{1}^{T}C_{1} + \cdots + 2C_{n}^{T}C_{n} & A^{T} \\ 
+        #         A & 0
+        #        \end{pmatrix}
+        #        \begin{pmatrix}
+        #        x\\ 
+        #        \lambda
+        #        \end{pmatrix}
+        #        =
+        #        \begin{pmatrix}
+        #        2C_{1}^{T}d_{1} + \cdots + 2C_{n}^{T}d_{n} \\ 
+        #        b
+        #        \end{pmatrix}
 
         # build system
         # A_large * x_large = b_large
@@ -273,7 +273,6 @@ class QP:
         self.A = None
         self.b = None
 
-    
     
 if __name__ == '__main__':
     import psyco; psyco.full()

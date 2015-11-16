@@ -106,6 +106,7 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getDOFAxesesLocal", &VpControlModel::getDOFAxesesLocal)
 
 		.def("setDOFAccelerations", &VpControlModel::setDOFAccelerations)
+		.def("setDOFTorques", &VpControlModel::setDOFTorques)
 
 		.def("getJointOrientationLocal", &VpControlModel::getJointOrientationLocal)
 		.def("getJointAngVelocityLocal", &VpControlModel::getJointAngVelocityLocal)
@@ -1345,6 +1346,13 @@ void VpControlModel::setDOFAccelerations( const bp::list& dofaccs)
 	setInternalJointAngAccelerationsLocal( ((bp::list)dofaccs.slice(1,_)) );
 }
 
+void VpControlModel::setDOFTorques(const bp::list& dofTorque)
+{
+	for(int i=1; i<_nodes.size(); ++i)
+		_nodes[i]->joint.SetAcceleration(pyVec3_2_Vec3(dofTorque[i-1]));
+}
+
+
 boost::python::object VpControlModel::getJointOrientationLocal( int index )
 {
 	numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
@@ -1899,6 +1907,8 @@ bp::list VpControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
 		//std::cout << _nodes[i]->joint.GetAcceleration();
 	//}
 
+
+
 	int n = _nodes.size()-1;
 	int N = 6+3*n;
 	dse3 zero_dse3(0.0);
@@ -2009,7 +2019,7 @@ bp::list VpControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
 	}
 	Hip->SetGenAcceleration(hipAccBackup);
 	Hip->ResetForce();
-	Hip->ApplyGlobalForce(hipTorBackup, zero_Vec3);
+	//Hip->ApplyGlobalForce(hipTorBackup, zero_Vec3);
 	return ls;
 }
 

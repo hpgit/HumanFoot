@@ -10,7 +10,7 @@ public:
 		//Lemke
 		m_maxValue = 100000;
 		m_debugLevel = 0;
-		m_maxLoops = 10000;
+		m_maxLoops = 100;
 		m_useLoHighBounds = true;
 
 		//Dantizg

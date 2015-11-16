@@ -135,7 +135,7 @@ def main():
 
     np.set_printoptions(precision=4, linewidth=200)
     
-#    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_5()
+    #motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_5()
     motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
     mcfg_motion = mit.normal_mcfg()
         

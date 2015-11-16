@@ -218,7 +218,7 @@ bool btLemkeSolver::solveMLCP(const btMatrixXu & A, const btVectorXu & b, btVect
 			if (errorIndexMax<0)
 				errorValueMax = 0.f;
 			m_errorCountTimes++;
-			printf("Error (x[%d] = %f, x[%d] = %f), resetting %d times\n", errorIndexMin,errorValueMin, errorIndexMax, errorValueMax, m_errorCountTimes++);
+			//printf("Error (x[%d] = %f, x[%d] = %f), resetting %d times\n", errorIndexMin,errorValueMin, errorIndexMax, errorValueMax, m_errorCountTimes++);
 			for (int i=0;i<n;i++)
 			{
 				x[i]=0.f;

@@ -203,6 +203,7 @@ public:	// expose to python
 	bp::list getDOFAxesesLocal();
 
 	void setDOFAccelerations(const bp::list& dofaccs);
+	void setDOFTorques(const bp::list& dofTorque);
 
 	/////////////////////////////////////////////////////////////////
 	// joint

@@ -134,33 +134,43 @@ def getBodyGlobalOri(model, motion, name):
 def main():
 
     np.set_printoptions(precision=4, linewidth=200)
-    
-#    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_5()
-    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
+    #motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_1()
+    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_5()
+    #motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
     mcfg_motion = mit.normal_mcfg()
         
     vpWorld = cvw.VpWorld(wcfg)
     controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
     
     vpWorld.initialize()
-    controlModel.initializeHybridDynamics()
+    #controlModel.initializeHybridDynamics()
+    controlModel.initializeForwardDynamics()
     
     totalDOF = controlModel.getTotalDOF()
     DOFs = controlModel.getDOFs()
+
+    bodyIDsToCheck = range(vpWorld.getBodyNum())
 
     # flat data structure
     ddth_des_flat = ype.makeFlatList(totalDOF)
     dth_flat = ype.makeFlatList(totalDOF)
     ddth_sol = ype.makeNestedList(DOFs)
 
-    #print controlModel.getBodyGravityForceLocal(0)
-    #print controlModel.getDOFVelocities()
+    rd_contactForces = [None]
+    rd_contactPositions = [None]
+
+    viewer = ysv.SimpleViewer()
+    viewer.doc.addObject('motion', motion)
+    viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL))
+    viewer.doc.addRenderer('rd_contactForces', yr.VectorsRenderer(rd_contactForces, rd_contactPositions, (0,255,0), .1))
+
+
 
     def simulateCallback(frame):
         print "main:frame : ", frame
         # motionModel.update(motion[0])
 
-        Kt, Kk, Kl, Kh, Ksc, Bt, Bl, Bh, B_CM, B_CMSd, B_Toe = 1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.
+        Kt, Kk, Kl, Kh, Ksc, Bt, Bl, Bh, B_CM, B_CMSd, B_Toe = 200.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.
         
         Dt = 2*(Kt**.5)
         Dk = 2*(Kk**.5)
@@ -174,39 +184,50 @@ def main():
         th_r = copy.copy(th_r_ori)
 
 
-        #th = controlModel.getDOFPositions()
-        #dth_r = motion.getDOFVelocities(frame)
+        th = controlModel.getDOFPositions()
+        dth_r = motion.getDOFVelocities(frame)
         dth = controlModel.getDOFVelocities()
-        #ddth_r = motion.getDOFAccelerations(frame)
-        #ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
-        #ddth_c = controlModel.getDOFAccelerations()
+        ddth_r = motion.getDOFAccelerations(frame)
+        ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
+        ddth_c = controlModel.getDOFAccelerations()
+        ype.flatten(ddth_des, ddth_des_flat)
+        lcpBodyIDs, lcpContactPositions, lcpContactPositionLocals, lcpContactForces = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, .5, 8, None)
 
-
-      
+        #print "lcpContactPositions: ", lcpContactPositions
+        #print "lcpContactPositionLocals: ", lcpContactPositionLocals      
         for i in range(stepsPerFrame):
             # apply penalty force
             #bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
             #print frame, bodyIDs, contactPositions, contactPositionLocals, contactForces
-            #vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)                      
-            
+            lcpBodyIDs, lcpContactPositions, lcpContactPositionLocals, lcpContactForces = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., 4, None)
+            if len(lcpBodyIDs) >0:
+                vpWorld.applyPenaltyForce(lcpBodyIDs, lcpContactPositionLocals, lcpContactForces)                      
+                for idx in range(len(lcpContactForces)):
+                    if lcpContactForces[idx][1] > 1000.:
+                        print frame, lcpContactForces[idx]
             #print ddth_sol
             #controlModel.setDOFAccelerations(ddth_des)
+            #controlModel.setDOFTorques(ddth_des[1:])
             
             #controlModel.solveHybridDynamics()
-            #vpWorld.step()                    
+            vpWorld.step()                    
             pass
             
         # print timeReport
         #del th
-    #for i in range(4):
-    #    simulateCallback(i)
 
-    # viewer.setSimulateCallback(simulateCallback)
-    # 
-    # viewer.startTimer(1/30.)
-    # viewer.show()
-    # 
-    # Fl.run()
+        del rd_contactForces[:]
+        del rd_contactPositions[:]
+        for i in range(len(lcpBodyIDs)):
+            rd_contactForces.append(lcpContactForces[i].copy()/200.)
+            rd_contactPositions.append(lcpContactPositions[i].copy())
+
+    viewer.setSimulateCallback(simulateCallback)
+    
+    viewer.startTimer(1/30.)
+    viewer.show()
+    
+    Fl.run()
 
 main()
 

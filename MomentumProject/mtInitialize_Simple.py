@@ -159,6 +159,43 @@ def create_vchain_5():
     
     return motion, mcfg, wcfg, stepsPerFrame, config
 
+def create_vchain_1():
+    # motion
+    motion = yf.readBvhFile('vchain_1_rotate_root0.bvh', 1)
+    
+    # world, model
+    mcfg = ypc.ModelConfig()
+    mcfg.defaultDensity = 1000.
+    mcfg.defaultBoneRatio = .8
+    for i in range(motion[0].skeleton.getElementNum()):
+        mcfg.addNode(motion[0].skeleton.getElementName(i))
+        
+    node = mcfg.getNode('Hips')
+    #node.width = .3
+    #node.mass = 6.
+        
+    wcfg = ypc.WorldConfig()
+    wcfg.planeHeight = 0.
+    wcfg.useDefaultContactModel = False
+    stepsPerFrame = 30
+    wcfg.timeStep = (1/60.)/stepsPerFrame
+    
+    # parameter
+    config = {}
+    config['Kt'] = 20; config['Dt'] = 2*(config['Kt']**.5) # tracking gain
+    config['Kl'] = 1; config['Dl'] = 2*(config['Kl']**.5) # linear balance gain
+    config['Kh'] = 1; config['Dh'] = 2*(config['Kh']**.5) # angular balance gain
+    config['Ks'] = 5000; config['Ds'] = 2*(config['Ks']**.5) # penalty force spring gain
+    config['Bt'] = 1.
+    config['Bl'] = 1.
+    config['Bh'] = 1.
+    
+    # etc
+    config['weightMap'] = {}
+    config['supLink'] = 'link0'
+    
+    return motion, mcfg, wcfg, stepsPerFrame, config
+
 def create_biped():            
     # motion
     #motionName = 'wd2_n_kick.bvh'  
@@ -249,7 +286,6 @@ def create_biped():
     yme.addJoint(motion, LEFT_FOOT,  LEFT_CALCANEUS_2,  ( 0.025, -0.06, -0.05))
     yme.addJoint(motion, RIGHT_FOOT, RIGHT_CALCANEUS_1, ( 0.025, -0.06, -0.05))
     yme.addJoint(motion, RIGHT_FOOT, RIGHT_CALCANEUS_2, (-0.025, -0.06, -0.05))
-
     yme.addJoint(motion, LEFT_CALCANEUS_1,  'LEFT_CALCANEUS_Effector1',  (0.0, 0.0, -length4))
     yme.addJoint(motion, LEFT_CALCANEUS_2,  'LEFT_CALCANEUS_Effector2',  (0.0, 0.0, -length4))
     yme.addJoint(motion, RIGHT_CALCANEUS_1, 'RIGHT_CALCANEUS_Effector1', (0.0, 0.0, -length4))
