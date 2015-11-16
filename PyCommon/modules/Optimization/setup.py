@@ -6,7 +6,7 @@ module_csLCPLemkeSolver = Extension('csLCPLemkeSolver',
 		extra_link_args=['-lgomp'],
 		libraries = ['boost_python', 'LinearMath'],
 		library_dirs = ['../usr/lib'],
-		sources = ['csLCPLemkeSolver.cpp'])
+		sources = ['csLCPLemkeSolver.cpp', 'btLemkeSolver.cpp', 'btLemkeAlgorithm.cpp'])
 	
 setup (name = 'csLCPLemkeSolver',
 	version = '0.1',
@@ -19,7 +19,7 @@ module_csLCPDantzigSolver = Extension('csLCPDantzigSolver',
 		extra_link_args=['-lgomp'],
 		libraries = ['boost_python', 'LinearMath'],
 		library_dirs = ['../usr/lib'],
-		sources = ['csLCPDantzigSolver.cpp','btDantzigSolver.cpp', 'btDantzigAlgorithm.cpp'])
+		sources = ['csLCPDantzigSolver.cpp','btDantzigLCP.cpp'])
 	
 setup (name = 'csLCPDantzigSolver',
 	version = '0.1',
