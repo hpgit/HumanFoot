@@ -124,7 +124,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, numFrictionBases, ta
     #print "A21: ", A21
     #print "A22: ", A22
 
-    factor = 10000.
+    factor = 1000.
 
     A1 = np.hstack((np.hstack((A11, A12)), np.zeros((A11.shape[0], E.shape[1])) ))
     A2 = np.hstack((np.hstack((A21, A22)), E ))
@@ -155,7 +155,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, numFrictionBases, ta
         if abs(contactPositions[i][1]) > penDepth:
             bPenDepth[i] = contactPositions[i][1] + penDepth
 
-    b1 = N.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau) + 0.01*invh*bPenDepth
+    b1 = N.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau) + 0.02*invh*bPenDepth
     #print b1
     b2 = D.T.dot(qdot_0 - h*invMc) + h*temp_DM.dot(tau)
     b3 = np.zeros(mus.shape[0])
@@ -170,14 +170,15 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, numFrictionBases, ta
     #print "A: ", A
     #print "b: ", b
     
+
     #lo = np.zeros(A.shape[0])
     lo = 0.*np.ones(A.shape[0])
     hi = 1000000. * np.ones(A.shape[0])
     x = 100.*np.ones(A.shape[0])
 
-    normalizeMatrix(A, b)
-    print A, b
-    pdb.set_trace()
+    #normalizeMatrix(A, b)
+
+    #print A[0]
 
     lcpSolver = lcp.LemkeSolver()
     #lcpSolver = lcpD.DantzigSolver()

@@ -2,10 +2,11 @@ MODULE_INC_DIR := PyCommon/modules/usr/include
 MODULE_LIB_DIR := PyCommon/modules/usr/lib
 VP_DIR := PyCommon/externalLibs/VirtualPhysics2010
 GEAR_DIR := PyCommon/externalLibs/gear
-PYTHON_FILE := main_MomentumProject_SimpleLCP.py
+#PYTHON_FILE := main_MomentumProject_SimpleLCP.py
 #PYTHON_FILE := ompTest.py
-PYTHON_FILE := main_Test.py
+#PYTHON_FILE := main_Test.py
 #PYTHON_FILE := lcpTest2.py
+PYTHON_FILE := run.py
 
 all:
 	cd PyCommon/modules;make
@@ -26,7 +27,7 @@ install_dependencies_mac:
 	cp $(VP_DIR)/usr/lib/Win32/gccRelease/libvpLib.a $(MODULE_LIB_DIR)/
 
 run:
-	cd MomentumProject;python $(PYTHON_FILE)
+	cd MomentumProject;python -i $(PYTHON_FILE)
 
 clean:
 	cd PyCommon/modules;make clean

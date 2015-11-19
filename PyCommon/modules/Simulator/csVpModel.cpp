@@ -1010,6 +1010,11 @@ void VpControlModel::_createJoint( const object& joint, const object& posture )
 
 		pParentNode->body.SetJoint(&pNode->joint, Inv(_boneTs[parent_index])*Inv(invLocalT));
 		pNode->body.SetJoint(&pNode->joint, Inv(_boneTs[joint_index]));
+		SpatialSpring el(.01);
+		SpatialDamper dam(.2);
+		//std::cout << el <<std::endl;
+		//pNode->joint.SetElasticity(el);
+		//pNode->joint.SetDamping(dam);
 		pNode->use_joint = true;
 	}
 

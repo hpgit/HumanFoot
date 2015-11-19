@@ -35,95 +35,14 @@ import numpy.linalg as npl
 import mtOptimize as mot
 import mtInitialize_Simple as mit
 
-MULTI_VIEWER = False
 
 MOTION_COLOR = (213,111,162)
 CHARACTER_COLOR = (20,166,188)
 FEATURE_COLOR = (255,102,0)
 CHARACTER_COLOR2 = (200,200,200)
 
-
-contactState = 0
-g_applyForce = False
-
-g_initFlag = 0
-
-softConstPoint = [0, 0, 0]
-
-forceShowFrame = 0
-forceApplyFrame = 0
-
-JsysPre = 0
-JsupPreL = 0
-JsupPreR = 0
-JsupPre = 0
-
-stage = 0
-
-desCOMOffset = 0
-
-contactRendererName = []
-
-leftHipTimer =0
-
-## Constant
-STATIC_BALANCING = 0
-MOTION_TRACKING = 1
-DYNAMIC_BALANCING = 2
-POWERFUL_BALANCING = 3
-POWERFUL_MOTION_TRACKING = 4
-FLYING = 5
-
-def checkAll(list, value) :
-    for i in range(len(list)) :
-        if list[i] != value :
-            return 0
-    return 1
-
-def getDesFootLinearAcc(refModel, controlModel, footIndex, ModelOffset, CM_ref, CM, Kkk, Dkk, restPosY = 0.0) :
-        
-    desLinearAcc = [0,0,0]
-
-    refPos = refModel.getBodyPositionGlobal(footIndex)  
-    curPos = controlModel.getBodyPositionGlobal(footIndex)
-    refPos[0] += ModelOffset[0]
-                                
-    refVel = refModel.getBodyVelocityGlobal(footIndex) 
-    curVel = controlModel.getBodyVelocityGlobal(footIndex)
-    refAcc = refModel.getBodyAccelerationGlobal(footIndex)
-         
-    refPos[1] = restPosY#0.032
-        
-    if refPos[1] < 0.0 :
-        refPos[1] = restPosY#0.032
-        
-    desLinearAcc = yct.getDesiredAcceleration(refPos, curPos, refVel, curVel, refAcc, Kkk, Dkk)         
-
-    return desLinearAcc, refPos
-
-def getDesFootAngularAcc(refModel, controlModel, footIndex, Kk, Dk, axis = [0,1,0], desAng = [0,1,0]) :
-    desAngularAcc = [0,0,0]
-
-    curAng = [controlModel.getBodyOrientationGlobal(footIndex)]
-    refAngVel = refModel.getBodyAngVelocityGlobal(footIndex)
-    curAngVel = controlModel.getBodyAngVelocityGlobal(footIndex)
-    refAngAcc = (0,0,0)
-                        
-    curAngY = np.dot(curAng, np.array(axis))
-    refAngY = np.array(desAng)
-    if stage == MOTION_TRACKING+10:    
-        refAng = [refModel.getBodyOrientationGlobal(footIndex)]
-        refAngY2 = np.dot(refAng, np.array([0,1,0]))
-        refAngY = refAngY2[0]
-    
-    aL = mm.logSO3(mm.getSO3FromVectors(curAngY[0], refAngY))
-    desAngularAcc = Kk*aL + Dk*(refAngVel-curAngVel)
-
-    return desAngularAcc
-
-def getPartJacobian(_Jsys, _jIdx):
-    # warning : only Jsys works.
-    return _Jsys[6*_jIdx : 6*_jIdx+6].copy()
+# warning : only Jsys works.
+getPartJacobian = lambda _Jsys, _jIdx : _Jsys[6*_jIdx:6*_jIdx+6].copy()
 
 def getBodyGlobalPos(model, motion, name):
     return model.getBodyPositionGlobal(motion[0].skeleton.getJointIndex(name))
@@ -131,21 +50,66 @@ def getBodyGlobalPos(model, motion, name):
 def getBodyGlobalOri(model, motion, name):
     return model.getBodyOrientationGlobal(motion[0].skeleton.getJointIndex(name))
 
-def main():
+
+
+motion = None
+mcfg = None
+wcfg = None
+stepsPerFrame = None
+cofig = None
+mcfg_motion = None
+
+vpWorld = None
+controlModel = None    
+
+totalDOF = None
+DOFs = None
+
+bodyIDsToCheck = None
+
+ddth_des_flat = None
+dth_flat = None
+ddth_sol = None
+
+rd_contactForces = None
+rd_contactPositions = None
+
+viewer = None
+
+
+def init():
+    global motion
+    global mcfg
+    global wcfg 
+    global stepsPerFrame
+    global cofig
+    global mcfg_motion
+    global vpWorld
+    global controlModel
+    global totalDOF
+    global DOFs
+    global bodyIDsToCheck
+    global ddth_des_flat
+    global dth_flat
+    global ddth_sol
+    global rd_contactForces
+    global rd_contactPositions
+    global viewer
 
     np.set_printoptions(precision=4, linewidth=200)
     #motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_1()
     #motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_5()
-    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
+    #motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
+    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_chiken_foot()
     mcfg_motion = mit.normal_mcfg()
         
     vpWorld = cvw.VpWorld(wcfg)
     controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
-    
+
     vpWorld.initialize()
     #controlModel.initializeHybridDynamics()
     controlModel.initializeForwardDynamics()
-    
+
     totalDOF = controlModel.getTotalDOF()
     DOFs = controlModel.getDOFs()
 
@@ -158,19 +122,47 @@ def main():
 
     rd_contactForces = [None]
     rd_contactPositions = [None]
-
+    if viewer is not None:
+        viewer.hide()
     viewer = ysv.SimpleViewer()
     viewer.doc.addObject('motion', motion)
     viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL))
     viewer.doc.addRenderer('rd_contactForces', yr.VectorsRenderer(rd_contactForces, rd_contactPositions, (0,255,0), .1))
 
 
+init()
 
-    def simulateCallback(frame):
+import testFunc as tf
+tfPrint = []
+#renderer input
+tfRender = []
+
+#controlModel.fixBody(0)
+class Callback:
+    def __init__(self):
+        self.cBodyIDs = None
+        self.cPositions = None
+        self.cPositionLocals = None
+        self.cForces = None
+        self.frame = -1
+        self.th_r = None
+        self.th = None
+        self.dth_r = None
+        self.dth = None
+        self.ddth_r = None
+        self.ddth_des = None
+        self.ddth_c = None
+
+    def simulateCallback(self, frame):
+
+        global ddth_des_flat
+
+        #reload(tf)
+        self.frame = frame
         print "main:frame : ", frame
         # motionModel.update(motion[0])
 
-        Kt, Kk, Kl, Kh, Ksc, Bt, Bl, Bh, B_CM, B_CMSd, B_Toe = 0.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.
+        Kt, Kk, Kl, Kh, Ksc, Bt, Bl, Bh, B_CM, B_CMSd, B_Toe = viewer.GetParam()
         
         Dt = 2*(Kt**.5)
         Dk = 2*(Kk**.5)
@@ -178,58 +170,58 @@ def main():
         Dh = 2*(Kh**.5)
         Dsc = 2*(Ksc**.5)
                 
-                       
+        
         # tracking
-        th_r_ori = motion.getDOFPositions(frame)
-        th_r = copy.copy(th_r_ori)
+        self.th_r = motion.getDOFPositions(0)
+        self.th = controlModel.getDOFPositions()
+        self.dth_r = motion.getDOFVelocities(0)
+        self.dth = controlModel.getDOFVelocities()
+        self.ddth_r = motion.getDOFAccelerations(0)
+        self.ddth_des = yct.getDesiredDOFAccelerations(self.th_r, self.th, self.dth_r, self.dth, self.ddth_r, Kt, Dt)
+        self.ddth_c = controlModel.getDOFAccelerations()
+        ype.flatten(self.ddth_des, ddth_des_flat)
 
-
-        th = controlModel.getDOFPositions()
-        dth_r = motion.getDOFVelocities(frame)
-        dth = controlModel.getDOFVelocities()
-        ddth_r = motion.getDOFAccelerations(frame)
-        ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
-        ddth_c = controlModel.getDOFAccelerations()
-        ype.flatten(ddth_des, ddth_des_flat)
         for i in range(6):
             ddth_des_flat[i] = 0.
-        lcpBodyIDs, lcpContactPositions, lcpContactPositionLocals, lcpContactForces = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., 8, ddth_des_flat)
+        try:
+            tf.printFunc(tfPrint)
+            #pass
+        except Exception, e:
+            print e
+        
 
-        #print "lcpContactPositions: ", lcpContactPositions
-        #print "lcpContactPositionLocals: ", lcpContactPositionLocals      
         for i in range(stepsPerFrame):
             # apply penalty force
             #bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
-            #print frame, bodyIDs, contactPositions, contactPositionLocals, contactForces
-            lcpBodyIDs, lcpContactPositions, lcpContactPositionLocals, lcpContactForces = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., 8, ddth_des_flat)
-            if len(lcpBodyIDs) >0:
-                vpWorld.applyPenaltyForce(lcpBodyIDs, lcpContactPositionLocals, lcpContactForces)                      
-                for idx in range(len(lcpContactForces)):
-                    if lcpContactForces[idx][1] > 1000.:
-                        print frame, lcpContactForces[idx]
-            #print ddth_sol
+            cBodyIDs, cPositions, cPositionLocals, cForces = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., 8, ddth_des_flat)
+            if len(cBodyIDs) >0:
+                vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForces)                      
+                for idx in range(len(cForces)):
+                    if cForces[idx][1] > 1000.:
+                        print frame, cForces[idx]
+
             #controlModel.setDOFAccelerations(ddth_des)
-            controlModel.setDOFTorques(ddth_des[1:])
-            
+            controlModel.setDOFTorques(self.ddth_des[1:])
             #controlModel.solveHybridDynamics()
             vpWorld.step()                    
-            pass
             
-        # print timeReport
-        #del th
-
+        self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., 8, ddth_des_flat)
+        try:
+            tf.renderFunc(tfRender)
+        except Exception, e:
+            print e
+        
         del rd_contactForces[:]
         del rd_contactPositions[:]
-        for i in range(len(lcpBodyIDs)):
-            rd_contactForces.append(lcpContactForces[i].copy()/200.)
-            rd_contactPositions.append(lcpContactPositions[i].copy())
+        for i in range(len(self.cBodyIDs)):
+            rd_contactForces.append(self.cForces[i].copy()/200.)
+            rd_contactPositions.append(self.cPositions[i].copy())
 
-    viewer.setSimulateCallback(simulateCallback)
-    
-    viewer.startTimer(1/30.)
-    viewer.show()
-    
-    Fl.run()
+callback = Callback()
 
-main()
+
+viewer.setSimulateCallback(callback.simulateCallback)
+
+viewer.startTimer(1/30.)
+viewer.show()
 
