@@ -108,7 +108,7 @@ def normal_mcfg():
     
     node = mcfg.getNode('Spine1')
     node.length = .2
-    node.offset = (0,0,0.1)
+    node.offset = (0, 0, 0.1)
     
     node = mcfg.getNode('Spine')
     node.width = .22
@@ -161,6 +161,7 @@ def create_vchain_5():
     
     return motion, mcfg, wcfg, stepsPerFrame, config
 
+
 def create_vchain_1():
     # motion
     motion = yf.readBvhFile('vchain_1_rotate_root0.bvh', 1)
@@ -197,6 +198,7 @@ def create_vchain_1():
     config['supLink'] = 'link0'
     
     return motion, mcfg, wcfg, stepsPerFrame, config
+
 
 def create_chiken_foot():
     # motion
@@ -243,29 +245,30 @@ def create_chiken_foot():
     wcfg.timeStep = (1/30.)/stepsPerFrame
     
     # parameter
-    config = {}
-    config['Kt'] = 20; config['Dt'] = 2*(config['Kt']**.5) # tracking gain
-    config['Kl'] = 1; config['Dl'] = 2*(config['Kl']**.5) # linear balance gain
-    config['Kh'] = 1; config['Dh'] = 2*(config['Kh']**.5) # angular balance gain
-    config['Ks'] = 5000; config['Ds'] = 2*(config['Ks']**.5) # penalty force spring gain
+    config = dict([])
+    config['Kt'] = 20; config['Dt'] = 2*(config['Kt']**.5)  # tracking gain
+    config['Kl'] = 1; config['Dl'] = 2*(config['Kl']**.5)  # linear balance gain
+    config['Kh'] = 1; config['Dh'] = 2*(config['Kh']**.5)  # angular balance gain
+    config['Ks'] = 5000; config['Ds'] = 2*(config['Ks']**.5)  # penalty force spring gain
     config['Bt'] = 1.
     config['Bl'] = 1.
     config['Bh'] = 1.
     
     # etc
     config['weightMap'] = {}
-    #config['supLink'] = 'link0'
+    # config['supLink'] = 'link0'
     
     return motion, mcfg, wcfg, stepsPerFrame, config
 
+
 def create_biped():            
     # motion
-    #motionName = 'wd2_n_kick.bvh'  
+    # motionName = 'wd2_n_kick.bvh'
     
     if MOTION == STAND:
-        #motionName = 'wd2_stand.bvh'
+        # motionName = 'wd2_stand.bvh'
         motionName = 'wd2_stand2.bvh'
-        #motionName = 'woddy2_jump0_short.bvh'
+        # motionName = 'woddy2_jump0_short.bvh'
     elif MOTION == STAND2:
         motionName = 'ww13_41_V001.bvh'
     elif MOTION == FORWARD_JUMP:
@@ -281,7 +284,7 @@ def create_biped():
     elif MOTION == TIPTOE:
         motionName = './MotionFile/cmu/15_07_15_07.bvh'
 
-    #motionName = 'ww13_41_V001.bvh'
+    # motionName = 'ww13_41_V001.bvh'
     scale = 0.01
     if MOTION == WALK :
         scale = 1.0
@@ -302,17 +305,17 @@ def create_biped():
     yme.removeJoint(motion, RIGHT_HAND_END, False)
     yme.removeJoint(motion, LEFT_HAND_END, False)
         
-    yme.offsetJointLocal(motion, RIGHT_ARM, (.03,-.05,0), False)
-    yme.offsetJointLocal(motion, LEFT_ARM, (-.03,-.05,0), False)
-    yme.rotateJointLocal(motion, HIP, mm.exp(mm.v3(1,0,0), .01), False)
-    #yme.rotateJointLocal(motion, HIP, mm.exp(mm.v3(0,0,1), -.01), False)
+    yme.offsetJointLocal(motion, RIGHT_ARM, (.03, -.05, 0.), False)
+    yme.offsetJointLocal(motion, LEFT_ARM, (-.03, -.05, 0.), False)
+    yme.rotateJointLocal(motion, HIP, mm.exp(mm.v3(1., 0., 0.), .01), False)
+    # yme.rotateJointLocal(motion, HIP, mm.exp(mm.v3(0,0,1), -.01), False)
     
-    #addFootSegment
-    #Talus
+    # addFootSegment
+    # Talus
     length1 = .15
     width1 = .03
     mass1 = .4
-    #Phalange
+    # Phalange
     length3 = length1*0.75
     width3  = width1
     mass3   = 0.4
@@ -427,7 +430,7 @@ def create_biped():
     
     node = mcfg.getNode(SPINE)
     node.width = .22
-    #node.length = .2 ####             
+    # node.length = .2 ####
     
         
     node = mcfg.getNode('RightFoot')
@@ -595,14 +598,13 @@ def create_biped():
     config['Bl'] = 1.#0.5
     config['Bh'] = 1.
     
-    
-    config['weightMap']={RIGHT_ARM:.2, RIGHT_FORE_ARM:.2, LEFT_ARM:.2, LEFT_FORE_ARM:.2, SPINE:.3, SPINE1:.2, RIGHT_FOOT:.3, LEFT_FOOT:.3, HIP:.3,
+    config['weightMap'] = {RIGHT_ARM:.2, RIGHT_FORE_ARM:.2, LEFT_ARM:.2, LEFT_FORE_ARM:.2, SPINE:.3, SPINE1:.2, RIGHT_FOOT:.3, LEFT_FOOT:.3, HIP:.3,
                     RIGHT_UP_LEG:.1, RIGHT_LEG:.2, LEFT_UP_LEG:.1, LEFT_LEG:.2, 
                     LEFT_TALUS_1:.1, RIGHT_TALUS_1:.1, LEFT_TALUS_2:.1, RIGHT_TALUS_2:.1, 
                     RIGHT_CALCANEUS_1:.2, LEFT_CALCANEUS_1:.2, RIGHT_CALCANEUS_2:.2, LEFT_CALCANEUS_2:.2, 
                     LEFT_PHALANGE_1:.1, LEFT_PHALANGE_2:.1, RIGHT_PHALANGE_1:.1, RIGHT_PHALANGE_2:.1}
     
-    config['weightMap2']={RIGHT_ARM:.2, RIGHT_FORE_ARM:.2, LEFT_ARM:.2, LEFT_FORE_ARM:.2, SPINE:.5, SPINE1:.3, RIGHT_FOOT:.7, LEFT_FOOT:.7, HIP:.5,
+    config['weightMap2'] = {RIGHT_ARM:.2, RIGHT_FORE_ARM:.2, LEFT_ARM:.2, LEFT_FORE_ARM:.2, SPINE:.5, SPINE1:.3, RIGHT_FOOT:.7, LEFT_FOOT:.7, HIP:.5,
                     RIGHT_UP_LEG:.7, RIGHT_LEG:.7, LEFT_UP_LEG:.7, LEFT_LEG:.7, 
                     LEFT_TALUS_1:.7, RIGHT_TALUS_1:.7, LEFT_TALUS_2:.7, RIGHT_TALUS_2:.7, 
                     RIGHT_CALCANEUS_1:.7, LEFT_CALCANEUS_1:.7, RIGHT_CALCANEUS_2:.7, LEFT_CALCANEUS_2:.7, 
@@ -638,7 +640,7 @@ def create_biped():
 
     config['supLink'] = LEFT_FOOT
     config['supLink2'] = RIGHT_FOOT
-    #config['end'] = HIP
+    # config['end'] = HIP
     config['end'] = SPINE1
 
     config['trunk'] = SPINE
@@ -649,29 +651,26 @@ def create_biped():
     
     config['FootLPart'] = [LEFT_FOOT, LEFT_CALCANEUS_1, LEFT_CALCANEUS_2, LEFT_TALUS_1, LEFT_TALUS_2, LEFT_PHALANGE_1, LEFT_PHALANGE_2]
     config['FootRPart'] = [RIGHT_FOOT, RIGHT_CALCANEUS_1, RIGHT_CALCANEUS_2, RIGHT_TALUS_1, RIGHT_TALUS_2, RIGHT_PHALANGE_1, RIGHT_PHALANGE_2]
-    
 
     return motion, mcfg, wcfg, stepsPerFrame, config
 
-
-
-#===============================================================================
+# ===============================================================================
 # biped config
-#===============================================================================
+# ===============================================================================
 
 # motion, mesh config
-g_motionDirConfigMap = {}
+g_motionDirConfigMap = dict()
 g_motionDirConfigMap['../Data/woody2/Motion/Physics2/'] = \
-    {'footRot': mm.exp(mm.v3(1,0,0), .05), 'yOffset': .0, 'scale':1.,\
+    {'footRot': mm.exp(mm.v3(1,0,0), .05), 'yOffset': .0, 'scale': 1.,
      'rootRot': mm.I_SO3()}
 g_motionDirConfigMap['../Data/woody2/Motion/Balancing/'] = \
-    {'footRot': mm.exp(mm.v3(1,-.5,0), -.6), 'yOffset': .0, 'scale':1.,\
+    {'footRot': mm.exp(mm.v3(1,-.5,0), -.6), 'yOffset': .0, 'scale': 1.,
      'rootRot': mm.exp(mm.v3(1,0,0), .01)}
 g_motionDirConfigMap['../Data/woody2/Motion/VideoMotion/'] = \
-    {'footRot': mm.exp(mm.v3(1,0,0), -.05), 'yOffset': .01, 'scale':2.53999905501,\
+    {'footRot': mm.exp(mm.v3(1,0,0), -.05), 'yOffset': .01, 'scale': 2.53999905501,
      'rootRot': mm.exp(mm.v3(1,0,0), .0)}
 g_motionDirConfigMap['../Data/woody2/Motion/Samsung/'] = \
-    {'footRot': mm.exp(mm.v3(1,0,0), -.03), 'yOffset': .0, 'scale':2.53999905501,\
+    {'footRot': mm.exp(mm.v3(1,0,0), -.03), 'yOffset': .0, 'scale': 2.53999905501,
      'rootRot': mm.exp(mm.v3(1,0,0), .03)}
 
 
@@ -679,7 +678,7 @@ g_motionDirConfigMap['../Data/woody2/Motion/Samsung/'] = \
 # # reloadable config
 #===============================================================================
 def buildMassMap():
-    massMap = {}
+    massMap = dict()
     massMap = massMap.fromkeys(['Head', 'Head_Effector', 'Hips', 'LeftArm', 'LeftFoot', 'LeftForeArm', 'LeftHand', 'LeftHand_Effector', 'LeftLeg', 'LeftShoulder1', 'LeftToes', 'LeftToes_Effector', 'LeftUpLeg', 'RightArm', 'RightFoot', 'RightForeArm', 'RightHand', 'RightHand_Effector', 'RightLeg', 'RightShoulder', 'RightToes', 'RightToes_Effector', 'RightUpLeg', 'Spine', 'Spine1',
                                     LEFT_METATARSAL_1, LEFT_METATARSAL_3, LEFT_METATARSAL_2, LEFT_PHALANGE_1, LEFT_PHALANGE_2, LEFT_PHALANGE_3, LEFT_CALCANEUS_1, LEFT_CALCANEUS_2, LEFT_CALCANEUS_3, 
                                     LEFT_TALUS_1, LEFT_TALUS_2, LEFT_TALUS_3, RIGHT_TALUS_1, RIGHT_TALUS_2, RIGHT_TALUS_3, 

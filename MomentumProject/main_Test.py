@@ -2,6 +2,7 @@
 from fltk import *
 import copy
 import numpy as np
+import numpy.linalg as npl
 import time
 
 import sys
@@ -19,18 +20,14 @@ import Simulator.csVpModel as cvm
 import Simulator.hpLCPSimulator as hls
 import GUI.ysSimpleViewer as ysv
 import Optimization.ysAnalyticConstrainedOpt as yac
-import ArticulatedBody.ysJacobian as yjc
 import Util.ysPythonEx as ype
+import ArticulatedBody.ysJacobian as yjc
 import ArticulatedBody.ysReferencePoints as yrp
 import ArticulatedBody.ysMomentum as ymt
 import ArticulatedBody.ysControl as yct
-
 import GUI.ysMultiViewer as ymv
-
 import Motion.ysHierarchyEdit as yme
 import Simulator.ysPhysConfig as ypc
-
-import numpy.linalg as npl
 
 import mtOptimize as mot
 import mtInitialize_Simple as mit
@@ -62,7 +59,7 @@ cofig = None
 mcfg_motion = None
 
 vpWorld = None
-controlModel = None    
+controlModel = None
 
 totalDOF = None
 DOFs = None
@@ -82,7 +79,7 @@ viewer = None
 def init():
     global motion
     global mcfg
-    global wcfg 
+    global wcfg
     global stepsPerFrame
     global cofig
     global mcfg_motion
@@ -94,8 +91,8 @@ def init():
     global ddth_des_flat
     global dth_flat
     global ddth_sol
-    global rd_contactForces
-    global rd_contactPositions
+    global rd_cForces
+    global rd_cPositions
     global viewer
 
     np.set_printoptions(precision=4, linewidth=200)
@@ -104,7 +101,7 @@ def init():
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
     motion, mcfg, wcfg, stepsPerFrame, config = mit.create_chiken_foot()
     mcfg_motion = mit.normal_mcfg()
-        
+
     vpWorld = cvw.VpWorld(wcfg)
     controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
 
@@ -122,10 +119,9 @@ def init():
     dth_flat = ype.makeFlatList(totalDOF)
     ddth_sol = ype.makeNestedList(DOFs)
 
-    rd_contactForces = [None]
-    rd_contactPositions = [None]
-    if viewer is not None:
-        viewer.hide()
+    rd_cForces = [None]
+    rd_cPositions = [None]
+
     viewer = ysv.SimpleViewer()
     viewer.doc.addObject('motion', motion)
     viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL))
@@ -173,7 +169,7 @@ class Callback:
         Dl = 2*(Kl**.5)
         Dh = 2*(Kh**.5)
         Dsc = 2*(Ksc**.5)
-                
+
         # tracking
         self.th_r = motion.getDOFPositions(0)
         self.th = controlModel.getDOFPositions()
@@ -197,7 +193,7 @@ class Callback:
             cBodyIDs, cPositions, cPositionLocals, cForces \
                 = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., 8, ddth_des_flat)
             if len(cBodyIDs) > 0:
-                vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForces)                      
+                vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForces)
                 for idx in range(len(cForces)):
                     if cForces[idx][1] > 1000.:
                         print frame, cForces[idx]
@@ -205,8 +201,8 @@ class Callback:
             # controlModel.setDOFAccelerations(ddth_des)
             controlModel.setDOFTorques(self.ddth_des[1:])
             # controlModel.solveHybridDynamics()
-            vpWorld.step()                    
-            
+            vpWorld.step()
+
         self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces \
             = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., 8, ddth_des_flat)
         try:
