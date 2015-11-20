@@ -13,7 +13,7 @@ import Motion.ysHierarchyEdit as yme
 import Motion.ysMotion as ym
 import math
 
-## Constant
+# Constant
 HIP = 'Hips'
 RIGHT_UP_LEG = 'RightUpLeg'
 RIGHT_LEG = 'RightLeg'
@@ -90,6 +90,7 @@ MOTION = STAND
 
 FOOT_PART_NUM = 7
 
+
 def normal_mcfg():
     massMap = buildMassMap()
         
@@ -121,6 +122,7 @@ def normal_mcfg():
     node.width = .1
 
     return mcfg
+
 
 def create_vchain_5():
     # motion
