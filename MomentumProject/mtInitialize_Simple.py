@@ -241,8 +241,8 @@ def create_chiken_foot():
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
-    stepsPerFrame = 360
-    wcfg.timeStep = (1/30.)/stepsPerFrame
+    stepsPerFrame = 120
+    wcfg.timeStep = (1/120.)/stepsPerFrame
     
     # parameter
     config = dict([])

@@ -192,7 +192,7 @@ class Callback:
             # apply penalty force
             # bodyIDs, cPositions, cPositionLocals, cForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
             cBodyIDs, cPositions, cPositionLocals, cForces \
-                = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., 8, ddth_des_flat)
+                = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., None, 8)
             if len(cBodyIDs) > 0:
                 vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForces)
                 for idx in range(len(cForces)):
@@ -200,12 +200,12 @@ class Callback:
                         print frame, cForces[idx]
 
             # controlModel.setDOFAccelerations(ddth_des)
-            controlModel.setDOFTorques(self.ddth_des[1:])
+            # controlModel.setDOFTorques(self.ddth_des[1:])
             # controlModel.solveHybridDynamics()
             vpWorld.step()
 
         self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces \
-            = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., 8, ddth_des_flat)
+            = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., None, 8)
         try:
             tf.renderFunc(tfRender)
         except Exception, e:
@@ -213,9 +213,9 @@ class Callback:
         
         del rd_cForces[:]
         del rd_cPositions[:]
-        for i in range(len(self.cBodyIDs)):
-            rd_cForces.append(self.cForces[i].copy()/200.)
-            rd_cPositions.append(self.cPositions[i].copy())
+        #for i in range(len(self.cBodyIDs)):
+        #    rd_cForces.append(self.cForces[i].copy()/200.)
+        #    rd_cPositions.append(self.cPositions[i].copy())
 
 callback = Callback()
 

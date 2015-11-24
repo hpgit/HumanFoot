@@ -205,6 +205,7 @@ class LSE:
 # subject to Gx <= h
 #            Ax  = b
 
+
 class QP:
     def __init__(self):
         self.Cs = []
@@ -257,13 +258,12 @@ class QP:
         solvers.options['maxiter'] = 1000
         x_large = solvers.qp(Q, p, G, h, A, b)['x']
         return x_large
-            
-        
-        #result = {}
-        #result['x'] = x_large[:self.varNum]
-        #if self.A!=None:
-            #result['lambda'] = x_large[self.varNum:]
-        #return result
+
+        # result = {}
+        # result['x'] = x_large[:self.varNum]
+        # if self.A!=None:
+        #     result['lambda'] = x_large[self.varNum:]
+        # return result
     
     def clear(self):
         del self.Cs[:]
