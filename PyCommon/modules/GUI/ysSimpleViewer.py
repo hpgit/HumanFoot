@@ -216,8 +216,8 @@ class RenderersWnd(Fl_Window, ybu.Observer):
         self.renderersChk.size(self.renderersChk.w(), h-10)
         Fl_Window.resize(self, x, y, w, h)
          
-initKt = 50
-maxKt = 1000
+initKt = 1.
+maxKt = 10.
 initKk = 17
 #initKk = 21#300
 

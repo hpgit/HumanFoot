@@ -279,14 +279,27 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 
 		string geomType = XS(cfgNode.attr("geom"));
 		if (geomType == "MyFoot3")
-			pNode->body.AddGeometry(new MyFoot3(width, length+width));
+		{
+		    scalar mass = XD(cfgNode.attr("mass"));
+		    density = mass/ (width*width*M_PI*(length+width));
+		    pNode->body.AddGeometry(new MyFoot3(width, length+width));
+		    pNode->body.SetInertia(CylinderInertia(density, width,length+width));
+		}
 		else if(geomType == "MyFoot4")
+		{
+		    scalar mass = XD(cfgNode.attr("mass"));
+		    density = mass/ (width*width*M_PI*length);
 			pNode->body.AddGeometry(new MyFoot4(width, length));
 			//pNode->body.AddGeometry(new MyFoot4(width, length), Vec3(0,0,-width));
+			pNode->body.SetInertia(CylinderInertia(density, width,length));
+		}
 		else
+		{
 			pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)));
+			pNode->body.SetInertia(BoxInertia(density, Vec3(width/2.,height/2.,length/2.)));
+		}
 //		pNode->body.SetInertia(BoxInertia(density, Vec3(width,height,length)));
-		pNode->body.SetInertia(BoxInertia(density, Vec3(width/2.,height/2.,length/2.)));
+		//pNode->body.SetInertia(BoxInertia(density, Vec3(width/2.,height/2.,length/2.)));
 
 		boneT = boneT * SE3(pyVec3_2_Vec3(cfgNode.attr("offset")));
 		_boneTs[joint_index] = boneT;
@@ -727,7 +740,7 @@ void VpModel::rotate( const object& rotation )
 	bodyFrame = _nodes[0]->body.GetFrame();
 	_nodes[0]->body.SetFrame(bodyFrame * R);
 
-	// ¹Ù²ï root body frame¿¡ µû¶ó joint·Î ¿¬°áµÈ ³ª¸ÓÁö bodyµé frame ¾÷µ¥ÀÌÆ®. ÀÌ°ÍÀ» ÇÏÁö ¾ÊÀ¸¸é root body ÇÏ³ª¸¸ rotationÀÌ Àû¿ëµÈ´Ù. 
+	// ï¿½Ù²ï¿½ root body frameï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ jointï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ bodyï¿½ï¿½ frame ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®. ï¿½Ì°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ root body ï¿½Ï³ï¿½ï¿½ï¿½ rotationï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È´ï¿½. 
 	_pWorld->UpdateFrame();
 }
 
@@ -789,8 +802,8 @@ void VpModel::setBodyAccelerationGlobal( int index, const Vec3& acc, const Vec3*
 VpMotionModel::VpMotionModel( VpWorld* pWorld, const object& createPosture, const object& config )
 	:VpModel(pWorld, createPosture, config), _recordVelByFiniteDiff(false), _inverseMotionTimeStep(30.)
 {
-	// OdeMotionModelÀÇ node.body.disable()Àº VpMotionModel¿¡¼­´Â pWorld->AddBody()¸¦
-	// ¾È ÇØÁÖ´Â °ÍÀ¸·Î ±× ¿ªÇÒÀ» ÇÏµµ·Ï ÇÑ´Ù.
+	// OdeMotionModelï¿½ï¿½ node.body.disable()ï¿½ï¿½ VpMotionModelï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ pWorld->AddBody()ï¿½ï¿½
+	// ï¿½ï¿½ ï¿½ï¿½ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ïµï¿½ï¿½ï¿½ ï¿½Ñ´ï¿½.
 
 	update(createPosture);
 	
@@ -941,9 +954,9 @@ void VpControlModel::_createJoint( const object& joint, const object& posture )
 	// parent      <--------->        child
 	// link     L1      L2      L3      L4
 	// L4_M =  P1*R1 * P2*R2 * P3*R3 * P4*R4  (forward kinematics matrix of L4)
-	// À¸·Î ³ªÅ¸³»ÁöÁö¸¸ ¿©±â¿¡¼± while loop¸¦ ½è±â ¶§¹®¿¡ back trackingÀÌ ¾î·Á¿ö
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½â¿¡ï¿½ï¿½ while loopï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ back trackingï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
 	// L4_M = Inv( Inv(R4)*Inv(P4) * Inv(R3)*Inv(P3) * ...)
-	// À¸·Î ÄÚµùÇßÀ½.
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½.
 
 	invLocalT = invLocalT * Inv(R);
 	invLocalT = invLocalT * Inv(P);
@@ -1010,11 +1023,11 @@ void VpControlModel::_createJoint( const object& joint, const object& posture )
 
 		pParentNode->body.SetJoint(&pNode->joint, Inv(_boneTs[parent_index])*Inv(invLocalT));
 		pNode->body.SetJoint(&pNode->joint, Inv(_boneTs[joint_index]));
-		SpatialSpring el(.01);
-		SpatialDamper dam(.2);
+		SpatialSpring el(1.);
+		SpatialDamper dam(2.);
 		//std::cout << el <<std::endl;
-		//pNode->joint.SetElasticity(el);
-		//pNode->joint.SetDamping(dam);
+		pNode->joint.SetElasticity(el);
+		pNode->joint.SetDamping(dam);
 		pNode->use_joint = true;
 	}
 
@@ -1071,9 +1084,9 @@ void VpControlModel::_updateJoint( const object& joint, const object& posture )
 	// parent      <--------->        child
 	// link     L1      L2      L3      L4
 	// L4_M =  P1*R1 * P2*R2 * P3*R3 * P4*R4  (forward kinematics matrix of L4)
-	// À¸·Î ³ªÅ¸³»ÁöÁö¸¸ ¿©±â¿¡¼± while loop¸¦ ½è±â ¶§¹®¿¡ back trackingÀÌ ¾î·Á¿ö
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½â¿¡ï¿½ï¿½ while loopï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ back trackingï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
 	// L4_M = Inv( Inv(R4)*Inv(P4) * Inv(R3)*Inv(P3) * ...)
-	// À¸·Î ÄÚµùÇßÀ½.
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½.
 
 	invLocalT = invLocalT * Inv(R);
 	invLocalT = invLocalT * Inv(P);
@@ -1127,7 +1140,7 @@ void VpControlModel::_updateJoint( const object& joint, const object& posture )
 		if(nodeExistParentJoint!=object())
 			pNode->joint.SetOrientation(R);
 		else
-			// rootÀÇ °æ¿ì´Â body¸¦ Á÷Á¢ SetFrame() ÇØÁØ´Ù.
+			// rootï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ bodyï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ SetFrame() ï¿½ï¿½ï¿½Ø´ï¿½.
 			pNode->body.SetFrame(SE3(pyVec3_2_Vec3(posture.attr("rootPos")))*P*R*_boneTs[joint_index]);
 	}
 
@@ -1354,7 +1367,11 @@ void VpControlModel::setDOFAccelerations( const bp::list& dofaccs)
 void VpControlModel::setDOFTorques(const bp::list& dofTorque)
 {
 	for(int i=1; i<_nodes.size(); ++i)
-		_nodes[i]->joint.SetAcceleration(pyVec3_2_Vec3(dofTorque[i-1]));
+	{
+	    //std::cout << _nodes[i]->name << std::endl;
+	    //std::cout << pyVec3_2_Vec3(dofTorque[i-1]) << std::endl;
+		_nodes[i]->joint.SetTorque(pyVec3_2_Vec3(dofTorque[i-1]));
+	}
 }
 
 
@@ -1383,7 +1400,7 @@ boost::python::object VpControlModel::getJointAngVelocityLocal( int index )
 
 		genVelBodyLocal = _nodes[index]->body.GetGenVelocityLocal();
 		genVelJointLocal = InvAd(Inv(_boneTs[index]), genVelBodyLocal);
-//		genVelJointLocal = Ad(_boneTs[index], genVelBodyLocal);	// À­ ¶óÀÎ°ú °°Àº ¿ªÇÒ
+//		genVelJointLocal = Ad(_boneTs[index], genVelBodyLocal);	// ï¿½ï¿½ ï¿½ï¿½ï¿½Î°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		pyV[0] = genVelJointLocal[0];
 		pyV[1] = genVelJointLocal[1];
 		pyV[2] = genVelJointLocal[2]; 
@@ -1421,12 +1438,12 @@ object VpControlModel::getJointPositionGlobal( int index )
 	SE3 bodyFrame;
 	object pyV = O.copy();
 
-	// body frame¿¡ Inv(boneT)·Î ¿ø·¡ joint À§Ä¡ Ã£´Â´Ù.
+	// body frameï¿½ï¿½ Inv(boneT)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ joint ï¿½ï¿½Ä¡ Ã£ï¿½Â´ï¿½.
 	bodyFrame = _nodes[index]->body.GetFrame();
 	Vec3_2_pyVec3((bodyFrame * Inv(_boneTs[index])).GetPosition(), pyV);
 	return pyV;
 
-//	if(!_nodes[index])	// ¸»´ÜÀÎ °æ¿ì parent joint frameÀ» Ã£¾Æ offset¸¸Å­ transformation ½ÃÅ²´Ù.
+//	if(!_nodes[index])	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ parent joint frameï¿½ï¿½ Ã£ï¿½ï¿½ offsetï¿½ï¿½Å­ transformation ï¿½ï¿½Å²ï¿½ï¿½.
 //	{
 //		static SE3 parentJointFrame;
 //		static Vec3 offset;
@@ -1436,7 +1453,7 @@ object VpControlModel::getJointPositionGlobal( int index )
 //		offset = pyVec3_2_Vec3(_skeleton.attr("getOffset")(index));
 //		Vec3_2_pyVec3(parentJointFrame * offset, pyV);
 //	}
-//	else	// ¸»´ÜÀÌ ¾Æ´Ñ °æ¿ì body frame¿¡ Inv(boneT)·Î ¿ø·¡ joint À§Ä¡ Ã£´Â´Ù.
+//	else	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Æ´ï¿½ ï¿½ï¿½ï¿½ body frameï¿½ï¿½ Inv(boneT)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ joint ï¿½ï¿½Ä¡ Ã£ï¿½Â´ï¿½.
 //	{
 //		static SE3 bodyFrame;
 //		bodyFrame = _nodes[index]->body.GetFrame();
@@ -1469,7 +1486,7 @@ boost::python::object VpControlModel::getJointOrientationGlobal( int index )
 	SE3 bodyFrame;
 	object pyR = I.copy();
 
-	// body frame¿¡ Inv(boneT)·Î ¿ø·¡ joint frame ±¸ÇÑ´Ù
+	// body frameï¿½ï¿½ Inv(boneT)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ joint frame ï¿½ï¿½ï¿½Ñ´ï¿½
 	bodyFrame = _nodes[index]->body.GetFrame();
 	SE3_2_pySO3(bodyFrame * Inv(_boneTs[index]), pyR);
 	return pyR;
@@ -1887,7 +1904,7 @@ void VpControlModel::setSpring(int body1Index, int body2Index, scalar elasticity
 
 
 
-
+// must be called at first:clear all torques and accelerations
 bp::list VpControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
 {
 	bp::list ls;
@@ -2021,8 +2038,11 @@ bp::list VpControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
 		vpBJoint *joint = &(_nodes.at(i+1)->joint);
 		joint->SetAcceleration(accBackup.at(i));
 		joint->SetTorque(torBackup.at(i));
+		joint->SetAcceleration(Vec3(0., 0., 0.));
+		joint->SetTorque(Vec3(0., 0., 0.));
 	}
-	Hip->SetGenAcceleration(hipAccBackup);
+	//Hip->SetGenAcceleration(hipAccBackup);
+
 	Hip->ResetForce();
 	//Hip->ApplyGlobalForce(hipTorBackup, zero_Vec3);
 	return ls;

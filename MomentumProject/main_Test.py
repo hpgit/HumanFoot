@@ -18,7 +18,7 @@ import Renderer.csVpRenderer as cvr
 import Simulator.csVpWorld as cvw
 import Simulator.csVpModel as cvm
 import Simulator.hpLCPSimulator as hls
-import GUI.ysSimpleViewer as ysv
+import GUI.hpSimpleViewer as hsv
 import Optimization.ysAnalyticConstrainedOpt as yac
 import Util.ysPythonEx as ype
 import ArticulatedBody.ysJacobian as yjc
@@ -56,7 +56,7 @@ motion = None
 mcfg = None
 wcfg = None
 stepsPerFrame = None
-cofig = None
+config = None
 mcfg_motion = None
 
 vpWorld = None
@@ -82,7 +82,7 @@ def init():
     global mcfg
     global wcfg
     global stepsPerFrame
-    global cofig
+    global config
     global mcfg_motion
     global vpWorld
     global controlModel
@@ -107,6 +107,9 @@ def init():
     controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
 
     vpWorld.initialize()
+    # vpWorld.SetIntegrator("RK4")
+    vpWorld.SetIntegrator("IMPLICIT_EULER")
+    # vpWorld.SetGlobalDamping(0.001)
     # controlModel.initializeHybridDynamics()
     controlModel.initializeForwardDynamics()
 
@@ -123,18 +126,20 @@ def init():
     rd_cForces = [None]
     rd_cPositions = [None]
 
-    viewer = ysv.SimpleViewer()
+    viewer = hsv.hpSimpleViewer()
     viewer.doc.addObject('motion', motion)
     viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL))
     viewer.doc.addRenderer('rd_contactForces', yr.VectorsRenderer(rd_cForces, rd_cPositions, (0, 255, 0), .1))
+    viewer.objectInfoWnd.add1DSlider('hehe', minVal=0., maxVal=10., initVal=1., valStep=.01)
+
+    for i in range(motion[0].skeleton.getJointNum()):
+        print(i, motion[0].skeleton.getJointName(i))
+    print "(index, id, name)"
+    for i in range(controlModel.getBodyNum()):
+        print (i, controlModel.index2id(i), controlModel.index2name(i))
 
 
 init()
-
-import testFunc as tf
-tfPrint = []
-# renderer input
-tfRender = []
 
 # controlModel.fixBody(0)
 
@@ -146,13 +151,6 @@ class Callback:
         self.cPositionLocals = None
         self.cForces = None
         self.frame = -1
-        self.th_r = None
-        self.th = None
-        self.dth_r = None
-        self.dth = None
-        self.ddth_r = None
-        self.ddth_des = None
-        self.ddth_c = None
 
     def simulateCallback(self, frame):
 
@@ -163,36 +161,29 @@ class Callback:
         print "main:frame : ", frame
         # motionModel.update(motion[0])
 
-        Kt, Kk, Kl, Kh, Ksc, Bt, Bl, Bh, B_CM, B_CMSd, B_Toe = viewer.GetParam()
+        (Kt,) = viewer.objectInfoWnd.getVals()
         
         Dt = 2*(Kt**.5)
-        Dk = 2*(Kk**.5)
-        Dl = 2*(Kl**.5)
-        Dh = 2*(Kh**.5)
-        Dsc = 2*(Ksc**.5)
 
         # tracking
-        self.th_r = motion.getDOFPositions(0)
-        self.th = controlModel.getDOFPositions()
-        self.dth_r = motion.getDOFVelocities(0)
-        self.dth = controlModel.getDOFVelocities()
-        self.ddth_r = motion.getDOFAccelerations(0)
-        self.ddth_des = yct.getDesiredDOFAccelerations(self.th_r, self.th, self.dth_r, self.dth, self.ddth_r, Kt, Dt)
-        self.ddth_c = controlModel.getDOFAccelerations()
-        ype.flatten(self.ddth_des, ddth_des_flat)
+        th_r = motion.getDOFPositions(0)
+        th = controlModel.getDOFPositions()
+        dth_r = motion.getDOFVelocities(0)
+        dth = controlModel.getDOFVelocities()
+        ddth_r = motion.getDOFAccelerations(0)
+        ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt,
+                                                  config['weightMap'].values())
+        ddth_c = controlModel.getDOFAccelerations()
+        ype.flatten(ddth_des, ddth_des_flat)
 
         for i in range(6):
             ddth_des_flat[i] = 0.
-        try:
-            tf.printFunc(tfPrint)
-        except Exception, e:
-            print e
-        
+
         for i in range(stepsPerFrame):
             # apply penalty force
             # bodyIDs, cPositions, cPositionLocals, cForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
             cBodyIDs, cPositions, cPositionLocals, cForces \
-                = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., None, 8)
+                = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, 8)
             if len(cBodyIDs) > 0:
                 vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForces)
                 for idx in range(len(cForces)):
@@ -200,22 +191,18 @@ class Callback:
                         print frame, cForces[idx]
 
             # controlModel.setDOFAccelerations(ddth_des)
-            # controlModel.setDOFTorques(self.ddth_des[1:])
+            controlModel.setDOFTorques(ddth_des[1:])
             # controlModel.solveHybridDynamics()
             vpWorld.step()
 
         self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces \
-            = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., None, 8)
-        try:
-            tf.renderFunc(tfRender)
-        except Exception, e:
-            print e
-        
+            = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, 8)
+
         del rd_cForces[:]
         del rd_cPositions[:]
-        #for i in range(len(self.cBodyIDs)):
-        #    rd_cForces.append(self.cForces[i].copy()/200.)
-        #    rd_cPositions.append(self.cPositions[i].copy())
+        for i in range(len(self.cBodyIDs)):
+            rd_cForces.append(self.cForces[i].copy()/200.)
+            rd_cPositions.append(self.cPositions[i].copy())
 
 callback = Callback()
 

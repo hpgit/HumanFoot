@@ -95,7 +95,8 @@ def normalizeMatrix(A, b):
 def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictionBases=8):
     # model = VpControlModel
     # numFrictionBases = 8
-    contactNum, bodyIDs, contactPositions, contactPositionsLocal, JTN, JTD, E, N, D = makeFrictionCone(motion[0].skeleton, world, model, bodyIDsToCheck, numFrictionBases)
+    contactNum, bodyIDs, contactPositions, contactPositionsLocal, JTN, JTD, E, N, D\
+        = makeFrictionCone(motion[0].skeleton, world, model, bodyIDsToCheck, numFrictionBases)
     # print "hpLCPSimulator:contactNum : ", contactNum
     if contactNum == 0:
         return bodyIDs, contactPositions, contactPositionsLocal, None
@@ -164,7 +165,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
         if abs(contactPositions[i][1]) > penDepth:
             bPenDepth[i] = contactPositions[i][1] + penDepth
 
-    b1 = JTN.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau) + 0.02*invh*bPenDepth
+    b1 = JTN.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau) + 0.5*invh*bPenDepth
     # print b1
     b2 = JTD.T.dot(qdot_0 - h*invMc) + h*temp_DM.dot(tau)
     b3 = np.zeros(mus.shape[0])
@@ -309,7 +310,7 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
         if abs(contactPositions[i][1]) > penDepth:
             bPenDepth[i] = contactPositions[i][1] + penDepth
 
-    b1 = JTN.T.dot(qdot_0) + h*temp_NM.dot(tau0 - c) + 0.02*invh*bPenDepth
+    b1 = JTN.T.dot(qdot_0) + h*temp_NM.dot(tau0 - c) + 0.5*invh*bPenDepth
     # print b1
     b2 = JTD.T.dot(qdot_0) + h*temp_DM.dot(tau0 - c)
     b3 = np.zeros(mus.shape[0])

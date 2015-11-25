@@ -195,6 +195,7 @@ class RenderersWnd(Fl_Window, ybu.Observer):
         self.renderersChk.size(self.renderersChk.w(), h-10)
         Fl_Window.resize(self, x, y, w, h)
 
+
 class ObjectInfoWnd(Fl_Window, ybu.Observer):
     def __init__(self, x, y, w, h, doc):
         Fl_Window.__init__(self, x, y, w, h)
@@ -231,7 +232,8 @@ class ObjectInfoWnd(Fl_Window, ybu.Observer):
     def onChangeObjectName(self, ptr):
         self.doc.selectObject(ptr.text(ptr.value()))
         self.doc.notify(EV_selectObject)
-    
+
+
 class MotionSkeletonWnd(Fl_Window, ybu.Observer):
     def __init__(self, x, y, w, h, doc):
         Fl_Window.__init__(self, x, y, w, h)

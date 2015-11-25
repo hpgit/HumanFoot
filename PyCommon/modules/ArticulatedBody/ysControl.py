@@ -8,7 +8,7 @@ import Math.mmMath as mm
 # th_r[0], th[0] : (Vec3, SO3), th_r[1:], th[1:] : SO3
 # dth_r, dth : Vec3
 # ddth_r : Vec3
-def getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt):
+def getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMap=None):
     ddth_des = [None]*len(th_r)
     
 #    p_r0 = mm.T2p(th_r[0])
@@ -33,13 +33,22 @@ def getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt):
     dth_r0 = dth_r[0][3:6]
     dth0 = dth[0][3:6]
     ddth_r0 = ddth_r[0][3:6]
-    
-    a_des0 = Kt*(p_r0 - p0) + Dt*(v_r0 - v0) #+ a_r0
-    ddth_des0 = Kt*(mm.logSO3(np.dot(th0.transpose(), th_r0))) + Dt*(dth_r0 - dth0) #+ ddth_r0
+
+    kt = 1.
+    dt = 1.
+    print weightMap
+    if weightMap is not None:
+        kt = weightMap[0]
+        dt = 2*(kt**.5)
+    a_des0 = Kt*kt*(p_r0 - p0) + Dt*dt*(v_r0 - v0) #+ a_r0
+    ddth_des0 = Kt*kt*(mm.logSO3(np.dot(th0.transpose(), th_r0))) + Dt*dt*(dth_r0 - dth0) #+ ddth_r0
     ddth_des[0] = np.concatenate((a_des0, ddth_des0))
     
     for i in range(1, len(th_r)):
-        ddth_des[i] = Kt*(mm.logSO3(np.dot(th[i].transpose(), th_r[i]))) + Dt*(dth_r[i] - dth[i]) #+ ddth_r[i]
+        if weightMap is not None:
+            kt = weightMap[0]
+            dt = 2*(kt**.5)
+        ddth_des[i] = Kt*kt*(mm.logSO3(np.dot(th[i].transpose(), th_r[i]))) + Dt*dt*(dth_r[i] - dth[i]) #+ ddth_r[i]
 
     return ddth_des
 

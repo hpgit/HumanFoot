@@ -214,35 +214,35 @@ def create_chiken_foot():
     node.geom = 'MyFoot3'
     node.length = .1
     node.width = .05
-    node.mass = 8.
+    node.mass = 5.
     
     node = mcfg.getNode('foot00')
     node.geom = 'MyFoot3'
-    node.length = .35
+    node.length = .15
     node.width = .05
-    node.mass = 1.
+    node.mass = .5
     node = mcfg.getNode('foot10')
     node.geom = 'MyFoot3'
-    node.length = .35
+    node.length = .15
     node.width = .05
-    node.mass = 1.
+    node.mass = .5
     
     node = mcfg.getNode('foot01')
     node.geom = 'MyFoot4'
-    node.length = .4
+    node.length = .2
     node.width = .05
-    node.mass = 1.
+    node.mass = .5
     node = mcfg.getNode('foot11')
     node.geom = 'MyFoot4'
-    node.length = .4
+    node.length = .2
     node.width = .05
-    node.mass = 1.
+    node.mass = .5
     
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
     stepsPerFrame = 120
-    wcfg.timeStep = (1/120.)/stepsPerFrame
+    wcfg.timeStep = (1/30.)/stepsPerFrame
     
     # parameter
     config = dict([])
@@ -255,7 +255,7 @@ def create_chiken_foot():
     config['Bh'] = 1.
     
     # etc
-    config['weightMap'] = {}
+    config['weightMap'] = {'root': 2., 'foot00': 1., 'foot10': 1., 'foot01': .2, 'foot11': .2}
     # config['supLink'] = 'link0'
     
     return motion, mcfg, wcfg, stepsPerFrame, config
