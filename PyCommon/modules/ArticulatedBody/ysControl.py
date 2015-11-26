@@ -34,21 +34,21 @@ def getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMap=N
     dth0 = dth[0][3:6]
     ddth_r0 = ddth_r[0][3:6]
 
-    kt = 1.
-    dt = 1.
-    print weightMap
+    kt = Kt
+    dt = Dt
+
     if weightMap is not None:
-        kt = weightMap[0]
-        dt = 2*(kt**.5)
-    a_des0 = Kt*kt*(p_r0 - p0) + Dt*dt*(v_r0 - v0) #+ a_r0
-    ddth_des0 = Kt*kt*(mm.logSO3(np.dot(th0.transpose(), th_r0))) + Dt*dt*(dth_r0 - dth0) #+ ddth_r0
+        kt = Kt * weightMap[0]
+        dt = 2. * (kt**.5)
+    a_des0 = kt*(p_r0 - p0) + dt*(v_r0 - v0) #+ a_r0
+    ddth_des0 = kt*(mm.logSO3(np.dot(th0.transpose(), th_r0))) + dt*(dth_r0 - dth0) #+ ddth_r0
     ddth_des[0] = np.concatenate((a_des0, ddth_des0))
     
     for i in range(1, len(th_r)):
         if weightMap is not None:
-            kt = weightMap[0]
-            dt = 2*(kt**.5)
-        ddth_des[i] = Kt*kt*(mm.logSO3(np.dot(th[i].transpose(), th_r[i]))) + Dt*dt*(dth_r[i] - dth[i]) #+ ddth_r[i]
+            kt = Kt * weightMap[i]
+            dt = 2.*(kt**.5)
+        ddth_des[i] = kt*(mm.logSO3(np.dot(th[i].transpose(), th_r[i]))) + dt*(dth_r[i] - dth[i]) #+ ddth_r[i]
 
     return ddth_des
 

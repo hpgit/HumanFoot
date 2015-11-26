@@ -101,6 +101,7 @@ def init():
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_5()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
     motion, mcfg, wcfg, stepsPerFrame, config = mit.create_chiken_foot()
+    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot()
     mcfg_motion = mit.normal_mcfg()
 
     vpWorld = cvw.VpWorld(wcfg)
@@ -108,7 +109,7 @@ def init():
 
     vpWorld.initialize()
     # vpWorld.SetIntegrator("RK4")
-    vpWorld.SetIntegrator("IMPLICIT_EULER")
+    vpWorld.SetIntegrator("IMPLICIT_EULER_FAST")
     # vpWorld.SetGlobalDamping(0.001)
     # controlModel.initializeHybridDynamics()
     controlModel.initializeForwardDynamics()
@@ -130,14 +131,16 @@ def init():
     viewer.doc.addObject('motion', motion)
     viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL))
     viewer.doc.addRenderer('rd_contactForces', yr.VectorsRenderer(rd_cForces, rd_cPositions, (0, 255, 0), .1))
-    viewer.objectInfoWnd.add1DSlider('hehe', minVal=0., maxVal=10., initVal=1., valStep=.01)
+
+    viewer.objectInfoWnd.add1DSlider('PD gain', minVal=0., maxVal=1000., initVal=180., valStep=.1)
+    viewer.objectInfoWnd.add1DSlider('Joint Damping', minVal=1., maxVal=200., initVal=35., valStep=1.)
 
     for i in range(motion[0].skeleton.getJointNum()):
         print(i, motion[0].skeleton.getJointName(i))
+
     print "(index, id, name)"
     for i in range(controlModel.getBodyNum()):
         print (i, controlModel.index2id(i), controlModel.index2name(i))
-
 
 init()
 
@@ -161,27 +164,25 @@ class Callback:
         print "main:frame : ", frame
         # motionModel.update(motion[0])
 
-        (Kt,) = viewer.objectInfoWnd.getVals()
-        
-        Dt = 2*(Kt**.5)
+        # constant setting
+        (Kt, damp,) = viewer.objectInfoWnd.getVals()
+        Dt = 2.*(Kt**.5)
+        controlModel.SetJointsDamping(damp)
 
         # tracking
-        th_r = motion.getDOFPositions(0)
+        th_r = motion.getDOFPositions(frame)
         th = controlModel.getDOFPositions()
-        dth_r = motion.getDOFVelocities(0)
+        dth_r = motion.getDOFVelocities(frame)
         dth = controlModel.getDOFVelocities()
-        ddth_r = motion.getDOFAccelerations(0)
-        ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt,
-                                                  config['weightMap'].values())
+        ddth_r = motion.getDOFAccelerations(frame)
+        ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt) # config['weightMapTuple'])
         ddth_c = controlModel.getDOFAccelerations()
         ype.flatten(ddth_des, ddth_des_flat)
 
         for i in range(6):
             ddth_des_flat[i] = 0.
-
         for i in range(stepsPerFrame):
             # apply penalty force
-            # bodyIDs, cPositions, cPositionLocals, cForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
             cBodyIDs, cPositions, cPositionLocals, cForces \
                 = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, 8)
             if len(cBodyIDs) > 0:
@@ -192,7 +193,6 @@ class Callback:
 
             # controlModel.setDOFAccelerations(ddth_des)
             controlModel.setDOFTorques(ddth_des[1:])
-            # controlModel.solveHybridDynamics()
             vpWorld.step()
 
         self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces \

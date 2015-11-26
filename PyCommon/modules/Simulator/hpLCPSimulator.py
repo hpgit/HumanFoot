@@ -36,7 +36,7 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
         n = np.array([[0., 1., 0., 0., 0., 0.]]).T
         JTn = Jic.T.dot(n)
         if N is None:
-            JTN = JTn
+            JTN = JTn.copy()
             N = n.copy()
         else:
             JTN = np.hstack((JTN, JTn))
@@ -53,7 +53,7 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
         for i in range(numFrictionBases):
             JTd = Jic.T.dot(d[i])
             if D is None:
-                JTD = JTd
+                JTD = JTd.copy()
                 D = d[i].copy()
             else:
                 JTD = np.hstack((JTD, JTd))

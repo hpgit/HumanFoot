@@ -213,29 +213,29 @@ def create_chiken_foot():
     node = mcfg.getNode('root')
     node.geom = 'MyFoot3'
     node.length = .1
-    node.width = .05
+    # node.width = .05
     node.mass = 5.
     
     node = mcfg.getNode('foot00')
     node.geom = 'MyFoot3'
-    node.length = .15
-    node.width = .05
+    #node.length = .25
+    #node.width = .05
     node.mass = .5
     node = mcfg.getNode('foot10')
     node.geom = 'MyFoot3'
-    node.length = .15
-    node.width = .05
+    #node.length = .25
+    #node.width = .05
     node.mass = .5
     
     node = mcfg.getNode('foot01')
     node.geom = 'MyFoot4'
-    node.length = .2
-    node.width = .05
+    #node.length = .3
+    #node.width = .05
     node.mass = .5
     node = mcfg.getNode('foot11')
     node.geom = 'MyFoot4'
-    node.length = .2
-    node.width = .05
+    #node.length = .3
+    #node.width = .05
     node.mass = .5
     
     wcfg = ypc.WorldConfig()
@@ -256,10 +256,71 @@ def create_chiken_foot():
     
     # etc
     config['weightMap'] = {'root': 2., 'foot00': 1., 'foot10': 1., 'foot01': .2, 'foot11': .2}
+    config['weightMapTuple'] = (2., 1., .2, 1., .2)
     # config['supLink'] = 'link0'
     
     return motion, mcfg, wcfg, stepsPerFrame, config
 
+def create_foot():
+    # motion
+    motion = yf.readBvhFile('foot.bvh', 1)
+
+    # world, model
+    mcfg = ypc.ModelConfig()
+    mcfg.defaultDensity = 1000.
+    mcfg.defaultBoneRatio = 1.
+    for i in range(motion[0].skeleton.getElementNum()):
+        mcfg.addNode(motion[0].skeleton.getElementName(i))
+    node = mcfg.getNode('root')
+    node.geom = 'MyFoot3'
+    node.length = 1.
+    node.width = .05
+    node.mass = 5.
+
+    node = mcfg.getNode('foot00')
+    node.geom = 'MyFoot3'
+    node.length = 2.5
+    node.width = .05
+    node.mass = .5
+
+    node = mcfg.getNode('foot01')
+    node.geom = 'MyFoot4'
+    node.length = 3.
+    node.width = .05
+    node.mass = .5
+    node = mcfg.getNode('foot02')
+    node.geom = 'MyFoot4'
+    node.length = 3.
+    node.width = .05
+    node.mass = .5
+    node = mcfg.getNode('foot03')
+    node.geom = 'MyFoot4'
+    node.length = 3.
+    node.width = .05
+    node.mass = .5
+
+    wcfg = ypc.WorldConfig()
+    wcfg.planeHeight = 0.
+    wcfg.useDefaultContactModel = False
+    stepsPerFrame = 120
+    wcfg.timeStep = (1/30.)/stepsPerFrame
+
+    # parameter
+    config = dict([])
+    config['Kt'] = 20; config['Dt'] = 2*(config['Kt']**.5)  # tracking gain
+    config['Kl'] = 1; config['Dl'] = 2*(config['Kl']**.5)  # linear balance gain
+    config['Kh'] = 1; config['Dh'] = 2*(config['Kh']**.5)  # angular balance gain
+    config['Ks'] = 5000; config['Ds'] = 2*(config['Ks']**.5)  # penalty force spring gain
+    config['Bt'] = 1.
+    config['Bl'] = 1.
+    config['Bh'] = 1.
+
+    # etc
+    config['weightMap'] = {'root': 2., 'foot00': 1., 'foot01': 1., 'foot02': .2, 'foot03': .2}
+    config['weightMapTuple'] = (2., 1., .2, 1., .2)
+    # config['supLink'] = 'link0'
+
+    return motion, mcfg, wcfg, stepsPerFrame, config
 
 def create_biped():            
     # motion

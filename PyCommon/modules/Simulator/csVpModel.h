@@ -60,7 +60,7 @@ public:
 
 	map<string, int> _name2index;
 
-	vector<SE3> _boneTs;	// joint position, orientation -> body position, orientation (bodyÀÇ Áß½ÉÁ¡ÀÌ bodyÀÇ position)
+	vector<SE3> _boneTs;	// joint position, orientation -> body position, orientation (bodyï¿½ï¿½ ï¿½ß½ï¿½ï¿½ï¿½ï¿½ï¿½ bodyï¿½ï¿½ position)
 
 public:	// expose to python
 	VpModel(VpWorld* pWorld, const object& createPosture, const object& config);
@@ -255,6 +255,13 @@ public:	// expose to python
 	void setJointAngAccelerationsLocal( const bp::list& angaccs );
 
 	void setInternalJointAngAccelerationsLocal( const bp::list& angaccs );
+
+    /////////////////////////////////////////////////////////////////
+	// joint dynamics
+	void SetJointElasticity(int index, scalar Kx, scalar Ky=-1, scalar Kz=-1);
+	void SetJointsElasticity(scalar Kx, scalar Ky=-1, scalar Kz=-1);
+	void SetJointDamping(int index, scalar Kx, scalar Ky=-1, scalar Kz=-1);
+	void SetJointsDamping(scalar Kx, scalar Ky=-1, scalar Kz=-1);
 
 	/////////////////////////////////////////////////////////////////
 	// joint force

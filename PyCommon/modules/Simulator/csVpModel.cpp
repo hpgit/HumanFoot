@@ -23,6 +23,11 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(VpControlModel_applyBodyGenForceGlobal_ov
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(VpControlModel_applyBodyForceGlobal_overloads, applyBodyForceGlobal, 2, 3);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(initializeHybridDynamics_overloads, initializeHybridDynamics, 0, 1);
 
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(VpControlModel_SetJointElasticity_overloads, SetJointElasticity, 2, 4);
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(VpControlModel_SetJointsElasticity_overloads, SetJointsElasticity, 1, 3);
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(VpControlModel_SetJointDamping_overloads, SetJointDamping, 2, 4);
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(VpControlModel_SetJointsDamping_overloads, SetJointsDamping, 1, 3);
+
 BOOST_PYTHON_MODULE(csVpModel)
 {
 	numeric::array::set_module_and_type("numpy", "ndarray");
@@ -156,6 +161,11 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getBodyNetForceLocal", &VpControlModel::getBodyNetForceLocal)
 		.def("getBodyGravityForceLocal", &VpControlModel::getBodyGravityForceLocal)
 
+        .def("SetJointElasticity", &VpControlModel::SetJointElasticity, VpControlModel_SetJointElasticity_overloads())
+	    .def("SetJointsElasticity", &VpControlModel::SetJointsElasticity, VpControlModel_SetJointsElasticity_overloads())
+	    .def("SetJointDamping", &VpControlModel::SetJointDamping, VpControlModel_SetJointDamping_overloads())
+	    .def("SetJointsDamping", &VpControlModel::SetJointsDamping, VpControlModel_SetJointsDamping_overloads())
+
 		.def("getJointTorqueLocal", &VpControlModel::getJointTorqueLocal)
 		.def("getInternalJointTorquesLocal", &VpControlModel::getInternalJointTorquesLocal)
 
@@ -252,32 +262,8 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 		_nodes[joint_index] = pNode;
 
 		object cfgNode = _config.attr("getNode")(joint_name);
-		scalar length;
-		if( cfgNode.attr("length") != object() )
-			length = XD(cfgNode.attr("length")) * XD(cfgNode.attr("boneRatio"));
-		else
-			length = Norm(offset) * XD(cfgNode.attr("boneRatio"));
-
-		scalar density = XD(cfgNode.attr("density"));
-		scalar width, height;
-		if( cfgNode.attr("width") != object() )
-		{
-			width = XD(cfgNode.attr("width"));
-			if( cfgNode.attr("mass") != object() )
-				height = (XD(cfgNode.attr("mass")) / (density * length)) / width;
-			else
-				height = .1;
-		}
-		else
-		{
-			if( cfgNode.attr("mass") != object() )
-				width = sqrt( (XD(cfgNode.attr("mass")) / (density * length)) );
-			else
-				width = .1;
-			height = width;
-		}
-
 		string geomType = XS(cfgNode.attr("geom"));
+		/*
 		if (geomType == "MyFoot3")
 		{
 		    scalar mass = XD(cfgNode.attr("mass"));
@@ -293,11 +279,58 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 			//pNode->body.AddGeometry(new MyFoot4(width, length), Vec3(0,0,-width));
 			pNode->body.SetInertia(CylinderInertia(density, width,length));
 		}
+		//*/
+		if (geomType == "MyFoot3" || geomType == "MyFoot4")
+		{
+		    scalar radius = .05;
+		    if( cfgNode.attr("width") != object() )
+		        radius = XD(cfgNode.attr("width"));
+
+		    scalar length = Norm(offset) + 2*radius;
+		    scalar density = XD(cfgNode.attr("density"));
+		    scalar mass = 1.;
+		    if( cfgNode.attr("mass") != object() )
+		    {
+		        mass = XD(cfgNode.attr("mass"));
+		        density = mass/ (radius * radius * M_PI * length);
+		    }
+		    else
+		        mass = density * radius * radius * M_PI * length;
+
+		    // density = mass/ (width*width*M_PI*(length+width));
+		    pNode->body.AddGeometry(new MyFoot3(radius, length));
+		    pNode->body.SetInertia(CylinderInertia(density, radius,length));
+		}
 		else
 		{
+            scalar length;
+            if( cfgNode.attr("length") != object() )
+                length = XD(cfgNode.attr("length")) * XD(cfgNode.attr("boneRatio"));
+            else
+                length = Norm(offset) * XD(cfgNode.attr("boneRatio"));
+
+            scalar density = XD(cfgNode.attr("density"));
+            scalar width, height;
+            if( cfgNode.attr("width") != object() )
+            {
+                width = XD(cfgNode.attr("width"));
+                if( cfgNode.attr("mass") != object() )
+                    height = (XD(cfgNode.attr("mass")) / (density * length)) / width;
+                else
+                    height = .1;
+            }
+            else
+            {
+                if( cfgNode.attr("mass") != object() )
+                    width = sqrt( (XD(cfgNode.attr("mass")) / (density * length)) );
+                else
+                    width = .1;
+                height = width;
+            }
 			pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)));
 			pNode->body.SetInertia(BoxInertia(density, Vec3(width/2.,height/2.,length/2.)));
 		}
+
 //		pNode->body.SetInertia(BoxInertia(density, Vec3(width,height,length)));
 		//pNode->body.SetInertia(BoxInertia(density, Vec3(width/2.,height/2.,length/2.)));
 
@@ -1023,8 +1056,11 @@ void VpControlModel::_createJoint( const object& joint, const object& posture )
 
 		pParentNode->body.SetJoint(&pNode->joint, Inv(_boneTs[parent_index])*Inv(invLocalT));
 		pNode->body.SetJoint(&pNode->joint, Inv(_boneTs[joint_index]));
-		SpatialSpring el(1.);
-		SpatialDamper dam(2.);
+
+		scalar kt = 16.;
+		scalar dt = 8.;
+		SpatialSpring el(kt);
+		SpatialDamper dam(dt);
 		//std::cout << el <<std::endl;
 		pNode->joint.SetElasticity(el);
 		pNode->joint.SetDamping(dam);
@@ -1718,6 +1754,49 @@ void VpControlModel::setInternalJointAngAccelerationsLocal( const bp::list& anga
 	for(int i=1; i<_nodes.size(); ++i)
 		_nodes[i]->joint.SetAcceleration(pyVec3_2_Vec3(angaccs[i-1]));
 }
+
+void VpControlModel::SetJointElasticity(int index, scalar Kx, scalar Ky, scalar Kz)
+{
+    assert(Kx < 0. && "Joint Elasticity must larger than 0");
+    if(Ky < 0.)
+    {
+        SpatialSpring k(Kx);
+        _nodes[index]->joint.SetElasticity(k);
+    }
+    else
+    {
+        SpatialSpring k(0., Kx, Ky, Kz);
+        _nodes[index]->joint.SetElasticity(k);
+    }
+}
+void VpControlModel::SetJointsElasticity(scalar Kx, scalar Ky, scalar Kz)
+{
+    for (int i=1; i<_nodes.size(); i++)
+        SetJointElasticity(i, Kx, Ky, Kz);
+}
+
+void VpControlModel::SetJointDamping(int index, scalar Dx, scalar Dy, scalar Dz)
+{
+    assert(Dx < 0. && "Joint Damping must larger than 0");
+
+    if(Dy < 0.)
+    {
+        SpatialDamper d(Dx);
+        _nodes[index]->joint.SetDamping(d);
+    }
+    else
+    {
+        SpatialDamper d(0., Dx, Dy, Dz);
+        _nodes[index]->joint.SetDamping(d);
+    }
+}
+
+void VpControlModel::SetJointsDamping(scalar Dx, scalar Dy, scalar Dz)
+{
+    for (int i=1; i<_nodes.size(); i++)
+        SetJointDamping(i, Dx, Dy, Dz);
+}
+
 
 boost::python::object VpControlModel::getJointTorqueLocal( int index )
 {

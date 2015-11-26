@@ -57,6 +57,7 @@ class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
         slider.name = name
         self.end()
         self.addValObjects(slider)
+        self.valObjOffset += 40
 
     def add3DSlider(self, name, minVal, maxVal, valStep, initVal):
         self.begin()
