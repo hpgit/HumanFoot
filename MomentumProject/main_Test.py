@@ -100,8 +100,8 @@ def init():
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_1()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_5()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
-    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_chiken_foot()
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot()
+    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_chiken_foot()
+    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot()
     mcfg_motion = mit.normal_mcfg()
 
     vpWorld = cvw.VpWorld(wcfg)
@@ -195,9 +195,12 @@ class Callback:
             controlModel.setDOFTorques(ddth_des[1:])
             vpWorld.step()
 
-        self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces \
-            = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, 8)
+        totalForce = np.array([0., 1000., 0.])
 
+        self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, torques \
+            = hls.calcLCPControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, ddth_des_flat, 8)
+        print ddth_des_flat
+        print torques
         del rd_cForces[:]
         del rd_cPositions[:]
         for i in range(len(self.cBodyIDs)):
@@ -211,4 +214,6 @@ viewer.setSimulateCallback(callback.simulateCallback)
 
 viewer.startTimer(1/30.)
 viewer.show()
+
+Fl.run()
 

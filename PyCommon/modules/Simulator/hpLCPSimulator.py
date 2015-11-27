@@ -251,7 +251,7 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
     contactNum, bodyIDs, contactPositions, contactPositionsLocal, JTN, JTD, E, N, D = makeFrictionCone(motion[0].skeleton, world, model, bodyIDsToCheck, numFrictionBases)
     # print "hpLCPSimulator:contactNum : ", contactNum
     if contactNum == 0:
-        return bodyIDs, contactPositions, contactPositionsLocal, None
+        return bodyIDs, contactPositions, contactPositionsLocal, None, None
 
     totalDOF = model.getTotalDOF()
 
