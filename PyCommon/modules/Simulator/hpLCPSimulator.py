@@ -331,8 +331,15 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
             pqp = cvxMatrix(b)
             Gqp = cvxMatrix(np.vstack((-A, -np.eye(A.shape[0]))))
             hqp = cvxMatrix(np.hstack((b.T, np.zeros(A.shape[0]))))
-            Aqp = cvxMatrix(np.hstack((np.hstack((N[:3], D[:3])), np.zeros(N[:3].shape))))
-            bqp = cvxMatrix(np.array(totalForce))
+            # TODO:
+            # torques of root must be zeros
+            # tau = np.dot(pinvM1, -c + tau0 + np.dot(JTN, normalForce) + np.dot(JTD, tangenForce))
+            # tau = pinvM1*(-b + JTN*theta + JTD*phi + tau0)
+            # tau = pinvM1*JTN*theta + pinvM1*JTD*phi + pinvM1*tau0 - pinvM1*b
+            Atauqp = np.hstack((np.hstack((np.dot(pinvM1[:6], JTN), np.dot(pinvM1[:6], JTD))), np.zeros(N[:6].shape)))
+            btauqp = np.dot(pinvM1[:6], -np.array(tau0)+np.array(c))
+            Aqp = cvxMatrix(np.vstack((np.hstack((np.hstack((N[:3], D[:3])), np.zeros(N[:3].shape))), Atauqp)))
+            bqp = cvxMatrix(np.hstack((np.array(totalForce), btauqp)))
             cvxSolvers.options['show_progress'] = False
             cvxSolvers.options['maxiter'] = 100
             # cvxSolvers.options['refinement'] = 10
@@ -344,14 +351,14 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
             if True:
                 x = xqp.copy()
         except Exception, e:
-            # print e
+            print e
             pass
 
     normalForce = x[:contactNum]
     tangenForce = x[contactNum:contactNum + numFrictionBases*contactNum]
     minTangenVel = x[contactNum + numFrictionBases*contactNum:]
 
-    tau = np.dot(pinvM1, -c + tau0 + np.dot(N, normalForce) + np.dot(D, tangenForce))
+    tau = np.dot(pinvM1, -c + tau0 + np.dot(JTN, normalForce) + np.dot(JTD, tangenForce))
 
     forces = []
     for cIdx in range(contactNum):

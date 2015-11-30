@@ -253,9 +253,10 @@ def create_chiken_foot():
     
     return motion, mcfg, wcfg, stepsPerFrame, config
 
+
 def create_foot():
     # motion
-    motion = yf.readBvhFile('foot2.bvh', 1)
+    motion = yf.readBvhFile('foot3.bvh', .05)
 
     # world, model
     mcfg = ypc.ModelConfig()
@@ -269,25 +270,33 @@ def create_foot():
     node.mass = 5.
 
     node = mcfg.getNode('foot00')
-    node.geom = 'MyFoot3'
+    node.geom = 'MyFoot4'
     node.mass = .5
 
     node = mcfg.getNode('foot01')
     node.geom = 'MyFoot4'
     node.mass = .5
 
-    node = mcfg.getNode('foot02')
+    node = mcfg.getNode('foot10')
     node.geom = 'MyFoot4'
     node.mass = .5
 
-    node = mcfg.getNode('foot03')
+    node = mcfg.getNode('foot11')
+    node.geom = 'MyFoot4'
+    node.mass = .5
+
+    node = mcfg.getNode('foot20')
+    node.geom = 'MyFoot4'
+    node.mass = .5
+
+    node = mcfg.getNode('foot21')
     node.geom = 'MyFoot4'
     node.mass = .5
 
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
-    stepsPerFrame = 120
+    stepsPerFrame = 40
     wcfg.timeStep = (1/30.)/stepsPerFrame
 
     # parameter
@@ -301,11 +310,12 @@ def create_foot():
     config['Bh'] = 1.
 
     # etc
-    config['weightMap'] = {'root': 2., 'foot00': 1., 'foot01': 1., 'foot02': .2, 'foot03': .2}
-    config['weightMapTuple'] = (2., 1., .2, 1., .2)
+    config['weightMap'] = {'root': 2., 'foot00': 1., 'foot10': 1., 'foot20': 1., 'foot01': .2, 'foot11': .2, 'foot21': .2}
+    config['weightMapTuple'] = (2., 1., .2, 1., .2, 1., .2)
     # config['supLink'] = 'link0'
 
     return motion, mcfg, wcfg, stepsPerFrame, config
+
 
 def create_biped():            
     # motion

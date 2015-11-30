@@ -8,6 +8,8 @@ def makeSineMotion(initPos, totalFrame, freq, maxDeg):
             0., 0., 0.*(-maxDeg*mm.cos(2*mm.pi*phase*freq)/2.-maxDeg/2.), \
             0., 0., 0.*(-maxDeg*mm.cos(2*mm.pi*phase*freq)/2.-maxDeg/2.), \
             0., 0., 0.*(maxDeg*mm.cos(2*mm.pi*phase*freq)/2.+maxDeg/2.), \
-            0., 0., 1.*(maxDeg*mm.cos(2*mm.pi*phase*freq)/2.+maxDeg/2.)
+            0., 0., 0.*(maxDeg*mm.cos(2*mm.pi*phase*freq)/2.+maxDeg/2.), \
+            0., 0., 0.*(maxDeg*mm.cos(2*mm.pi*phase*freq)/2.+maxDeg/2.), \
+            0., 0., 0.*(maxDeg*mm.cos(2*mm.pi*phase*freq)/2.+maxDeg/2.)
 
 makeSineMotion([0., 15., 0.], 100, 30, 0.)
