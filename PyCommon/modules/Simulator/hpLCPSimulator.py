@@ -12,6 +12,8 @@ import numpy as np
 import numpy.linalg as npl
 import math
 
+import time
+
 
 def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
     cVpBodyIds, cPositions, cPositionsLocal, cVelocities = world.getContactPoints(bodyIDsToCheck)
@@ -92,20 +94,42 @@ def normalizeMatrix(A, b):
         b[0] /= n
 
 
+def setTimeStamp(timeStamp, timeIndex, prevTime):
+    if timeIndex == 0:
+        prevTime = time.time()
+    if len(timeStamp) < timeIndex + 1:
+        timeStamp.append(0.)
+    curTime = time.time()
+    timeStamp[timeIndex] += curTime - prevTime
+    prevTime = curTime
+    timeIndex += 1
+    return timeStamp, timeIndex, prevTime
+
+
 def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictionBases=8):
+    timeStamp = []
+    timeIndex = 0
+    prevTime = time.time()
+
+    tmp = None
+
     # model = VpControlModel
     # numFrictionBases = 8
     contactNum, bodyIDs, contactPositions, contactPositionsLocal, JTN, JTD, E, N, D\
         = makeFrictionCone(motion[0].skeleton, world, model, bodyIDsToCheck, numFrictionBases)
     # print "hpLCPSimulator:contactNum : ", contactNum
+
     if contactNum == 0:
-        return bodyIDs, contactPositions, contactPositionsLocal, None
+        return bodyIDs, contactPositions, contactPositionsLocal, None, None
+    timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
+
     # print D
     totalDOF = model.getTotalDOF()
 
     invM = np.zeros((totalDOF,totalDOF))
     invMc = np.zeros(totalDOF)
     model.getInverseEquationOfMotion(invM, invMc)
+    timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
 
     # Jc = np.zeros(())
     # N = np.zeros(())
@@ -193,7 +217,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
     # lcpSolver = lcpD.DantzigSolver()
     # lcpSolver.solve(A.shape[0], A, b, x, lo, hi)
     z = np.dot(A, x) + b
-    
+
     # if abs(np.dot(x,z)) > 100.:
     if True:
         try:
@@ -202,6 +226,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
             bqp = cvxMatrix(b)
             Gqp = cvxMatrix(np.vstack((-A, -np.eye(A.shape[0]))))
             hqp = cvxMatrix(np.hstack((b.T, np.zeros(A.shape[0]))))
+            timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
             cvxSolvers.options['show_progress'] = False
             cvxSolvers.options['maxiter'] = 100
             # cvxSolvers.options['refinement'] = 10
@@ -242,7 +267,8 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
 
     # repairForces(forces, contactPositions)
     # print forces
-    return bodyIDs, contactPositions, contactPositionsLocal, forces
+    timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
+    return bodyIDs, contactPositions, contactPositionsLocal, forces, timeStamp
 
 
 def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=None, numFrictionBases=8):
@@ -332,12 +358,11 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
             Gqp = cvxMatrix(np.vstack((-A, -np.eye(A.shape[0]))))
             hqp = cvxMatrix(np.hstack((b.T, np.zeros(A.shape[0]))))
             # TODO:
-            # torques of root must be zeros
+            # check correctness of equality constraint
             # tau = np.dot(pinvM1, -c + tau0 + np.dot(JTN, normalForce) + np.dot(JTD, tangenForce))
-            # tau = pinvM1*(-b + JTN*theta + JTD*phi + tau0)
             # tau = pinvM1*JTN*theta + pinvM1*JTD*phi + pinvM1*tau0 - pinvM1*b
             Atauqp = np.hstack((np.hstack((np.dot(pinvM1[:6], JTN), np.dot(pinvM1[:6], JTD))), np.zeros(N[:6].shape)))
-            btauqp = np.dot(pinvM1[:6], -np.array(tau0)+np.array(c))
+            btauqp = np.dot(pinvM1[:6], np.array(tau0)-np.array(c))
             Aqp = cvxMatrix(np.vstack((np.hstack((np.hstack((N[:3], D[:3])), np.zeros(N[:3].shape))), Atauqp)))
             bqp = cvxMatrix(np.hstack((np.array(totalForce), btauqp)))
             cvxSolvers.options['show_progress'] = False
@@ -351,7 +376,7 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
             if True:
                 x = xqp.copy()
         except Exception, e:
-            print e
+            print 'LCPControl!!', e
             pass
 
     normalForce = x[:contactNum]

@@ -254,9 +254,9 @@ def create_chiken_foot():
     return motion, mcfg, wcfg, stepsPerFrame, config
 
 
-def create_foot():
+def create_foot(motionFile='foot3.bvh'):
     # motion
-    motion = yf.readBvhFile('foot3.bvh', .05)
+    motion = yf.readBvhFile(motionFile, .05)
 
     # world, model
     mcfg = ypc.ModelConfig()
@@ -269,27 +269,27 @@ def create_foot():
     node.length = 1.
     node.mass = 5.
 
-    node = mcfg.getNode('foot00')
+    node = mcfg.getNode('foot_0_0')
     node.geom = 'MyFoot4'
     node.mass = .5
 
-    node = mcfg.getNode('foot01')
+    node = mcfg.getNode('foot_0_1')
     node.geom = 'MyFoot4'
     node.mass = .5
 
-    node = mcfg.getNode('foot10')
+    node = mcfg.getNode('foot_1_0')
     node.geom = 'MyFoot4'
     node.mass = .5
 
-    node = mcfg.getNode('foot11')
+    node = mcfg.getNode('foot_1_1')
     node.geom = 'MyFoot4'
     node.mass = .5
 
-    node = mcfg.getNode('foot20')
+    node = mcfg.getNode('foot_2_0')
     node.geom = 'MyFoot4'
     node.mass = .5
 
-    node = mcfg.getNode('foot21')
+    node = mcfg.getNode('foot_2_1')
     node.geom = 'MyFoot4'
     node.mass = .5
 
