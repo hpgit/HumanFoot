@@ -268,7 +268,7 @@ class Callback:
             rd_cForces.append(self.cForces[i].copy()/10.)
             rd_cPositions.append(self.cPositions[i].copy())
         if self.cForces is not None:
-            print "length: ",mm.length(sum(self.cForces))
+            print "length: ", mm.length(sum(self.cForces))
         # if torques is not None:
         #     print np.array(torques) - np.array(ddth_des_flat)
 

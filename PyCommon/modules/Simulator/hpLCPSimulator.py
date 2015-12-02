@@ -126,7 +126,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
     # print D
     totalDOF = model.getTotalDOF()
 
-    invM = np.zeros((totalDOF,totalDOF))
+    invM = np.zeros((totalDOF, totalDOF))
     invMc = np.zeros(totalDOF)
     model.getInverseEquationOfMotion(invM, invMc)
     timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
@@ -158,7 +158,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
     # print "A21: ", A21
     # print "A22: ", A22
 
-    factor = 1000.
+    factor = 1.
 
     A1 = np.hstack((np.hstack((A11, A12)), np.zeros((A11.shape[0], E.shape[1]))))
     A2 = np.hstack((np.hstack((A21, A22)), E))
@@ -166,7 +166,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
     A = np.vstack((np.vstack((A1, A2)), A3)) * factor
     # print npl.eigvals(A)
     # pdb.set_trace()
-    # A = A + 0.0001*np.eye(A.shape[0])
+    # A = A + 0.01*np.eye(A.shape[0])
 
     # bx= h * (M*qdot_0 + tau - c)
     # b =[N.T * Jc * invM * kx]
@@ -213,34 +213,62 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
 
     # print A[0]
 
-    lcpSolver = lcp.LemkeSolver()
+    # lcpSolver = lcp.LemkeSolver()
     # lcpSolver = lcpD.DantzigSolver()
     # lcpSolver.solve(A.shape[0], A, b, x, lo, hi)
-    z = np.dot(A, x) + b
+    # z = np.dot(A, x) + b
 
     # if abs(np.dot(x,z)) > 100.:
     if True:
-        try:
+        if True:
+            # try:
             # print "prev z: ", np.dot(x, z)
-            Aqp = cvxMatrix(2*A)
+            Acp = cvxMatrix(A)
+            bcp = cvxMatrix(b)
+            Hcp = cvxMatrix(A+A.T)
+
+            def F(xin=None, z=None):
+                if xin is None:
+                    return 0, cvxMatrix(1., (A.shape[1], 1))
+                for j in range(len(np.array(xin))):
+                    if xin[j] < 0.:
+                        return None, None
+                f = xin.T*(Acp*xin+bcp)
+                # TODO:
+                # check!!!
+                Df = Hcp*xin + bcp
+                if z is None:
+                    return f, Df.T
+                H = Hcp
+                return f, Df.T, H
+
+            def is_pos_def(_m):
+                return np.all(np.linalg.eigvals(_m) > 0)
+            if is_pos_def(A+A.T):
+                print "POSDEF!!!!!"
+            Aqp = cvxMatrix(A+A.T)
             bqp = cvxMatrix(b)
             Gqp = cvxMatrix(np.vstack((-A, -np.eye(A.shape[0]))))
             hqp = cvxMatrix(np.hstack((b.T, np.zeros(A.shape[0]))))
             timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
             cvxSolvers.options['show_progress'] = False
-            cvxSolvers.options['maxiter'] = 100
+            cvxSolvers.options['maxiters'] = 100
+            # cvxSolvers.options['kktreg'] = 1e-6
             # cvxSolvers.options['refinement'] = 10
-            xqp = np.array(cvxSolvers.qp(Aqp, bqp, Gqp, hqp)['x']).flatten()
+            solution = cvxSolvers.qp(Aqp, bqp, Gqp, hqp)
+            # solution = cvxSolvers.cp(F, Gqp, hqp)
+            xqp = np.array(solution['x']).flatten()
+            # xqp = np.array(cvxSolvers.qp(Aqp, bqp, Gqp, hqp)['x']).flatten()
+            # print "iters: ", solution['iterations']
             # print "x: ", x
-            zqp = np.dot(A,xqp).T +b
+            # zqp = np.dot(A,xqp).T +b
             # print "QP z: ", np.dot(xqp, zqp)
             # if np.dot(xqp, zqp) < np.dot(x, z):
             if True:
                 x = xqp.copy()
-        except Exception, e:
-            # print e
-            pass
-
+                # except Exception, e:
+                #     print e
+                # pass
     normalForce = x[:contactNum]
     tangenForce = x[contactNum:contactNum + numFrictionBases*contactNum]
     minTangenVel = x[contactNum + numFrictionBases*contactNum:]
@@ -248,7 +276,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
     # print "normalForce: ", normalForce
     # print "tangenForce: ", tangenForce
     # print "minTangenVel: ", minTangenVel
-    
+
     # print "z: ", z
     # print "np.dot(x,z): ", np.dot(x,z)
     # print sum(x >= 0.)
