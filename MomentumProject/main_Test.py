@@ -67,6 +67,8 @@ DOFs = None
 
 bodyIDsToCheck = None
 
+torques_nested = None
+
 ddth_des_flat = None
 dth_flat = None
 ddth_sol = None
@@ -76,6 +78,11 @@ rd_cPositions = None
 
 rd_cForcesControl = None
 rd_cPositionsControl = None
+
+rd_ForceControl = None
+rd_ForceDes = None
+rd_Position = None
+rd_PositionDes = None
 
 rd_jointPos = None
 
@@ -94,6 +101,7 @@ def init():
     global totalDOF
     global DOFs
     global bodyIDsToCheck
+    global torques_nested
     global ddth_des_flat
     global dth_flat
     global ddth_sol
@@ -102,6 +110,10 @@ def init():
     global rd_jointPos
     global rd_cForcesControl
     global rd_cPositionsControl
+    global rd_ForceControl
+    global rd_ForceDes
+    global rd_Position
+    global rd_PositionDes
     global viewer
 
     np.set_printoptions(precision=4, linewidth=200)
@@ -133,11 +145,16 @@ def init():
     ddth_des_flat = ype.makeFlatList(totalDOF)
     dth_flat = ype.makeFlatList(totalDOF)
     ddth_sol = ype.makeNestedList(DOFs)
+    torques_nested = ype.makeNestedList(DOFs)
 
     rd_cForces = [None]
     rd_cPositions = [None]
     rd_cForcesControl = [None]
     rd_cPositionsControl = [None]
+    rd_ForceControl = [None]
+    rd_ForceDes = [None]
+    rd_Position = [None]
+    rd_PositionDes = [None]
     rd_jointPos = [None]
 
     viewer = hsv.hpSimpleViewer()
@@ -145,6 +162,8 @@ def init():
     viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL))
     viewer.doc.addRenderer('rd_contactForcesControl', yr.VectorsRenderer(rd_cForcesControl, rd_cPositionsControl, (0, 255, 0), .1))
     viewer.doc.addRenderer('rd_contactForces', yr.VectorsRenderer(rd_cForces, rd_cPositions, (255, 0, 0), .1))
+    viewer.doc.addRenderer('rd_contactForceControl', yr.VectorsRenderer(rd_ForceControl, rd_Position, (0, 0, 255), .1))
+    viewer.doc.addRenderer('rd_contactForceDes', yr.VectorsRenderer(rd_ForceDes, rd_PositionDes, (255, 0, 255), .1))
     # viewer.doc.addRenderer('rd_jointPos', yr.PointsRenderer(rd_jointPos))
 
     viewer.objectInfoWnd.add1DSlider('PD gain', minVal=0., maxVal=1000., initVal=180., valStep=.1)
@@ -211,32 +230,43 @@ class Callback:
         ddth_c = controlModel.getDOFAccelerations()
         ype.flatten(ddth_des, ddth_des_flat)
 
-        totalForce = np.array([0., 1000., 0.])
+        totalForce = np.array([0., 50., 0.])
+        totalForce = np.array([50., 150.])
 
         torques = None
         ddth_des_flat[0:6] = [0.]*6
         self.setTimeStamp()
         for i in range(stepsPerFrame):
             # apply penalty force
-            # cBodyIDs, cPositions, cPositionLocals, cForces, torque \
-            #     = hls.calcLCPControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, ddth_des_flat, 8)
-            cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
-                = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, 8)
+            if frame > 400:
+                cBodyIDs, cPositions, cPositionLocals, cForces, torques \
+                    = hls.calcLCPControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, ddth_des_flat)
 
-            if timeStamp is not None:
-                if self.LCPTimeStamp is not None:
-                    self.LCPTimeStamp += np.array(timeStamp)
-                else:
-                    self.LCPTimeStamp = np.array(timeStamp).copy()
+            # if timeStamp is not None:
+            #     if self.LCPTimeStamp is not None:
+            #         self.LCPTimeStamp += np.array(timeStamp)
+            #     else:
+            #         self.LCPTimeStamp = np.array(timeStamp).copy()
+            try:
+                print torques[:6]
+            except Exception, e:
+                pass
+
+            if torques is not None:
+                cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
+                    = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques)
+            else:
+                cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
+                    = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat)
 
             if len(cBodyIDs) > 0:
                 vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForces)
                 for idx in range(len(cForces)):
                     if cForces[idx][1] > 1000.:
                         print frame, cForces[idx]
-
             if torques is not None:
-                controlModel.setDOFTorques(torques[1:])
+                ype.nested(torques, torques_nested)
+                controlModel.setDOFTorques(torques_nested[1:])
             else:
                 controlModel.setDOFTorques(ddth_des[1:])
             vpWorld.step()
@@ -245,14 +275,12 @@ class Callback:
         # print ddth_des_flat
         # print torques
 
-        totalForce = np.array([0., 100., 0.])
-
         # self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, torques \
         #     = hls.calcLCPControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, ddth_des_flat, 8)
         # del rd_cForcesControl[:]
         # del rd_cPositionsControl[:]
         # for i in range(len(self.cBodyIDs)):
-        #     rd_cForcesControl.append(self.cForces[i].copy()/200.)
+        #     rd_cForcesControl.append(self.cForces[i].copy()/50.)
         #     rd_cPositionsControl.append(self.cPositions[i].copy())
         # # if torques is not None:
         # #     print 'torques: ', torques[:6]
@@ -260,12 +288,12 @@ class Callback:
         tmptmp = None
 
         self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, tmptmp \
-            = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, 8)
+            = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques)
         # print 'self.cPositionLocals: ', self.cPositionLocals
         del rd_cForces[:]
         del rd_cPositions[:]
         for i in range(len(self.cBodyIDs)):
-            rd_cForces.append(self.cForces[i].copy()/10.)
+            rd_cForces.append(self.cForces[i].copy()/50.)
             rd_cPositions.append(self.cPositions[i].copy())
         if self.cForces is not None:
             print "length: ", mm.length(sum(self.cForces))
@@ -275,6 +303,19 @@ class Callback:
         del rd_jointPos[:]
         for i in range(motion[0].skeleton.getJointNum()):
             rd_jointPos.append(motion[frame].getJointPositionGlobal(i))
+
+        del rd_ForceControl[:]
+        del rd_ForceDes[:]
+        del rd_Position[:]
+        del rd_PositionDes[:]
+        if self.cForces is not None:
+            rd_ForceControl.append(sum(self.cForces)/50.)
+            rd_ForceDes.append(totalForce/50.)
+            rd_Position.append(np.array([0., 0., 0.1]))
+            rd_PositionDes.append(np.array([0., 0., 0.]))
+        if self.cForces is not None:
+            # print "length: ", mm.length(sum(self.cForces))
+            print self.cForces
 
         self.setTimeStamp()
         # print self.timeStamp

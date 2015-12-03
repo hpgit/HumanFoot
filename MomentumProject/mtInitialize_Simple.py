@@ -296,8 +296,8 @@ def create_foot(motionFile='foot3.bvh'):
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
-    stepsPerFrame = 40
-    wcfg.timeStep = (1/30.)/stepsPerFrame
+    stepsPerFrame = 4
+    wcfg.timeStep = (1/300.)/stepsPerFrame
 
     # parameter
     config = dict([])
