@@ -168,6 +168,8 @@ def init():
 
     viewer.objectInfoWnd.add1DSlider('PD gain', minVal=0., maxVal=1000., initVal=180., valStep=.1)
     viewer.objectInfoWnd.add1DSlider('Joint Damping', minVal=1., maxVal=200., initVal=35., valStep=1.)
+    viewer.objectInfoWnd.add1DSlider('steps per frame', minVal=1., maxVal=200., initVal=config['stepsPerFrame'], valStep=1.)
+    viewer.objectInfoWnd.add1DSlider('1/simul speed', minVal=1., maxVal=20., initVal=config['simulSpeedInv'], valStep=1.)
 
     for i in range(motion[0].skeleton.getJointNum()):
         print(i, motion[0].skeleton.getJointName(i))
@@ -207,6 +209,9 @@ class Callback:
 
     def simulateCallback(self, frame):
         global ddth_des_flat
+        global stepsPerFrame
+        global wcfg
+        global vpWorld
 
         # reload(tf)
         self.frame = frame
@@ -216,7 +221,15 @@ class Callback:
         self.setTimeStamp()
 
         # constant setting
-        (Kt, damp,) = viewer.objectInfoWnd.getVals()
+        # (Kt, damp, stepsPerFrame, simulSpeedInv) = viewer.objectInfoWnd.getVals()
+        getVal = viewer.objectInfoWnd.getVal
+        Kt = getVal('PD gain')
+        damp = getVal('Joint Damping')
+        stepsPerFrame = getVal('steps per frame')
+        simulSpeedInv = getVal('1/simul speed')
+        wcfg.timeStep = 1/(30.*simulSpeedInv)/stepsPerFrame
+        vpWorld.SetTimeStep(wcfg.timeStep)
+
         Dt = 2.*(Kt**.5)
         controlModel.SetJointsDamping(damp)
 
@@ -236,9 +249,10 @@ class Callback:
         torques = None
         ddth_des_flat[0:6] = [0.]*6
         self.setTimeStamp()
-        for i in range(stepsPerFrame):
+        for i in range(int(stepsPerFrame)):
             # apply penalty force
-            if frame > 400:
+            # if frame > 400:
+            if False:
                 cBodyIDs, cPositions, cPositionLocals, cForces, torques \
                     = hls.calcLCPControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, ddth_des_flat)
 
@@ -275,8 +289,8 @@ class Callback:
         # print ddth_des_flat
         # print torques
 
-        # self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, torques \
-        #     = hls.calcLCPControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, ddth_des_flat, 8)
+        self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, torques \
+            = hls.calcLCPControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, ddth_des_flat, 8)
         # del rd_cForcesControl[:]
         # del rd_cPositionsControl[:]
         # for i in range(len(self.cBodyIDs)):
@@ -287,16 +301,16 @@ class Callback:
 
         tmptmp = None
 
-        self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, tmptmp \
-            = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques)
-        # print 'self.cPositionLocals: ', self.cPositionLocals
+        # self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, tmptmp \
+        #     = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques)
         del rd_cForces[:]
         del rd_cPositions[:]
         for i in range(len(self.cBodyIDs)):
             rd_cForces.append(self.cForces[i].copy()/50.)
             rd_cPositions.append(self.cPositions[i].copy())
         if self.cForces is not None:
-            print "length: ", mm.length(sum(self.cForces))
+            print "Force length: ", mm.length(sum(self.cForces))
+            print "root torques : ", torques[:6]
         # if torques is not None:
         #     print np.array(torques) - np.array(ddth_des_flat)
 
@@ -308,14 +322,18 @@ class Callback:
         del rd_ForceDes[:]
         del rd_Position[:]
         del rd_PositionDes[:]
+        # rd_ForceDes.append(totalForce/50.)
+        rd_ForceDes.append(totalForce[0]*np.array([0., 1., 0.])/50.)
+        rd_ForceDes.append(totalForce[1]*np.array([0., 1., 0.])/50.)
+        rd_PositionDes.append(np.array([0., 0., 0.]))
+        rd_PositionDes.append(np.array([0., 0., -0.1]))
         if self.cForces is not None:
             rd_ForceControl.append(sum(self.cForces)/50.)
-            rd_ForceDes.append(totalForce/50.)
             rd_Position.append(np.array([0., 0., 0.1]))
-            rd_PositionDes.append(np.array([0., 0., 0.]))
         if self.cForces is not None:
             # print "length: ", mm.length(sum(self.cForces))
-            print self.cForces
+            # print self.cForces
+            pass
 
         self.setTimeStamp()
         # print self.timeStamp

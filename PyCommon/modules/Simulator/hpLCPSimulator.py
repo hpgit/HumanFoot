@@ -311,8 +311,8 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
 def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=None, numFrictionBases=8):
     # model = VpControlModel
     # numFrictionBases = 8
-    contactNum, bodyIDs, contactPositions, contactPositionsLocal, JTN, JTD, E, N, D = makeFrictionCone(motion[0].skeleton, world, model, bodyIDsToCheck, numFrictionBases)
-    # print "hpLCPSimulator:contactNum : ", contactNum
+    contactNum, bodyIDs, contactPositions, contactPositionsLocal, JTN, JTD, E, N, D \
+        = makeFrictionCone(motion[0].skeleton, world, model, bodyIDsToCheck, numFrictionBases)
     if contactNum == 0:
         return bodyIDs, contactPositions, contactPositionsLocal, None, None
 
@@ -330,7 +330,10 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
     M = npl.inv(invM)
     c = np.dot(M, invMc)
 
-    pinvM = npl.inv(np.dot(M, M.T)+np.eye(M.shape[0]))
+    Mtmp = np.dot(M, M.T)+np.eye(M.shape[0])
+    Mtmp[:6, :6] -= np.eye(6)
+
+    pinvM = npl.inv(Mtmp)
     pinvM0 = np.dot(M.T, pinvM)
     pinvM1 = -pinvM
 
@@ -375,7 +378,6 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
             bPenDepth[i] = contactPositions[i][1] + penDepth
 
     b1 = JTN.T.dot(qdot_0) + h*temp_NM.dot(tau0 - c) + 0.5*invh*bPenDepth
-    # print b1
     b2 = JTD.T.dot(qdot_0) + h*temp_DM.dot(tau0 - c)
     b3 = np.zeros(mus.shape[0])
     b = np.hstack((np.hstack((b1, b2)), b3)) * factor
@@ -389,15 +391,23 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
 
     if True:
         try:
+        # if True:
             # print "prev z: ", np.dot(x, z)
             Qqp = cvxMatrix(A+A.T)
             pqp = cvxMatrix(b)
-            Gqp = cvxMatrix(np.vstack((np.vstack((-A, -np.eye(A.shape[0]))), np.hstack((np.ones(2, N.shape[1]),np.zeros(2, D.shape[1]+N.shape[1]) ))  )))
-            hqp = cvxMatrix(np.hstack((b.T, np.zeros(A.shape[0]))))
+            G = np.vstack((np.vstack((-A, -np.eye(A.shape[0]))), np.hstack((np.ones((2, N.shape[1])), np.zeros((2, D.shape[1]+N.shape[1]))))))
+            G[-2] *= -1.
+            Gqp = cvxMatrix(G)
+            hnp = np.hstack((b.T, np.zeros(A.shape[0]+2)))
+            hnp[-2] = -totalForce[0]
+            hnp[-1] = totalForce[1]
+            hqp = cvxMatrix(hnp)
             # TODO:
             # check correctness of equality constraint
             # tau = np.dot(pinvM1, -c + tau0 + np.dot(JTN, normalForce) + np.dot(JTD, tangenForce))
-            # tau = pinvM1*JTN*theta + pinvM1*JTD*phi + pinvM1*tau0 - pinvM1*b
+            # tau = pinvM1*JTN*theta + pinvM1*JTD*phi + pinvM1*tau0 - pinvM1*b + tau0
+            # TODO:
+            # there is bug!!!!!!!!!
             Atauqp = np.hstack((np.hstack((JTN[:6], JTD[:6])), np.zeros(N[:6].shape)))
             btauqp = np.array(c[:6])-np.array(tau0[:6])
             # Aqp = cvxMatrix(np.vstack((np.hstack((np.hstack((N[:3], D[:3])), np.zeros(N[:3].shape))), Atauqp)))
@@ -416,15 +426,14 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
             # if np.dot(xqp, zqp) < np.dot(x, z):
             x = xqp.copy()
         except Exception, e:
-            print e
-            # print 'LCPControl!!', e
+            print 'LCPControl!!', e
             pass
 
     normalForce = x[:contactNum]
     tangenForce = x[contactNum:contactNum + numFrictionBases*contactNum]
     minTangenVel = x[contactNum + numFrictionBases*contactNum:]
 
-    tau = np.dot(pinvM1, -c + tau0 + np.dot(JTN, normalForce) + np.dot(JTD, tangenForce))
+    tau = np.dot(pinvM1, -c + tau0 + np.dot(JTN, normalForce) + np.dot(JTD, tangenForce)) + np.array(tau0)
 
     forces = []
     for cIdx in range(contactNum):

@@ -245,7 +245,7 @@ def create_chiken_foot():
     config['Bt'] = 1.
     config['Bl'] = 1.
     config['Bh'] = 1.
-    
+
     # etc
     config['weightMap'] = {'root': 2., 'foot00': 1., 'foot10': 1., 'foot01': .2, 'foot11': .2}
     config['weightMapTuple'] = (2., 1., .2, 1., .2)
@@ -297,7 +297,9 @@ def create_foot(motionFile='foot3.bvh'):
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
     stepsPerFrame = 4
-    wcfg.timeStep = (1/300.)/stepsPerFrame
+    simulSpeedInv = 10.
+
+    wcfg.timeStep = (1/30.*simulSpeedInv)/stepsPerFrame
 
     # parameter
     config = dict([])
@@ -308,6 +310,8 @@ def create_foot(motionFile='foot3.bvh'):
     config['Bt'] = 1.
     config['Bl'] = 1.
     config['Bh'] = 1.
+    config['stepsPerFrame'] = stepsPerFrame
+    config['simulSpeedInv'] = simulSpeedInv
 
     # etc
     config['weightMap'] = {'root': 2., 'foot00': 1., 'foot10': 1., 'foot20': 1., 'foot01': .2, 'foot11': .2, 'foot21': .2}
