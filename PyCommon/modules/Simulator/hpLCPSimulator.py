@@ -408,8 +408,8 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
             # tau = pinvM1*JTN*theta + pinvM1*JTD*phi + pinvM1*tau0 - pinvM1*b + tau0
             # TODO:
             # there is bug!!!!!!!!!
-            Atauqp = np.hstack((np.hstack((JTN[:6], JTD[:6])), np.zeros(N[:6].shape)))
-            btauqp = np.array(c[:6])-np.array(tau0[:6])
+            Atauqp = np.hstack((np.dot(pinvM1[:6], np.hstack((JTN, JTD))), np.zeros(N[:6].shape)))
+            btauqp = np.dot(pinvM1[:6], (np.array(c)-np.array(tau0))) - np.array(tau0[:6])
             # Aqp = cvxMatrix(np.vstack((np.hstack((np.hstack((N[:3], D[:3])), np.zeros(N[:3].shape))), Atauqp)))
             # bqp = cvxMatrix(np.hstack((np.array(totalForce), btauqp)))
             # print Aqp

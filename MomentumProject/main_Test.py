@@ -169,7 +169,7 @@ def init():
     viewer.objectInfoWnd.add1DSlider('PD gain', minVal=0., maxVal=1000., initVal=180., valStep=.1)
     viewer.objectInfoWnd.add1DSlider('Joint Damping', minVal=1., maxVal=200., initVal=35., valStep=1.)
     viewer.objectInfoWnd.add1DSlider('steps per frame', minVal=1., maxVal=200., initVal=config['stepsPerFrame'], valStep=1.)
-    viewer.objectInfoWnd.add1DSlider('1/simul speed', minVal=1., maxVal=20., initVal=config['simulSpeedInv'], valStep=1.)
+    viewer.objectInfoWnd.add1DSlider('1/simul speed', minVal=1., maxVal=100., initVal=config['simulSpeedInv'], valStep=1.)
 
     for i in range(motion[0].skeleton.getJointNum()):
         print(i, motion[0].skeleton.getJointName(i))
