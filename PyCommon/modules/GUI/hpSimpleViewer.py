@@ -9,10 +9,12 @@ class hpSimpleViewer(ysvOri.SimpleViewer):
         self.doc = ysvOri.SimpleDoc()
         self.begin()
         panelWidth = 280
-        self.motionViewWnd = ysvOri.MotionViewWnd(0, 0, self.w()-panelWidth, self.h(), self.doc)
+        cForceHeight = 200
+        self.motionViewWnd = ysvOri.MotionViewWnd(0, 0, self.w()-panelWidth, self.h()-cForceHeight, self.doc)
         t = .3
         self.renderersWnd = ysvOri.RenderersWnd(self.w()-panelWidth, 0, panelWidth, int(self.h()*t), self.doc)
         self.objectInfoWnd = hpObjectInfoWnd(self.w()-panelWidth, int(self.h()*t), panelWidth, int(self.h()*(1-t)), self.doc)
+        self.cForceWnd = hpContactForceGraphWnd(40, self.h()-cForceHeight, self.w()-panelWidth-40, cForceHeight, self.doc)
         self.end()
         self.resizable(self.motionViewWnd)
         self.size_range(600, 400)
@@ -64,6 +66,27 @@ class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
 
         self.end()
         pass
+
+
+class hpContactForceGraphWnd(fltk.Fl_Chart):
+    def __init__(self, x, y, w, h, doc):
+        self.doc = doc
+        super(hpContactForceGraphWnd, self).__init__(x, y, w, h)
+        self.type(fltk.FL_LINE_CHART)
+
+    def update(self, ev, doc):
+        if ev == ysvOri.EV_addObject:
+            self.maxsize(doc.motionSystem.getMaxFrame())
+        self.glWindow.redraw()
+    def addData(self, val):
+        fltk.fl_color(fltk.FL_BLACK)
+        # fltk.fl_line
+        #
+        # int x1 = x(),       y1 = y();
+        # int x2 = x()+w()-1, y2 = y()+h()-1;
+        # fl_line(x1, y1, x2, y2);
+        # fl_line(x1, y2, x2, y1);
+
 
 
 

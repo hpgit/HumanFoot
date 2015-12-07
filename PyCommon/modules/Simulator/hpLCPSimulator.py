@@ -276,7 +276,8 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
             # if np.dot(xqp, zqp) < np.dot(x, z):
             x = xqp.copy()
         except Exception, e:
-            print e
+            # print e
+            pass
 
     normalForce = x[:contactNum]
     tangenForce = x[contactNum:contactNum + numFrictionBases*contactNum]
@@ -392,30 +393,30 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
     if True:
         try:
         # if True:
-            # print "prev z: ", np.dot(x, z)
             Qqp = cvxMatrix(A+A.T)
             pqp = cvxMatrix(b)
-            G = np.vstack((np.vstack((-A, -np.eye(A.shape[0]))), np.hstack((np.ones((2, N.shape[1])), np.zeros((2, D.shape[1]+N.shape[1]))))))
-            G[-2] *= -1.
+
+            # G = np.vstack((np.vstack((-A, -np.eye(A.shape[0]))), np.hstack((np.ones((2, N.shape[1])), np.zeros((2, D.shape[1]+N.shape[1]))))))
+            # G[-2] *= -1.
+            # hnp = np.hstack((b.T, np.zeros(A.shape[0]+2)))
+            # hnp[-2] = -totalForce[0]
+            # hnp[-1] = totalForce[1]
+            G = np.vstack((-A, -np.eye(A.shape[0])))
+            hnp = np.hstack((b.T, np.zeros(A.shape[0])))
             Gqp = cvxMatrix(G)
-            hnp = np.hstack((b.T, np.zeros(A.shape[0]+2)))
-            hnp[-2] = -totalForce[0]
-            hnp[-1] = totalForce[1]
             hqp = cvxMatrix(hnp)
+
             # TODO:
             # check correctness of equality constraint
             # tau = np.dot(pinvM1, -c + tau0 + np.dot(JTN, normalForce) + np.dot(JTD, tangenForce))
             # tau = pinvM1*JTN*theta + pinvM1*JTD*phi + pinvM1*tau0 - pinvM1*b + tau0
-            # TODO:
-            # there is bug!!!!!!!!!
             Atauqp = np.hstack((np.dot(pinvM1[:6], np.hstack((JTN, JTD))), np.zeros(N[:6].shape)))
             btauqp = np.dot(pinvM1[:6], (np.array(c)-np.array(tau0))) - np.array(tau0[:6])
-            # Aqp = cvxMatrix(np.vstack((np.hstack((np.hstack((N[:3], D[:3])), np.zeros(N[:3].shape))), Atauqp)))
-            # bqp = cvxMatrix(np.hstack((np.array(totalForce), btauqp)))
-            # print Aqp
-            # print bqp
-            Aqp = cvxMatrix(Atauqp)
-            bqp = cvxMatrix(btauqp)
+            # Aqp = cvxMatrix(Atauqp)
+            # bqp = cvxMatrix(btauqp)
+            Aqp = cvxMatrix(np.vstack((np.hstack((np.hstack((N[:3], D[:3])), np.zeros(N[:3].shape))), Atauqp)))
+            bqp = cvxMatrix(np.hstack((np.array(totalForce), btauqp)))
+
             cvxSolvers.options['show_progress'] = False
             cvxSolvers.options['maxiters'] = 100
             # cvxSolvers.options['refinement'] = 10
@@ -426,7 +427,7 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
             # if np.dot(xqp, zqp) < np.dot(x, z):
             x = xqp.copy()
         except Exception, e:
-            print 'LCPControl!!', e
+            # print 'LCPControl!!', e
             pass
 
     normalForce = x[:contactNum]

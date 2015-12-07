@@ -121,7 +121,8 @@ def init():
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_5()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_chiken_foot()
-    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('fastswim.bvh')
+    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('fastswim.bvh')
+    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
     mcfg_motion = mit.normal_mcfg()
 
     vpWorld = cvw.VpWorld(wcfg)
@@ -243,8 +244,8 @@ class Callback:
         ddth_c = controlModel.getDOFAccelerations()
         ype.flatten(ddth_des, ddth_des_flat)
 
-        totalForce = np.array([0., 50., 0.])
-        totalForce = np.array([50., 150.])
+        totalForce = np.array([0., 80., 0.])
+        # totalForce = np.array([50., 150.])
 
         torques = None
         ddth_des_flat[0:6] = [0.]*6
@@ -278,6 +279,9 @@ class Callback:
                 for idx in range(len(cForces)):
                     if cForces[idx][1] > 1000.:
                         print frame, cForces[idx]
+            if 70 < frame < 130:
+                if cForces is not None:
+                    print frame, sum(cForces)
             if torques is not None:
                 ype.nested(torques, torques_nested)
                 controlModel.setDOFTorques(torques_nested[1:])
@@ -308,11 +312,9 @@ class Callback:
         for i in range(len(self.cBodyIDs)):
             rd_cForces.append(self.cForces[i].copy()/50.)
             rd_cPositions.append(self.cPositions[i].copy())
-        if self.cForces is not None:
-            print "Force length: ", mm.length(sum(self.cForces))
-            print "root torques : ", torques[:6]
-        # if torques is not None:
-        #     print np.array(torques) - np.array(ddth_des_flat)
+        # if self.cForces is not None:
+        #     print "Force length: ", mm.length(sum(self.cForces))
+        #     print "root torques : ", torques[:6]
 
         del rd_jointPos[:]
         for i in range(motion[0].skeleton.getJointNum()):
@@ -333,7 +335,11 @@ class Callback:
         if self.cForces is not None:
             # print "length: ", mm.length(sum(self.cForces))
             # print self.cForces
+            sumForce = sum(self.cForces)
+            viewer.cForceWnd.insert(frame+1, sumForce[1])
             pass
+        else:
+            viewer.cForceWnd.insert(frame+1, 0.)
 
         self.setTimeStamp()
         # print self.timeStamp
