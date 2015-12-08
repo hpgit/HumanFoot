@@ -171,6 +171,14 @@ def init():
     viewer.objectInfoWnd.add1DSlider('Joint Damping', minVal=1., maxVal=200., initVal=35., valStep=1.)
     viewer.objectInfoWnd.add1DSlider('steps per frame', minVal=1., maxVal=200., initVal=config['stepsPerFrame'], valStep=1.)
     viewer.objectInfoWnd.add1DSlider('1/simul speed', minVal=1., maxVal=100., initVal=config['simulSpeedInv'], valStep=1.)
+    viewer.objectInfoWnd.add1DSlider('normal des force min', minVal=0., maxVal=200., initVal=80., valStep=5.)
+    viewer.objectInfoWnd.add1DSlider('normal des force max', minVal=0., maxVal=200., initVal=80., valStep=5.)
+    viewer.objectInfoWnd.add1DSlider('des force begin', minVal=0., maxVal=len(motion)-1, initVal=0., valStep=1.)
+    viewer.objectInfoWnd.add1DSlider('des force dur', minVal=0., maxVal=len(motion)-1, initVal=20., valStep=1.)
+
+    viewer.cForceWnd.addDataSet('expForce', FL_BLACK)
+    viewer.cForceWnd.addDataSet('desForce', FL_RED)
+    viewer.cForceWnd.addDataSet('realForce', FL_GREEN)
 
     for i in range(motion[0].skeleton.getJointNum()):
         print(i, motion[0].skeleton.getJointName(i))
@@ -235,16 +243,29 @@ class Callback:
         controlModel.SetJointsDamping(damp)
 
         # tracking
-        th_r = motion.getDOFPositions(frame)
+        th_r = motion.getDOFPositions(0)
         th = controlModel.getDOFPositions()
-        dth_r = motion.getDOFVelocities(frame)
+        dth_r = motion.getDOFVelocities(0)
         dth = controlModel.getDOFVelocities()
-        ddth_r = motion.getDOFAccelerations(frame)
+        ddth_r = motion.getDOFAccelerations(0)
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt) # config['weightMapTuple'])
         ddth_c = controlModel.getDOFAccelerations()
         ype.flatten(ddth_des, ddth_des_flat)
 
-        totalForce = np.array([0., 80., 0.])
+        desForceFrameBegin = getVal('des force begin')
+        desForceDuration = getVal('des force dur')
+        desForceFrame = [desForceFrameBegin, desForceFrameBegin + desForceDuration]
+
+        desForceRelFrame = float(frame-desForceFrame[0])/desForceDuration
+        desNormalForceMin = getVal('normal des force min')
+        desNormalForceMax = getVal('normal des force max')
+        desNormalForce = desNormalForceMin
+        if desForceFrame[0] <= frame <= desForceFrame[1]:
+            desNormalForce = desNormalForceMin*(1-desForceRelFrame) + desNormalForceMax * desForceRelFrame
+
+        totalForce = np.array([0., desNormalForce, 0.])
+
+
         # totalForce = np.array([50., 150.])
 
         torques = None
@@ -252,10 +273,10 @@ class Callback:
         self.setTimeStamp()
         for i in range(int(stepsPerFrame)):
             # apply penalty force
-            # if frame > 400:
-            if False:
-                cBodyIDs, cPositions, cPositionLocals, cForces, torques \
-                    = hls.calcLCPControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, ddth_des_flat)
+            if desForceFrame[0] <= frame <= desForceFrame[1]:
+                if True:
+                    cBodyIDs, cPositions, cPositionLocals, cForces, torques \
+                        = hls.calcLCPControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, ddth_des_flat)
 
             # if timeStamp is not None:
             #     if self.LCPTimeStamp is not None:
@@ -295,51 +316,55 @@ class Callback:
 
         self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, torques \
             = hls.calcLCPControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, ddth_des_flat, 8)
-        # del rd_cForcesControl[:]
-        # del rd_cPositionsControl[:]
-        # for i in range(len(self.cBodyIDs)):
-        #     rd_cForcesControl.append(self.cForces[i].copy()/50.)
-        #     rd_cPositionsControl.append(self.cPositions[i].copy())
-        # # if torques is not None:
-        # #     print 'torques: ', torques[:6]
+        del rd_cForcesControl[:]
+        del rd_cPositionsControl[:]
+        for i in range(len(self.cBodyIDs)):
+            # print expected force
+            rd_cForcesControl.append(self.cForces[i].copy()/50.)
+            rd_cPositionsControl.append(self.cPositions[i].copy())
+        del rd_ForceControl[:]
+        del rd_Position[:]
+        if self.cForces is not None:
+            # print expected force
+            rd_ForceControl.append(sum(self.cForces)/50.)
+            rd_Position.append(np.array([0., 0., 0.1]))
+        # graph
+        if self.cForces is not None:
+            sumForce = sum(self.cForces)
+            viewer.cForceWnd.insertData('expForce', frame, sumForce[1])
+        else:
+            viewer.cForceWnd.insertData('expForce', frame, 0.)
 
-        tmptmp = None
-
-        # self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, tmptmp \
-        #     = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques)
+        self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, tmptmp \
+            = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques)
         del rd_cForces[:]
         del rd_cPositions[:]
         for i in range(len(self.cBodyIDs)):
+            # print calculated force
             rd_cForces.append(self.cForces[i].copy()/50.)
             rd_cPositions.append(self.cPositions[i].copy())
-        # if self.cForces is not None:
-        #     print "Force length: ", mm.length(sum(self.cForces))
-        #     print "root torques : ", torques[:6]
 
         del rd_jointPos[:]
         for i in range(motion[0].skeleton.getJointNum()):
             rd_jointPos.append(motion[frame].getJointPositionGlobal(i))
 
-        del rd_ForceControl[:]
         del rd_ForceDes[:]
-        del rd_Position[:]
         del rd_PositionDes[:]
         # rd_ForceDes.append(totalForce/50.)
-        rd_ForceDes.append(totalForce[0]*np.array([0., 1., 0.])/50.)
         rd_ForceDes.append(totalForce[1]*np.array([0., 1., 0.])/50.)
         rd_PositionDes.append(np.array([0., 0., 0.]))
-        rd_PositionDes.append(np.array([0., 0., -0.1]))
+        # if self.cForces is not None:
+        #     rd_ForceDes.append(sum(self.cForces)[1]/50. * [0., 1., 0.])
+        #     rd_PositionDes.append(np.array([0., 0., -0.1]))
+
+        # graph
         if self.cForces is not None:
-            rd_ForceControl.append(sum(self.cForces)/50.)
-            rd_Position.append(np.array([0., 0., 0.1]))
-        if self.cForces is not None:
-            # print "length: ", mm.length(sum(self.cForces))
-            # print self.cForces
             sumForce = sum(self.cForces)
-            viewer.cForceWnd.insert(frame+1, sumForce[1])
-            pass
+            viewer.cForceWnd.insertData('realForce', frame, sumForce[1])
         else:
-            viewer.cForceWnd.insert(frame+1, 0.)
+            viewer.cForceWnd.insertData('realForce', frame, 0.)
+
+        viewer.cForceWnd.insertData('desForce', frame, totalForce[1])
 
         self.setTimeStamp()
         # print self.timeStamp

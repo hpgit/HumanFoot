@@ -414,8 +414,10 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
             btauqp = np.dot(pinvM1[:6], (np.array(c)-np.array(tau0))) - np.array(tau0[:6])
             # Aqp = cvxMatrix(Atauqp)
             # bqp = cvxMatrix(btauqp)
-            Aqp = cvxMatrix(np.vstack((np.hstack((np.hstack((N[:3], D[:3])), np.zeros(N[:3].shape))), Atauqp)))
-            bqp = cvxMatrix(np.hstack((np.array(totalForce), btauqp)))
+            # Aqp = cvxMatrix(np.vstack((np.hstack((np.hstack((N[:3], D[:3])), np.zeros(N[:3].shape))), Atauqp)))
+            # bqp = cvxMatrix(np.hstack((np.array(totalForce), btauqp)))
+            Aqp = cvxMatrix(np.vstack((np.hstack((np.hstack((N[1:2], D[1:2])), np.zeros(N[1:2].shape))), Atauqp)))
+            bqp = cvxMatrix(np.hstack((np.array(totalForce[1]), btauqp)))
 
             cvxSolvers.options['show_progress'] = False
             cvxSolvers.options['maxiters'] = 100

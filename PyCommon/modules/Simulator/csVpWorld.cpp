@@ -377,7 +377,7 @@ boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
 					if (penentrated)
 					{
 						velocity = pBody->GetLinVelocity(positionLocal);
-						
+
 						bodyIDs.append(bodyID);
 
 						object pyPosition = O_Vec3.copy();

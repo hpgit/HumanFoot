@@ -298,7 +298,10 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 		        mass = density * radius * radius * M_PI * length;
 
 		    // density = mass/ (width*width*M_PI*(length+width));
-		    pNode->body.AddGeometry(new MyFoot3(radius, length));
+		    if (geomType == "MyFoot3")
+		        pNode->body.AddGeometry(new MyFoot3(radius, length));
+		    else
+		        pNode->body.AddGeometry(new MyFoot4(radius, length));
 		    pNode->body.SetInertia(CylinderInertia(density, radius,length));
 		}
 		else
