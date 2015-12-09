@@ -5,7 +5,7 @@ module_csVpModel = Extension('csVpModel',
 		extra_compile_args=['-fopenmp', '-D __APPLE_OMP__'],
 		libraries = ['boost_python', 'vpLib', 'iomp5'],
 		library_dirs = ['../usr/lib'],
-		sources = ['csVpModel.cpp', 'VpUtil.cpp', 'myGeom.cpp'])
+		sources = ['csVpModel.cpp', 'myGeom.cpp'])
 	
 setup (name = 'csVpModel',
 	version = '0.1',
@@ -17,7 +17,7 @@ module_csVpWorld = Extension('csVpWorld',
 		extra_compile_args=['-fopenmp', '-D __APPLE_OMP__'],
 		libraries = ['boost_python', 'vpLib', 'iomp5'],
 		library_dirs = ['../usr/lib'],
-		sources = ['csVpWorld.cpp', 'VpUtil.cpp'])
+		sources = ['csVpWorld.cpp'])
 	
 setup (name = 'csVpWorld',
 	version = '0.1',

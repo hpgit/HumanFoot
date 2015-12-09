@@ -19,7 +19,7 @@ module_csVpWorld = Extension('csVpWorld',
 		extra_link_args=['-lgomp'],
 		libraries = ['boost_python', 'vpLib'],
 		library_dirs = ['../usr/lib'],
-		sources = ['csVpWorld.cpp', 'VpUtil.cpp'])
+		sources = ['csVpWorld.cpp'])
 	
 setup (name = 'csVpWorld',
 	version = '0.1',

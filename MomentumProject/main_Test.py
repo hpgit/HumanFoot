@@ -126,7 +126,6 @@ def init():
     mcfg_motion = mit.normal_mcfg()
 
     vpWorld = cvw.VpWorld(wcfg)
-    print "heheheheheheheheheheheheheheheh", vpWorld._timeStep
     controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
 
     vpWorld.initialize()

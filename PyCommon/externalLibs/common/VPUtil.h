@@ -60,10 +60,10 @@ inline void pySO3_2_SE3(const object& pyR, SE3& T)
 
 inline SE3 pySE3_2_SE3(const object& pyT)
 {
-	return SE3(XD(pyR[0][0]), XD(pyR[1][0]), XD(pyR[2][0]),
-				XD(pyR[0][1]), XD(pyR[1][1]), XD(pyR[2][1]),
-				XD(pyR[0][2]), XD(pyR[1][2]), XD(pyR[2][2]),
-				XD(pyR[0][3]), XD(pyR[1][3]), XD(pyR[2][3]));
+	return SE3(XD(pyT[0][0]), XD(pyT[1][0]), XD(pyT[2][0]),
+				XD(pyT[0][1]), XD(pyT[1][1]), XD(pyT[2][1]),
+				XD(pyT[0][2]), XD(pyT[1][2]), XD(pyT[2][2]),
+				XD(pyT[0][3]), XD(pyT[1][3]), XD(pyT[2][3]));
 }
 inline void pySE3_2_SE3(const object& pyT, SE3& T)
 {

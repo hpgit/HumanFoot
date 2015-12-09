@@ -47,7 +47,7 @@ class vpJoint():
 
 class csVpWorld:
     def __init__(self, config):
-        self._world = vpWorld
+        self._world = vpWorld()
         self._world.SetGravity(config.gravity)
         self._ground = vpBody
         self._timeStep = config.timeStep
@@ -61,7 +61,7 @@ class csVpWorld:
             self._ground.AddGeometry(vpBox(np.array([100., 0., 100.])))
             self._ground.SetFrame(np.array([0., self._planeHeight, 0.]))
             self._ground.SetGround()
-            self._world.AddBody(self.ground)
+            self._world.AddBody(self._ground)
 
     def step(self):
         self._world.StepAhead()

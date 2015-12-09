@@ -15,13 +15,15 @@
 BOOST_PYTHON_MODULE(csVpWorld)
 {
 	class_<VpWorld>("VpWorld", init<const object&>())
+	    .def_readwrite("_ground", &VpWorld::_ground)
+	    .def("ptr", &VpWorld::ptr)
 		.def("step", &VpWorld::step)
 		.def("initialize", &VpWorld::initialize)
 		.def("calcPenaltyForce", &VpWorld::calcPenaltyForce)
 		.def("applyPenaltyForce", &VpWorld::applyPenaltyForce)
 		.def("getBodyNum", &VpWorld::getBodyNum)
 		.def("getContactPoints", &VpWorld::getContactPoints)
-		.def("getTimeStep", &VpWorld::getTimeStep)
+		//.def("getTimeStep", &VpWorld::getTimeStep)
 		//.def(" //void								 AddBody(vpBody *);
 		//.def(" //void								 AddWorld(vpWorld *);
 		//.def(" //void								 SetGlobalFrame(const SE3 &);
