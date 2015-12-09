@@ -14,7 +14,7 @@ class hpSimpleViewer(ysvOri.SimpleViewer):
         t = .3
         self.renderersWnd = ysvOri.RenderersWnd(self.w()-panelWidth, 0, panelWidth, int(self.h()*t), self.doc)
         self.objectInfoWnd = hpObjectInfoWnd(self.w()-panelWidth, int(self.h()*t), panelWidth, int(self.h()*(1-t)), self.doc)
-        self.cForceWnd = hpContactForceGraphWnd(40, self.h()-cForceHeight, self.w()-panelWidth-40, cForceHeight, self.doc)
+        self.cForceWnd = hpContactForceGraphWnd(0, self.h()-cForceHeight, self.w()-panelWidth-40, cForceHeight, self.doc)
         self.end()
         self.resizable(self.motionViewWnd)
         self.resizable(self.cForceWnd)
@@ -79,6 +79,9 @@ class hpContactForceGraphWnd(fltk.Fl_Widget, ybu.Observer):
         self.dataSetName = []
         self.dataSetColor = []
 
+        self.dataCheckBtn = []
+        self.dataCheckBtnOffset = 0
+
     def update(self, ev, doc):
         if ev == ysvOri.EV_addObject:
             self.dataLength = doc.motionSystem.getMaxFrame()
@@ -88,6 +91,12 @@ class hpContactForceGraphWnd(fltk.Fl_Widget, ybu.Observer):
         self.data.append([0.] * (self.dataLength+1))
         self.dataSetName.append(name)
         self.dataSetColor.append(color)
+        checkBox = fltk.Fl_Check_Button(self.x(), self.y() + self.dataCheckBtnOffset, 30, 40, name)
+        checkBox.value(True)
+        checkBox.callback(self.checkBtnCallback)
+        self.dataCheckBtn.append(checkBox)
+        self.dataCheckBtnOffset += 40
+        self.redraw()
 
     def addData(self, name, val):
         dataIdx = self.dataSetName.index(name)
@@ -100,12 +109,17 @@ class hpContactForceGraphWnd(fltk.Fl_Widget, ybu.Observer):
         self.redraw()
 
     def draw(self):
-        fltk.fl_draw_box(fltk.FL_FLAT_BOX, self.x(), self.y(), self.w(), self.h(), fltk.fl_rgb_color(192, 192, 192))
+        fltk.fl_draw_box(fltk.FL_FLAT_BOX, 40+self.x(), self.y(), self.w()-40, self.h(), fltk.fl_rgb_color(192, 192, 192))
         ratio = float(self.w())/self.dataLength
         for dataIdx in range(len(self.data)):
-            for valIdx in range(1, self.dataLength-1):
-                fltk.fl_color(self.dataSetColor[dataIdx])
-                fltk.fl_line(self.x()+int(ratio * (valIdx-1)), int(self.y()+self.h() - self.data[dataIdx][valIdx-1]/2.)-3,
-                             self.x()+int(ratio * valIdx), int(self.y()+self.h() - self.data[dataIdx][valIdx]/2.)-3)
+            if self.dataCheckBtn[dataIdx].value():
+                for valIdx in range(1, self.dataLength-1):
+                    fltk.fl_color(self.dataSetColor[dataIdx])
+                    fltk.fl_line(40+self.x()+int(ratio * (valIdx-1)), int(self.y()+self.h() - self.data[dataIdx][valIdx-1]/2.)-3,
+                                 40+self.x()+int(ratio * valIdx), int(self.y()+self.h() - self.data[dataIdx][valIdx]/2.)-3)
+
+    def checkBtnCallback(self, ptr):
+        self.redraw()
+        pass
 
 

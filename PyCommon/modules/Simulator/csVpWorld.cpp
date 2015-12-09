@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
 #include "../../../PyCommon/externalLibs/common/boostPythonUtil.h"
+#include "../../../PyCommon/externalLibs/common/VPUtil.h"
 
-#include "VPUtil.h"
 #include "csVpModel.h"
 #include "csVpWorld.h"
 
@@ -72,6 +72,7 @@ VpWorld::VpWorld(const object& config)
 {
 	_world.SetTimeStep(XD(config.attr("timeStep")));
 	_world.SetGravity(pyVec3_2_Vec3(config.attr("gravity")));
+	setOpenMP();
 
 	//std::cout << _world.GetGlobalDampling() << std::endl;
 	//_world.SetGlobalDamping(0.99);
@@ -102,28 +103,23 @@ void VpWorld::initialize()
 
 	//_world.SetIntegrator(VP::IMPLICIT_EULER);
 	_world.SetIntegrator(VP::IMPLICIT_EULER_FAST);
-#if !defined(__APPLE__) || defined(__APPLE_OMP__)
-	setOpenMP();
-#endif
 }
 
-#if !defined(__APPLE__) || defined(__APPLE_OMP__)
 void VpWorld::setOpenMP()
 {
 	int a = 1;
 
-	#pragma omp parallel 
-		_world.SetNumThreads((a = omp_get_num_threads()));
+#if !defined(__APPLE__) || defined(__APPLE_OMP__)
+	//#pragma omp parallel
+	std::cout << "OpenMP versions: " << _OPENMP << std::endl;
+	std::cout << "OpenMP max threads: " << omp_get_max_threads() << std::endl;
+	_world.SetNumThreads((a = omp_get_max_threads()-2));
 	std::cout << "csVpWorld: parallelized with " << a << " cores" << std::endl;
-
-}
+#else
+    std::cout << "OpenMP is not supported in this environment." << std::endl;
 #endif
 
-scalar VpWorld::getTimeStep()
-{
-	return _world.GetTimeStep();
 }
-
 
 // @return ( bodyIDs, positions, postionLocals, forces)
 boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, const bp::list& mus, scalar Ks, scalar Ds )

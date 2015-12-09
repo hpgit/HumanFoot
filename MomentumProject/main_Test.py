@@ -126,6 +126,7 @@ def init():
     mcfg_motion = mit.normal_mcfg()
 
     vpWorld = cvw.VpWorld(wcfg)
+    print "heheheheheheheheheheheheheheheh", vpWorld._timeStep
     controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
 
     vpWorld.initialize()
@@ -161,8 +162,8 @@ def init():
     viewer = hsv.hpSimpleViewer()
     viewer.doc.addObject('motion', motion)
     viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL))
-    viewer.doc.addRenderer('rd_contactForcesControl', yr.VectorsRenderer(rd_cForcesControl, rd_cPositionsControl, (0, 255, 0), .1))
-    viewer.doc.addRenderer('rd_contactForces', yr.VectorsRenderer(rd_cForces, rd_cPositions, (255, 0, 0), .1))
+    viewer.doc.addRenderer('rd_contactForcesControl', yr.VectorsRenderer(rd_cForcesControl, rd_cPositionsControl, (255, 0, 0), .1))
+    viewer.doc.addRenderer('rd_contactForces', yr.VectorsRenderer(rd_cForces, rd_cPositions, (0, 255, 0), .1))
     viewer.doc.addRenderer('rd_contactForceControl', yr.VectorsRenderer(rd_ForceControl, rd_Position, (0, 0, 255), .1))
     viewer.doc.addRenderer('rd_contactForceDes', yr.VectorsRenderer(rd_ForceDes, rd_PositionDes, (255, 0, 255), .1))
     # viewer.doc.addRenderer('rd_jointPos', yr.PointsRenderer(rd_jointPos))
@@ -264,8 +265,6 @@ class Callback:
             desNormalForce = desNormalForceMin*(1-desForceRelFrame) + desNormalForceMax * desForceRelFrame
 
         totalForce = np.array([0., desNormalForce, 0.])
-
-
         # totalForce = np.array([50., 150.])
 
         torques = None
@@ -300,9 +299,6 @@ class Callback:
                 for idx in range(len(cForces)):
                     if cForces[idx][1] > 1000.:
                         print frame, cForces[idx]
-            if 70 < frame < 130:
-                if cForces is not None:
-                    print frame, sum(cForces)
             if torques is not None:
                 ype.nested(torques, torques_nested)
                 controlModel.setDOFTorques(torques_nested[1:])

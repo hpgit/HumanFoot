@@ -396,11 +396,11 @@ class GlWindow(Fl_Gl_Window):
 
 
         #### SHADOW
-        if FLAG_SHADOW :
+        if FLAG_SHADOW:
             glDisable(GL_LIGHTING)
             glDepthMask(GL_FALSE)
     
-            glPushMatrix();
+            glPushMatrix()
        
         
             # shadow 
@@ -608,6 +608,7 @@ class GlWindow(Fl_Gl_Window):
 
     def GetForce(self):
         return self.force
+
     def ResetForce(self):
         self.force = [0, 0, 0]
         self.forceDir = 0
@@ -669,6 +670,7 @@ class MotionViewer(Fl_Window):
     def setCurrentFrame(self, frame):
         self.frame = frame
         self.panel.updateFrame(frame)
+
     def getCurrentFrame(self):
         return self.frame
              
@@ -689,18 +691,23 @@ class MotionViewer(Fl_Window):
             
     def preFrameCallback_Always(self, frame):
         pass
+
     def preFrameCallback(self, frame):
         pass
+
     def simulateCallback(self, frame):
         pass
+
     def postFrameCallback(self, frame):
         pass
+
     def postFrameCallback_Always(self, frame):
         pass
            
     def setStateObjects(self, objs):
         self.stateObjects = objs
         self.initObjectStates = [None]*len(objs)
+
     # onFrame -1
     def loadInitStates(self):
         self.glWindow.setState(self.initSceneState)
@@ -710,6 +717,7 @@ class MotionViewer(Fl_Window):
             
         self.panel.updateFrame(self.frame)
         self.glWindow.redraw()
+
     def saveInitStates(self):
         self.initSceneState = self.glWindow.getState()
         for i in range(len(self.stateObjects)):
@@ -721,10 +729,10 @@ class MotionViewer(Fl_Window):
         
         self.preFrameCallback_Always(frame)
                 
-#        print '[FRAMELOG]onFrame', frame
+        # print '[FRAMELOG]onFrame', frame
         if self.recording:
-            if self.sceneStates[frame]==None:
-                if frame == 0 or self.sceneStates[self.frame-1]!=None:
+            if self.sceneStates[frame] is None:
+                if frame == 0 or self.sceneStates[self.frame-1] is not None:
                     self.preFrameCallback(frame)
                     self.simulateCallback(frame)
                     self.postFrameCallback(frame)
@@ -751,10 +759,12 @@ class MotionViewer(Fl_Window):
         
     def saveFrameStates(self, frame):
         self.sceneStates[frame]= self.glWindow.getState()
+
     def loadFrameStates(self, frame):
         self.glWindow.setState(self.sceneStates[frame])
+
     def deleteFrameStates(self, frame):
-#        print '[FRAMELOG]deletelist', frame
+        #print '[FRAMELOG]deletelist', frame
         self.glWindow.deleteState(self.sceneStates[frame])
         self.sceneStates[frame] = None
         
@@ -773,27 +783,33 @@ class MotionViewer(Fl_Window):
         
     def isPlaying(self):
         return self.playing
+
     def play(self):
         self.playing = True
+
     def pause(self):
         self.playing = False
+
     def record(self, recordingOn):
         self.recording = recordingOn
         if recordingOn==False:
             self.resetRecFrom(0)
         self.panel.updateControl(self.loaded)
+
     def resetRecFrom(self, startFrame):
         for frame in range(startFrame+1, len(self.sceneStates)):
             if self.sceneStates[frame]:
                 self.deleteFrameStates(frame)
         self.maxRecordedFrame = startFrame
         self.panel.updateRecordedFrame(self.maxRecordedFrame)
+
     def goToFrame(self, frame):
         self.frame = frame
         if frame==-1:
             self.loadInitStates()
         else:
             self.onFrame(frame)
+
 
 class ControlPanel(Fl_Window):
     def __init__(self, x, y, w, h, parent):
@@ -860,43 +876,54 @@ class ControlPanel(Fl_Window):
     def onClickFirst(self, ptr):
         self.parent.pause()
         self.parent.goToFrame(-1)
+
     def onClickLast(self, ptr):
         self.parent.pause()
         self.parent.goToFrame(int(self.slider.maximum()))
+
     def onClickPrev(self, ptr):
         self.parent.pause()
         self.parent.goToFrame(int(self.frame.value())-1)
+
     def onClickNext(self, ptr):
         self.parent.pause()
         self.parent.goToFrame(int(self.frame.value())+1)
+
     def onClickRecord(self, ptr):
         if self.parent.recording:
             self.parent.record(False)
         else:
             self.parent.record(True)
+
     def onClickPlayFromLastRecorded(self, ptr):
         if self.parent.isPlaying():
             self.parent.pause()
         else:
             self.parent.goToFrame(int(self.recordSlider.value()))
-            self.parent.play()        
+            self.parent.play()
+
     def onClickResetRec(self, ptr):
         self.parent.resetRecFrom(0)
+
     def onClickResetRecFromCurrent(self, ptr):
         self.parent.resetRecFrom(int(self.frame.value()))
+
     def onClickPlay(self, ptr):
         if self.parent.isPlaying():
             self.parent.pause()
         else:
             self.parent.play()
+
     def onEnterFrame(self, ptr):
         self.slider.value(int(ptr.value()))
         self.parent.pause()
         self.parent.goToFrame(int(ptr.value()))
+
     def onChangeSlider(self, ptr):
         self.frame.value(int(ptr.value()))
         self.parent.pause()
         self.parent.goToFrame(int(ptr.value()))
+
     def onChangeShowOption(self, ptr):
         self.parent.notifyShowOption(self.odeBodyDrawType.text(self.odeBodyDrawType.value()), self.showOdeDesired.value())      
 
@@ -905,17 +932,20 @@ class ControlPanel(Fl_Window):
         self.updateFrame(self.parent.frame)
         self.updateRecordedFrame(self.parent.maxRecordedFrame)
         self.updateMaxFrame(self.parent.maxFrame)
+
     def updateControl(self, loaded):
         self.record.value(self.parent.recording)
+
     def updateFrame(self, frame):
         self.slider.value(frame)
         self.frame.value(frame)
+
     def updateRecordedFrame(self, maxRecordedFrame):
         self.recordSlider.value(maxRecordedFrame)
+
     def updateMaxFrame(self, maxFrame):
         self.slider.maximum(maxFrame)
         self.recordSlider.maximum(maxFrame)
         self.slider.redraw()
         self.recordSlider.redraw()
-      
-        
+

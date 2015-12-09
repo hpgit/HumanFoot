@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _VPUTIL_H_
+#define _VPUTIL_H_
 
 #include <math.h>
 #include <VP/vphysics.h>
@@ -56,11 +57,34 @@ inline void pySO3_2_SE3(const object& pyR, SE3& T)
 	T[8] = XD(pyR[2][2]);
 	T[9] = T[10] = T[11] = 0.;
 }
+
+inline SE3 pySE3_2_SE3(const object& pyT)
+{
+	return SE3(XD(pyR[0][0]), XD(pyR[1][0]), XD(pyR[2][0]),
+				XD(pyR[0][1]), XD(pyR[1][1]), XD(pyR[2][1]),
+				XD(pyR[0][2]), XD(pyR[1][2]), XD(pyR[2][2]),
+				XD(pyR[0][3]), XD(pyR[1][3]), XD(pyR[2][3]));
+}
+inline void pySE3_2_SE3(const object& pyT, SE3& T)
+{
+	T[0]  = XD(pyT[0][0]);
+	T[1]  = XD(pyT[1][0]);
+	T[2]  = XD(pyT[2][0]);
+	T[3]  = XD(pyT[0][1]);
+	T[4]  = XD(pyT[1][1]);
+	T[5]  = XD(pyT[2][1]);
+	T[6]  = XD(pyT[0][2]);
+	T[7]  = XD(pyT[1][2]);
+	T[8]  = XD(pyT[2][2]);
+	T[9]  = XD(pyT[0][3]);
+	T[10] = XD(pyT[1][3]);
+	T[11] = XD(pyT[2][3]);
+}
 inline void SE3_2_pySO3(const SE3& T, object& pyR)
 {
 	pyR[make_tuple(0,0)] = T[0]; pyR[make_tuple(0,1)] = T[3]; pyR[make_tuple(0,2)] = T[6];
 	pyR[make_tuple(1,0)] = T[1]; pyR[make_tuple(1,1)] = T[4]; pyR[make_tuple(1,2)] = T[7];
-	pyR[make_tuple(2,0)] = T[2]; pyR[make_tuple(2,1)] = T[5]; pyR[make_tuple(2,2)] = T[8]; 
+	pyR[make_tuple(2,0)] = T[2]; pyR[make_tuple(2,1)] = T[5]; pyR[make_tuple(2,2)] = T[8];
 }
 
 inline void SE3_2_pySE3(const SE3& T, object& pyT)
@@ -69,6 +93,10 @@ inline void SE3_2_pySE3(const SE3& T, object& pyT)
 	pyT[make_tuple(0,3)] = T[9];
 	pyT[make_tuple(1,3)] = T[10];
 	pyT[make_tuple(2,3)] = T[11];
+	pyT[make_tuple(3,0)] = 0.;
+	pyT[make_tuple(3,1)] = 0.;
+	pyT[make_tuple(3,2)] = 0.;
+	pyT[make_tuple(3,3)] = 1.;
 }
 
 inline SE3 slerp(const SE3& R1, const SE3& R2, double t)
@@ -77,4 +105,36 @@ inline SE3 slerp(const SE3& R1, const SE3& R2, double t)
 	return R1 * Exp(t * Log(Inv(R1) * R2));
 }
 
-SE3 getSE3FromVectors(const Vec3& vec1, const Vec3& vec2);
+SE3 getSE3FromVectors(const Vec3& vec1, const Vec3& vec2)
+{
+	Vec3 v1 = Normalize(vec1);
+	Vec3 v2 = Normalize(vec2);
+
+	Vec3 rot_axis = Normalize(Cross(v1, v2));
+	scalar inner = Inner(v1, v2);
+	scalar theta = acos(inner);
+
+	if( rot_axis[0]==0 && rot_axis[1]==0 && rot_axis[2]==0)
+		rot_axis = Vec3(0,1,0);
+	else if( inner < -1.0 + LIE_EPS)
+	{
+	    Vec3 rand_vec(rand(), rand(), rand());
+	    rot_axis = Normalize(Cross(v1, Normalize(rand_vec)));
+	}
+
+
+
+	scalar x = rot_axis[0];
+	scalar y = rot_axis[1];
+	scalar z = rot_axis[2];
+
+	scalar c = inner;
+	scalar s = sin(theta);
+
+	SE3 R(c + (1.0-c)*x*x,    (1.0-c)*x*y - s*z,    (1-c)*x*z + s*y,
+        (1.0-c)*x*y + s*z,    c + (1.0-c)*y*y,    (1.0-c)*y*z - s*x,
+        (1.0-c)*z*x - s*y,    (1.0-c)*z*y + s*x,    c + (1.0-c)*z*z);
+
+	return Inv(R);
+}
+#endif //_VPUTIL_H_

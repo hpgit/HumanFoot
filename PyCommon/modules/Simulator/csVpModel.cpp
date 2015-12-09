@@ -1,10 +1,10 @@
 #include "stdafx.h"
 
 #include "../../../PyCommon/externalLibs/common/boostPythonUtil.h"
+#include "../../../PyCommon/externalLibs/common/VPUtil.h"
 
 #define make_tuple boost::python::make_tuple
 
-#include "VPUtil.h"
 #include "csVpModel.h"
 #include "csVpWorld.h"
 #include "myGeom.h"
@@ -263,23 +263,6 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 
 		object cfgNode = _config.attr("getNode")(joint_name);
 		string geomType = XS(cfgNode.attr("geom"));
-		/*
-		if (geomType == "MyFoot3")
-		{
-		    scalar mass = XD(cfgNode.attr("mass"));
-		    density = mass/ (width*width*M_PI*(length+width));
-		    pNode->body.AddGeometry(new MyFoot3(width, length+width));
-		    pNode->body.SetInertia(CylinderInertia(density, width,length+width));
-		}
-		else if(geomType == "MyFoot4")
-		{
-		    scalar mass = XD(cfgNode.attr("mass"));
-		    density = mass/ (width*width*M_PI*length);
-			pNode->body.AddGeometry(new MyFoot4(width, length));
-			//pNode->body.AddGeometry(new MyFoot4(width, length), Vec3(0,0,-width));
-			pNode->body.SetInertia(CylinderInertia(density, width,length));
-		}
-		//*/
 		if (geomType == "MyFoot3" || geomType == "MyFoot4")
 		{
 		    scalar radius = .05;

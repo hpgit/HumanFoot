@@ -14,6 +14,13 @@ SE3 getSE3FromVectors(const Vec3& vec1, const Vec3& vec2)
 
 	if( rot_axis[0]==0 && rot_axis[1]==0 && rot_axis[2]==0)
 		rot_axis = Vec3(0,1,0);
+	else if( inner < -1.0 + LIE_EPS)
+	{
+	    Vec3 rand_vec(rand(), rand(), rand());
+	    rot_axis = Normalize(Cross(v1, Normalize(rand_vec)));
+	}
+
+
 
 	scalar x = rot_axis[0];
 	scalar y = rot_axis[1];

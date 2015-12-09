@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _BPUTIL_H_
+#define _BPUTIL_H_
 
 #define XD(v)	((extract<double>)(v))
 #define XC(v)	((extract<char*>)(v))
@@ -8,3 +9,5 @@
 #define XB(v)	((extract<bool>)(v))
 
 //void printSO3(const object& SO3);
+
+#endif // _BPUTIL_H_

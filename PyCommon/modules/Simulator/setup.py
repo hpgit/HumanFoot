@@ -6,7 +6,7 @@ module_csVpModel = Extension('csVpModel',
 		extra_link_args=['-lgomp'],
 		libraries = ['boost_python', 'vpLib'],
 		library_dirs = ['../usr/lib'],
-		sources = ['csVpModel.cpp', 'VpUtil.cpp', 'myGeom.cpp'])
+		sources = ['csVpModel.cpp', 'myGeom.cpp'])
 	
 setup (name = 'csVpModel',
 	version = '0.1',
