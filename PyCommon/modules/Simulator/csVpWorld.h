@@ -1,6 +1,7 @@
 #pragma once
 
 #include <VP/vphysics.h>
+#include <boost/python/ptr.hpp>
 
 class VpWorld
 {
@@ -23,8 +24,7 @@ public:	// expose to python
 	boost::python::tuple calcPenaltyForce(const bp::list& bodyIDsToCheck, const bp::list& mus, scalar Ks, scalar Ds);
 	void applyPenaltyForce(const bp::list& bodyIDs, const bp::list& positions, const bp::list& forces);
 	int getBodyNum() { return _world.GetNumBody(); }
-	VpWorld *ptr(){return this;}
-
+	VpWorld& self(){return *this;}
 
 	//add a body to the world
 	//void								 AddBody(vpBody *);

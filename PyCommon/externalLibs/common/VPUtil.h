@@ -17,6 +17,24 @@ inline numeric::array transpose_pySO3(numeric::array& pyR)
 	return pyR;
 }
 
+inline bool checkPyVlen(const object& pyV, int _len)
+{
+    const tuple	&_shape = extract<tuple>(pyV.attr("shape"));
+    return (  
+    		(
+    		 (XI(pyV.attr("ndim")) == 1) &&
+    		 (boost::python::len(pyV) == _len)
+    		)
+        || 
+        	(
+        	 (XI(pyV.attr("ndim")) == 2) &&
+        	 (XI(_shape[0]) + XI(_shape[1]) == _len+1) &&
+        	 (XI(_shape[0]) == _len || XI(_shape[1]) == _len)
+        	)
+        );
+
+}
+
 inline Vec3 pyVec3_2_Vec3(const object& pyV)
 {
 	return Vec3( XD(pyV[0]), XD(pyV[1]), XD(pyV[2]) );
@@ -32,6 +50,23 @@ inline object Vec3_2_pyVec3(const Vec3& V)
 inline void Vec3_2_pyVec3(const Vec3& V, object& pyV)
 {
 	pyV[0] = V[0]; pyV[1] = V[1]; pyV[2] = V[2];
+}
+
+inline se3 pyVec6_2_se3(const object& pyV)
+{
+	return se3( XD(pyV[0]), XD(pyV[1]), XD(pyV[2]), XD(pyV[3]), XD(pyV[4]), XD(pyV[5]));
+}
+inline dse3 pyVec6_2_dse3(const object& pyV)
+{
+	return dse3( XD(pyV[0]), XD(pyV[1]), XD(pyV[2]), XD(pyV[3]), XD(pyV[4]), XD(pyV[5]));
+}
+inline void se3_2_pyVec6(const se3& V, object& pyV)
+{
+	pyV[0] = V[0]; pyV[1] = V[1]; pyV[2] = V[2]; pyV[3] = V[3]; pyV[4] = V[4]; pyV[5] = V[5];
+}
+inline void dse3_2_pyVec6(const dse3& V, object& pyV)
+{
+	pyV[0] = V[0]; pyV[1] = V[1]; pyV[2] = V[2]; pyV[3] = V[3]; pyV[4] = V[4]; pyV[5] = V[5];
 }
 
 

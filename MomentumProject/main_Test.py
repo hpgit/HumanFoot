@@ -29,10 +29,10 @@ import GUI.ysMultiViewer as ymv
 import Motion.ysHierarchyEdit as yme
 import Simulator.ysPhysConfig as ypc
 
+import VirtualPhysics.vpWorld as VP
 
 import mtOptimize as mot
 import mtInitialize_Simple as mit
-
 
 MOTION_COLOR = (213, 111, 162)
 CHARACTER_COLOR = (20, 166, 188)
@@ -115,6 +115,10 @@ def init():
     global rd_Position
     global rd_PositionDes
     global viewer
+
+    testWorld = VP.vpWorld()
+    testWorld.EnableCollision()
+
 
     np.set_printoptions(precision=4, linewidth=200)
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_1()
@@ -236,7 +240,7 @@ class Callback:
         damp = getVal('Joint Damping')
         stepsPerFrame = getVal('steps per frame')
         simulSpeedInv = getVal('1/simul speed')
-        wcfg.timeStep = 1/(30.*simulSpeedInv)/stepsPerFrame
+        wcfg.timeStep = 1/(30.*simulSpeedInv*stepsPerFrame)
         vpWorld.SetTimeStep(wcfg.timeStep)
 
         Dt = 2.*(Kt**.5)
@@ -253,7 +257,7 @@ class Callback:
         ype.flatten(ddth_des, ddth_des_flat)
 
         desForceFrameBegin = getVal('des force begin')
-        desForceDuration = getVal('des force dur')
+        desForceDuration = getVal('des force dur')*simulSpeedInv
         desForceFrame = [desForceFrameBegin, desForceFrameBegin + desForceDuration]
 
         desForceRelFrame = float(frame-desForceFrame[0])/desForceDuration

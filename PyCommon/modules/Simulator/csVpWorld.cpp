@@ -16,7 +16,7 @@ BOOST_PYTHON_MODULE(csVpWorld)
 {
 	class_<VpWorld>("VpWorld", init<const object&>())
 	    .def_readwrite("_ground", &VpWorld::_ground)
-	    .def("ptr", &VpWorld::ptr)
+	    .def("self", &VpWorld::self, return_value_policy<reference_existing_object>())
 		.def("step", &VpWorld::step)
 		.def("initialize", &VpWorld::initialize)
 		.def("calcPenaltyForce", &VpWorld::calcPenaltyForce)

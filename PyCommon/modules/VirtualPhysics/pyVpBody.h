@@ -1,43 +1,46 @@
+#ifndef _PYVPBODY_H_
+#define _PYVPBODY_H_
+
 #include <VP/vpDataType.h>
 
-class VpBody
+class pyVpWorld;
+
+class pyVpBody : public vpBody
 {
 
 
 public:
 
-							 vpBody();
+	pyVpBody&               self();
 	/*!
 		set up a joint to the body.
 		\param J a joint that you want to connect to the body
 		\param T transformation of the joint frame represented in a body frame.
 	*/
-	void					 SetJoint(vpJoint *J, const SE3 &T = SE3(0));
+	//void					 SetJoint_py(vpJoint *J, const SE3 &T = SE3(0));
 
 	/*!
 		apply a force to the body.
 		The force will accumulated during the simulation time period.
 		After each simulation step, all the applied forces will be set to be zero.
-		If you do not want accumulating the force, then you should call ResetForce() explicitly, before calling Apply*Force().
+		If you do not want accumulating the force, then you should call ResetForce_py() explicitly, before calling Apply*Force_py().
 		\param F a force that you want to apply to the body. F is represented in a global frame
 		\param p an appyling position of the force represented in a body frame.
 	*/
-	void					 ApplyGlobalForce(const dse3 &F, const Vec3 &p);
-	void					 ApplyGlobalForce(const Vec3 &F, const Vec3 &p);
+	void					 ApplyGlobalForce_py(object &pyF, object &pyP);
 
 	/*!
 		apply a force to the body.
 		\param F a force that you want to apply to the body. F is represented in a body frame
 		\param p an appyling position of the force represented in a body frame.
 	*/
-	void					 ApplyLocalForce(const dse3 &F, const Vec3 &p);
-	void					 ApplyLocalForce(const Vec3 &F, const Vec3 &p);
-	void					 ApplyLocalForce(const Axis &M);
+	void					 ApplyLocalForce_py(object &F, object &p);
+	void					 ApplyLocalForce_py(object &M);
 
 	/*!
 		release the force from the body.
 	*/
-	void					 ResetForce(void);
+	void					 ResetForce_py(void);
 
 	/*!
 		set an inertia tensor tothe body.
@@ -46,239 +49,238 @@ public:
 		However you can override or ignore the generated inertia using this method.
 	*/
 
-	void					 SetInertia(const Inertia &);
+	//void					 SetInertia_py(const Inertia &);
 
 	/*!
 		get an inertia tensor of the body.
 	*/
-	const Inertia			&GetInertia(void) const;
+	//const Inertia			&GetInertia_py(void) const;
 
 	/*!
 		set a transformation of the joint frame.
-		\param J the joint should be set to the body previously using SetJoint() method.
+		\param J the joint should be set to the body previously using SetJoint_py() method.
 	*/
-	void					 SetJointFrame(vpJoint *J, const SE3 &T);
+	//void					 SetJointFrame_py(vpJoint *J, const SE3 &T);
 
 	/*!
 		get a transformation of the joint frame.
 	*/
-	const SE3				&GetJointFrame(const vpJoint *) const;
+	//const SE3				&GetJointFrame_py(const vpJoint *) const;
 
 	/*!
 		set a transformation of the body frame w.r.t a global frame.
 
 		\sa vpWorld::SetGlobalFrame
 	*/
-	void					 SetFrame(const SE3 &);
+	void					 SetFrame_py(object &pySE3);
 
 	/*!
 		get a transformation of the body frame w.r.t a global frame.
 	*/
-	const SE3				&GetFrame(void) const;
+	object				    GetFrame_py(void);
 
 	/*!
 		set a linear velocity of the body.
 		The velocity is reprenseted in a global frame.
 	*/
-	void					 SetVelocity(const Vec3 &);
+	void					 SetVelocity_py(object &);
 
 	/*!
 		set an angular velocity of the body.
 		The velocity is reprenseted in a global frame.
 	*/
-	void					 SetAngularVelocity(const Vec3 &);
+	void					 SetAngularVelocity_py(object &);
 
 	/*!
 		set a generalized velocity of the body.
 		The velocity is reprenseted in a global frame.
-		Note that it depends on the current frame. Hence it should be called before SetFrame().
+		Note that it depends on the current frame. Hence it should be called before SetFrame_py().
 	*/
-	void					 SetGenVelocity(const se3 &);
+	void					 SetGenVelocity_py(object &);
 
 	/*!
 		set a generalized velocity of the body.
 		The velocity is reprenseted in a local frame.
 	*/
-	void					 SetGenVelocityLocal(const se3 &);
+	void					 SetGenVelocityLocal_py(object &);
 
 	/*!
 		set a generalized acceleration of the body.
 		The acceleration is reprenseted in a global frame.
-		Note that it depends on the current frame. Hence it should be called before SetFrame().
+		Note that it depends on the current frame. Hence it should be called before SetFrame_py().
 	*/
-	void					 SetGenAcceleration(const se3 &);
+	void					 SetGenAcceleration_py(object &);
 
 	/*!
 		set a generalized acceleration of the body.
 		The acceleration is reprenseted in a local frame.
 	*/
-	void					 SetGenAccelerationLocal(const se3 &);
+	void					 SetGenAccelerationLocal_py(object &);
 
 	/*!
 		get a generalized velocity of the body.
 		The velocity is reprenseted in a global frame.
 	*/
-	se3						 GetGenVelocity(void) const;
+	object						 GetGenVelocity_py(void);
 
 	/*!
 		get a generalized velocity of the body.
 		The velocity is reprenseted in a local frame.
 	*/
-	const se3				&GetGenVelocityLocal(void) const;
+	object				GetGenVelocityLocal_py(void);
 
 	/*!
 		get a linear velocity of a given point in the body.
 		The velocity is reprenseted in a global frame.
 		\param p position of the point in the body. It is represented in the body frame.
 	*/
-	Vec3					 GetLinVelocity(const Vec3 &p) const;
+	object					 GetLinVelocity_py(object &p);
 
 	/*!
 		get an angular velocity of the body.
 		The velocity is reprenseted in a global frame.
 	*/
-	Vec3					 GetAngVelocity(void) const;
+	object					 GetAngVelocity_py(void);
 
 	/*!
 		get a generalized acceleration of the body.
 		The velocity is reprenseted in a global frame.
 	*/
-	se3						 GetGenAcceleration(void) const;
+	object						 GetGenAcceleration_py(void);
 
 	/*!
 		get a generalized acceleration of the body.
 		The velocity is reprenseted in a local frame.
 	*/
-	const se3				&GetGenAccelerationLocal(void) const;
+	object				GetGenAccelerationLocal_py(void);
 
 	/*!
 		query whether the body can collide with other bodies.
 	*/
-	bool					 IsCollidable(void) const;
+	bool					 IsCollidable_py(void);
 
 	/*!
 		query whether the body is desclared as a ground.
 	*/
-	bool					 IsGround(void) const;
+	bool					 IsGround_py(void);
 
 	/*!
 		set a collidability of the body.
 	*/
-	void					 SetCollidable(bool);
+	void					 SetCollidable_py(bool);
 
 	/*!
 		Add a primitive geometry to the body
 		\param pGeom a pointer to a primitive geometry
 		\param T a location of the geometry represented in the body frame.
 	*/
-	void					 AddGeometry(vpGeom *pGeom, const SE3 &T = SE3(0));
+	//void					 AddGeometry_py(vpGeom *pGeom, const SE3 &T = SE3(0));
 
 	/*!
 		get a radius of a bounding sphere including the body, where the center is located at the center of body frame
 	*/
-	scalar					 GetBoundingSphereRadius(void) const;
+	scalar					 GetBoundingSphereRadius_py(void);
 
 	/*!
 		set a material for the body.
 		If you do not set up a material,
 		default material properties will be applied.
-		\sa vpMaterial::GetDefaultMaterial()
+		\sa vpMaterial::GetDefaultMaterial_py()
 	*/
-	void					 SetMaterial(const vpMaterial *);
+	//void					 SetMaterial_py(const vpMaterial *);
 
 	/*!
 		get a meterial applied to the body.
-		\sa vpBody::SetMaterial()
+		\sa vpBody::SetMaterial_py()
 	*/
-	const vpMaterial		*GetMaterial(void) const;
+	//const vpMaterial		*GetMaterial_py(void) const;
 
 	/*!
 		get a center of mass
 	*/
-	const Vec3				&GetCenterOfMass(void) const;
+	object				GetCenterOfMass_py(void);
 
 	/*!
 		generate a display list
 	*/
-	void					 GenerateDisplayList(bool);
+	void					 GenerateDisplayList_py(bool);
 
 	/*!
 		get a sum of all forces applied to the body including gravity
 	*/
-	dse3					 GetForce(void) const;
+	object					 GetForce_py(void);
 
 	/*!
 		get a sum of all forces applied to the body excluding gravity
 	*/
-	const dse3				&GetNetForce(void) const;
+	object 					GetNetForce_py(void);
+
 
 	/*!
 		get a force applied to the body due to the gravity
 	*/
-	dse3					 GetGravityForce(void) const;
+	object					 GetGravityForce_py(void);
 
 	/*!
 		return whether the inertia of the body is assigend by user
 		\sa vpBody::SetInertia
 	*/
-	bool					 IsSetInertia(void) const;
+	bool					 IsSetInertia_py(void);
 
 	/*!
 		get a number of geometries attached to the body
-		\sa vpBody::GetGeometry()
+		\sa vpBody::GetGeometry_py()
 	*/
-	int						 GetNumGeometry(void) const;
+	int						 GetNumGeometry_py(void) ;
 
 	/*!
 		get a pointer to the ith geometry
 	*/
-	vpGeom			*GetGeometry(int) const;
+	//vpGeom			*GetGeometry_py(int) const;
 
 	/*!
 		get a unique identifying integer value which is assigned by VirtualPhysics
 	*/
-	int						 GetID(void) const;
+	int						 GetID_py(void) ;
 
 	/*!
 		set the body as a ground. Bodies set as a ground don't move under any external forces.
 	*/
-	void					 SetGround(bool = true);
+	void					 SetGround_py(bool = true);
 
 	/*!
 		Apply gravity for the body.
 		\sa vpWorld::SetGravity
 	*/
-	void					 ApplyGravity(bool flag = true);
+	void					 ApplyGravity_py(bool flag = true);
 
 	/*!
 		return wheter the gravity is applied to the body
 		\sa vpBody::ApplyGravity
 	*/
-	bool					 IsApplyingGravity(void) const;
+	bool					 IsApplyingGravity_py(void);
 
 	/*!
 		return the world including with the body
 		\sa vpWorld::AddBody
 	*/
-	const vpWorld			*GetWorld(void) const;
+	object&					GetWorld_py(void);
 
 	/*!
 		return whether the body is collided with pBody approximated with bounding sphere
 	*/
-	bool					 DetectCollisionApprox(const vpBody *pBody) const;
+	bool					 DetectCollisionApprox_py(object &Body);
 
-	vpSystem				*GetSystem(void);
+	//vpSystem				*GetSystem_py(void);
 
-	void					 SetHybridDynamicsType(VP::HD_TYPE);
-	VP::HD_TYPE				 GetHybridDynamicsType(void) const;
+	void					 SetHybridDynamicsType_py(std::string);
+	std::string				 GetHybridDynamicsType_py(void);
 
-	void					 BackupState(void);
-	void					 RollbackState(void);
+	void					 BackupState_py(void);
+	void					 RollbackState_py(void);
 
-	string					 m_szName;
-	unsigned int			 m_iDisplayList;
-
-	void					 UpdateGeomFrame(void);
+	void					 UpdateGeomFrame_py(void);
 
 };
 
+#endif // _PYVPBODY_H_

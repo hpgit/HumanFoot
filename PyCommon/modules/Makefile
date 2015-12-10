@@ -1,5 +1,5 @@
 .PHONY: all
-all: Simulator Renderer Optimization
+all: Simulator Renderer Optimization VirtualPhysics
 
 .PHONY: Renderer
 Renderer:
@@ -13,8 +13,13 @@ Simulator:
 Optimization:
 	make --directory="Optimization/" --file=Optimization.makefile
 
+.PHONY: VirtualPhysics
+VirtualPhysics:
+	make --directory="VirtualPhysics/" --file=VirtualPhysics.makefile
+
 .PHONY: clean
 clean:
 	rm -rf Renderer/build
 	rm -rf Simulator/build
 	rm -rf Optimization/build
+	rm -rf VirtualPhysics/build

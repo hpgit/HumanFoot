@@ -139,7 +139,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
     # D = np.zeros(())
     # E = np.zeros(())
 
-    h = world.getTimeStep()
+    h = world.GetTimeStep()
     invh = 1./h
     mus = mu * np.eye(contactNum)
     temp_NM = JTN.T.dot(invM)
@@ -167,7 +167,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
     A2 = np.hstack((np.hstack((A21, A22)), E))
     A3 = np.hstack((np.hstack((mus, -E.T)), np.zeros((mus.shape[0], E.shape[1]))))
     A = np.vstack((np.vstack((A1, A2)), A3)) * factor
-    A += 0.01 * np.eye(A.shape[0])*factor
+    # A += 0.01 * np.eye(A.shape[0])*factor
 
     # print npl.eigvals(A)
     # pdb.set_trace()
@@ -338,7 +338,7 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
     pinvM0 = np.dot(M.T, pinvM)
     pinvM1 = -pinvM
 
-    h = world.getTimeStep()
+    h = world.GetTimeStep()
     invh = 1./h
     mus = mu * np.eye(contactNum)
     temp_NM = JTN.T.dot(pinvM0)
@@ -355,7 +355,7 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
     A2 = np.hstack((np.hstack((A21, A22)), E))
     A3 = np.hstack((np.hstack((mus, -E.T)), np.zeros((mus.shape[0], E.shape[1]))))
     A = np.vstack((np.vstack((A1, A2)), A3)) * factor
-    A += 0.01 * np.eye(A.shape[0])*factor
+    # A += 0.01 * np.eye(A.shape[0])*factor
 
     # bx= h * (M*qdot_0 + tau - c)
     # b =[N.T * Jc * invM * kx]
