@@ -264,7 +264,7 @@ public:
 		return the world including with the body
 		\sa vpWorld::AddBody
 	*/
-	object&					GetWorld_py(void);
+	//object&					GetWorld_py(void);
 
 	/*!
 		return whether the body is collided with pBody approximated with bounding sphere

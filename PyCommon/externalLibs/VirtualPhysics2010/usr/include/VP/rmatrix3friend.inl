@@ -1450,8 +1450,9 @@ template <class TYPE>
 _rmatrix<TYPE> Inv(const _rmatrix<TYPE> &A)
 {		
 	_rmatrix<TYPE> x;
-	bool re = SolveAxEqualB(A, x, Eye<TYPE>(A.row, A.row));
-	assert(re && "Inv(const _rmatrix &) -> no inverse");
+	// bool re = SolveAxEqualB(A, x, Eye<TYPE>(A.row, A.row));
+	// assert(re && "Inv(const _rmatrix &) -> no inverse");
+	assert(SolveAxEqualB(A, x, Eye<TYPE>(A.row, A.row)) && "Inv(const _rmatrix &) -> no inverse");
 	return x;
 }
 
