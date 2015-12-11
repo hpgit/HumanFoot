@@ -34,8 +34,7 @@ public:
 		\param F a force that you want to apply to the body. F is represented in a body frame
 		\param p an appyling position of the force represented in a body frame.
 	*/
-	void					 ApplyLocalForce_py(object &F, object &p);
-	void					 ApplyLocalForce_py(object &M);
+	void					 ApplyLocalForce_py(object &F, const object &p=object());
 
 	/*!
 		release the force from the body.
@@ -203,7 +202,7 @@ public:
 	/*!
 		generate a display list
 	*/
-	void					 GenerateDisplayList_py(bool);
+	//void					 GenerateDisplayList_py(bool);
 
 	/*!
 		get a sum of all forces applied to the body including gravity
@@ -252,13 +251,13 @@ public:
 		Apply gravity for the body.
 		\sa vpWorld::SetGravity
 	*/
-	void					 ApplyGravity_py(bool flag = true);
+	//void					 ApplyGravity_py(bool flag = true);
 
 	/*!
 		return wheter the gravity is applied to the body
 		\sa vpBody::ApplyGravity
 	*/
-	bool					 IsApplyingGravity_py(void);
+	//bool					 IsApplyingGravity_py(void);
 
 	/*!
 		return the world including with the body

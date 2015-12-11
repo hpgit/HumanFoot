@@ -72,7 +72,7 @@ pyVpWorld& pyVpWorld::self()
 //TODO:
 //check!!!!!!!!!!
 //add a body to the world
-void pyVpWorld::AddBody_py(object & objBody)
+void pyVpWorld::AddBody_py(pyVpBody * objBody)
 {
     AddBody(reinterpret_cast<vpBody*>(&objBody));
 }

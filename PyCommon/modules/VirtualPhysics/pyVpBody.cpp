@@ -8,20 +8,19 @@
 
 #define make_tuple boost::python::make_tuple
 
-        // .def("ApplyLocalForce(const dse3 &F, const Vec3 &p);
-        // .def("SetGround(bool = true);
-        // .def("ApplyGravity(bool flag = true);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyVpBody_ApplyLocalForce_py_overloads, ApplyLocalForce_py, 1, 2);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyVpBody_SetGround_py_overloads, SetGround_py, 0, 1);
-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyVpBody_ApplyGravity_py_overloads, ApplyGravity_py, 0, 1);
+//BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyVpBody_ApplyGravity_py_overloads, ApplyGravity_py, 0, 1);
 
 BOOST_PYTHON_MODULE(vpBody)
 {
+    numeric::array::set_module_and_type("numpy", "ndarray");
+
     class_<pyVpBody>("vpBody", init<>())
         .def("self", &pyVpBody::self, return_value_policy<reference_existing_object>())
         //.def("SetJoint(vpJoint *J, const SE3 &T = SE3(0));
         .def("ApplyGlobalForce", &pyVpBody::ApplyGlobalForce_py)
-        .def("ApplyLocalForce", &pyVpBody::ApplyLocalForce_py, pyVpBody_ApplyLocalForce_py_overloads())
+        .def("ApplyLocalForce_py", &pyVpBody::ApplyLocalForce_py, pyVpBody_ApplyLocalForce_py_overloads())
         .def("ResetForce", &pyVpBody::ResetForce_py)
         //.def("SetInertia(const Inertia &);
         //.def("GetInertia(void) const;
@@ -49,7 +48,7 @@ BOOST_PYTHON_MODULE(vpBody)
         //.def("SetMaterial", &pyVpBody::SetMaterial_py)
         //.def("GetMaterial(void) const;
         .def("GetCenterOfMass", &pyVpBody::GetCenterOfMass_py)
-        .def("GenerateDisplayList", &pyVpBody::GenerateDisplayList_py)
+        //.def("GenerateDisplayList", &pyVpBody::GenerateDisplayList_py)
         .def("GetForce", &pyVpBody::GetForce_py)
         .def("GetNetForce", &pyVpBody::GetNetForce_py)
         .def("GetGravityForce", &pyVpBody::GetGravityForce_py)
@@ -58,7 +57,7 @@ BOOST_PYTHON_MODULE(vpBody)
         //.def("GetGeometry(int) const;
         .def("GetID", &pyVpBody::GetID_py)
         .def("SetGround", &pyVpBody::SetGround_py, pyVpBody_SetGround_py_overloads())
-        .def("ApplyGravity", &pyVpBody::ApplyGravity_py, pyVpBody_ApplyGravity_py_overloads())
+        //.def("ApplyGravity", &pyVpBody::ApplyGravity_py, pyVpBody_ApplyGravity_py_overloads())
         .def("IsApplyingGravity", &pyVpBody::IsApplyingGravity_py)
         //.def("GetWorld", &pyVpBody::GetWorld_py)
         .def("DetectCollisionApprox", &pyVpBody::DetectCollisionApprox_py)
@@ -68,6 +67,7 @@ BOOST_PYTHON_MODULE(vpBody)
         .def("BackupState", &pyVpBody::BackupState_py)
         .def("RollbackState", &pyVpBody::RollbackState_py)
         .def("UpdateGeomFrame", &pyVpBody::UpdateGeomFrame_py)
+        ;
 }
 
 
@@ -100,28 +100,31 @@ void pyVpBody::ApplyGlobalForce_py(object &pyF, object &pyP)
         std::cout << "Error:length is not proper" <<std::endl;
 }
 
-void pyVpBody::ApplyLocalForce_py(object &pyF, object &pyP)
+void pyVpBody::ApplyLocalForce_py(object &pyF, const object &pyP)
 {
-    Vec3 p = pyVec3_2_Vec3(pyP);
-    if (checkPyVlen(pyF, 6))
+    if (pyP == object())
     {
-        dse3 F = pyVec6_2_dse3(pyF);
-        ApplyLocalForce(F, p);
-    }
-    else if(checkPyVlen(pyF, 3))
-    {
-        Vec3 F = pyVec3_2_Vec3(pyF);
-        ApplyLocalForce(F, p);
+        Vec3 p = pyVec3_2_Vec3(pyP);
+        if (checkPyVlen(pyF, 6))
+        {
+            dse3 F = pyVec6_2_dse3(pyF);
+            ApplyLocalForce(F, p);
+        }
+        else if(checkPyVlen(pyF, 3))
+        {
+            Vec3 F = pyVec3_2_Vec3(pyF);
+            ApplyLocalForce(F, p);
+        }
+        else
+            std::cout << "Error:length is not proper" <<std::endl;
     }
     else
-        std::cout << "Error:length is not proper" <<std::endl;
-}
+    {
+        Vec3 VecM = pyVec3_2_Vec3(pyF);
+        Axis M(VecM[0], VecM[1], VecM[2]);
+        ApplyLocalForce(M);
+    }
 
-void pyVpBody::ApplyLocalForce_py(object &pyM)
-{
-    Vec3 VecM = pyVec3_2_Vec3(pyM);
-    Axis M(VecM[0], VecM[1], VecM[2]);
-    ApplyLocalForce(M);
 }
 
 void pyVpBody::ResetForce_py(void)
@@ -311,10 +314,10 @@ object pyVpBody::GetCenterOfMass_py(void)
     return pyV;
 }
 
-void pyVpBody::GenerateDisplayList_py(bool pyB)
-{
-    GenerateDisplayList(pyB);
-}
+// void pyVpBody::GenerateDisplayList_py(bool pyB)
+// {
+    // GenerateDisplayList(pyB);
+// }
 
 object pyVpBody::GetForce_py(void)
 {
@@ -366,15 +369,15 @@ void pyVpBody::SetGround_py(bool pyB)
     return SetGround(pyB);
 }
 
-void pyVpBody::ApplyGravity_py(bool pyB)
-{
-    return ApplyGravity(pyB);
-}
+// void pyVpBody::ApplyGravity_py(bool pyB)
+// {
+//     return ApplyGravity(pyB);
+// }
 
-bool pyVpBody::IsApplyingGravity_py(void)
-{
-    return IsApplyingGravity();
-}
+// bool pyVpBody::IsApplyingGravity_py(void)
+// {
+//     return IsApplyingGravity();
+// }
 
 //TODO:
 //object &pyVpBody::GetWorld_py(void)

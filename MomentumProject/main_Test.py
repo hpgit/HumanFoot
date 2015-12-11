@@ -29,7 +29,9 @@ import GUI.ysMultiViewer as ymv
 import Motion.ysHierarchyEdit as yme
 import Simulator.ysPhysConfig as ypc
 
-import VirtualPhysics.vpWorld as VP
+import VirtualPhysics.vpWorld as VPW
+import VirtualPhysics.vpBody as VPB
+
 
 import mtOptimize as mot
 import mtInitialize_Simple as mit
@@ -116,8 +118,10 @@ def init():
     global rd_PositionDes
     global viewer
 
-    testWorld = VP.vpWorld()
+    testWorld = VPW.vpWorld()
     testWorld.EnableCollision()
+
+    testWorld.report()
 
 
     np.set_printoptions(precision=4, linewidth=200)

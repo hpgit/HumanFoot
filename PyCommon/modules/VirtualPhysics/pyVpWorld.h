@@ -2,8 +2,8 @@
 #define _PYVPWORLD_H_
 
 #include <VP/vphysics.h>
+#include "pyVpBody.h"
 
-class pyVpBody;
 class pyVpJoint;
 
 class pyVpWorld : public vpWorld
@@ -11,7 +11,7 @@ class pyVpWorld : public vpWorld
 public:
     pyVpWorld&                          self();
 	//add a body to the world
-	void								 AddBody_py(object &objBody);
+	void								 AddBody_py(pyVpBody *objBody);
 
 	//add a world
 	//World's parameters such as a time step and the gravity will not be updated with newly added world'parameters.
