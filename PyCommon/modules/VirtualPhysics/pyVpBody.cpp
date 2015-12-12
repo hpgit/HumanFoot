@@ -58,8 +58,8 @@ BOOST_PYTHON_MODULE(vpBody)
         .def("GetID", &pyVpBody::GetID_py)
         .def("SetGround", &pyVpBody::SetGround_py, pyVpBody_SetGround_py_overloads())
         //.def("ApplyGravity", &pyVpBody::ApplyGravity_py, pyVpBody_ApplyGravity_py_overloads())
-        .def("IsApplyingGravity", &pyVpBody::IsApplyingGravity_py)
-        //.def("GetWorld", &pyVpBody::GetWorld_py)
+        //.def("IsApplyingGravity", &pyVpBody::IsApplyingGravity_py)
+        .def("GetWorld", &pyVpBody::GetWorld_py, return_value_policy<reference_existing_object>())
         .def("DetectCollisionApprox", &pyVpBody::DetectCollisionApprox_py)
         //.def("GetSystem", &pyVpBody::GetSystem_py)
         .def("SetHybridDynamicsType", &pyVpBody::SetHybridDynamicsType_py)
@@ -380,10 +380,11 @@ void pyVpBody::SetGround_py(bool pyB)
 // }
 
 //TODO:
-//object &pyVpBody::GetWorld_py(void)
-//{
-//    return *(reinterpret_cast<pyVpWorld *>( GetWorld() ));
-//}
+const pyVpWorld &pyVpBody::GetWorld_py(void)
+{
+    return *reinterpret_cast<const pyVpWorld *>( GetWorld());
+    // return *const_cast<pyVpWorld*>((reinterpret_cast<const pyVpWorld *>( GetWorld())));
+}
 
 bool pyVpBody::DetectCollisionApprox_py(object &pBody)
 {

@@ -2,8 +2,7 @@
 #define _PYVPBODY_H_
 
 #include <VP/vpDataType.h>
-
-class pyVpWorld;
+#include "pyVpWorld.h"
 
 class pyVpBody : public vpBody
 {
@@ -17,6 +16,7 @@ public:
 		\param J a joint that you want to connect to the body
 		\param T transformation of the joint frame represented in a body frame.
 	*/
+	//needed to implemented by all joint type
 	//void					 SetJoint_py(vpJoint *J, const SE3 &T = SE3(0));
 
 	/*!
@@ -263,7 +263,7 @@ public:
 		return the world including with the body
 		\sa vpWorld::AddBody
 	*/
-	//object&					GetWorld_py(void);
+	const pyVpWorld&					GetWorld_py(void);
 
 	/*!
 		return whether the body is collided with pBody approximated with bounding sphere

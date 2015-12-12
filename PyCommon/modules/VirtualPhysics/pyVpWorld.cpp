@@ -5,6 +5,8 @@
 #include "../../../PyCommon/externalLibs/common/VPUtil.h"
 #include <VP/vpDataType.h>
 
+#include <sstream>
+
 
 #define make_tuple boost::python::make_tuple
 
@@ -12,6 +14,8 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyVpWorld_EnableCollision_py_overloads, E
 
 BOOST_PYTHON_MODULE(vpWorld)
 {
+    numeric::array::set_module_and_type("numpy", "ndarray");
+    
 	class_<pyVpWorld>("vpWorld", init<>())
 	    .def("self", &pyVpWorld::self, return_value_policy<reference_existing_object>())
 		.def("AddBody", &pyVpWorld::AddBody_py)
@@ -33,7 +37,7 @@ BOOST_PYTHON_MODULE(vpWorld)
 		.def("GetTotalEnergy", &pyVpWorld::GetTotalEnergy_py)
 		.def("GetNumBody", &pyVpWorld::GetNumBody_py)
 		//.def(" //const vpBody						*GetBody(int_py) const;
-		//.def(" //vpBody								*GetBody(int_py);
+		.def("GetBody", &pyVpWorld::GetBody_py, return_value_policy<reference_existing_object>())
 		//.def(" //const vpBody						*GetBodyByName(const string &name_py) const;
 		.def("GetNumGeometry", &pyVpWorld::GetNumGeometry_py)
 		.def("BackupState", &pyVpWorld::BackupState_py)
@@ -74,7 +78,7 @@ pyVpWorld& pyVpWorld::self()
 //add a body to the world
 void pyVpWorld::AddBody_py(pyVpBody * objBody)
 {
-    AddBody(reinterpret_cast<vpBody*>(&objBody));
+    AddBody(reinterpret_cast<vpBody*>(objBody));
 }
 
 //TODO:
@@ -82,9 +86,9 @@ void pyVpWorld::AddBody_py(pyVpBody * objBody)
 //add a world
 //World's parameters such as a time step and the gravity will not be updated with newly added world'parameters.
 //Only the body and joints will be added.
-void pyVpWorld::AddWorld_py(object & objWorld)
+void pyVpWorld::AddWorld_py(pyVpWorld * objWorld)
 {
-    AddWorld(reinterpret_cast<vpWorld*>(&objWorld));
+    AddWorld(reinterpret_cast<vpWorld*>(objWorld));
 }
 
 //	set a global frame
@@ -145,7 +149,7 @@ object pyVpWorld::GetBoundingSphere_py()
 	return make_tuple(rad, Vec3_2_pyVec3(center));
 }
 
-void pyVpWorld::SetGravity_py(const object &g)
+void pyVpWorld::SetGravity_py(object &g)
 {
 	SetGravity(pyVec3_2_Vec3(g));
 }
@@ -191,10 +195,13 @@ int pyVpWorld::GetNumBody_py()
 	return GetNumBody();
 }
 
-	//	get a pointer to the ith body.
+//	get a pointer to the ith body.
 	//	\sa vpBody::GetID
 	//const vpBody						*GetBody(int) const;
-	//vpBody								*GetBody(int);
+pyVpBody& pyVpWorld::GetBody_py(int pyI)
+{
+	return *(reinterpret_cast<pyVpBody*>(GetBody(pyI)));
+}
 
 	//get a pointer to the body with the name
 	//const vpBody						*GetBodyByName(const string &name) const;
@@ -246,9 +253,11 @@ void pyVpWorld::Clear_py()
 	Clear();
 }
 
-void pyVpWorld::report_py()
+std::string pyVpWorld::report_py()
 {
-    report(std::cout);
+	std::stringstream ss;
+    report(ss);
+    return ss.str();
 }
 
 int pyVpWorld::GetNumCollision_py()

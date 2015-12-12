@@ -109,14 +109,16 @@ void VpWorld::initialize()
 
 void VpWorld::setOpenMP()
 {
-	int a = 1;
+	int numThreads = 1;
 
 #if !defined(__APPLE__) || defined(__APPLE_OMP__)
 	//#pragma omp parallel
 	std::cout << "OpenMP versions: " << _OPENMP << std::endl;
 	std::cout << "OpenMP max threads: " << omp_get_max_threads() << std::endl;
-	_world.SetNumThreads((a = omp_get_max_threads()-2));
-	std::cout << "csVpWorld: parallelized with " << a << " cores" << std::endl;
+	numThreads = omp_get_max_threads()-2;
+	if (numThreads <= 0) numThreads = 1;
+	_world.SetNumThreads(numThreads);
+	std::cout << "csVpWorld: parallelized with " << numThreads << " cores" << std::endl;
 #else
     std::cout << "OpenMP is not supported in this environment." << std::endl;
 #endif

@@ -4,6 +4,7 @@
 #include <VP/vphysics.h>
 #include "pyVpBody.h"
 
+class pyVpBody;
 class pyVpJoint;
 
 class pyVpWorld : public vpWorld
@@ -16,7 +17,7 @@ public:
 	//add a world
 	//World's parameters such as a time step and the gravity will not be updated with newly added world'parameters.
 	//Only the body and joints will be added.
-	void								 AddWorld_py(object &objWorld);
+	void								 AddWorld_py(pyVpWorld *objWorld);
 
 	//	set a global frame
 	//	All the coordinate frame is represented by this global frame.
@@ -50,7 +51,7 @@ public:
 	object								 GetBoundingSphere_py();
 
 	//set a gravity. Default is zero gravity.
-	void								 SetGravity_py(const object &);
+	void								 SetGravity_py(object &);
 
 	//get a gravity.
 	object								 GetGravity_py(void);
@@ -84,7 +85,7 @@ public:
 	//	get a pointer to the ith body.
 	//	\sa vpBody::GetID
 	//const vpBody						*GetBody_py(int) const;
-	//vpBody								*GetBody_py(int);
+	pyVpBody&							GetBody_py(int);
 
 	//get a pointer to the body with the name
 	//const vpBody						*GetBodyByName_py(const string &name) const;
@@ -129,7 +130,7 @@ public:
 	*/
 	void								 Clear_py(void);
 
-	void								 report_py();
+	std::string							 report_py();
 
 	int									 GetNumCollision_py(void);
 	int									 GetNumContact_py(void);

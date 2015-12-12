@@ -1,17 +1,8 @@
 import numpy as np
 from numpy import linalg as npl
 import itertools
-
-
-class vpWorld:
-    def __init__(self):
-        pass
-
-
-class vpBody:
-    def __init__(self):
-        pass
-
+import VirtualPhysics.vpWorld as vpw
+import VirtualPhysics.vpBody as vpb
 
 class vpMaterial:
     def __init__(self):
@@ -45,11 +36,11 @@ class vpJoint():
         pass
 
 
-class csVpWorld:
+class VpWorld:
     def __init__(self, config):
-        self._world = vpWorld()
+        self._world = vpw.vpWorld()
         self._world.SetGravity(config.gravity)
-        self._ground = vpBody
+        self._ground = vpb.vpBody()
         self._timeStep = config.timeStep
         self._planeHeight = config.planeHeight
         self._lockingVel = config.lockingVel

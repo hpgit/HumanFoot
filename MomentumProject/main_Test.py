@@ -17,6 +17,8 @@ import Renderer.ysRenderer as yr
 import Renderer.csVpRenderer as cvr
 import Simulator.csVpWorld as cvw
 import Simulator.csVpModel as cvm
+import Simulator.csVpWorld_tmp as cvwt
+
 import Simulator.hpLCPSimulator as hls
 import GUI.hpSimpleViewer as hsv
 import Optimization.ysAnalyticConstrainedOpt as yac
@@ -119,9 +121,10 @@ def init():
     global viewer
 
     testWorld = VPW.vpWorld()
-    testWorld.EnableCollision()
-
-    testWorld.report()
+    testBody = VPB.vpBody()
+    testBody2 = VPB.vpBody()
+    testWorld.AddBody(testBody)
+    testWorld.AddBody(testBody2)
 
 
     np.set_printoptions(precision=4, linewidth=200)
@@ -133,7 +136,7 @@ def init():
     motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
     mcfg_motion = mit.normal_mcfg()
 
-    vpWorld = cvw.VpWorld(wcfg)
+    vpWorld = cvwt.VpWorld(wcfg)
     controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
 
     vpWorld.initialize()

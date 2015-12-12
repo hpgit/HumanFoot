@@ -5,6 +5,9 @@
 #include <VP/vphysics.h>
 #include "../../../PyCommon/externalLibs/common/boostPythonUtil.h"
 
+#define MAKE_SO3 numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+#define MAKE_SE3 numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+#define MAKE_VEC3 numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
 
 inline numeric::array transpose_pySO3(numeric::array& pyR)
 {
@@ -15,6 +18,24 @@ inline numeric::array transpose_pySO3(numeric::array& pyR)
 	pyR[make_tuple(2,0)] = pyR_copy[make_tuple(0,2)]; pyR[make_tuple(2,1)] = pyR_copy[make_tuple(1,2)];
 
 	return pyR;
+}
+
+void make_pyVec3(object &pyV)
+{
+	numeric::array O( make_tuple(0.,0.,0.) );
+	pyV = O.copy();
+}
+
+void make_pySE3(object &pyT)
+{
+	numeric::array I( make_tuple(make_tuple(1.,0.,0.,0.), make_tuple(0.,1.,0.,0.), make_tuple(0.,0.,1.,0.), make_tuple(0.,0.,0.,1.)) );
+	pyT = I.copy();
+}
+
+void make_pySO3(object &pyR)
+{
+	numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+	pyR = I.copy();
 }
 
 inline bool checkPyVlen(const object& pyV, int _len)
