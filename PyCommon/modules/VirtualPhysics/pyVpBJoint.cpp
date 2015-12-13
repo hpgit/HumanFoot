@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "pyVpBody.h"
+#include "pyVpBJoint.h"
 #include "../../../PyCommon/externalLibs/common/boostPythonUtil.h"
 #include "../../../PyCommon/externalLibs/common/VPUtil.h"
 #include <VP/vpDataType.h>
@@ -15,7 +15,7 @@ BOOST_PYTHON_MODULE(vpBJoint)
 
     class_<pyVpBJoint>("vpBJoint", init<>())
         .def("self", &pyVpBJoint::self, return_value_policy<reference_existing_object>())
-		.def("Break", &pyVpBJoint::Break_py)
+        .def("Break", &pyVpBJoint::Break_py)
 		.def("GetMaxNormalForce", &pyVpBJoint::GetMaxNormalForce_py)
 		.def("SetMaxNormalForce", &pyVpBJoint::SetMaxNormalForce_py)
 		.def("GetMaxNormalTorque", &pyVpBJoint::GetMaxNormalTorque_py)
@@ -58,7 +58,7 @@ scalar pyVpBJoint::GetMaxNormalForce_py(void)
 	return GetMaxNormalForce();
 }
 
-void pyVpBJointSetMaxNormalForce_py(scalar pyD)
+void pyVpBJoint::SetMaxNormalForce_py(scalar pyD)
 {
 	SetMaxNormalForce(pyD);
 }
@@ -112,7 +112,7 @@ void pyVpBJoint::SetAcceleration_py(object &pyV)
 	SetAcceleration(V);
 }
 
-void pyVpBJoint::SetInitialOrientation_py(object &pyR);
+void pyVpBJoint::SetInitialOrientation_py(object &pyR)
 {
 	SE3 R = pySO3_2_SE3(pyR);
 	SetOrientation(R);
@@ -121,13 +121,13 @@ void pyVpBJoint::SetInitialOrientation_py(object &pyR);
 void pyVpBJoint::SetElasticity_py(scalar pyD)
 {
 	SpatialSpring el(pyD);
-	pNode->joint.SetElasticity(el);
+	SetElasticity(el);
 }
 
 void pyVpBJoint::SetDamping_py(scalar pyD)
 {
 	SpatialDamper dam(pyD);
-	pNode->joint.SetDamping(dam);
+	SetDamping(dam);
 }
 
 void pyVpBJoint::SetTorque_py(object &pyV)

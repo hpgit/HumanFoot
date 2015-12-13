@@ -125,6 +125,12 @@ def init():
     testBody2 = VPB.vpBody()
     testWorld.AddBody(testBody)
     testWorld.AddBody(testBody2)
+    testWorld.Initialize()
+    testBody2.SetAngularVelocity(np.array([0., 1., 0.]))
+    testBody3 = testWorld.GetBody(1)
+    print testBody2.GetAngVelocity()
+    print testBody3.GetAngVelocity()
+
 
 
     np.set_printoptions(precision=4, linewidth=200)
@@ -136,7 +142,7 @@ def init():
     motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
     mcfg_motion = mit.normal_mcfg()
 
-    vpWorld = cvwt.VpWorld(wcfg)
+    vpWorld = cvw.VpWorld(wcfg)
     controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
 
     vpWorld.initialize()

@@ -36,18 +36,18 @@ BOOST_PYTHON_MODULE(vpWorld)
 		.def("GetPotentialEnergy", &pyVpWorld::GetPotentialEnergy_py)
 		.def("GetTotalEnergy", &pyVpWorld::GetTotalEnergy_py)
 		.def("GetNumBody", &pyVpWorld::GetNumBody_py)
-		//.def(" //const vpBody						*GetBody(int_py) const;
-		.def("GetBody", &pyVpWorld::GetBody_py, return_value_policy<reference_existing_object>())
+		// .def("GetBody", &pyVpWorld::GetBody_py, return_value_policy<reference_existing_object>())
+		.def("GetBody", &pyVpWorld::GetBody_py, return_value_policy<copy_non_const_reference>())
 		//.def(" //const vpBody						*GetBodyByName(const string &name_py) const;
 		.def("GetNumGeometry", &pyVpWorld::GetNumGeometry_py)
 		.def("BackupState", &pyVpWorld::BackupState_py)
 		.def("RollbackState", &pyVpWorld::RollbackState_py)
 		.def("UpdateFrame", &pyVpWorld::UpdateFrame_py)
 		.def("GetNumMaterial", &pyVpWorld::GetNumMaterial_py)
-		//.def(" //const vpMaterial					*GetMaterial(int_py) const;
+		.def("GetMaterial", &pyVpWorld::GetMaterial, return_value_policy<reference_existing_object>())
 		//.def(" //const vpMaterial					*GetMaterialByName(const string &name_py) const;
 		.def("GetNumJoint", &pyVpWorld::GetNumJoint_py)
-		//.def(" //const vpJoint						*GetJoint(int_py) const;
+		.def("GetJoint", &pyVpWorld::GetJoint, return_value_policy<reference_existing_object>())
 		//.def(" //const vpJoint						*GetJointByName(const string &name_py) const;
 		.def("Clear", &pyVpWorld::Clear_py)
 		.def("report", &pyVpWorld::report_py)
@@ -200,6 +200,7 @@ int pyVpWorld::GetNumBody_py()
 	//const vpBody						*GetBody(int) const;
 pyVpBody& pyVpWorld::GetBody_py(int pyI)
 {
+	// return reinterpret_cast<pyVpBody*>(GetBody(pyI));
 	return *(reinterpret_cast<pyVpBody*>(GetBody(pyI)));
 }
 
@@ -231,8 +232,10 @@ int pyVpWorld::GetNumMaterial_py()
 	return GetNumMaterial();
 }
 
-	//get a pointer to the ith material
-	//const vpMaterial					*GetMaterial(int) const;
+pyVpMaterial& pyVpWorld::GetMaterial_py(int pyI)
+{
+	return *reinterpret_cast<pyVpMaterial *>(const_cast<vpMaterial*>(GetMaterial(pyI)));
+}
 
 	//get a pointer to the material with the name
 	//const vpMaterial					*GetMaterialByName(const string &name) const;
@@ -242,8 +245,11 @@ int pyVpWorld::GetNumJoint_py()
 	return GetNumJoint();
 }
 
-	//get a pointer to the ith joint
-	//const vpJoint						*GetJoint(int) const;
+pyVpBJoint& pyVpWorld::GetJoint_py(int pyI)
+{
+	// return *const_cast<vpJoint*>(GetJoint(pyI));
+	return *reinterpret_cast<pyVpBJoint*>(const_cast<vpJoint*>(GetJoint(pyI)));
+}
 
 	//get a pointer to the joint with the name
 	//const vpJoint						*GetJointByName(const string &name) const;

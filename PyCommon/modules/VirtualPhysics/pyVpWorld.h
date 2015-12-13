@@ -5,7 +5,9 @@
 #include "pyVpBody.h"
 
 class pyVpBody;
-class pyVpJoint;
+class pyVpBJoint;
+class pyVpMaterial;
+class pyVpSystem;
 
 class pyVpWorld : public vpWorld
 {
@@ -110,7 +112,7 @@ public:
 
     //TODO:
 	//get a pointer to the ith material
-	//const vpMaterial					*GetMaterial_py(int) const;
+	pyVpMaterial&				GetMaterial_py(int);
 
 	//get a pointer to the material with the name
 	//const vpMaterial					*GetMaterialByName_py(const string &name) const;
@@ -120,7 +122,7 @@ public:
 
     //TODO:
 	//get a pointer to the ith joint
-	//const vpJoint						*GetJoint_py(int) const;
+	pyVpBJoint&					GetJoint_py(int);
 
 	//get a pointer to the joint with the name
 	//const vpJoint						*GetJointByName_py(const string &name) const;

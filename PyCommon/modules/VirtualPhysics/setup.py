@@ -1,27 +1,18 @@
 from distutils.core import setup, Extension
 
-module_vpWorld = Extension('vpWorld',
+def moduleSetup(moduleName):
+	moduleToSetup = Extension(moduleName,
 		include_dirs = ['../usr/include/'],
 		extra_compile_args=['-fopenmp'],
 		extra_link_args=['-lgomp'],
 		libraries = ['boost_python', 'vpLib'],
 		library_dirs = ['../usr/lib'],
-		sources = ['pyVpWorld.cpp'])
+		sources = ['pyV'+moduleName[1:]+'.cpp'])
 	
-setup (name = 'vpWorld',
-	version = '0.1',
-	description = 'vpWorld',
-	ext_modules = [module_vpWorld])
+	setup (name = moduleName,
+		version = '0.1',
+		description = moduleName,
+		ext_modules = [moduleToSetup])
 
-module_vpBody = Extension('vpBody',
-						   include_dirs = ['../usr/include/'],
-						   extra_compile_args=['-fopenmp'],
-						   extra_link_args=['-lgomp'],
-						   libraries = ['boost_python', 'vpLib'],
-						   library_dirs = ['../usr/lib'],
-						   sources = ['pyVpBody.cpp'])
-
-setup (name = 'vpBody',
-	   version = '0.1',
-	   description = 'vpBody',
-	   ext_modules = [module_vpBody])
+moduleSetup('vpWorld')
+moduleSetup('vpBody')

@@ -5,7 +5,7 @@
 #include "pyVpWorld.h"
 #include "pyVpBody.h"
 
-class pyVpBJoint : public vpJoint
+class pyVpBJoint : public vpBJoint
 {
 public:
 	pyVpBJoint& 			self();

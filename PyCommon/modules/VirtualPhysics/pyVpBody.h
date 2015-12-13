@@ -4,6 +4,8 @@
 #include <VP/vpDataType.h>
 #include "pyVpWorld.h"
 
+class pyVpWorld;
+
 class pyVpBody : public vpBody
 {
 
