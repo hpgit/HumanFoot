@@ -33,6 +33,7 @@ import Simulator.ysPhysConfig as ypc
 
 import VirtualPhysics.vpWorld as VPW
 import VirtualPhysics.vpBody as VPB
+import VirtualPhysics.vpBJoint as VPJ
 
 
 import mtOptimize as mot
@@ -127,9 +128,11 @@ def init():
     testWorld.AddBody(testBody2)
     testWorld.Initialize()
     testBody2.SetAngularVelocity(np.array([0., 1., 0.]))
-    testBody3 = testWorld.GetBody(1)
+    testJoint = VPJ.vpBJoint()
+    testBody2.SetJoint(testJoint)
+    testBody.SetJoint(testJoint)
     print testBody2.GetAngVelocity()
-    print testBody3.GetAngVelocity()
+    print testJoint.GetDOF()
 
 
 

@@ -77,7 +77,7 @@ class VpWorld:
 
             for geomIdx in range(len(pBody.GetNumGeometry())):
                 pGeom = pBody.GetGeometry(geomIdx)
-                geomType, data = pGeom.GetShape();
+                geomType, data = pGeom.GetShape()
 
                 if geomType == ord('C'):
                     verticesLocal = pGeom.getVerticesLocal()

@@ -5,9 +5,11 @@
 #include "../../../PyCommon/externalLibs/common/VPUtil.h"
 #include <VP/vpDataType.h>
 
-
+#ifndef make_tuple
 #define make_tuple boost::python::make_tuple
+#endif
 
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyVpBody_SetJoint_py_overloads, SetJoint_py, 1, 2);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyVpBody_ApplyLocalForce_py_overloads, ApplyLocalForce_py, 1, 2);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyVpBody_SetGround_py_overloads, SetGround_py, 0, 1);
 //BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyVpBody_ApplyGravity_py_overloads, ApplyGravity_py, 0, 1);
@@ -18,7 +20,7 @@ BOOST_PYTHON_MODULE(vpBody)
 
     class_<pyVpBody>("vpBody", init<>())
         .def("self", &pyVpBody::self, return_value_policy<reference_existing_object>())
-        //.def("SetJoint(vpJoint *J, const SE3 &T = SE3(0));
+        .def("SetJoint", &pyVpBody::SetJoint_py, pyVpBody_SetJoint_py_overloads() )
         .def("ApplyGlobalForce", &pyVpBody::ApplyGlobalForce_py)
         .def("ApplyLocalForce_py", &pyVpBody::ApplyLocalForce_py, pyVpBody_ApplyLocalForce_py_overloads())
         .def("ResetForce", &pyVpBody::ResetForce_py)
@@ -81,7 +83,16 @@ pyVpBody& pyVpBody::self()
 }
 
 //TODO:
-// void pyVpBody::SetJoint_py_py(vpJoint *J, const SE3 &T = SE3_py(0));
+void pyVpBody::SetJoint_py(pyVpBJoint *J, const object &pyT)
+{
+    if (pyT == object())
+        SetJoint(J);
+    else
+    {
+        SE3 T = pySE3_2_SE3(pyT);
+        SetJoint(J, T);
+    }
+}
 
 void pyVpBody::ApplyGlobalForce_py(object &pyF, object &pyP)
 {

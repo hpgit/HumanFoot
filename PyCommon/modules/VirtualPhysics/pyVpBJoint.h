@@ -5,6 +5,49 @@
 #include "pyVpWorld.h"
 #include "pyVpBody.h"
 
+class vpJointWrapper : public vpJoint, public wrapper<vpJoint>
+{
+public:
+	int   GetDOF(void) const{return this->get_override("GetDOF")();}
+	scalar   GetNormalForce(void) const{return this->get_override("GetNormalForce")();}
+	scalar   GetNormalTorque(void) const{return this->get_override("GetNormalTorque")();}
+
+	void   BuildKinematics(void){this->get_override("BuildKinematics")();}
+	SE3   Transform(void) const{return this->get_override("Transform")();}
+	void   UpdateSpringDamperTorque(void){this->get_override("UpdateSpringDamperTorque")();}
+	scalar   GetPotentialEnergy(void) const{return this->get_override("GetPotentialEnergy")();}
+	
+	const  scalar & GetDisplacement_(int a) const{return this->get_override("GetDisplacement_")(a);}
+	void   SetDisplacement_(int a, const scalar &b){this->get_override("SetDisplacement_")(a,b);}
+	const  scalar & GetVelocity_(int a) const{return this->get_override("GetVelocity_")(a);}
+	void   SetVelocity_(int a, const scalar &b){this->get_override("SetVelocity_")(a,b);}
+	const  scalar & GetAcceleration_(int a) const{return this->get_override("GetAcceleration_")(a);}
+	void   SetAcceleration_(int a, const scalar & b){this->get_override("SetAcceleration_")(a,b);}
+	const  scalar & GetImpulsiveTorque_(int a) const{return this->get_override("GetImpulsiveTorque_")(a);}
+	void   SetImpulsiveTorque_(int a, const scalar &b){this->get_override("SetImpulsiveTorque_")(a,b);}
+	scalar   GetTorque_(int a) const{return this->get_override("GetTorque_")(a);}
+	void   SetTorque_(int a, const scalar &b){this->get_override("SetTorque_")(a,b);}
+	void   SetSpringDamperTorque_(int a, const scalar &b){this->get_override("SetSpringDamperTorque_")(a,b);}
+	const  scalar & GetRestitution_(int a) const{return this->get_override("GetRestitution_")(a);}
+	bool   ViolateUpperLimit_(int a) const{return this->get_override("ViolateUpperLimit_")(a);}
+	bool   ViolateLowerLimit_(int a) const{return this->get_override("ViolateLowerLimit_")(a);}
+
+	void   UpdateTorqueID(void){this->get_override("UpdateTorqueID")();}
+	void   UpdateTorqueHD(void){this->get_override("UpdateTorqueHD")();}
+	void   UpdateVelocity(const se3 &a){this->get_override("UpdateVelocity")(a);}
+	void   UpdateAccelerationID(const se3 &a){this->get_override("UpdateAccelerationID")(a);}
+	void   UpdateAccelerationFD(const se3 &a){this->get_override("UpdateAccelerationFD")(a);}
+	void   UpdateAInertia(AInertia &a){this->get_override("UpdateAInertia")(a);}
+	void   UpdateLOTP(void){this->get_override("UpdateLOTP")();}
+	void   UpdateTP(void){this->get_override("UpdateTP")();}
+	void   UpdateLP(void){this->get_override("UpdateLP")();}
+	dse3   GetLP(void){return this->get_override("GetLP")();}
+	void   ClearTP(void){this->get_override("ClearTP")();}
+	
+	void   IntegrateDisplacement(const scalar &a){this->get_override("IntegrateDisplacement")(a);}
+	void   IntegrateVelocity(const scalar &a){this->get_override("IntegrateVelocity")(a);}
+};
+
 class pyVpBJoint : public vpBJoint
 {
 public:

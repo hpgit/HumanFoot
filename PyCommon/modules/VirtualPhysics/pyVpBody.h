@@ -3,8 +3,10 @@
 
 #include <VP/vpDataType.h>
 #include "pyVpWorld.h"
+#include "pyVpBJoint.h"
 
 class pyVpWorld;
+class pyVpBJoint;
 
 class pyVpBody : public vpBody
 {
@@ -19,7 +21,7 @@ public:
 		\param T transformation of the joint frame represented in a body frame.
 	*/
 	//needed to implemented by all joint type
-	//void					 SetJoint_py(vpJoint *J, const SE3 &T = SE3(0));
+	void					 SetJoint_py(pyVpBJoint *J, const object &T = object());
 
 	/*!
 		apply a force to the body.
