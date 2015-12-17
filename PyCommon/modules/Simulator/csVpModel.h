@@ -91,6 +91,8 @@ public:	// expose to python
 
 	/////////////////////////////////////////////////////////////////
 	// body
+	object getCOM();
+	
 	object getBodyPositionGlobal_py( int index, const object& positionLocal=object() );
 	object getBodyVelocityGlobal_py( int index, const object& positionLocal=object() );
 	object getBodyAccelerationGlobal_py(int index, const object& positionLocal=object() );

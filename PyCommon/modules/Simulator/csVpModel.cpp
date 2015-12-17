@@ -51,6 +51,8 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getBodyInertiasLocal", &VpModel::getBodyInertiasLocal)
 		.def("getBodyInertiasGlobal", &VpModel::getBodyInertiasGlobal)
 		
+		.def("getCOM", &VpModel::getCOM)
+
 		.def("getBodyPositionGlobal", &VpModel::getBodyPositionGlobal_py, getBodyPositionGlobal_py_overloads())
 		.def("getBodyVelocityGlobal", &VpModel::getBodyVelocityGlobal_py, getBodyVelocityGlobal_py_overloads())
 		.def("getBodyAccelerationGlobal", &VpModel::getBodyAccelerationGlobal_py, getBodyAccelerationGlobal_py_overloads())
@@ -569,6 +571,20 @@ bp::list VpModel::getBodyInertiasGlobal()
 	return ls;
 }
 
+object VpModel::getCOM()
+{
+	object pyV;
+	make_pyVec3(pyV);
+	Vec3 com(0., 0., 0.);
+	for(int i=0; i<_nodes.size(); ++i)
+		com += _nodes[i]->body.GetInertia().GetMass() * _nodes[i]->body.GetFrame().GetPosition();
+	com *= 1./getTotalMass();
+
+	Vec3_2_pyVec3(com, pyV);
+	return pyV;
+
+}
+
 object VpModel::getBodyPositionGlobal_py( int index, const object& positionLocal/*=object() */ )
 {
 	numeric::array O(make_tuple(0.,0.,0.));
@@ -1048,8 +1064,8 @@ void VpControlModel::_createJoint( const object& joint, const object& posture )
 		SpatialSpring el(kt);
 		SpatialDamper dam(dt);
 		//std::cout << el <<std::endl;
-		pNode->joint.SetElasticity(el);
-		pNode->joint.SetDamping(dam);
+		// pNode->joint.SetElasticity(el);
+		// pNode->joint.SetDamping(dam);
 		pNode->use_joint = true;
 	}
 

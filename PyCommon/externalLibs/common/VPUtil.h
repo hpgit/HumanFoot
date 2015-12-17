@@ -5,9 +5,9 @@
 #include <VP/vphysics.h>
 #include "../../../PyCommon/externalLibs/common/boostPythonUtil.h"
 
-#define MAKE_SO3 numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
-#define MAKE_SE3 numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
-#define MAKE_VEC3 numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+// #define MAKE_SO3 numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+// #define MAKE_SE3 numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+// #define MAKE_VEC3 numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
 
 inline numeric::array transpose_pySO3(numeric::array& pyR)
 {

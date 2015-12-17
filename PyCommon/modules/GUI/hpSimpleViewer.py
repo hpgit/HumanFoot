@@ -10,7 +10,7 @@ class hpSimpleViewer(ysvOri.SimpleViewer):
         self.begin()
         panelWidth = 280
         cForceHeight = 200
-        self.motionViewWnd = ysvOri.MotionViewWnd(0, 0, self.w()-panelWidth, self.h()-cForceHeight, self.doc)
+        self.motionViewWnd = hpMotionViewWnd(0, 0, self.w()-panelWidth, self.h()-cForceHeight, self.doc)
         t = .3
         self.renderersWnd = ysvOri.RenderersWnd(self.w()-panelWidth, 0, panelWidth, int(self.h()*t), self.doc)
         self.objectInfoWnd = hpObjectInfoWnd(self.w()-panelWidth, int(self.h()*t), panelWidth, int(self.h()*(1-t)), self.doc)
@@ -19,8 +19,27 @@ class hpSimpleViewer(ysvOri.SimpleViewer):
         self.resizable(self.motionViewWnd)
         self.resizable(self.cForceWnd)
         self.size_range(600, 400)
+
+        self.cForceWnd.viewer = self
+        self.motionViewWnd.cForceWnd = self.cForceWnd
     pass
 
+
+class hpMotionViewWnd(ysvOri.MotionViewWnd):
+    def goToFrame(self, frame):
+        super(hpMotionViewWnd, self).goToFrame(frame)
+        self.cForceWnd.redraw()
+
+    def onTimer(self):
+        if self.playing:
+            self.frame += 1
+            if self.frame > self.maxFrame:
+                self.frame = 0
+            self.onFrame(self.frame)
+            self.cForceWnd.redraw()
+
+        if self.timeInterval:
+            fltk.Fl.repeat_timeout(self.timeInterval, self.onTimer)
 
 class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
     def __init__(self, x, y, w, h, doc):
@@ -82,6 +101,9 @@ class hpContactForceGraphWnd(fltk.Fl_Widget, ybu.Observer):
         self.dataCheckBtn = []
         self.dataCheckBtnOffset = 0
 
+        self.curFrame = -1
+        self.viewer = None
+
     def update(self, ev, doc):
         if ev == ysvOri.EV_addObject:
             self.dataLength = doc.motionSystem.getMaxFrame()
@@ -110,13 +132,20 @@ class hpContactForceGraphWnd(fltk.Fl_Widget, ybu.Observer):
 
     def draw(self):
         fltk.fl_draw_box(fltk.FL_FLAT_BOX, 40+self.x(), self.y(), self.w()-40, self.h(), fltk.fl_rgb_color(192, 192, 192))
-        ratio = float(self.w())/self.dataLength
+        ratio = float(self.w()-40)/self.dataLength
         for dataIdx in range(len(self.data)):
             if self.dataCheckBtn[dataIdx].value():
                 for valIdx in range(1, self.dataLength-1):
                     fltk.fl_color(self.dataSetColor[dataIdx])
                     fltk.fl_line(40+self.x()+int(ratio * (valIdx-1)), int(self.y()+self.h() - self.data[dataIdx][valIdx-1]/2.)-3,
                                  40+self.x()+int(ratio * valIdx), int(self.y()+self.h() - self.data[dataIdx][valIdx]/2.)-3)
+
+
+        frame = self.viewer.getCurrentFrame()
+        if frame >-1:
+            fltk.fl_color(fltk.FL_BLUE)
+            fltk.fl_line(40+self.x()+int(ratio * frame), int(self.y()+self.h())-3,
+                         40+self.x()+int(ratio * frame), int(self.y()-3))
 
     def checkBtnCallback(self, ptr):
         self.redraw()
