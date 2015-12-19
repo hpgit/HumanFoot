@@ -177,7 +177,7 @@ public:
 		\param pGeom a pointer to a primitive geometry
 		\param T a location of the geometry represented in the body frame.
 	*/
-	//void					 AddGeometry_py(vpGeom *pGeom, const SE3 &T = SE3(0));
+	void					 AddGeometry_py(vpGeom *pGeom, const object &T = object());
 
 	/*!
 		get a radius of a bounding sphere including the body, where the center is located at the center of body frame
@@ -239,7 +239,8 @@ public:
 	/*!
 		get a pointer to the ith geometry
 	*/
-	//vpGeom			*GetGeometry_py(int) const;
+	//boost::shared_ptr<vpGeom>			GetGeometry_py(int);
+	vpGeom&			GetGeometry_py(int);
 
 	/*!
 		get a unique identifying integer value which is assigned by VirtualPhysics

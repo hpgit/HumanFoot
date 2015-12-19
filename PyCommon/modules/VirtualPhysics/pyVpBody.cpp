@@ -9,6 +9,7 @@
 #define make_tuple boost::python::make_tuple
 #endif
 
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyVpBody_AddGeometry_py_overloads, AddGeometry_py, 1, 2);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyVpBody_SetJoint_py_overloads, SetJoint_py, 1, 2);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyVpBody_ApplyLocalForce_py_overloads, ApplyLocalForce_py, 1, 2);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyVpBody_SetGround_py_overloads, SetGround_py, 0, 1);
@@ -45,7 +46,7 @@ BOOST_PYTHON_MODULE(vpBody)
         .def("IsCollidable", &pyVpBody::IsCollidable_py)
         .def("IsGround", &pyVpBody::IsGround_py)
         .def("SetCollidable", &pyVpBody::SetCollidable_py)
-        //.def("AddGeometry", &pyVpBody::AddGeometry_py)
+        .def("AddGeometry", &pyVpBody::AddGeometry_py, pyVpBody_AddGeometry_py_overloads())
         .def("GetBoundingSphereRadius", &pyVpBody::GetBoundingSphereRadius_py)
         //.def("SetMaterial", &pyVpBody::SetMaterial_py)
         //.def("GetMaterial(void) const;
@@ -56,7 +57,7 @@ BOOST_PYTHON_MODULE(vpBody)
         .def("GetGravityForce", &pyVpBody::GetGravityForce_py)
         .def("IsSetInertia", &pyVpBody::IsSetInertia_py)
         .def("GetNumGeometry", &pyVpBody::GetNumGeometry_py)
-        //.def("GetGeometry(int) const;
+        .def("GetGeometry", &pyVpBody::GetGeometry_py, return_value_policy<reference_existing_object>())
         .def("GetID", &pyVpBody::GetID_py)
         .def("SetGround", &pyVpBody::SetGround_py, pyVpBody_SetGround_py_overloads())
         //.def("ApplyGravity", &pyVpBody::ApplyGravity_py, pyVpBody_ApplyGravity_py_overloads())
@@ -305,7 +306,19 @@ void pyVpBody::SetCollidable_py(bool pyB)
 }
 
 //TODO:
-// void pyVpBody::AddGeometry_py(vpGeom *pGeom, const SE3 &T = SE3_py(0));
+void pyVpBody::AddGeometry_py(vpGeom *pGeom, const object &pyT)
+{
+    if (pyT == object())
+    {
+        AddGeometry(pGeom);
+    }
+    else
+    {
+        SE3 T = pySE3_2_SE3(pyT);
+        AddGeometry(pGeom, T);
+    }
+
+}
 
 scalar pyVpBody::GetBoundingSphereRadius_py(void)
 {
@@ -368,7 +381,12 @@ int	pyVpBody::GetNumGeometry_py(void)
 }
 
 //TODO:
-//vpGeom *pyVpBody::GetGeometry_py(int) const;
+//boost::shared_ptr<vpGeom> pyVpBody::GetGeometry_py(int geomIdx)
+vpGeom& pyVpBody::GetGeometry_py(int geomIdx)
+{
+    // return boost::shared_ptr<vpGeom>(GetGeometry(geomIdx));
+    return *(GetGeometry(geomIdx));
+}
 
 int	pyVpBody::GetID_py(void)
 {

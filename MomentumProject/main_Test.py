@@ -33,6 +33,7 @@ import Simulator.ysPhysConfig as ypc
 import VirtualPhysics.vpWorld as VPW
 import VirtualPhysics.vpBody as VPB
 import VirtualPhysics.vpBJoint as VPJ
+import VirtualPhysics.vpGeom as VPG
 
 
 import mtOptimize as mot
@@ -119,6 +120,18 @@ def init():
     global rd_Position
     global rd_PositionDes
     global viewer
+
+    geomStr = ''
+    geomData = []
+    testGeom = VPG.vpBox()
+    testGeom.SetSize(np.array([2., 2., 2.]))
+    # print "size: ", testGeom.GetBoundingSphereRadius()
+    testBody = VPB.vpBody()
+    testBody.AddGeometry(testGeom)
+    testGeom2 = testBody.GetGeometry(0)
+    print testGeom2.GetShapePy()
+
+
 
     # testWorld = VPW.vpWorld()
     # testBody = VPB.vpBody()
