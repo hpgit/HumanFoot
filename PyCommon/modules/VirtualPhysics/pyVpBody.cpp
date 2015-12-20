@@ -370,7 +370,7 @@ void pyVpBody::SetMaterial_py(const vpMaterial *M)
     SetMaterial(M);
 }
 
-const vpMaterial &pyVpBody::GetMaterial_py(void)
+pyVpMaterial &pyVpBody::GetMaterial_py(void)
 {
     return *(GetMaterial());
 }
@@ -454,10 +454,10 @@ void pyVpBody::SetGround_py(bool pyB)
 //     return IsApplyingGravity();
 // }
 
-const vpWorld &pyVpBody::GetWorld_py(void)
+pyVpWorld &pyVpBody::GetWorld_py(void)
 {
-    return *( GetWorld());
-    // return *const_cast<pyVpWorld*>((reinterpret_cast<const pyVpWorld *>( GetWorld())));
+    // return *( GetWorld());
+    return *const_cast<pyVpWorld*>((reinterpret_cast<const pyVpWorld *>( GetWorld())));
 }
 
 bool pyVpBody::DetectCollisionApprox_py(object &pBody)
@@ -465,9 +465,9 @@ bool pyVpBody::DetectCollisionApprox_py(object &pBody)
     return DetectCollisionApprox(reinterpret_cast<vpBody *> (&pBody));
 }
 
-vpSystem &pyVpBody::GetSystem_py(void)
+pyVpSystem &pyVpBody::GetSystem_py(void)
 {
-    return *(GetSystem());
+    return *reinterpret_cast<vpBody *>(GetSystem());
 }
 
 void pyVpBody::SetHybridDynamicsType_py(std::string typeStr)

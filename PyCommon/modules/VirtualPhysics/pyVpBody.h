@@ -196,7 +196,7 @@ public:
 		get a meterial applied to the body.
 		\sa vpBody::SetMaterial_py()
 	*/
-	const vpMaterial		&GetMaterial_py(void);
+	pyVpMaterial		&GetMaterial_py(void);
 
 	/*!
 		get a center of mass
@@ -268,14 +268,14 @@ public:
 		return the world including with the body
 		\sa vpWorld::AddBody
 	*/
-	const vpWorld&					GetWorld_py(void);
+	pyVpWorld&					GetWorld_py(void);
 
 	/*!
 		return whether the body is collided with pBody approximated with bounding sphere
 	*/
 	bool					 DetectCollisionApprox_py(object &Body);
 
-	vpSystem&				GetSystem_py(void);
+	pyVpSystem&				GetSystem_py(void);
 
 	void					 SetHybridDynamicsType_py(std::string);
 	std::string				 GetHybridDynamicsType_py(void);
