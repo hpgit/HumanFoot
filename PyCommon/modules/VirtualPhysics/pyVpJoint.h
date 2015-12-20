@@ -5,17 +5,17 @@
 #include "pyVpWorld.h"
 #include "pyVpBody.h"
 
-class vpJointWrapper : public vpJoint, public wrapper<vpJoint>
+class pyVpJoint : public vpJoint, public wrapper<vpJoint>
 {
 public:
-	int   GetDOF(void) const{return this->get_override("GetDOF")();}
-	scalar   GetNormalForce(void) const{return this->get_override("GetNormalForce")();}
-	scalar   GetNormalTorque(void) const{return this->get_override("GetNormalTorque")();}
+	virtual int   GetDOF(void) const{return this->get_override("GetDOF")();}
+	virtual scalar   GetNormalForce(void) const{return this->get_override("GetNormalForce")();}
+	virtual scalar   GetNormalTorque(void) const{return this->get_override("GetNormalTorque")();}
 
-	void   BuildKinematics(void){this->get_override("BuildKinematics")();}
-	SE3   Transform(void) const{return this->get_override("Transform")();}
-	void   UpdateSpringDamperTorque(void){this->get_override("UpdateSpringDamperTorque")();}
-	scalar   GetPotentialEnergy(void) const{return this->get_override("GetPotentialEnergy")();}
+	void   BuildKinematics(void){std::cout << "BuildKinematics"<<std::endl;}
+	SE3   Transform(void) const{std::cout << "Transform" << std::endl; return SE3();}
+	void   UpdateSpringDamperTorque(void){std::cout << "UpdateSpringDamperTorque" <<std::endl;}
+	scalar   GetPotentialEnergy(void) const{std::cout << "GetPotentialEnergy" <<std::endl; return 0;}
 	
 	const  scalar & GetDisplacement_(int a) const{return this->get_override("GetDisplacement_")(a);}
 	void   SetDisplacement_(int a, const scalar &b){this->get_override("SetDisplacement_")(a,b);}
@@ -48,11 +48,17 @@ public:
 	void   IntegrateVelocity(const scalar &a){this->get_override("IntegrateVelocity")(a);}
 };
 
-class pyVpBJoint : public vpBJoint
+class pyVpBJoint : public vpBJoint, public wrapper<vpBJoint>
 {
 public:
 	pyVpBJoint& 			self();
 
+	virtual int   GetDOF(void) const;
+	int GetDOF_default(void) const;
+	virtual scalar   GetNormalForce(void) const;
+	virtual scalar   GetNormalForce_default(void) const;
+	virtual scalar   GetNormalTorque(void) const;
+	virtual scalar   GetNormalTorque_default(void) const;
 ////////////////// common vpJoint functions
 	/*!
 		break the joint.

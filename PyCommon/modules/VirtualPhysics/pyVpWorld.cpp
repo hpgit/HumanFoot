@@ -16,7 +16,8 @@ BOOST_PYTHON_MODULE(vpWorld)
 {
     numeric::array::set_module_and_type("numpy", "ndarray");
     
-	class_<pyVpWorld>("vpWorld", init<>())
+    class_<pyVpWorld, boost::shared_ptr<pyVpWorld>, boost::noncopyable>("vpWorld") 
+	// class_<pyVpWorld>("vpWorld", init<>())
 	    .def("self", &pyVpWorld::self, return_value_policy<reference_existing_object>())
 		.def("AddBody", &pyVpWorld::AddBody_py)
 		.def("AddWorld", &pyVpWorld::AddWorld_py)
@@ -61,6 +62,10 @@ BOOST_PYTHON_MODULE(vpWorld)
 		.def("ReportStatistics", &pyVpWorld::ReportStatistics_py)
 		.def("ResetStatistics", &pyVpWorld::ResetStatistics_py)
 	;
+        bp::objects::class_value_wrapper< 
+            boost::shared_ptr<vpWorld> , 
+            bp::objects::make_ptr_instance<vpWorld, 
+                bp::objects::pointer_holder<boost::shared_ptr<vpWorld>,vpWorld> > >();
 }
 
 
@@ -245,10 +250,10 @@ int pyVpWorld::GetNumJoint_py()
 	return GetNumJoint();
 }
 
-pyVpBJoint& pyVpWorld::GetJoint_py(int pyI)
+vpJoint& pyVpWorld::GetJoint_py(int pyI)
 {
 	// return *const_cast<vpJoint*>(GetJoint(pyI));
-	return *reinterpret_cast<pyVpBJoint*>(const_cast<vpJoint*>(GetJoint(pyI)));
+	return *(const_cast<vpJoint*>(GetJoint(pyI)));
 }
 
 	//get a pointer to the joint with the name

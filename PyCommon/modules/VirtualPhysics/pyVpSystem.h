@@ -3,7 +3,7 @@
 
 #include <VP/vpDataType.h>
 
-class pyVpSystem : public vpSystem 
+class pyVpSystem : public vpSystem, public wrapper<vpSystem>
 {
 public:
     pyVpSystem&             self();

@@ -5,11 +5,11 @@
 #include "pyVpBody.h"
 
 class pyVpBody;
-class pyVpBJoint;
+//class pyVpBJoint;
 class pyVpMaterial;
 class pyVpSystem;
 
-class pyVpWorld : public vpWorld
+class pyVpWorld : public vpWorld, public wrapper<vpWorld>
 {
 public:
     pyVpWorld&                          self();
@@ -122,7 +122,7 @@ public:
 
     //TODO:
 	//get a pointer to the ith joint
-	pyVpBJoint&					GetJoint_py(int);
+	vpJoint&					GetJoint_py(int);
 
 	//get a pointer to the joint with the name
 	//const vpJoint						*GetJointByName_py(const string &name) const;

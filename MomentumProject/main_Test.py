@@ -32,7 +32,7 @@ import Simulator.ysPhysConfig as ypc
 
 import VirtualPhysics.vpWorld as VPW
 import VirtualPhysics.vpBody as VPB
-import VirtualPhysics.vpBJoint as VPJ
+import VirtualPhysics.vpJoint as VPJ
 import VirtualPhysics.vpGeom as VPG
 
 
@@ -121,28 +121,26 @@ def init():
     global rd_PositionDes
     global viewer
 
-    geomStr = ''
-    geomData = []
-    testGeom = VPG.vpBox()
-    testGeom.SetSize(np.array([2., 2., 2.]))
+    # testGeom = VPG.vpBox()
+    # testGeom.SetSize(np.array([2., 2., 2.]))
     # print "size: ", testGeom.GetBoundingSphereRadius()
-    testBody = VPB.vpBody()
-    testBody.AddGeometry(testGeom)
-    testGeom2 = testBody.GetGeometry(0)
-    print testGeom2.GetShapePy()
-
-
-
-    # testWorld = VPW.vpWorld()
     # testBody = VPB.vpBody()
-    # testBody2 = VPB.vpBody()
-    # testWorld.AddBody(testBody)
-    # testWorld.AddBody(testBody2)
-    # testWorld.Initialize()
+    # testBody.AddGeometry(testGeom)
+    # testGeom2 = testBody.GetGeometry(0)
+    # print testGeom2.GetShapePy()
+
+    testWorld = VPW.vpWorld()
+    testBody = VPB.vpBody()
+    testBody2 = VPB.vpBody()
+    testJoint = VPJ.vpBJoint()
+    testBody2.SetJoint(testJoint)
+    testBody.SetJoint(testJoint)
+    testWorld.AddBody(testBody)
+    testWorld.Initialize()
+
+    print testWorld.GetJoint(0).GetDOF()
     # testBody2.SetAngularVelocity(np.array([0., 1., 0.]))
-    # testJoint = VPJ.vpBJoint()
-    # testBody2.SetJoint(testJoint)
-    # testBody.SetJoint(testJoint)
+
     # print testBody2.GetAngVelocity()
     # print testJoint.GetDOF()
 

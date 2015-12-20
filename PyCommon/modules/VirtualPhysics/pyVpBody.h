@@ -3,12 +3,12 @@
 
 #include <VP/vpDataType.h>
 #include "pyVpWorld.h"
-#include "pyVpBJoint.h"
+#include "pyVpJoint.h"
 
 class pyVpWorld;
 class pyVpBJoint;
 
-class pyVpBody : public vpBody
+class pyVpBody : public vpBody, public wrapper<vpBody>
 {
 
 
@@ -21,7 +21,7 @@ public:
 		\param T transformation of the joint frame represented in a body frame.
 	*/
 	//needed to implemented by all joint type
-	void					 SetJoint_py(pyVpBJoint *J, const object &T = object());
+	void					 SetJoint_py(vpJoint *J, const object &T = object());
 
 	/*!
 		apply a force to the body.
@@ -63,12 +63,12 @@ public:
 		set a transformation of the joint frame.
 		\param J the joint should be set to the body previously using SetJoint_py() method.
 	*/
-	//void					 SetJointFrame_py(vpJoint *J, const SE3 &T);
+	void					 SetJointFrame_py(vpJoint *J, const object &pyT);
 
 	/*!
 		get a transformation of the joint frame.
 	*/
-	//const SE3				&GetJointFrame_py(const vpJoint *) const;
+	object				GetJointFrame_py(vpJoint *);
 
 	/*!
 		set a transformation of the body frame w.r.t a global frame.
@@ -190,13 +190,13 @@ public:
 		default material properties will be applied.
 		\sa vpMaterial::GetDefaultMaterial_py()
 	*/
-	//void					 SetMaterial_py(const vpMaterial *);
+	void					 SetMaterial_py(const vpMaterial *);
 
 	/*!
 		get a meterial applied to the body.
 		\sa vpBody::SetMaterial_py()
 	*/
-	//const vpMaterial		*GetMaterial_py(void) const;
+	const vpMaterial		&GetMaterial_py(void);
 
 	/*!
 		get a center of mass
@@ -268,14 +268,14 @@ public:
 		return the world including with the body
 		\sa vpWorld::AddBody
 	*/
-	const pyVpWorld&					GetWorld_py(void);
+	const vpWorld&					GetWorld_py(void);
 
 	/*!
 		return whether the body is collided with pBody approximated with bounding sphere
 	*/
 	bool					 DetectCollisionApprox_py(object &Body);
 
-	//vpSystem				*GetSystem_py(void);
+	vpSystem&				GetSystem_py(void);
 
 	void					 SetHybridDynamicsType_py(std::string);
 	std::string				 GetHybridDynamicsType_py(void);

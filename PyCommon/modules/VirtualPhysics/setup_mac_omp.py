@@ -16,7 +16,8 @@ def moduleSetup(moduleName):
 
 moduleSetup('vpWorld')
 moduleSetup('vpBody')
-moduleSetup('vpBJoint')
+# moduleSetup('vpBJoint')
 moduleSetup('vpMaterial')
 moduleSetup('vpSystem')
 moduleSetup('vpGeom')
+moduleSetup('vpJoint')

@@ -62,7 +62,7 @@ public:
 	/*!
 		get a default material used for bodies which do not have their own materials.
 	*/
-	static pyVpMaterial&	GetDefaultMaterial_py(void);
+	static vpMaterial&	GetDefaultMaterial_py(void);
 };
 
 #endif // _PYVPMATERIAL_H_

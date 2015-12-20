@@ -9,7 +9,8 @@
 
 BOOST_PYTHON_MODULE(vpMaterial)
 {
-    class_<pyVpMaterial>("vpMaterial", init<>())
+    class_<pyVpMaterial, boost::shared_ptr<pyVpMaterial>, boost::noncopyable>("vpMaterial") 
+    // class_<pyVpMaterial>("vpMaterial", init<>())
         .def("self", &pyVpMaterial::self, return_value_policy<reference_existing_object>())
         .def("GetDensity", &pyVpMaterial::GetDensity_py)
         .def("SetDensity", &pyVpMaterial::SetDensity_py)
@@ -23,6 +24,10 @@ BOOST_PYTHON_MODULE(vpMaterial)
         .def("SetSpinningFriction", &pyVpMaterial::SetSpinningFriction_py)
         .def("GetDefaultMaterial", &pyVpMaterial::GetDefaultMaterial_py, return_value_policy<reference_existing_object>())
     ;
+        bp::objects::class_value_wrapper< 
+            boost::shared_ptr<vpMaterial> , 
+            bp::objects::make_ptr_instance<vpMaterial, 
+                bp::objects::pointer_holder<boost::shared_ptr<vpMaterial>,vpMaterial> > >();
 }
 
 pyVpMaterial& pyVpMaterial::self()
@@ -80,7 +85,7 @@ void pyVpMaterial::SetSpinningFriction_py(scalar pyD)
     SetSpinningFriction(pyD);
 }
 
-pyVpMaterial& pyVpMaterial::GetDefaultMaterial_py(void)
+vpMaterial& pyVpMaterial::GetDefaultMaterial_py(void)
 {
-    return *(reinterpret_cast<pyVpMaterial*>(GetDefaultMaterial()));
+    return *(GetDefaultMaterial());
 }

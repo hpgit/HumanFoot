@@ -10,7 +10,8 @@
 
 BOOST_PYTHON_MODULE(vpSystem)
 {
-    class_<pyVpSystem>("vpSystem", init<>())
+    class_<pyVpSystem, boost::shared_ptr<pyVpSystem>, boost::noncopyable>("vpSystem") 
+    // class_<pyVpSystem>("vpSystem", init<>())
         .def("self", &pyVpSystem::self, return_value_policy<reference_existing_object>())
         .def("GetNumJoint", &pyVpSystem::GetNumJoint_py)
         .def("GetNumBody", &pyVpSystem::GetNumBody_py)
@@ -23,6 +24,11 @@ BOOST_PYTHON_MODULE(vpSystem)
         .def("InverseDynamics", &pyVpSystem::InverseDynamics_py)
         .def("HybridDynamics", &pyVpSystem::HybridDynamics_py)
         ;
+
+        bp::objects::class_value_wrapper< 
+            boost::shared_ptr<vpSystem> , 
+            bp::objects::make_ptr_instance<vpSystem, 
+                bp::objects::pointer_holder<boost::shared_ptr<vpSystem>,vpSystem> > >();
 }
 
 

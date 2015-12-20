@@ -19,7 +19,8 @@ BOOST_PYTHON_MODULE(vpBody)
 {
     numeric::array::set_module_and_type("numpy", "ndarray");
 
-    class_<pyVpBody>("vpBody", init<>())
+    class_<pyVpBody, boost::shared_ptr<pyVpBody>, boost::noncopyable>("vpBody") 
+    // class_<pyVpBody>("vpBody", init<>())
         .def("self", &pyVpBody::self, return_value_policy<reference_existing_object>())
         .def("SetJoint", &pyVpBody::SetJoint_py, pyVpBody_SetJoint_py_overloads() )
         .def("ApplyGlobalForce", &pyVpBody::ApplyGlobalForce_py)
@@ -27,8 +28,8 @@ BOOST_PYTHON_MODULE(vpBody)
         .def("ResetForce", &pyVpBody::ResetForce_py)
         //.def("SetInertia(const Inertia &);
         //.def("GetInertia(void) const;
-        //.def("SetJointFrame(vpJoint *J, const SE3 &T);
-        //.def("GetJointFrame(const vpJoint *) const;
+        .def("SetJointFrame", &pyVpBody::SetJointFrame_py)
+        .def("GetJointFrame", &pyVpBody::GetJointFrame_py)
         .def("SetFrame", &pyVpBody::SetFrame_py)
         .def("GetFrame", &pyVpBody::GetFrame_py)
         .def("SetVelocity", &pyVpBody::SetVelocity_py)
@@ -48,8 +49,8 @@ BOOST_PYTHON_MODULE(vpBody)
         .def("SetCollidable", &pyVpBody::SetCollidable_py)
         .def("AddGeometry", &pyVpBody::AddGeometry_py, pyVpBody_AddGeometry_py_overloads())
         .def("GetBoundingSphereRadius", &pyVpBody::GetBoundingSphereRadius_py)
-        //.def("SetMaterial", &pyVpBody::SetMaterial_py)
-        //.def("GetMaterial(void) const;
+        .def("SetMaterial", &pyVpBody::SetMaterial_py)
+        .def("GetMaterial", &pyVpBody::GetMaterial_py, return_value_policy<reference_existing_object>())
         .def("GetCenterOfMass", &pyVpBody::GetCenterOfMass_py)
         //.def("GenerateDisplayList", &pyVpBody::GenerateDisplayList_py)
         .def("GetForce", &pyVpBody::GetForce_py)
@@ -64,13 +65,17 @@ BOOST_PYTHON_MODULE(vpBody)
         //.def("IsApplyingGravity", &pyVpBody::IsApplyingGravity_py)
         .def("GetWorld", &pyVpBody::GetWorld_py, return_value_policy<reference_existing_object>())
         .def("DetectCollisionApprox", &pyVpBody::DetectCollisionApprox_py)
-        //.def("GetSystem", &pyVpBody::GetSystem_py)
+        .def("GetSystem", &pyVpBody::GetSystem_py, return_value_policy<reference_existing_object>())
         .def("SetHybridDynamicsType", &pyVpBody::SetHybridDynamicsType_py)
         .def("GetHybridDynamicsType", &pyVpBody::GetHybridDynamicsType_py)
         .def("BackupState", &pyVpBody::BackupState_py)
         .def("RollbackState", &pyVpBody::RollbackState_py)
         .def("UpdateGeomFrame", &pyVpBody::UpdateGeomFrame_py)
         ;
+        bp::objects::class_value_wrapper< 
+            boost::shared_ptr<vpBody> , 
+            bp::objects::make_ptr_instance<vpBody, 
+                bp::objects::pointer_holder<boost::shared_ptr<vpBody>,vpBody> > >();
 }
 
 
@@ -84,7 +89,7 @@ pyVpBody& pyVpBody::self()
 }
 
 //TODO:
-void pyVpBody::SetJoint_py(pyVpBJoint *J, const object &pyT)
+void pyVpBody::SetJoint_py(vpJoint *J, const object &pyT)
 {
     if (pyT == object())
         SetJoint(J);
@@ -147,8 +152,21 @@ void pyVpBody::ResetForce_py(void)
 //TODO:
 // void SetInertia_py(const Inertia &);
 // const Inertia &GetInertia_py(void) const;
-// void SetJointFrame_py(vpJoint *J, const SE3 &T);
-// const SE3 &GetJointFrame_py(const vpJoint *) const;
+
+void pyVpBody::SetJointFrame_py(vpJoint *J, const object &pyT)
+{
+    SE3 T = pySE3_2_SE3(pyT);
+    SetJointFrame(J, T);
+}
+
+object pyVpBody::GetJointFrame_py(vpJoint *J)
+{
+    SE3 T = GetJointFrame(J);
+    object pyT;
+    make_pySE3(pyT);
+    SE3_2_pySE3(T, pyT);
+    return pyT;
+}
 
 void pyVpBody::SetFrame_py(object &pySE3)
 {
@@ -305,7 +323,6 @@ void pyVpBody::SetCollidable_py(bool pyB)
     SetCollidable(pyB);
 }
 
-//TODO:
 void pyVpBody::AddGeometry_py(vpGeom *pGeom, const object &pyT)
 {
     if (pyT == object())
@@ -325,9 +342,15 @@ scalar pyVpBody::GetBoundingSphereRadius_py(void)
     return GetBoundingSphereRadius();
 }
 
-//TODO:
-// void pyVpBody::SetMaterial_py(const vpMaterial *);
-// const vpMaterial *pyVpBody::GetMaterial_py(void) const;
+void pyVpBody::SetMaterial_py(const vpMaterial *M)
+{
+    SetMaterial(M);
+}
+
+const vpMaterial &pyVpBody::GetMaterial_py(void)
+{
+    return *(GetMaterial());
+}
 
 object pyVpBody::GetCenterOfMass_py(void)
 {
@@ -408,10 +431,9 @@ void pyVpBody::SetGround_py(bool pyB)
 //     return IsApplyingGravity();
 // }
 
-//TODO:
-const pyVpWorld &pyVpBody::GetWorld_py(void)
+const vpWorld &pyVpBody::GetWorld_py(void)
 {
-    return *reinterpret_cast<const pyVpWorld *>( GetWorld());
+    return *( GetWorld());
     // return *const_cast<pyVpWorld*>((reinterpret_cast<const pyVpWorld *>( GetWorld())));
 }
 
@@ -420,8 +442,10 @@ bool pyVpBody::DetectCollisionApprox_py(object &pBody)
     return DetectCollisionApprox(reinterpret_cast<vpBody *> (&pBody));
 }
 
-//TODO:
-//vpSystem *pyVpBody::GetSystem_py(void);
+vpSystem &pyVpBody::GetSystem_py(void)
+{
+    return *(GetSystem());
+}
 
 void pyVpBody::SetHybridDynamicsType_py(std::string typeStr)
 {
