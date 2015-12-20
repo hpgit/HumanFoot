@@ -52,12 +52,12 @@ public:
 		However you can override or ignore the generated inertia using this method.
 	*/
 
-	//void					 SetInertia_py(const Inertia &);
+	void					 SetInertia_py(object &);
 
 	/*!
 		get an inertia tensor of the body.
 	*/
-	//const Inertia			&GetInertia_py(void) const;
+	object 					GetInertia_py(void);
 
 	/*!
 		set a transformation of the joint frame.

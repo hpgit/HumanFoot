@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
 #include <VP/vphysics.h>
+#include "../VirtualPhysics/pyVpBody.h"
+#include "../VirtualPhysics/pyVpJoint.h"
 
 class VpWorld;
 
@@ -73,6 +75,11 @@ public:	// expose to python
 	scalar getTotalMass();
 	object getBodyShape(int index);
 	bp::list getBodyVerticesPositionGlobal(int index);
+
+	pyVpBody &getBodyByIndex(int index){ return *reinterpret_cast<pyVpBody*> (&_nodes[index]->body);}
+	pyVpBody &getBodyByName(std::string name){ return *reinterpret_cast<pyVpBody*> (&_nodes[name2index(name)]->body);}
+	pyVpJoint &getJointByIndex(int index){ return *reinterpret_cast<pyVpJoint*> (&_nodes[index]->joint);}
+	pyVpJoint &getJointByName(std::string name){ return *reinterpret_cast<pyVpJoint*> (&_nodes[name2index(name)]->joint);}
 
 	/////////////////////////////////////////////////////////////////
 	// index converter

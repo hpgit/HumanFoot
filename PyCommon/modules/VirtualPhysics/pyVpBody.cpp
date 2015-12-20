@@ -26,8 +26,8 @@ BOOST_PYTHON_MODULE(vpBody)
         .def("ApplyGlobalForce", &pyVpBody::ApplyGlobalForce_py)
         .def("ApplyLocalForce_py", &pyVpBody::ApplyLocalForce_py, pyVpBody_ApplyLocalForce_py_overloads())
         .def("ResetForce", &pyVpBody::ResetForce_py)
-        //.def("SetInertia(const Inertia &);
-        //.def("GetInertia(void) const;
+        .def("SetInertia", &pyVpBody::SetInertia_py)
+        .def("GetInertia", &pyVpBody::GetInertia_py)
         .def("SetJointFrame", &pyVpBody::SetJointFrame_py)
         .def("GetJointFrame", &pyVpBody::GetJointFrame_py)
         .def("SetFrame", &pyVpBody::SetFrame_py)
@@ -149,9 +149,32 @@ void pyVpBody::ResetForce_py(void)
     ResetForce();
 }
 
-//TODO:
-// void SetInertia_py(const Inertia &);
-// const Inertia &GetInertia_py(void) const;
+void pyVpBody::SetInertia_py(object &pyI)
+{
+    Inertia I(
+        XD(pyI[0]),
+        XD(pyI[1]),
+        XD(pyI[2]),
+        XD(pyI[3]),
+        XD(pyI[4]),
+        XD(pyI[5]),
+        XD(pyI[6]),
+        XD(pyI[7]),
+        XD(pyI[8]),
+        XD(pyI[9])
+        );
+    SetInertia(I);
+}
+
+object pyVpBody::GetInertia_py(void)
+{
+    Inertia I = GetInertia();
+    object pyI;
+    make_pyInertia(pyI);
+    for(int i=0; i<10; i++)
+        pyI[i] = I[i];
+    return pyI;
+}
 
 void pyVpBody::SetJointFrame_py(vpJoint *J, const object &pyT)
 {

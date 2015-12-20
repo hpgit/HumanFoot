@@ -3,38 +3,9 @@ from numpy import linalg as npl
 import itertools
 import VirtualPhysics.vpWorld as vpw
 import VirtualPhysics.vpBody as vpb
-
-class vpMaterial:
-    def __init__(self):
-        pass
-
-    def GetDefaultMaterial(self):
-        return self
-
-    def SetRestitution(self, res):
-        pass
-
-    def SetDynamicFriction(self, mu):
-        pass
-
-    def SetStaticFriction(self, mu):
-        pass
-
-
-class vpGeom:
-    def __init__(self):
-        pass
-
-
-class vpBox(vpGeom):
-    def __init__(self, _size):
-        pass
-
-
-class vpJoint():
-    def __init__(self):
-        pass
-
+import VirtualPhysics.vpJoint as vpj
+import VirtualPhysics.vpMaterial as vpm
+import VirtualPhysics.vpGeom as vpg
 
 class VpWorld:
     def __init__(self, config):
@@ -46,10 +17,10 @@ class VpWorld:
         self._lockingVel = config.lockingVel
 
         if config.useDefaultContactModel:
-            vpMaterial.GetDefaultMaterial().SetRestitution(0.01)
-            vpMaterial.GetDefaultMaterial().SetDynamicFriction(100)
-            vpMaterial.GetDefaultMaterial().SetStaticFriction(100)
-            self._ground.AddGeometry(vpBox(np.array([100., 0., 100.])))
+            vpm.GetDefaultMaterial().SetRestitution(0.01)
+            vpm.GetDefaultMaterial().SetDynamicFriction(100)
+            vpm.GetDefaultMaterial().SetStaticFriction(100)
+            self._ground.AddGeometry(vpg.vpBox(np.array([100., 0., 100.])))
             self._ground.SetFrame(np.array([0., self._planeHeight, 0.]))
             self._ground.SetGround()
             self._world.AddBody(self._ground)

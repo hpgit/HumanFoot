@@ -26,6 +26,24 @@ void make_pyVec3(object &pyV)
 	pyV = O.copy();
 }
 
+void make_pyse3(object &pyV)
+{
+	numeric::array O( make_tuple(0., 0., 0., 0.,0.,0.) );
+	pyV = O.copy();
+}
+
+void make_pydse3(object &pyV)
+{
+	numeric::array O( make_tuple(0.,0.,0.,0.,0.,0.) );
+	pyV = O.copy();
+}
+
+void make_pyInertia(object &pyV)
+{
+	numeric::array O( make_tuple(0., 0., 0., 0., 0., 0., 0., 0.,0.,0.) );
+	pyV = O.copy();
+}
+
 void make_pySE3(object &pyT)
 {
 	numeric::array I( make_tuple(make_tuple(1.,0.,0.,0.), make_tuple(0.,1.,0.,0.), make_tuple(0.,0.,1.,0.), make_tuple(0.,0.,0.,1.)) );

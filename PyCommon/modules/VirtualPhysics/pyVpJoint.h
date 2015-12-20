@@ -116,12 +116,12 @@ public:
 	/*!
 		set an elasticity of the joint frame.
 	*/
-	void					 SetElasticity_py(scalar);
+	void					 SetElasticity_py(object &);
 
 	/*!
 		set a damping parameter of the joint frame.
 	*/
-	void					 SetDamping_py(scalar);
+	void					 SetDamping_py(object &);
 
 	/*!
 		set a torque applied to the joint which is represented in a local frame.

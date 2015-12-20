@@ -171,16 +171,38 @@ void pyVpBJoint::SetInitialOrientation_py(object &pyR)
     SetOrientation(R);
 }
 
-void pyVpBJoint::SetElasticity_py(scalar pyD)
+void pyVpBJoint::SetElasticity_py(object &pyI)
 {
-    SpatialSpring el(pyD);
-    SetElasticity(el);
+    SpatialSpring I(
+        XD(pyI[0]),
+        XD(pyI[1]),
+        XD(pyI[2]),
+        XD(pyI[3]),
+        XD(pyI[4]),
+        XD(pyI[5]),
+        XD(pyI[6]),
+        XD(pyI[7]),
+        XD(pyI[8]),
+        XD(pyI[9])
+        );
+    SetElasticity(I);
 }
 
-void pyVpBJoint::SetDamping_py(scalar pyD)
+void pyVpBJoint::SetDamping_py(object &pyI)
 {
-    SpatialDamper dam(pyD);
-    SetDamping(dam);
+    SpatialDamper I(
+        XD(pyI[0]),
+        XD(pyI[1]),
+        XD(pyI[2]),
+        XD(pyI[3]),
+        XD(pyI[4]),
+        XD(pyI[5]),
+        XD(pyI[6]),
+        XD(pyI[7]),
+        XD(pyI[8]),
+        XD(pyI[9])
+        );
+    SetDamping(I);
 }
 
 void pyVpBJoint::SetTorque_py(object &pyV)

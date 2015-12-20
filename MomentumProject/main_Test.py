@@ -34,6 +34,7 @@ import VirtualPhysics.vpWorld as VPW
 import VirtualPhysics.vpBody as VPB
 import VirtualPhysics.vpJoint as VPJ
 import VirtualPhysics.vpGeom as VPG
+import VirtualPhysics.LieGroup as VPL
 
 
 import mtOptimize as mot
@@ -129,16 +130,16 @@ def init():
     # testGeom2 = testBody.GetGeometry(0)
     # print testGeom2.GetShapePy()
 
-    testWorld = VPW.vpWorld()
-    testBody = VPB.vpBody()
-    testBody2 = VPB.vpBody()
-    testJoint = VPJ.vpBJoint()
-    testBody2.SetJoint(testJoint)
-    testBody.SetJoint(testJoint)
-    testWorld.AddBody(testBody)
-    testWorld.Initialize()
+    # testWorld = VPW.vpWorld()
+    # testBody = VPB.vpBody()
+    # testBody2 = VPB.vpBody()
+    # testJoint = VPJ.vpBJoint()
+    # testBody2.SetJoint(testJoint)
+    # testBody.SetJoint(testJoint)
+    # testWorld.AddBody(testBody)
+    # testWorld.Initialize()
 
-    print testWorld.GetJoint(0).GetDOF()
+    # print testWorld.GetJoint(0).GetDOF()
     # testBody2.SetAngularVelocity(np.array([0., 1., 0.]))
 
     # print testBody2.GetAngVelocity()

@@ -40,6 +40,11 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getBodyShape", &VpModel::getBodyShape)
 		.def("getBodyVerticesPositionGlobal", &VpModel::getBodyVerticesPositionGlobal)
 
+		.def("getBodyByIndex", &VpModel::getBodyByIndex, return_value_policy<reference_existing_object>())
+		.def("getBodyByName", &VpModel::getBodyByName, return_value_policy<reference_existing_object>())
+		.def("getJointByIndex", &VpModel::getJointByIndex, return_value_policy<reference_existing_object>())
+		.def("getJointByName", &VpModel::getJointByName, return_value_policy<reference_existing_object>())
+
 		.def("index2name", &VpModel::index2name)
 		.def("index2id", &VpModel::index2id)
 		.def("name2index", &VpModel::name2index)
