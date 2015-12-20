@@ -56,7 +56,6 @@ class dse3:
 class Quat:
     pass
 
-#TODO:
 class SO3:
     def __new__(cls, *args):
         if len(args) == 0:
@@ -90,9 +89,11 @@ class SO3:
     def RotX(self, angle):
         return SO3(np.array([[1., 0., 0.], [0., m.cos(angle), -m.sin(angle)], [0., m.sin(angle), m.cos(angle)]]))
 
+    #TODO:
     def RotY(self, angle):
         return SO3(np.array([[1., 0., 0.], [0., m.cos(angle), -m.sin(angle)], [0., m.sin(angle), m.cos(angle)]]))
 
+    #TODO:
     def RotZ(self, angle):
         return SO3(np.array([[1., 0., 0.], [0., m.cos(angle), -m.sin(angle)], [0., m.sin(angle), m.cos(angle)]]))
 
@@ -149,18 +150,7 @@ class SE3(np.ndarray):
     def GetSO3(self):
         return SO3(self[0:3, 0:3])
 
-class Inertia:
-#     Inertia BoxInertia(scalar density, const Vec3 &size);
-# Inertia SphereInertia(scalar density, scalar rad);
-# Inertia CylinderInertia(scalar density, scalar rad, scalar height);
-# Inertia TorusInertia(scalar density, scalar ring_rad, scalar tube_rad);
-#
-# 	/*!
-# 		constructor
-# 	*/
-# 	explicit		 Inertia(scalar mass, scalar Ixx, scalar Iyy, scalar Izz);
-#
-# 	explicit		 Inertia(scalar, scalar, scalar, scalar, scalar, scalar, scalar, scalar, scalar, scalar);
+class Inertia(np.ndarray):
     def __new__(cls, *args):
         if len(args) == 0:
             obj = np.asarray(np.zeros(10)).view(cls)
@@ -202,6 +192,36 @@ class Inertia:
     def GetMass(self):
         return self[9]
 
+    def GetDiag(self):
+        return Vec3(self[1:4])
+
+def BoxInertia(density, size):
+    mass = 8.0 * density * size[0] * size[1] * size[2]
+    ix = mass * (size[1] * size[1] + size[2] * size[2]) / 3.
+    iy = mass * (size[0] * size[0] + size[2] * size[2]) / 3.
+    iz = mass * (size[0] * size[0] + size[1] * size[1]) / 3.
+    return Inertia(mass, ix, iy, iz)
+
+def SphereInertia(density, rad):
+    rad_2 = rad * rad
+    mass = density * m.pi * rad_2
+    i = 0.4 * mass * rad_2
+    return Inertia(mass, i, i, i)
+
+def CylinderInertia(density, rad, height):
+    rad_2 = rad * rad
+    mass = density * m.pi * rad_2 * height
+    ix = mass * height * height  / 12.0 + .25 * mass * rad_2
+    iy = ix
+    iz = .5* mass * rad_2
+    return Inertia(mass, ix, iy, iz)
+
+def TorusInertia(density, ring_rad, tube_rad):
+    mass = density * 2. * (m.pi*m.pi) * ring_rad * tube_rad * tube_rad
+    ix = mass * (0.625 * tube_rad * tube_rad + .5 * ring_rad + ring_rad)
+    iy = ix
+    iz = mass * (0.75 * tube_rad * tube_rad + ring_rad + ring_rad)
+    return Inertia(mass, ix, iy, iz);
 
 def main():
     v = Vec3(1., 2., 1.)

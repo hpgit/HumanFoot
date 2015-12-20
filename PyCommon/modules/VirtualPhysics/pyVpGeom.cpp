@@ -44,6 +44,10 @@ BOOST_PYTHON_MODULE(vpGeom)
     .def("GetBoundingSphereRadius", &vpCapsule::GetBoundingSphereRadius, &pyVpCapsule::default_GetBoundingSphereRadius)
     .def("GetShape", &vpCapsule::GetShape, &pyVpCapsule::default_GetShape)
 
+    .def("GetLocalFrame", &pyVpCapsule::GetLocalFrame_py)
+    .def("GetGlobalFrame", &pyVpCapsule::GetGlobalFrame_py)
+    .def("UpdateGlobalFrame", &pyVpCapsule::UpdateGlobalFrame_py)
+
     .def("GetInertiaPy", &pyVpCapsule::GetInertia_py)
     .def("GetShapePy", &pyVpCapsule::GetShape_py)
     .def("SetSize", &vpCapsule::SetSize)
@@ -55,6 +59,10 @@ BOOST_PYTHON_MODULE(vpGeom)
     .def("GetInertia", &vpSphere::GetInertia, &pyVpSphere::default_GetInertia)
     .def("GetBoundingSphereRadius", &vpSphere::GetBoundingSphereRadius, &pyVpSphere::default_GetBoundingSphereRadius)
     .def("GetShape", &vpSphere::GetShape, &pyVpSphere::default_GetShape)
+
+    .def("GetLocalFrame", &pyVpSphere::GetLocalFrame_py)
+    .def("GetGlobalFrame", &pyVpSphere::GetGlobalFrame_py)
+    .def("UpdateGlobalFrame", &pyVpSphere::UpdateGlobalFrame_py)
 
     .def("GetInertiaPy", &pyVpSphere::GetInertia_py)
     .def("GetShapePy", &pyVpSphere::GetShape_py)
@@ -129,6 +137,26 @@ object pyVpBox::GetInertia_py(scalar d)
     return pyI;
 }
 
+object pyVpCapsule::GetLocalFrame_py(void)
+{
+    SE3 T = GetLocalFrame();
+    object pyT;
+    SE3_2_pySE3(T, pyT);
+    return pyT;
+}
+
+object pyVpCapsule::GetGlobalFrame_py(void)
+{
+    SE3 T = GetGlobalFrame();
+    object pyT;
+    SE3_2_pySE3(T, pyT);
+    return pyT;
+}
+
+void pyVpCapsule::UpdateGlobalFrame_py(void)
+{
+    UpdateGlobalFrame();
+}
 bp::list pyVpCapsule::GetShape_py(void)
 {
     char type;
@@ -152,6 +180,26 @@ object pyVpCapsule::GetInertia_py(scalar d)
     return pyI;
 }
 
+object pyVpSphere::GetLocalFrame_py(void)
+{
+    SE3 T = GetLocalFrame();
+    object pyT;
+    SE3_2_pySE3(T, pyT);
+    return pyT;
+}
+
+object pyVpSphere::GetGlobalFrame_py(void)
+{
+    SE3 T = GetGlobalFrame();
+    object pyT;
+    SE3_2_pySE3(T, pyT);
+    return pyT;
+}
+
+void pyVpSphere::UpdateGlobalFrame_py(void)
+{
+    UpdateGlobalFrame();
+}
 bp::list pyVpSphere::GetShape_py(void)
 {
     char type;

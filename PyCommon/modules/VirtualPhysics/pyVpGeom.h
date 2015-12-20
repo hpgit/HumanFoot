@@ -159,6 +159,13 @@ public:
 		vpCapsule::GetShape(type, data);
 	}
 
+	object GetLocalFrame_py(void);
+
+	/*!
+		get a coordinate frame of the geometry w.r.t a global frame.
+	*/
+	object GetGlobalFrame_py(void);
+	void UpdateGlobalFrame_py(void);
 
 	/*!
 		get a shape information.
@@ -216,6 +223,13 @@ public:
 	}
 
 
+	object GetLocalFrame_py(void);
+
+	/*!
+		get a coordinate frame of the geometry w.r.t a global frame.
+	*/
+	object GetGlobalFrame_py(void);
+	void UpdateGlobalFrame_py(void);
 	/*!
 		get a shape information.
 		return type = 'S', data[0] = radius

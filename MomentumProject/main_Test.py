@@ -94,6 +94,7 @@ rd_jointPos = None
 
 viewer = None
 
+testWorld = VPW.vpWorld()
 
 def init():
     global motion
@@ -122,6 +123,8 @@ def init():
     global rd_PositionDes
     global viewer
 
+    global testWorld
+
     # testGeom = VPG.vpBox()
     # testGeom.SetSize(np.array([2., 2., 2.]))
     # print "size: ", testGeom.GetBoundingSphereRadius()
@@ -131,19 +134,17 @@ def init():
     # print testGeom2.GetShapePy()
 
     # testWorld = VPW.vpWorld()
-    # testBody = VPB.vpBody()
-    # testBody2 = VPB.vpBody()
-    # testJoint = VPJ.vpBJoint()
-    # testBody2.SetJoint(testJoint)
-    # testBody.SetJoint(testJoint)
-    # testWorld.AddBody(testBody)
+    testBody = VPB.vpBody()
+    testBody2 = VPB.vpBody()
+    testJoint = VPJ.vpBJoint()
+    testBody2.SetJoint(testJoint)
+    testBody.SetJoint(testJoint)
+    testWorld.AddBody(testBody)
     # testWorld.Initialize()
 
     # print testWorld.GetJoint(0).GetDOF()
-    # testBody2.SetAngularVelocity(np.array([0., 1., 0.]))
+    # print testWorld.GetBody(0).GetAngVelocity()
 
-    # print testBody2.GetAngVelocity()
-    # print testJoint.GetDOF()
 
     np.set_printoptions(precision=4, linewidth=200)
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_1()
@@ -233,7 +234,6 @@ def init():
 init()
 
 # controlModel.fixBody(0)
-
 
 class Callback:
 

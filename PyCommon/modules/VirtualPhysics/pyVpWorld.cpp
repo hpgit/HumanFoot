@@ -37,8 +37,7 @@ BOOST_PYTHON_MODULE(vpWorld)
 		.def("GetPotentialEnergy", &pyVpWorld::GetPotentialEnergy_py)
 		.def("GetTotalEnergy", &pyVpWorld::GetTotalEnergy_py)
 		.def("GetNumBody", &pyVpWorld::GetNumBody_py)
-		// .def("GetBody", &pyVpWorld::GetBody_py, return_value_policy<reference_existing_object>())
-		.def("GetBody", &pyVpWorld::GetBody_py, return_value_policy<copy_non_const_reference>())
+		.def("GetBody", &pyVpWorld::GetBody_py, return_value_policy<reference_existing_object>())
 		//.def(" //const vpBody						*GetBodyByName(const string &name_py) const;
 		.def("GetNumGeometry", &pyVpWorld::GetNumGeometry_py)
 		.def("BackupState", &pyVpWorld::BackupState_py)
@@ -207,6 +206,7 @@ pyVpBody& pyVpWorld::GetBody_py(int pyI)
 {
 	// return reinterpret_cast<pyVpBody*>(GetBody(pyI));
 	return *(reinterpret_cast<pyVpBody*>(GetBody(pyI)));
+	// return *(GetBody(pyI));
 }
 
 	//get a pointer to the body with the name

@@ -6,6 +6,7 @@ import VirtualPhysics.vpBody as vpb
 import VirtualPhysics.vpJoint as vpj
 import VirtualPhysics.vpMaterial as vpm
 import VirtualPhysics.vpGeom as vpg
+import VirtualPhysics.LieGroup as vpl
 
 class VpWorld:
     def __init__(self, config):
@@ -20,8 +21,10 @@ class VpWorld:
             vpm.GetDefaultMaterial().SetRestitution(0.01)
             vpm.GetDefaultMaterial().SetDynamicFriction(100)
             vpm.GetDefaultMaterial().SetStaticFriction(100)
-            self._ground.AddGeometry(vpg.vpBox(np.array([100., 0., 100.])))
-            self._ground.SetFrame(np.array([0., self._planeHeight, 0.]))
+            groundGeom = vpg.vpBox()
+            groundGeom.SetSize(vpl.Vec3(100., 0., 100.))
+            self._ground.AddGeometry(groundGeom)
+            self._ground.SetFrame(vpl.SE3(np.array([0., self._planeHeight, 0.])))
             self._ground.SetGround()
             self._world.AddBody(self._ground)
 
