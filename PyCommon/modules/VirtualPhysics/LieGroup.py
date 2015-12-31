@@ -44,19 +44,19 @@ class Vec3(np.ndarray):
         else:
             raise ZeroDivisionError
 
-class Axis:
+class Axis(np.ndarray):
     pass
 
-class se3:
+class se3(np.ndarray):
     pass
 
-class dse3:
+class dse3(np.ndarray):
     pass
 
-class Quat:
+class Quat(np.ndarray):
     pass
 
-class SO3:
+class SO3(np.ndarray):
     def __new__(cls, *args):
         if len(args) == 0:
             obj = np.asarray(np.eye(3, 3)).view(cls)
@@ -77,6 +77,14 @@ class SO3:
 
         raise DimNotSupportedError
 
+    def __mul__(self, other):
+        if isinstance(other, Vec3):
+            return Vec3(np.dot(self, other))
+        elif isinstance(other, Axis):
+            return Axis(np.dot(self, other))
+        else:
+            super(SO3, self).__mul__(other)
+
     def FromAngleAxis(self, v):
         pass
 
@@ -89,13 +97,11 @@ class SO3:
     def RotX(self, angle):
         return SO3(np.array([[1., 0., 0.], [0., m.cos(angle), -m.sin(angle)], [0., m.sin(angle), m.cos(angle)]]))
 
-    #TODO:
     def RotY(self, angle):
-        return SO3(np.array([[1., 0., 0.], [0., m.cos(angle), -m.sin(angle)], [0., m.sin(angle), m.cos(angle)]]))
+        return SO3(np.array([[m.cos(angle), 0., m.sin(angle)], [0., 1., 0.], [-m.sin(angle), 0., m.cos(angle)]]))
 
-    #TODO:
     def RotZ(self, angle):
-        return SO3(np.array([[1., 0., 0.], [0., m.cos(angle), -m.sin(angle)], [0., m.sin(angle), m.cos(angle)]]))
+        return SO3(np.array([[m.cos(angle), -m.sin(angle), 0.], [m.sin(angle), -m.sin(angle), 0.], [0., 0., 1.]]))
 
 class SE3(np.ndarray):
     def __new__(cls, *args):
@@ -141,8 +147,13 @@ class SE3(np.ndarray):
     def __mul__(self, other):
         if isinstance(other, Vec3):
             return Vec3(np.dot(self[0:3, 0:3], other)) + Vec3(self[0:3, 3])
+        elif isinstance(other, Axis):
+            return Axis(np.dot(self[0:3, 0:3], other))
         else:
             super(SE3, self).__mul__(other)
+
+    def GetPosition(self):
+        return self.GetVec3()
 
     def GetVec3(self):
         return Vec3(self[0:3, 3])

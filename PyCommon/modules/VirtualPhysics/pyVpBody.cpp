@@ -310,7 +310,8 @@ object pyVpBody::GetAngVelocity_py(void)
     numeric::array O(make_tuple(0., 0., 0.));
     object pyV = O.copy();
     Vec3_2_pyVec3(V, pyV);
-    return pyV;
+    object pyVec3Class = import("VirtualPhysics.LieGroup").attr("Vec3");
+    return pyV.attr("view")(pyVec3Class);
 }
 
 object pyVpBody::GetGenAcceleration_py(void)
@@ -372,7 +373,7 @@ void pyVpBody::SetMaterial_py(const vpMaterial *M)
 
 pyVpMaterial &pyVpBody::GetMaterial_py(void)
 {
-    return *(GetMaterial());
+    return *reinterpret_cast<pyVpMaterial*>(const_cast<vpMaterial*>(GetMaterial()));
 }
 
 object pyVpBody::GetCenterOfMass_py(void)
@@ -467,7 +468,7 @@ bool pyVpBody::DetectCollisionApprox_py(object &pBody)
 
 pyVpSystem &pyVpBody::GetSystem_py(void)
 {
-    return *reinterpret_cast<vpBody *>(GetSystem());
+    return *reinterpret_cast<pyVpSystem *>(GetSystem());
 }
 
 void pyVpBody::SetHybridDynamicsType_py(std::string typeStr)

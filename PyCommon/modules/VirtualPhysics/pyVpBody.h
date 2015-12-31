@@ -4,6 +4,8 @@
 #include <VP/vpDataType.h>
 #include "pyVpWorld.h"
 #include "pyVpJoint.h"
+#include "pyVpSystem.h"
+#include "pyVpMaterial.h"
 
 class pyVpWorld;
 class pyVpBJoint;

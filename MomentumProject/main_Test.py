@@ -94,7 +94,6 @@ rd_jointPos = None
 
 viewer = None
 
-testWorld = VPW.vpWorld()
 
 def init():
     global motion
@@ -123,29 +122,6 @@ def init():
     global rd_PositionDes
     global viewer
 
-    global testWorld
-
-    # testGeom = VPG.vpBox()
-    # testGeom.SetSize(np.array([2., 2., 2.]))
-    # print "size: ", testGeom.GetBoundingSphereRadius()
-    # testBody = VPB.vpBody()
-    # testBody.AddGeometry(testGeom)
-    # testGeom2 = testBody.GetGeometry(0)
-    # print testGeom2.GetShapePy()
-
-    # testWorld = VPW.vpWorld()
-    testBody = VPB.vpBody()
-    testBody2 = VPB.vpBody()
-    testJoint = VPJ.vpBJoint()
-    testBody2.SetJoint(testJoint)
-    testBody.SetJoint(testJoint)
-    testWorld.AddBody(testBody)
-    # testWorld.Initialize()
-
-    # print testWorld.GetJoint(0).GetDOF()
-    # print testWorld.GetBody(0).GetAngVelocity()
-
-
     np.set_printoptions(precision=4, linewidth=200)
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_1()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_5()
@@ -164,7 +140,7 @@ def init():
     # vpWorld.SetGlobalDamping(0.001)
     # controlModel.initializeHybridDynamics()
     controlModel.initializeForwardDynamics()
-    ModelOffset = np.array([0., 1., 0.])
+    ModelOffset = np.array([0., .07, 0.])
     controlModel.translateByOffset(ModelOffset)
 
     totalDOF = controlModel.getTotalDOF()
@@ -211,9 +187,9 @@ def init():
     viewer.objectInfoWnd.add1DSlider(
         '1/simul speed', minVal=1., maxVal=100., initVal=config['simulSpeedInv'], valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
-        'normal des force min', minVal=0., maxVal=200., initVal=80., valStep=5.)
+        'normal des force min', minVal=0., maxVal=200., initVal=80., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
-        'normal des force max', minVal=0., maxVal=200., initVal=80., valStep=5.)
+        'normal des force max', minVal=0., maxVal=200., initVal=80., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
         'des force begin', minVal=0., maxVal=len(motion) - 1, initVal=70., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
@@ -319,21 +295,19 @@ class Callback:
         ddth_des_flat[0:6] = [0.] * 6
         self.setTimeStamp()
         simulContactForces = np.zeros(3)
+
         for i in range(int(stepsPerFrame)):
             if desForceFrame[0] <= frame <= desForceFrame[1]:
                 if True:
+                # if i == 0:
+                    # totalForceImpulse = stepsPerFrame * totalForce
                     cBodyIDs, cPositions, cPositionLocals, cForces, torques \
                         = hls.calcLCPControl(
                             motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, ddth_des_flat)
 
-            # if timeStamp is not None:
-            #     if self.LCPTimeStamp is not None:
-            #         self.LCPTimeStamp += np.array(timeStamp)
-            #     else:
-            #         self.LCPTimeStamp = np.array(timeStamp).copy()
             try:
-                # print torques[:6]
-                print torques[:]
+                print torques[:6]
+                # print torques[:]
             except Exception, e:
                 pass
             if torques is not None:
@@ -382,6 +356,11 @@ class Callback:
             viewer.cForceWnd.insertData('expForce', frame, sumForce[1])
         else:
             viewer.cForceWnd.insertData('expForce', frame, 0.)
+        try:
+            print torques[:6]
+            # print torques[:]
+        except Exception, e:
+            pass
 
         self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, tmptmp \
             = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques)
@@ -413,8 +392,12 @@ class Callback:
         else:
             viewer.cForceWnd.insertData('realForce', frame, 0.)
 
-        viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1] * .9)
-        viewer.cForceWnd.insertData('desForceMax', frame, totalForce[1] * 1.1)
+        if desForceFrame[0] <= frame <= desForceFrame[1]:
+            viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1] * .8)
+            viewer.cForceWnd.insertData('desForceMax', frame, totalForce[1] * 1.2)
+        else:
+            viewer.cForceWnd.insertData('desForceMin', frame, 0.)
+            viewer.cForceWnd.insertData('desForceMax', frame, 0.)
 
         self.setTimeStamp()
         # print self.timeStamp

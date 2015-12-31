@@ -10,6 +10,8 @@ import ArticulatedBody.ysJacobian as yjc
 import Util.ysPythonEx as ype
 import Math.mmMath as mm
 
+import VirtualPhysics.LieGroup as VPL
+
 import numpy as np
 import numpy.linalg as npl
 import math
@@ -76,10 +78,10 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
 def repairForces(forces, contactPositions):
     for idx in range(0, len(forces)):
         force = forces[idx]
-        # if force[1] < 0.:
-        #    force[0] = 0.
-        #    force[2] = 0.
-        #    force[1] = 0.
+        if force[1] < 0.:
+           force[0] = 0.
+           force[2] = 0.
+           force[1] = 0.
         #    force[1] = -contactPositions[idx][1]*2000.
         # elif force[1] > 10000.:
         #    ratio = 10000./force[1]
@@ -140,7 +142,7 @@ def getLCPMatrix(world, model, invM, invMc, mu, tau, contactNum, contactPosition
 
     qdot_0 = ype.makeFlatList(totalDOF)
     ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
-    qdot_0 = np.array(qdot_0)
+    qdot_0 = np.asarray(qdot_0)
     if tau is None:
         tau = np.zeros(np.shape(qdot_0))
 
@@ -301,7 +303,7 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
     c = np.dot(M, invMc)
 
     Mtmp = np.dot(M, M.T)+np.eye(M.shape[0])
-    Mtmp[:6, :6] -= np.eye(6)
+    # Mtmp[:6, :6] -= np.eye(6)
 
     pinvM = npl.inv(Mtmp)
     pinvM0 = np.dot(M.T, pinvM)
@@ -327,7 +329,9 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
     A = np.concatenate((A1,
                         A2,
                         A3), axis=0) * factor
-    # A += 0.01 * np.eye(A.shape[0])*factor
+    A = 0.01 * np.eye(A.shape[0])*factor
+    # print npl.eigvals(A+A.T)
+    npl.eigvals(A+A.T)
 
     # bx= h * (M*qdot_0 + tau - c)
     # b =[N.T * Jc * invM * kx]
@@ -336,7 +340,7 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
 
     qdot_0 = ype.makeFlatList(totalDOF)
     ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
-    qdot_0 = np.array(qdot_0)
+    qdot_0 = np.asarray(qdot_0)
     if tau0 is None:
         tau0 = np.zeros(np.shape(qdot_0))
 
@@ -376,8 +380,16 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
     if True:
         # if True:
         try:
-            Qqp = cvxMatrix(A+A.T)
+            Qtauqp = np.vstack(( np.hstack((np.dot(pinvM1[:6], np.hstack((JTN, JTD))), np.zeros_like(N[:6]))), np.zeros((A.shape[0]-6, A.shape[1]))))
+            ptauqp = np.dot(pinvM1[:6], (np.asarray(c)-np.asarray(tau0))) - np.asarray(tau0[:6])
+
+            np.dot(Qtauqp.T, Qtauqp)
+
+            Qqp = cvxMatrix(A+A.T + np.dot(Qtauqp.T, Qtauqp))
             pqp = cvxMatrix(b)
+
+            # Qqp = cvxMatrix(A+A.T)
+            # pqp = cvxMatrix(b)
             equalConstForce = False
             G = np.vstack((-A, -np.eye(A.shape[0])))
             hnp = np.hstack((b.T, np.zeros(A.shape[0])))
@@ -385,25 +397,33 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
             if not equalConstForce:
                 constMu = .1
                 constFric = totalForce[1]*constMu
-                totalForceMat = np.concatenate((N, D, np.zeros(N.shape)), axis=1)
+                totalForceMat = np.concatenate((N, D, np.zeros_like(N)), axis=1)
                 G = np.concatenate((G, totalForceMat[:3], totalForceMat[:3]), axis=0)
                 G[-6] *= -1.
                 G[-5] *= -1.
                 G[-4] *= -1.
                 hnp = np.hstack((hnp, np.zeros(6)))
                 hnp[-6] = -totalForce[0] - constFric
-                hnp[-5] = -totalForce[1] * .9
+                hnp[-5] = -totalForce[1] * .0
                 hnp[-4] = -totalForce[2] - constFric
                 hnp[-3] = totalForce[0] + constFric
-                hnp[-2] = totalForce[1] * 1.1
+                hnp[-2] = totalForce[1] * 10.
                 hnp[-1] = totalForce[2] + constFric
 
 
-                # G = np.vstack((G, np.hstack((np.ones((2, N.shape[1])), np.zeros((2, D.shape[1]+N.shape[1]))))))
-                # G[-2] *= -1.
-                # hnp = np.hstack((hnp, np.zeros(2)))
-                # hnp[-2] = -totalForce[1] * .9
-                # hnp[-1] = totalForce[1] * 1.1
+            # G = np.vstack((G, np.hstack((np.ones((2, N.shape[1])), np.zeros((2, D.shape[1]+N.shape[1]))))))
+            # G[-2] *= -1.
+            # hnp = np.hstack((hnp, np.zeros(2)))
+            # hnp[-2] = -totalForce[1] * .9
+            # hnp[-1] = totalForce[1] * 1.1
+
+            # root torque 0 condition as inequality constraint
+            Atauqp = np.hstack((np.dot(pinvM1, np.hstack((JTN, JTD))), np.zeros((pinvM1.shape[0], N.shape[1]))))
+            btauqp = np.dot(pinvM1, (np.asarray(c)-np.asarray(tau0))) - np.array(tau0)
+
+            # G = np.concatenate((G, -Atauqp, Atauqp), axis=0)
+            # hnp = np.hstack((hnp, np.hstack((-btauqp, btauqp))))
+            # hnp[-2*pinvM1.shape[0]:] += 1. * np.ones(2*pinvM1.shape[0])
 
             Gqp = cvxMatrix(G)
             hqp = cvxMatrix(hnp)
@@ -411,11 +431,14 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
             # check correctness of equality constraint
             # tau = np.dot(pinvM1, -c + tau0 + np.dot(JTN, normalForce) + np.dot(JTD, tangenForce))
             # tau = pinvM1*JTN*theta + pinvM1*JTD*phi + pinvM1*tau0 - pinvM1*b + tau0
-            Atauqp = np.hstack((np.dot(pinvM1[:6], np.hstack((JTN, JTD))), np.zeros(N[:6].shape)))
-            btauqp = np.dot(pinvM1[:6], (np.array(c)-np.array(tau0))) - np.array(tau0[:6])
+            Atauqp = np.hstack((np.dot(pinvM1[:6], np.hstack((JTN, JTD))), np.zeros_like(N[:6])))
+            btauqp = np.dot(pinvM1[:6], (np.asarray(c)-np.asarray(tau0))) - np.asarray(tau0[:6])
+            # Atauqp = np.hstack((np.dot(pinvM1, np.hstack((JTN, JTD))), np.zeros((pinvM1.shape[0], N.shape[1]))))
+            # btauqp = np.dot(pinvM1, (np.asarray(c)-np.asarray(tau0))) - np.asarray(tau0)
 
-            AextTorqp = np.concatenate((rcN, rcD, np.zeros(N[:3].shape)), axis=1)
+            AextTorqp = np.concatenate((rcN, rcD, np.zeros_like(N[:3])), axis=1)
             bextTorqp = totalForce[3:]
+
 
             # Atauqp = np.vstack((Atauqp, AextTorqp))
             # btauqp = np.hstack((btauqp, bextTorqp))
@@ -429,10 +452,11 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
             Aqp = cvxMatrix(Atauqp)
             bqp = cvxMatrix(btauqp)
 
-            cvxSolvers.options['show_progress'] = False
+            cvxSolvers.options['show_progress'] = True
             cvxSolvers.options['maxiters'] = 100
             # cvxSolvers.options['refinement'] = 10
-            xqp = np.array(cvxSolvers.qp(Qqp, pqp, Gqp, hqp, Aqp, bqp)['x']).flatten()
+            # xqp = np.array(cvxSolvers.qp(Qqp, pqp, Gqp, hqp, Aqp, bqp)['x']).flatten()
+            xqp = np.asarray(cvxSolvers.qp(Qqp, pqp, Gqp, hqp)['x']).flatten()
             # print "x: ", x
             # zqp = np.dot(A, xqp).T + b
             # print "QP z: ", np.dot(xqp, zqp)
