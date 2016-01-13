@@ -10,6 +10,8 @@ import sys
 # if './modules' not in sys.path:
 #    sys.path.append('./modules')
 
+import math
+
 import Math.mmMath as mm
 import Resource.ysMotionLoader as yf
 import Renderer.ysRenderer as yr
@@ -194,6 +196,8 @@ def init():
         'des force begin', minVal=0., maxVal=len(motion) - 1, initVal=70., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
         'des force dur', minVal=0., maxVal=len(motion) - 1, initVal=20., valStep=1.)
+    viewer.objectInfoWnd.add1DSlider(
+        'torque weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
 
     viewer.cForceWnd.addDataSet('expForce', FL_BLACK)
     viewer.cForceWnd.addDataSet('desForceMin', FL_RED)
@@ -263,6 +267,8 @@ class Callback:
         Dt = 2. * (Kt**.5)
         controlModel.SetJointsDamping(damp)
 
+        wTorque = math.pow(10, getVal('torque weight'))
+
         # tracking
         th_r = motion.getDOFPositions(0)
         th = controlModel.getDOFPositions()
@@ -303,7 +309,7 @@ class Callback:
                     # totalForceImpulse = stepsPerFrame * totalForce
                     cBodyIDs, cPositions, cPositionLocals, cForces, torques \
                         = hls.calcLCPControl(
-                            motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, ddth_des_flat)
+                            motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wTorque, ddth_des_flat)
 
             try:
                 print torques[:6]
@@ -337,7 +343,7 @@ class Callback:
         # print torques
 
         self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, torques \
-            = hls.calcLCPControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, ddth_des_flat, 8)
+            = hls.calcLCPControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wTorque, ddth_des_flat, 8)
         del rd_cForcesControl[:]
         del rd_cPositionsControl[:]
         for i in range(len(self.cBodyIDs)):

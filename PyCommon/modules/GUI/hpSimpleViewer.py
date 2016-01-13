@@ -1,7 +1,7 @@
 import ysSimpleViewer_ori as ysvOri
 import GUI.ysBaseUI as ybu
 import fltk
-
+import cPickle
 
 class hpSimpleViewer(ysvOri.SimpleViewer):
     def __init__(self, rect=None, title='hpSimpleViewer'):
@@ -43,9 +43,19 @@ class hpMotionViewWnd(ysvOri.MotionViewWnd):
 
 class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
     def __init__(self, x, y, w, h, doc):
+        super(hpObjectInfoWnd, self).__init__(x, y, w, h, doc)
         self.valObjects = dict()
         self.valObjOffset = 30
-        super(hpObjectInfoWnd, self).__init__(x, y, w, h, doc)
+
+        self.begin()
+        saveBtn = fltk.Fl_Button(10, self.valObjOffset, 80, 20, 'param save')
+        saveBtn.callback(self.save)
+        loadBtn = fltk.Fl_Button(100, self.valObjOffset, 80, 20, 'param load')
+        loadBtn.callback(self.load)
+        self.end()
+        self.valObjOffset += 40
+
+        # super(hpObjectInfoWnd, self).__init__(x, y, w, h, doc)
 
     def update(self, ev, doc):
         super(hpObjectInfoWnd, self).update(ev, doc)
@@ -55,6 +65,7 @@ class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
         pass
 
     def getValobject(self, name):
+        return self.valObjects[name]
         pass
 
     def getValObjects(self):
@@ -69,6 +80,12 @@ class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
         except Exception, e:
             print e
             return 0
+
+    def getNameAndVals(self):
+        objValDict = dict()
+        for k, v in self.valObjects.iteritems():
+            objValDict[k] = v.value()
+        return objValDict
 
     def add1DSlider(self, name, minVal, maxVal, valStep, initVal):
         self.begin()
@@ -87,6 +104,18 @@ class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
         self.end()
         pass
 
+    def save(self, obj):
+        f = file('params.settings', 'w')
+        cPickle.dump(self.getNameAndVals(), f)
+        f.close()
+
+    def load(self, obj):
+        f = file('params.settings', 'r')
+        objVals = cPickle.load(f)
+        f.close()
+        for k, v in objVals.iteritems():
+            if k in self.valObjects.keys():
+                self.valObjects[k].value(v)
 
 class hpContactForceGraphWnd(fltk.Fl_Widget, ybu.Observer):
     def __init__(self, x, y, w, h, doc):

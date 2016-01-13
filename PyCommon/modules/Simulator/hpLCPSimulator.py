@@ -280,7 +280,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
     return bodyIDs, contactPositions, contactPositionsLocal, forces, timeStamp
 
 
-def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=None, numFrictionBases=8):
+def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wTorque, tau0=None, numFrictionBases=8):
     # model = VpControlModel
     # numFrictionBases = 8
     contactNum, bodyIDs, contactPositions, contactPositionsLocal, JTN, JTD, E, N, D \
@@ -331,7 +331,7 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
                         A3), axis=0) * factor
     A = 0.01 * np.eye(A.shape[0])*factor
     # print npl.eigvals(A+A.T)
-    npl.eigvals(A+A.T)
+    # npl.eigvals(A+A.T)
 
     # bx= h * (M*qdot_0 + tau - c)
     # b =[N.T * Jc * invM * kx]
@@ -380,13 +380,11 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, tau0=No
     if True:
         # if True:
         try:
-            Qtauqp = np.vstack(( np.hstack((np.dot(pinvM1[:6], np.hstack((JTN, JTD))), np.zeros_like(N[:6]))), np.zeros((A.shape[0]-6, A.shape[1]))))
-            ptauqp = np.dot(pinvM1[:6], (np.asarray(c)-np.asarray(tau0))) - np.asarray(tau0[:6])
+            Qtauqp = np.hstack((np.dot(pinvM1[:6], np.hstack((JTN, JTD))), np.zeros_like(N[:6])))
+            ptauqp = np.dot(pinvM1[:6], (-np.asarray(c)+np.asarray(tau0))) + np.asarray(tau0[:6])
 
-            np.dot(Qtauqp.T, Qtauqp)
-
-            Qqp = cvxMatrix(A+A.T + np.dot(Qtauqp.T, Qtauqp))
-            pqp = cvxMatrix(b)
+            Qqp = cvxMatrix(2.*A+ wTorque* np.dot(Qtauqp.T, Qtauqp))
+            pqp = cvxMatrix(b+ wTorque* np.dot(ptauqp.T, Qtauqp))
 
             # Qqp = cvxMatrix(A+A.T)
             # pqp = cvxMatrix(b)
