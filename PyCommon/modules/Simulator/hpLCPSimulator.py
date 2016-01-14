@@ -380,19 +380,26 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wTorque
     if True:
         # if True:
         try:
-            Qtauqp = np.hstack((np.dot(pinvM1[:6], np.hstack((JTN, JTD))), np.zeros_like(N[:6])))
-            ptauqp = np.dot(pinvM1[:6], (-np.asarray(c)+np.asarray(tau0))) + np.asarray(tau0[:6])
-
-            Qqp = cvxMatrix(2.*A+ wTorque* np.dot(Qtauqp.T, Qtauqp))
-            pqp = cvxMatrix(b+ wTorque* np.dot(ptauqp.T, Qtauqp))
-
             # Qqp = cvxMatrix(A+A.T)
             # pqp = cvxMatrix(b)
+
+            # Qtauqp = np.hstack((np.dot(pinvM1[:6], np.hstack((JTN, JTD))), np.zeros_like(N[:6])))
+            # ptauqp = np.dot(pinvM1[:6], (-np.asarray(c)+np.asarray(tau0))) + np.asarray(tau0[:6])
+
+            # Qqp = cvxMatrix(2.*A + wTorque * np.dot(Qtauqp.T, Qtauqp))
+            # pqp = cvxMatrix(b + wTorque * np.dot(ptauqp.T, Qtauqp))
+
+            Qfqp = np.concatenate((N[:3], D[:3], np.zeros_like(N[:3])), axis=1)
+            pfqp = -totalForce[:3]
+
+            Qqp = cvxMatrix(2.*A + wTorque * np.dot(Qfqp.T, Qfqp))
+            pqp = cvxMatrix(b + wTorque * np.dot(pfqp.T, Qfqp))
+
             equalConstForce = False
             G = np.vstack((-A, -np.eye(A.shape[0])))
             hnp = np.hstack((b.T, np.zeros(A.shape[0])))
 
-            if not equalConstForce:
+            if False and not equalConstForce:
                 constMu = .1
                 constFric = totalForce[1]*constMu
                 totalForceMat = np.concatenate((N, D, np.zeros_like(N)), axis=1)
@@ -452,9 +459,9 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wTorque
 
             cvxSolvers.options['show_progress'] = True
             cvxSolvers.options['maxiters'] = 100
-            # cvxSolvers.options['refinement'] = 10
-            # xqp = np.array(cvxSolvers.qp(Qqp, pqp, Gqp, hqp, Aqp, bqp)['x']).flatten()
-            xqp = np.asarray(cvxSolvers.qp(Qqp, pqp, Gqp, hqp)['x']).flatten()
+            cvxSolvers.options['refinement'] = 1
+            xqp = np.array(cvxSolvers.qp(Qqp, pqp, Gqp, hqp, Aqp, bqp)['x']).flatten()
+            # xqp = np.asarray(cvxSolvers.qp(Qqp, pqp, Gqp, hqp)['x']).flatten()
             # print "x: ", x
             # zqp = np.dot(A, xqp).T + b
             # print "QP z: ", np.dot(xqp, zqp)
