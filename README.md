@@ -28,25 +28,27 @@ libgle3
 
 #### In MAC OS X,
 
-ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-brew update
+in OSX terminal,
 
-brew install python
-brew install boost --with-python
-brew install boost-python
-brew install fltk
-    in El capitan,
-    brew reinstall --devel https://raw.githubusercontent.com/dpo/homebrew/ec46018128dde5bf466b013a6c7086d0880930a3/Library/Formula/fltk.rb
-brew install ode
-brew install bullet
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    brew update
+    brew install python
+    brew install boost --with-python
+    brew install boost-python
+    brew install fltk
+        in El capitan,
+        brew reinstall --devel https://raw.githubusercontent.com/dpo/homebrew/ec46018128dde5bf466b013a6c7086d0880930a3/Library/Formula/fltk.rb
+    brew install ode
+    brew install bullet
 
-pip install --upgrade pip setuptools
+after make virtual environment,
 
-pip install numpy
-pip install PyOpenGL PyOpenGL-accelerate
-pip install cvxopt
-pip install pyode
-pip install openopt
+    pip install --upgrade pip setuptools
+    pip install numpy
+    pip install PyOpenGL PyOpenGL-accelerate
+    pip install cvxopt
+    pip install pyode
+    pip install openopt
 
 setup pyfltk1.3.3 (google and download)
      in python/fltk_wrap.cpp,
