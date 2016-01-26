@@ -4,7 +4,7 @@
 # vundle (old version)
 	git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
 
-## How to run
+## How to build and run
 #### In linux,
 1. setup boost
 	
