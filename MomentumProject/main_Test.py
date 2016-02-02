@@ -189,9 +189,9 @@ def init():
     viewer.objectInfoWnd.add1DSlider(
         '1/simul speed', minVal=1., maxVal=100., initVal=config['simulSpeedInv'], valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
-        'normal des force min', minVal=0., maxVal=200., initVal=80., valStep=1.)
+        'normal des force min', minVal=0., maxVal=1000., initVal=80., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
-        'normal des force max', minVal=0., maxVal=200., initVal=80., valStep=1.)
+        'normal des force max', minVal=0., maxVal=1000., initVal=80., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
         'des force begin', minVal=0., maxVal=len(motion) - 1, initVal=70., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
@@ -359,7 +359,7 @@ class Callback:
         # graph
         if self.cForces is not None:
             sumForce = sum(self.cForces)
-            viewer.cForceWnd.insertData('expForce', frame, sumForce[1])
+            viewer.cForceWnd.insertData('expForce', frame, sumForce[1]/10)
         else:
             viewer.cForceWnd.insertData('expForce', frame, 0.)
         try:
@@ -394,13 +394,13 @@ class Callback:
         if self.cForces is not None:
             sumForce = sum(self.cForces)
             # viewer.cForceWnd.insertData('realForce', frame, sumForce[1])
-            viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame)
+            viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame/10)
         else:
             viewer.cForceWnd.insertData('realForce', frame, 0.)
 
         if desForceFrame[0] <= frame <= desForceFrame[1]:
-            viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1] * .8)
-            viewer.cForceWnd.insertData('desForceMax', frame, totalForce[1] * 1.2)
+            viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1] * .8/10)
+            viewer.cForceWnd.insertData('desForceMax', frame, totalForce[1] * 1.2/10)
         else:
             viewer.cForceWnd.insertData('desForceMin', frame, 0.)
             viewer.cForceWnd.insertData('desForceMax', frame, 0.)
