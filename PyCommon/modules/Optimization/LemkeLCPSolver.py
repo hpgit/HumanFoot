@@ -1,18 +1,6 @@
-package maspack.contact
-
-import java.io.*
-
-import maspack.util.NumberFormat
-import maspack.matrix.LUDecomposition
-import maspack.matrix.MatrixNd
-import maspack.matrix.VectorNd
-
-import java.util.*
-
 import LemkeSolverBase
 
 class LemkeLCPSolver(LemkeSolverBase):
-{
     '''
     #  private Variable[] variableList = new Variable[0]
     private Variable[] zVars = new Variable[0]
@@ -119,39 +107,39 @@ class LemkeLCPSolver(LemkeSolverBase):
         private String[] wvarNames = null
 
     class BasisState:
-        def __init__():
+        def __init__(self):
             self.zactive = 0
             self.driveVar = None
 
-        def equals(state):
-            return (zactive == state.zactive && driveVar == state.driveVar)
+        def equals(self, state):
+            return (self.zactive == state.zactive) and (self.driveVar == state.driveVar)
 
-        def set(state):
-            zactive = state.zactive
-            driveVar = state.driveVar
+        def set(self, state):
+            self.zactive = state.zactive
+            self.driveVar = state.driveVar
             
 
-        def init(drive):
-            zactive = 0
-            driveVar = drive
+        def init(self, drive):
+            self.zactive = 0
+            self.driveVar = drive
 
-        def pivot(dropping, entering):
-            if (entering.isZ()):
-                zactive |= (1L<<entering.idx); 
-            if (dropping.isZ() && !dropping.isZ0()):
-                zactive &= ~(1L<<dropping.idx)
-            driveVar = dropping.complement
+        def pivot(self, dropping, entering):
+            if entering.isZ():
+                self.zactive |= (1L<<entering.idx);
+            if dropping.isZ() and not dropping.isZ0():
+                self.zactive &= ~(1L<<dropping.idx)
+            self.driveVar = dropping.complement
 
-        def toString():
-            StringBuffer sbuf = new StringBuffer(256)
-            NumberFormat fmt = new NumberFormat("%x")
-            for i in range(0, 64):
-                if ((zactive & (1L<<i)) != 0):
-                    sbuf.append (" z")
-                    sbuf.append ((i+1))
-            if (driveVar != null):
-                sbuf.append (" z0 (" + driveVar.getName() + ")")
-            return sbuf.toString()
+        # def toString(self):
+        #     StringBuffer sbuf = new StringBuffer(256)
+        #     NumberFormat fmt = new NumberFormat("%x")
+        #     for i in range(0, 64):
+        #         if ((zactive & (1L<<i)) != 0):
+        #             sbuf.append (" z")
+        #             sbuf.append ((i+1))
+        #     if (driveVar != null):
+        #         sbuf.append (" z0 (" + driveVar.getName() + ")")
+        #     return sbuf.toString()
 
 
 
@@ -1106,4 +1094,3 @@ class LemkeLCPSolver(LemkeSolverBase):
     # @return String
     def getBasisString():
         return basisString(null)
-}

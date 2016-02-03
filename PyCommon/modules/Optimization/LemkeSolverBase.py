@@ -1,18 +1,4 @@
-package maspack.contact;
-
-import java.io.*;
-
-import maspack.util.NumberFormat;
-import maspack.matrix.MatrixNd;
-import maspack.matrix.VectorNd;
-
-import java.util.*;
-
-import java.lang.reflect.Array;
-
-public abstract class LemkeSolverBase
-{
-
+class LemkeSolverBase:
     static final int SOLVED = 1;
     static final int UNBOUNDED_RAY = 2;
     static final int CYCLING_DETECTED = 3;
@@ -621,6 +607,4 @@ public abstract class LemkeSolverBase
     {
         return epsilon; 
     }
-
-}
 
