@@ -200,12 +200,18 @@ class LemkeSolverBase:
 
     # @return void
     # @param code int
-    void setDebug (int code)
+    def setDebug (int code):
     {
         debug = code
     }
 
-    private int makeZeroList (int[] candidates, double[] mv, double[] qv, int nr, double maxQ)
+    # @return int
+    # @param candidates int[]
+    # @param mv double[]
+    # @param qv double[]
+    # @param nr int
+    # @param maxQ double
+    def makeZeroList (int[] candidates, double[] mv, double[] qv, int nr, double maxQ):
     {
         double tol0 = Math.max(epsilon, maxQ*WORKING_PREC)
         int numCand = 0
@@ -222,10 +228,15 @@ class LemkeSolverBase:
         return numCand
     }
 
-    private int minRatio (
-            int[] candidates, int numc, double[] mv, double[] qv, int z_i,
-            boolean tie, boolean takeFirst)
-
+    # @return int
+    # @param candidates int[]
+    # @param numc int
+    # @param mv double[]
+    # @param qv double[]
+    # @param z_i int
+    # @param tie boolean
+    # @param takeFirst boolean
+    def minRatio (int[] candidates, int numc, double[] mv, double[] qv, int z_i, boolean tie, boolean takeFirst):
     {
         double minRatio = Double.POSITIVE_INFINITY
         int imin = -1
@@ -234,7 +245,7 @@ class LemkeSolverBase:
         {
             int i = candidates[k]
             double ratio = -qv[i]/mv[i]
-            if qv[i] > 0 || tie:
+            if (qv[i] > 0) or tie:
             {
                 if ratio < minRatio:
                 {
@@ -249,7 +260,7 @@ class LemkeSolverBase:
             }
         }
 
-        if imin != -1 && takeFirst:
+        if (imin != -1) and takeFirst:
         {
             candidates[0] = imin
             return 1
@@ -260,7 +271,7 @@ class LemkeSolverBase:
         {
             int i = candidates[k]
             double ratio = -qv[i]/mv[i]
-            if Math.abs(ratio-minRatio) <= epsilon || (!tie && qv[i] <= 0):
+            if (Math.abs(ratio-minRatio) <= epsilon) || (!tie && (qv[i] <= 0)):
             {
                 candidates[newc++] = i
                 if i == z_i:
@@ -273,18 +284,31 @@ class LemkeSolverBase:
         return newc
     }
 
-    protected abstract boolean wIsBasic (int j)
+    # @return boolean
+    # @param j int
+    def wIsBasic (int j):
+        raise NotImplementedError
 
-    protected abstract void getBasisColumn (double[] iv, int j)
+    # @return void
+    # @param iv double[]
+    # @param j int
+    def getBasisColumn (double[] iv, int j):
+        raise NotImplementedError
 
-    protected abstract Variable[] getBasicVars ()
+    # @return Variable[]
+    def getBasicVars ():
+        raise NotImplementedError
 
-    protected abstract Variable getWzVar()
+    # @return Variable
+    def getWzVar():
+        raise NotImplementedError
 
-    private boolean[] getDisplayedRows (
-            int[] candidates, int numc, int numv)
+    # @return boolean[]
+    # @param candidates int[]
+    # @param numc int
+    # @param numv int
+    def getDisplayedRows (int[] candidates, int numc, int numv):
     {
-
         boolean[] displayRow = new boolean[numv]
         for i in range(0, numc)
         {
@@ -293,8 +317,12 @@ class LemkeSolverBase:
         return displayRow
     }
 
-    private int initCandidates (double[] mv, double[] qv, int numv,
-            boolean initial)
+    # @return int
+    # @param mv double[]
+    # @param qv double[]
+    # @param numv int
+    # @param initial boolean
+    def initCandidates (double[] mv, double[] qv, int numv, boolean initial):
     {
         int numc = 0
         if initial:
@@ -320,8 +348,13 @@ class LemkeSolverBase:
         return numc
     }
 
-    int lexicoMinRatioTest (
-            double[] mv, double[] qv, int numv, int z_i, boolean initial)
+    # @return int
+    # @param mv double[]
+    # @param qv double[]
+    # @param numv int
+    # @param z_i int
+    # @param initial boolean
+    def lexicoMinRatioTest (double[] mv, double[] qv, int numv, int z_i, boolean initial):
     {
 
         int blocking_i = -1
@@ -344,7 +377,6 @@ class LemkeSolverBase:
 
         if numc > 1:
         {
-
             if printLexicoCols:
             {
                 printMinRatioInfo (mv, qv, numv, z_i, -1, candidates, numc)
@@ -409,7 +441,11 @@ class LemkeSolverBase:
      * the list whose index is ei.   
      */
     '''
-    protected int minRatioElementaryTest (int[] candidates, int ei, int numCand)
+    # @return int
+    # @param candidates int[]
+    # @param ei int
+    # @param numCand int
+    def minRatioElementaryTest (int[] candidates, int ei, int numCand):
     {
         int k
         for (k=0; k<numCand; k++)
@@ -425,7 +461,7 @@ class LemkeSolverBase:
         }
         else:
         {
-            while (k < numCand-1)
+            while (k < numCand-1):
             {
                 candidates[k] = candidates[k+1]
                 k++
@@ -434,7 +470,11 @@ class LemkeSolverBase:
         }
     }
 
-    private boolean isCandidate (int i, int[] candidates, int numCand)
+    # @return boolean
+    # @param i int
+    # @param candidates int[]
+    # @param numCand int
+    def isCandidate (int i, int[] candidates, int numCand):
     {
         for k in range(0, numCand)
         {
@@ -446,28 +486,39 @@ class LemkeSolverBase:
         return false
     }
 
-    protected void printBasis (Variable driveVar)
+    # @return void
+    # @param driveVar Variable
+    def printBasis (Variable driveVar):
     {
         System.out.println ("Basis: " + basisString(driveVar))
     }
 
-
-    protected String basisString (Variable driveVar)
+    # @return String
+    # @param driveVar Variable
+    def basisString (Variable driveVar):
     {
         return ""
     }
 
-    protected void printMinRatioInfo (
-            double[] mv, double[] qv, int numv, 
-            int z_i, int blocking_i, int[] candidates, int numc)
+    # @return void
+    # @param mv double[] 
+    # @param qv double[]
+    # @param numv int
+    # @param z_i int
+    # @param blocking_i int
+    # @param candidates int[] candidates, int numc)
+    def printMinRatioInfo (double[] mv, double[] qv, int numv, int z_i, int blocking_i, int[] candidates, int numc):
     {
-
         printMinRatioInfo (mv, qv, numv, z_i, blocking_i,
                 candidates, numc, null)
     }
 
-    private int[] getDisplayIndices (
-            Variable[] basicVars, int numv, boolean[] displayRow, int z_i)
+    # @return int[]
+    # @param basicVars Variable[]
+    # @param numv int
+    # @param displayRow boolean[]
+    # @param z_i int
+    def getDisplayIndices (Variable[] basicVars, int numv, boolean[] displayRow, int z_i):
     {
         int[] idxs
 
@@ -527,6 +578,9 @@ class LemkeSolverBase:
         return idxs
     }
 
+    # @return int
+    # @param vars_ Variable[]
+    # @param numv int
     private int getMaxNameLength (Variable[] vars, int numv)
     {
         int maxNameLength = 0
@@ -540,7 +594,11 @@ class LemkeSolverBase:
         return maxNameLength
     }
 
-    protected void printQv (String msg, double[] qv, int numv)
+    # @return void
+    # @param msg String
+    # @param qv double[]
+    # @param numv int
+    def printQv (String msg, double[] qv, int numv):
     {
         Variable[] basicVars = getBasicVars()
         int maxNameLength = getMaxNameLength (basicVars, numv)
@@ -568,10 +626,16 @@ class LemkeSolverBase:
         }
     }
 
-    protected void printMinRatioInfo (
-            double[] mv, double[] qv, int numv, 
-            int z_i, int blocking_i, int[] candidates, int numc,
-            boolean[] displayRow)
+    # @return void
+    # @param mv double[]
+    # @param qv double[]
+    # @param numv int
+    # @param z_i int
+    # @param blocking_i int
+    # @param candidates int[]
+    # @param numc int
+    # @param displayRow boolean[]
+    def printMinRatioInfo (double[] mv, double[] qv, int numv, int z_i, int blocking_i, int[] candidates, int numc, boolean[] displayRow):
     {
         Variable[] basicVars = getBasicVars()
 
@@ -592,8 +656,7 @@ class LemkeSolverBase:
 
         if blocking_i != -1:
         {
-            System.out.println (
-                    "blocking variable=" + basicVars[blocking_i].getName())
+            System.out.println ("blocking variable=" + basicVars[blocking_i].getName())
         }
 
         int maxNameLength = getMaxNameLength (basicVars, numv)
@@ -604,7 +667,7 @@ class LemkeSolverBase:
             sbuf.setLength(0)
             sbuf.append (basicVars[i].isZ() ? "z " : "  ")
             sbuf.append (basicVars[i].getName())
-            while (sbuf.length() < maxNameLength+2)
+            while (sbuf.length() < maxNameLength+2):
             {
                 sbuf.insert (2, ' '); 
             }
@@ -622,4 +685,3 @@ class LemkeSolverBase:
     # @return double
     def getEpsilon(self):
         return epsilon
-
