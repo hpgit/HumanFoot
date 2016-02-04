@@ -18,9 +18,16 @@ freeglut3-dev
 pypy
 g++
 python-fltk
-python-numpy
-python-pyode
 libgle3
+
+2. 
+
+    pip install --upgrade pip setuptools
+    pip install numpy
+    pip install PyOpenGL PyOpenGL-accelerate
+    pip install cvxopt
+    pip install pyode
+    pip install openopt
 
 3. build VirtualPhysics2010 (remove -fPIC in vpLib.makefile) & copy libvpLib.a to PyCommon/modules/usr/lib/
 4. make in PyCommon/modules (if there is a copy error, edit setup.py in Renderer and Simulator)

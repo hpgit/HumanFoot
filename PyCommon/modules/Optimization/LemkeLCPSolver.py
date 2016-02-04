@@ -1,111 +1,9 @@
+import math
+import numpy as np
 import LemkeSolverBase
 
 
 class LemkeLCPSolver(LemkeSolverBase):
-    '''
-    #  private Variable[] variableList = new Variable[0]
-    private Variable[] zVars = new Variable[0]
-    private Variable[] wVars = new Variable[0]
-    private Variable[] basicVars
-    private Variable[] nonBasicVars
-    private Variable z0Var
-    private Variable wzVar
-    private int nonCompIdx = -1
-
-    private double[] Mv
-
-
-
-    # stuff for incremental pivoting
-
-    private double[] Mbuf
-    private double[] qbuf
-    private int msize
-    private MatrixNd Raa = new MatrixNd(0,0)
-    #  private double[] RaaBuf = new double[0]
-    private VectorNd avec0 = new VectorNd(0)
-    private VectorNd avec1 = new VectorNd(0)
-    private VectorNd avec2 = new VectorNd(0)
-    private VectorNd avec3 = new VectorNd(0)
-    private Variable[] zAlpha = new Variable[0]
-    private Variable[] wAlpha = new Variable[0]
-    private int asize = 0
-
-    private double[] qv = new double[0]
-    private double[] mv = new double[0]
-    private double[] iv = new double[0]
-    private double[] cvec = new double[0]
-
-    private double[] qvNew = new double[0]
-    #  private Interval[] ratioIntervals = new Interval[0]
-    private int[] columnList = new int[0]
-
-    private boolean fullSolve = false
-    private boolean incrementalPivoting = false
-    private MatrixNd Morig = new MatrixNd(0,0)
-    private VectorNd qorig = new VectorNd(0)
-    private MatrixNd Basis = new MatrixNd(0,0)
-    private MatrixNd InvBasis = new MatrixNd(0,0)
-    private VectorNd col = new VectorNd(0)
-
-    private BasisState[] basisHistory = new BasisState[0]
-    private BasisState currentBasis = new BasisState()
-    private BasisState proposedBasis = new BasisState()
-
-    private String[] zvarNames = null
-    private String[] wvarNames = null
-    '''
-    def __init__():
-        #  private Variable[] variableList = new Variable[0]
-        private Variable[] zVars = new Variable[0]
-        private Variable[] wVars = new Variable[0]
-        private Variable[] basicVars
-        private Variable[] nonBasicVars
-        private Variable z0Var
-        private Variable wzVar
-        private int nonCompIdx = -1
-
-        private double[] Mv
-
-
-        # stuff for incremental pivoting
-        private double[] Mbuf
-        private double[] qbuf
-        private int msize
-        private MatrixNd Raa = new MatrixNd(0,0)
-        #  private double[] RaaBuf = new double[0]
-        private VectorNd avec0 = new VectorNd(0)
-        private VectorNd avec1 = new VectorNd(0)
-        private VectorNd avec2 = new VectorNd(0)
-        private VectorNd avec3 = new VectorNd(0)
-        private Variable[] zAlpha = new Variable[0]
-        private Variable[] wAlpha = new Variable[0]
-        private int asize = 0
-
-        private double[] qv = new double[0]
-        private double[] mv = new double[0]
-        private double[] iv = new double[0]
-        private double[] cvec = new double[0]
-
-        private double[] qvNew = new double[0]
-        #  private Interval[] ratioIntervals = new Interval[0]
-        private int[] columnList = new int[0]
-
-        private boolean fullSolve = false
-        private boolean incrementalPivoting = false
-        private MatrixNd Morig = new MatrixNd(0,0)
-        private VectorNd qorig = new VectorNd(0)
-        private MatrixNd Basis = new MatrixNd(0,0)
-        private MatrixNd InvBasis = new MatrixNd(0,0)
-        private VectorNd col = new VectorNd(0)
-
-        private BasisState[] basisHistory = new BasisState[0]
-        private BasisState currentBasis = new BasisState()
-        private BasisState proposedBasis = new BasisState()
-
-        private String[] zvarNames = null
-        private String[] wvarNames = null
-
     class BasisState:
         def __init__(self):
             self.zactive = 0
@@ -129,40 +27,145 @@ class LemkeLCPSolver(LemkeSolverBase):
                 self.zactive &= ~(1L << dropping.idx)
             self.driveVar = dropping.complement
 
-        # def toString(self):
-        #     StringBuffer sbuf = new StringBuffer(256)
-        #     NumberFormat fmt = new NumberFormat("%x")
-        #     for i in range(0, 64):
-        #         if ((zactive & (1L<<i)) != 0):
-        #             sbuf.append (" z")
-        #             sbuf.append ((i+1))
-        #     if (driveVar != null):
-        #         sbuf.append (" z0 (" + driveVar.getName() + ")")
-        #     return sbuf.toString()
+            # def toString(self):
+            #     StringBuffer sbuf = new StringBuffer(256)
+            #     NumberFormat fmt = new NumberFormat("%x")
+            #     for i in range(0, 64):
+            #         if (zactive & (1L<<i)) != 0:
+            #             sbuf.append (" z")
+            #             sbuf.append ((i+1))
+            #     if driveVar != null:
+            #         sbuf.append (" z0 (" + driveVar.getName() + ")")
+            #     return sbuf.toString()
+    '''
+    //  private Variable[] variableList = new Variable[0];
+    private Variable[] zVars = new Variable[0];
+    private Variable[] wVars = new Variable[0];
+    private Variable[] basicVars;
+    private Variable[] nonBasicVars;
+    private Variable z0Var;
+    private Variable wzVar;
+    private int nonCompIdx = -1;
+
+    private double[] Mv;
+
+
+
+    // stuff for incremental pivoting
+
+    private double[] Mbuf;
+    private double[] qbuf;
+    private int msize;
+    private MatrixNd Raa = new MatrixNd(0,0);
+    //  private double[] RaaBuf = new double[0];
+    private VectorNd avec0 = new VectorNd(0);
+    private VectorNd avec1 = new VectorNd(0);
+    private VectorNd avec2 = new VectorNd(0);
+    private VectorNd avec3 = new VectorNd(0);
+    private Variable[] zAlpha = new Variable[0];
+    private Variable[] wAlpha = new Variable[0];
+    private int asize = 0;
+
+    private double[] qv = new double[0];
+    private double[] mv = new double[0];
+    private double[] iv = new double[0];
+    private double[] cvec = new double[0];
+
+    private double[] qvNew = new double[0];
+    //  private Interval[] ratioIntervals = new Interval[0];
+    private int[] columnList = new int[0];
+
+    private boolean fullSolve = false;
+    private boolean incrementalPivoting = false;
+    private MatrixNd Morig = new MatrixNd(0,0);
+    private VectorNd qorig = new VectorNd(0);
+    private MatrixNd Basis = new MatrixNd(0,0);
+    private MatrixNd InvBasis = new MatrixNd(0,0);
+    private VectorNd col = new VectorNd(0);
+
+    private BasisState[] basisHistory = new BasisState[0];
+    private BasisState currentBasis = new BasisState();
+    private BasisState proposedBasis = new BasisState();
+
+    private String[] zvarNames = null;
+    private String[] wvarNames = null;
+    '''
+    def __init__(self):
+        #  self.variableList = new Variable[0]
+        self.zVars = []
+        self.wVars = []
+        self.basicVars = self.Variable()
+        self.nonBasicVars = self.Variable()
+        self.z0Var = self.Variable()
+        self.wzVar = self.Variable()
+        self.nonCompIdx = -1
+
+        self.Mv = None
+
+        # stuff for incremental pivoting
+        self.Mbuf = None
+        self.qbuf = None
+        self.msize = 0
+        self.Raa = np.zeros((0, 0))
+        #  self.RaaBuf = new double[0]
+        self.avec0 = np.zeros((0,))
+        self.avec1 = np.zeros((0,))
+        self.avec2 = np.zeros((0,))
+        self.avec3 = np.zeros((0,))
+        self.zAlpha = []
+        self.wAlpha = []
+        self.asize = 0
+
+        self.qv = []
+        self.mv = []
+        self.iv = []
+        self.cvec = []
+
+        self.qvNew = []
+        #  self.ratioIntervals = new Interval[0]
+        self.columnList = []
+
+        self.fullSolve = False
+        self.incrementalPivoting = False
+        self.Morig = np.zeros((0, 0))
+        self.qorig = np.zeros((0,))
+        self.Basis = np.zeros((0, 0))
+        self.InvBasis = np.zeros((0, 0))
+        self.col = np.zeros((0,))
+
+        self.basisHistory = []
+        self.currentBasis = self.BasisState()
+        self.proposedBasis = self.BasisState()
+
+        self.zvarNames = None
+        self.wvarNames = None
+
+        self.tieBreakHack = -1  # 21
+
 
     # @return void
     # @param zNames String[]
     # @param wNames String[]
-    def setVariableNames(zNames, wNames):
-        allocateSpace(zNames.length)
-        for i in range(0, zNames.length):
-            zVars[i].name = zNames[i]
-        for i in range(0, wNames.length):
-            wVars[i].name = wNames[i]
+    def setVariableNames(self, zNames, wNames):
+        self.allocateSpace(len(zNames))
+        for _i in range(0, zNames.length):
+            self.zVars[_i].name = zNames[_i]
+        for _i in range(0, wNames.length):
+            self.wVars[_i].name = wNames[_i]
 
 
     # @return boolean
     # @param basis BasisState
     # @param pcnt int
-    def basisHasOccurred(basis, pcnt):
-        for i in range(0, pcnt):
-            if basisHistory[i].equals(basis):
+    def basisHasOccurred(self, basis, pcnt):
+        for _i in range(0, pcnt):
+            if self.basisHistory[_i].equals(basis):
                 return True
         return False
 
     # @param enable boolean
-    def setIncrementalPivoting(enable):
-        incrementalPivoting = enable
+    def setIncrementalPivoting(self, enable):
+        self.incrementalPivoting = enable
 
 
     '''
@@ -173,28 +176,21 @@ class LemkeLCPSolver(LemkeSolverBase):
     '''
     # @return String
     # @param driveVar Variable
-    def basisString(driveVar):
-        StringBuffer sbuf = new StringBuffer(256)
-        for i in range(0, msize):
-            if (zVars[i].isBasic):
-                sbuf.append(" ")
-                sbuf.append(zVars[i].getName())
+    def basisString(self, driveVar):
+        # StringBuffer sbuf = new StringBuffer(256)
+        sbuf = ""
+        for _i in range(0, self.msize):
+            if self.zVars[_i].isBasic:
+                sbuf += " " + self.zVars[_i].getName()
 
-        if (zVars[msize].isBasic):
-            sbuf.append(" z0 (")
-            if (driveVar != null):
-                sbuf.append(driveVar.getName())
+        if self.zVars[self.msize].isBasic:
+            sbuf += " z0 ("
+            if driveVar is not None:
+                sbuf += driveVar.getName()
             else:
-                sbuf.append("null")
-            sbuf.append(")")
-        return sbuf.toString()
-
-
-    # @return double
-    # @param M double[]
-    # @param q double[]
-    def computeEpsilon(M, q):
-        return computeEpsilon(M, q, q.length)
+                sbuf += "null"
+            sbuf += ")"
+        return sbuf
 
 
     # XXX Need to think better about how to get a "good" epsilon.
@@ -202,68 +198,78 @@ class LemkeLCPSolver(LemkeSolverBase):
     # @param M double[]
     # @param q double[]
     # @param nc int
-    def computeEpsilon(M, q, nc):
+    def computeEpsilon(self, M, q, nc=None):
+        if nc is None:
+            nc = len(q)
         # compute the one norm of M
-        double Mnorm1 = 0
-        for j in range(0, nc):
-            double sum = 0
-            for i in range(0, nc):
-                sum += Math.abs(M[i*nc+j])
-            if (sum > Mnorm1):
-                Mnorm1 = sum
+        Mnorm1 = 0.
+        for _j in range(0, nc):
+            _sum = 0.
+            for _i in range(0, nc):
+                _sum += abs(M[_i*nc+_j])
+            if _sum > Mnorm1:
+                Mnorm1 = _sum
 
         # compute the one norm of q
-        double qnorm1 = 0
-        for i in range(0, nc):
-            qnorm1 += Math.abs(q[i])
-        double maxnorm = Math.max(Mnorm1, qnorm1)
-        return 100*Math.sqrt(nc)*maxnorm*DOUBLE_PREC
+        qnorm1 = 0.
+        for _i in range(0, nc):
+            qnorm1 += abs(q[_i])
+        maxnorm = max(Mnorm1, qnorm1)
+        return 100. * math.sqrt(nc) * maxnorm * self.DOUBLE_PREC
 
+    # TODO:
+    # return row instead of call-by-reference
     # @return void
     # @param row VectorNd
     # @param i int
-    def getMaaRow(row, i):
-        double[] buf = row.getBuffer()
-        for ja in range(0, asize):
-            int j = zAlpha[ja].idx
-            if (j == msize):
-                buf[ja] = cvec[i]
+    def getMaaRow(self, row, i_):
+        # buf = row.getBuffer()
+        buf = row
+        for ja in range(0, self.asize):
+            _j = self.zAlpha[ja].idx
+            if _j == self.msize:
+                buf[ja] = self.cvec[i_]
             else:
-                buf[ja] = Mbuf[i*msize + j]
+                buf[ja] = self.Mbuf[i_*self.msize + _j]
+        return buf
 
 
+    # TODO:
+    # return col instead of call-by-reference
     # @return void
     # @param col VectorNd
     # @param j int
-    def getMaaCol(col, j):
-        double[] buf = col.getBuffer()
-        if (j == msize):
-            for ia in range(0, asize):
-                buf[ia] = cvec[wAlpha[ia].idx]
+    def getMaaCol(self, col, j_):
+        # buf = col.getBuffer()
+        buf = col
+        if j_ == self.msize:
+            for ia in range(0, self.asize):
+                buf[ia] = self.cvec[self.wAlpha[ia].idx]
         else:
-            for ia in range(0, asize):
-                buf[ia] = Mbuf[wAlpha[ia].idx*msize+j]
+            for ia in range(0, self.asize):
+                buf[ia] = self.Mbuf[self.wAlpha[ia].idx*self.msize + j_]
+        return buf
 
 
     # @return double
     # @param i int
     # @param j int
-    def getMaaElement(i, j):
-        if (j == msize):
-            return cvec[i]
+    def getMaaElement(self, i_, j_):
+        if j_ == self.msize:
+            return self.cvec[i_]
         else:
-            return Mbuf[i*msize+j]
+            return self.Mbuf[i_*self.msize+j_]
 
 
     # @return MatrixNd
-    def createMaa():
-        MatrixNd Maa = new MatrixNd(asize, asize)
-        VectorNd col = new VectorNd(asize)
-        for ja in range(0, asize):
+    def createMaa(self):
+        Maa = np.zeros((self.asize, self.asize))
+        col = np.zeros((self.asize,))
 
-            getMaaCol(col, zAlpha[ja].idx)
-            print ("zAlpha=" + zAlpha[ja].getName() + " col=" + zAlpha[ja].idx)
-            Maa.setColumn(ja, col)
+        for ja in range(0, self.asize):
+            col = self.getMaaCol(col, self.zAlpha[ja].idx)
+            print ("zAlpha=" + self.zAlpha[ja].getName() + " col=" + self.zAlpha[ja].idx)
+            Maa[:, ja] = col
 
         return Maa
 
@@ -272,24 +278,24 @@ class LemkeLCPSolver(LemkeSolverBase):
     # @param Raa MatrixNd
     # @param Rcol VectorNd
     # @param Rrow VectorNd
-    def outerProductUpdate(Raa, Rcol, Rrow):
+    def outerProductUpdate(self, Raa, Rcol, Rrow):
         int w = Raa.getBufferWidth()
         double[] RaaBuf = Raa.getBuffer()
         double[] colBuf = Rcol.getBuffer()
         double[] rowBuf = Rrow.getBuffer()
 
-        for ia in range(0, asize):
-            for ja in range(0, asize):
+        for ia in range(0, self.asize):
+            for ja in range(0, self.asize):
                 RaaBuf[ia*w + ja] -= colBuf[ia]*rowBuf[ja]
 
     # @return Variable
     # @param dropping Variable
     # @param entering Variable
-    def incPivot(dropping, entering):
+    def incPivot(self, dropping, entering):
 
-        Variable newDrive = null
-        entering.isBasic = true
-        dropping.isBasic = false
+        newDrive = None
+        entering.isBasic = True
+        dropping.isBasic = False
 
         newDrive = dropping.complement
 
@@ -299,48 +305,48 @@ class LemkeLCPSolver(LemkeSolverBase):
                 # add row and column to Raa 
 
                 #       print ("add row and column")
-                VectorNd Mcol = avec0
-                VectorNd Mrow = avec1
+                Mcol = self.avec0
+                Mrow = self.avec1
 
-                int col = entering.idx
-                int row = dropping.idx
+                col = entering.idx
+                row = dropping.idx
 
-                getMaaCol(Mcol, col)
-                getMaaRow(Mrow, row)
+                self.getMaaCol(Mcol, col)
+                self.getMaaRow(Mrow, row)
 
-                VectorNd Rvec = avec2
-                VectorNd Rrow = avec3
+                Rvec = self.avec2
+                Rrow = self.avec3
 
-                Raa.mul(Rvec, Mcol)
-                double Rrc = 1/(getMaaElement(row, col) - Mrow.dot(Rvec))
-                Raa.mulTranspose(Rrow, Mrow)
+                self.Raa.mul(Rvec, Mcol)
+                Rrc = 1/(self.getMaaElement(row, col) - Mrow.dot(Rvec))
+                self.Raa.mulTranspose(Rrow, Mrow)
                 Rrow.scale(-Rrc)
-                Raa.setSize(asize+1, asize+1)
+                self.Raa.setSize(self.asize+1, self.asize+1)
 
-                outerProductUpdate(Raa, Rvec, Rrow)
+                self.outerProductUpdate(self.Raa, Rvec, Rrow)
 
-                for ia in range(0, asize):
-                    Raa.set(ia, asize, -Rrc*Rvec.get(ia))
-                    Raa.set(asize, ia, Rrow.get(ia))
-                Raa.set(asize, asize, Rrc)
+                for ia in range(0, self.asize):
+                    self.Raa.set(ia, self.asize, -Rrc*Rvec.get(ia))
+                    self.Raa.set(self.asize, ia, Rrow.get(ia))
+                self.Raa.set(self.asize, self.asize, Rrc)
 
-                avec0.setSize(asize+1)
-                avec1.setSize(asize+1)
-                avec2.setSize(asize+1)
-                avec3.setSize(asize+1)
+                self.avec0 = np.zeros((self.asize+1,))
+                self.avec1 = np.zeros((self.asize+1,))
+                self.avec2 = np.zeros((self.asize+1,))
+                self.avec3 = np.zeros((self.asize+1,))
 
-                zAlpha[asize] = entering
-                entering.col = asize
-                wAlpha[asize] = dropping
-                dropping.col = asize
-                asize++
+                self.zAlpha[self.asize] = entering
+                entering.col = self.asize
+                self.wAlpha[self.asize] = dropping
+                dropping.col = self.asize
+                self.asize += 1
             else:
                 # replace row in Maa
 
                 #       print ("replace row")
 
-                int oldRow = entering.idx
-                int newRow = dropping.idx
+                oldRow = entering.idx
+                newRow = dropping.idx
 
                 VectorNd MrowOld = avec0
                 VectorNd MrowDel = avec1
@@ -442,8 +448,8 @@ class LemkeLCPSolver(LemkeSolverBase):
 
                 #       print ("replace column")
 
-                int oldCol = dropping.idx
-                int newCol = entering.idx
+                oldCol = dropping.idx
+                newCol = entering.idx
 
                 VectorNd McolOld = avec0
                 VectorNd McolDel = avec1
@@ -467,20 +473,20 @@ class LemkeLCPSolver(LemkeSolverBase):
                 entering.col = col
         if newDrive is not null:
             if newDrive.isZ():
-                wzVar = newDrive.complement
+                self.wzVar = newDrive.complement
             else:
-                wzVar = newDrive
+                self.wzVar = newDrive
         else:
-            wzVar = null
-        computeQv(qv)
-        cumulativePivotCnt++
+            self.wzVar = None
+        self.computeQv(self.qv)
+        self.cumulativePivotCnt += 1
         return newDrive
 
     # @return boolean
     # @param minCond double
-    def computeMvFromBasis(minCond):
-        int nr = msize
-        int nc = msize+1
+    def computeMvFromBasis(self, minCond):
+        nr = self.msize
+        nc = self.msize+1
 
         double[] MvNew = new double[nr*nc]
         double[] qvNew = new double[nr]
@@ -490,7 +496,7 @@ class LemkeLCPSolver(LemkeSolverBase):
             if bvar.isZ0():
                 Morig.getColumn(nr, col)
                 col.negate()
-            else if bvar.isZ():
+            elif bvar.isZ():
                 Morig.getColumn(bvar.idx, col)
                 col.negate()
             else:
@@ -500,8 +506,8 @@ class LemkeLCPSolver(LemkeSolverBase):
         LUDecomposition LU = new LUDecomposition(nr)
         LU.set(Basis)
         double rcond = 1/LU.conditionEstimate(Basis)
-        if (rcond < minCond):
-            return false
+        if rcond < minCond:
+            return False
 
         LU.inverse(InvBasis)
         col.mul(InvBasis, qorig)
@@ -518,7 +524,7 @@ class LemkeLCPSolver(LemkeSolverBase):
                 #        {
                 # print (col.get(i))
                 #        }
-            else if nbvar.isZ():
+            elif nbvar.isZ():
                 Morig.getColumn(nbvar.idx, col)
                 col.mul(InvBasis, col)
             else:
@@ -531,16 +537,16 @@ class LemkeLCPSolver(LemkeSolverBase):
             for j in range(0, nc):
                 Mv[i*nc+j] = MvNew[i*nc+j]
             qv[i] = qvNew[i]
-        return true
+        return True
 
     # @return Variable
     # @param dropping Variable
     # @param entering Varialbe
-    def pivot(dropping, entering):
+    def pivot(self, dropping, entering):
         # transform Mv and qv to reflect and exchange of variables
 
-        if (incrementalPivoting):
-            return incPivot(dropping, entering)
+        if self.incrementalPivoting:
+            return self.incPivot(dropping, entering)
 
         int nr = msize
         int nc = msize+1
@@ -555,7 +561,7 @@ class LemkeLCPSolver(LemkeSolverBase):
 
         # update qv
         for i in range(0, nr):
-            if (i == s):
+            if i == s:
                 qv[i] = -q_s/m_sr
             else:
                 qv[i] = qv[i] - q_s*(Mv[i*nc+r]/m_sr)
@@ -582,61 +588,64 @@ class LemkeLCPSolver(LemkeSolverBase):
         #     Variable entering = nonBasicVars[r]
         #     Variable dropping = basicVars[s]
 
-        #     if (entering.col != r):
+        #     if entering.col != r:
         #      {
         # print ("entering=" + entering.getName())
         #        print ("col=" + entering.col + " r=" + r)
         #        System.exit(1)
         #      }
-        #     if (dropping.col != s):
+        #     if dropping.col != s:
         #      {
         # print ("dropping=" + dropping.getName())
         #        print ("col=" + dropping.col + " s=" + s)
         #        System.exit(1)
         #      }
 
-        entering.isBasic = true
+        entering.isBasic = True
         dropping.col = r
-        dropping.isBasic = false
+        dropping.isBasic = False
         entering.col = s
 
-        nonBasicVars[r] = dropping
+        self.nonBasicVars[r] = dropping
 
-        basicVars[s] = entering
+        self.basicVars[s] = entering
         nonCompIdx = dropping.idx
 
-        if fullSolve:
-            computeMvFromBasis(0)
+        if self.fullSolve:
+            self.computeMvFromBasis(0)
 
-        cumulativePivotCnt++
+        self.cumulativePivotCnt += 1
         Variable newDrive = dropping.complement
-        if (newDrive != null):
-            wzVar = newDrive.isZ() ? newDrive.complement : newDrive
+        if newDrive != null:
+            if newDrive.isZ():
+                self.wzVar = newDrive.complement
+            else:
+                self.wzVar = newDrive
         else:
-            wzVar = null
+            self.wzVar = None
         return newDrive
 
     # @return void
     # @param n int
-    def allocateSpace(n):
+    def allocateSpace(self, n):
 
-        super.allocateSpace (n)
+        super.allocateSpace(n)
 
-        if (qv.length < n):
+        if len(self.qv) < n:
 
             # Mv = new double[n*(2*n+1)]
             Mv = new double[n*(n+1)]
             qv = new double[n]
             mv = new double[n]
             iv = new double[n]
-            Raa = new MatrixNd (n, n)
-            avec0 = new VectorNd (n)
-            avec1 = new VectorNd (n)
-            avec2 = new VectorNd (n)
-            avec3 = new VectorNd (n)
+            Raa = new MatrixNd(n, n)
+            avec0 = new VectorNd(n)
+            avec1 = new VectorNd(n)
+            avec2 = new VectorNd(n)
+            avec3 = new VectorNd(n)
             cvec = new double[n]
             for i in range(0, n):
-                cvec[i] = 1; 
+                cvec[i] = 1
             qvNew = new double[n]
             basicVars = new Variable[n]
             nonBasicVars = new Variable[n+1]
@@ -645,33 +654,33 @@ class LemkeLCPSolver(LemkeSolverBase):
             wAlpha = new Variable[n]
 
             Class varClass = new Variable().getClass()
-            int oldLength
+            oldLength
 
             oldLength = wVars.length
             wVars = (Variable[])growObjectArray(wVars, n, varClass)
             for i in range(oldLength, wVars.length):
-                wVars[i].setIndex (i); 
+                wVars[i].setIndex(i)
             oldLength = zVars.length
             zVars = (Variable[])growObjectArray(zVars, n+1, varClass)
             for i in range(oldLength, zVars.length):
-                zVars[i].setIndex (i); 
+                zVars[i].setIndex(i)
 
             #        BasicNode[] oldNodeList = nodeList
             #        nodeList = new BasicNode[n]
             #        for i in range(0, oldNodeList.length):
             #         {
-            #nodeList[i] = oldNodeList[i]
+            # nodeList[i] = oldNodeList[i]
             #         }
             #        for i in range(oldNodeList.length, nodeList.length):
             #         {
-            #nodeList[i] = new BasicNode (i)
+            # nodeList[i] = new BasicNode (i)
             #         }
 
-            if (cycleCheckingEnabled && basisHistory.length == 0):
+            if cycleCheckingEnabled and (basisHistory.length == 0):
 
                 basisHistory = new BasisState[maxBasisHistory]
                 for i in range(0, basisHistory.length):
-                    basisHistory[i] = new BasisState()         
+                    basisHistory[i] = new BasisState()
             # updateNodeAllocation (n)
 
 
@@ -684,22 +693,23 @@ class LemkeLCPSolver(LemkeSolverBase):
     @param n int
     @param eps double
     '''
-    def checkArgs(w, z, M, q, n, eps):
-        if (M.length < n*n):
-            throw new IllegalArgumentException ("Incompatible size for matrix M"):
-        if (q.length < n):
-            throw new IllegalArgumentException ("Incompatible size for vector q"):
-        if (z != null && z.length < n):
-            throw new IllegalArgumentException ("Vector z too small")
-        if (w != null && w.length < n):
-            throw new IllegalArgumentException ("Vector w too small")
+    def checkArgs(self, w, z, M, q, n, eps):
+        if M.length < n*n:
+            throw new IllegalArgumentException("Incompatible size for matrix M")
+        if q.length < n:
+            throw new IllegalArgumentException("Incompatible size for vector q")
+        if z != null && z.length < n:
+            throw new IllegalArgumentException("Vector z too small")
+        if w != null && w.length < n:
+            throw new IllegalArgumentException("Vector w too small")
 
         # compute an epsilon
-        if (eps == AUTO_EPSILON):
-            epsilon = computeEpsilon (M, q, n)
+        if eps == AUTO_EPSILON:
+            epsilon = computeEpsilon(M, q, n)
         else:
-            epsilon = eps          
-        allocateSpace (n)
+            epsilon = eps
+        self.allocateSpace(n)
+
 
     '''
     @return void
@@ -710,117 +720,125 @@ class LemkeLCPSolver(LemkeSolverBase):
     @param qv double[]
     @param n int
     '''
-    def computeSolution(w, z, M, q, qv, n):
-        if (w != null || z != null):
-            if (z == null):
-                z = new double[n]
+    def computeSolution(self, w, z, M, q, qv, n):
+        if (w is not None) or (z is not None):
+            if z is None:
+                z = [0.]*n
             for i in range(0, n):
                 z[i] = 0
-            if (incrementalPivoting):
+            if self.incrementalPivoting:
                 for i in range(0, n):
-                    if (zVars[i].isBasic):
-                        z[zVars[i].idx] = qv[zVars[i].idx]
+                    if self.zVars[i].isBasic:
+                        z[self.zVars[i].idx] = qv[self.zVars[i].idx]
             else:
                 for i in range(0, n):
-                    if (basicVars[i].isZ()):
-                        z[basicVars[i].idx] = qv[i] 
+                    if self.basicVars[i].isZ():
+                        z[self.basicVars[i].idx] = qv[i]
             for i in range(0, n):
-                double wx = q[i]
+                wx = q[i]
                 for j in range(0, n):
                     wx += M[i*n+j]*z[j]
                 w[i] = wx
 
-    
-    # @return int
-    # @param w double[]
-    # @param z double[]
-    # @param M double[]
-    # @param q double[]
-    def solve(w, z, M, q):
-        return solve (w, z, M, q, q.length, AUTO_EPSILON)
-
-    private int tieBreakHack = -1; # 21
 
 
     # @return void
     # @param y double[]
     # @param var Variable
-    def computeMvCol(y, var):
-        if (!incrementalPivoting):
+    def computeMvCol(self, y, var):
+        wVars = self.wVars
+        msize = self.msize
+        asize = self.asize
+        avec0 = self.avec0
+        avec1 = self.avec1
+        avec2 = self.avec2
+        zAlpha = self.zAlpha
+
+        if not self.incrementalPivoting:
             # int nc = 2*msize+1
-            int nc = msize+1
+            nc = msize+1
             for i in range(0, msize):
-                y[i] = Mv[i*nc+var.col];  
-        else if (var.isZ()):
-            VectorNd MabCol = avec0
-            VectorNd Rprod = avec1
-            VectorNd MbaRow = avec2
+                y[i] = self.Mv[i*nc+var.col]
+        elif var.isZ():
+            MabCol = avec0
+            Rprod = avec1
+            MbaRow = avec2
 
-            int col = var.idx
+            col = var.idx
 
-            getMaaCol (MabCol, col)
-            Raa.mul (Rprod, MabCol)
+            self.getMaaCol(MabCol, col)
+            self.Raa.mul(Rprod, MabCol)
             for ia in range(0, asize):
-                int idx = (zAlpha[ia] == z0Var ? wzVar.idx : zAlpha[ia].idx)
+                if zAlpha[ia] == self.z0Var:
+                    idx = self.wzVar.idx
+                else:
+                    idx = zAlpha[ia].idx
                 y[idx] = -Rprod.get(ia)
             for i in range(0, msize):
-                if (wVars[i].isBasic):
-                    int row = wVars[i].idx
-                    getMaaRow (MbaRow, row)
-                    y[row] = Mbuf[row*msize+col] - Rprod.dot(MbaRow)
-        else: # var.isW()
-            VectorNd Rprod = avec0
-            VectorNd MbaRow = avec1
+                if wVars[i].isBasic:
+                    row = wVars[i].idx
+                    self.getMaaRow(MbaRow, row)
+                    y[row] = self.Mbuf[row*msize+col] - Rprod.dot(MbaRow)
+        else:  # var.isW()
+            Rprod = avec0
+            MbaRow = avec1
 
-            Raa.getColumn (var.col, Rprod)
+            self.Raa.getColumn(var.col, Rprod)
             for ia in range(0, asize):
-                int idx = (zAlpha[ia] == z0Var ? wzVar.idx : zAlpha[ia].idx)
+                if zAlpha[ia] == self.z0Var:
+                    idx = self.wzVar.idx
+                else:
+                    idx = zAlpha[ia].idx
                 y[idx] = Rprod.get(ia)
 
             for i in range(0, msize):
-                if (wVars[i].isBasic):
-                    int row = wVars[i].idx
-                    getMaaRow (MbaRow, row)
+                if wVars[i].isBasic:
+                    row = wVars[i].idx
+                    self.getMaaRow(MbaRow, row)
                     y[row] = Rprod.dot(MbaRow)
 
 
     # @return void
     # @param y double[]
-    def computeQv(y):
-        if (!incrementalPivoting):
-            if (y != qv):
+    def computeQv(self, y):
+        msize = self.msize
+        asize = self.asize
+        if not self.incrementalPivoting:
+            if y != self.qv:
                 for i in range(0, msize):
-                    y[i] = qv[i] 
+                    y[i] = self.qv[i]
         else:
-            VectorNd qa = avec0
-            VectorNd Rprod = avec1
-            VectorNd MbaRow = avec2
+            qa = self.avec0
+            Rprod = self.avec1
+            MbaRow = self.avec2
 
             for ia in range(0, asize):
-                qa.set (ia, qbuf[wAlpha[ia].idx])
-            Raa.mul (Rprod, qa)
+                qa.set(ia, self.qbuf[self.wAlpha[ia].idx])
+            self.Raa.mul(Rprod, qa)
             for ia in range(0, asize):
-                int idx = (zAlpha[ia] == z0Var ? wzVar.idx : zAlpha[ia].idx)
+                if self.zAlpha[ia] == self.z0Var:
+                    idx = self.wzVar.idx
+                else:
+                    idx = self.zAlpha[ia].idx
+
                 y[idx] = -Rprod.get(ia)
             for i in range(0, msize):
-                if (wVars[i].isBasic):
-                    int row = wVars[i].idx
-                    getMaaRow (MbaRow, row)
-                    y[row] = qbuf[row] - Rprod.dot(MbaRow)
+                if self.wVars[i].isBasic:
+                    row = self.wVars[i].idx
+                    self.getMaaRow(MbaRow, row)
+                    y[row] = self.qbuf[row] - Rprod.dot(MbaRow)
 
     # @return Variable
     # @param idx int
-    def getBasic(idx):
-        if (incrementalPivoting):
-            if (zVars[idx].isBasic):
-                return zVars[idx]
+    def getBasic(self, idx):
+        if self.incrementalPivoting:
+            if self.zVars[idx].isBasic:
+                return self.zVars[idx]
             else:
-                return wVars[idx]
+                return self.wVars[idx]
         else:
-            return basicVars[idx]; 
+            return self.basicVars[idx]
 
-    def solve(w, z, M, q, nr, eps):
-        return solve (w, z, M, q, nr, eps, null)
 
     '''
     @return int
@@ -832,27 +850,31 @@ class LemkeLCPSolver(LemkeSolverBase):
     @param eps double epsilon
     @param preset boolean preset
     '''
-    def solve(w, z, M, q, nr, eps, preset):
-        Variable driveVar
-        Variable blockingVar
-        int numCand
-        int origNumCand = 0
-        boolean basisWasPreset = false
+    def solve(self, w, z, M, q, nr=None, eps=None, preset=None):
+        if nr is None:
+            nr = len(q)
+        if eps is None:
+            eps = self.AUTO_EPSILON
+        asize = self.asize
+        driveVar = self.Variable()
+        blockingVar = self.Variable()
+        numCand = 0
+        origNumCand = 0
+        basisWasPreset = False
 
-        int nc = nr+1
-        boolean cycleCheck = False
+        nc = nr+1
+        cycleCheck = False
 
         # print ("problem size = " + nr)
-        if cycleCheckingEnabled:
-            if (nr <= maxCycleCheckSize):
-                cycleCheck = true
-           
+        if self.cycleCheckingEnabled:
+            if nr <= self.maxCycleCheckSize:
+                cycleCheck = True
             else:
-                print ("Warning: no cycle check because problem size exceeds " + maxCycleCheckSize)
+                print ("Warning: no cycle check because problem size exceeds " + self.maxCycleCheckSize)
 
-        checkArgs(w, z, M, q, nr, eps)
+        self.checkArgs(w, z, M, q, nr, eps)
 
-        if (fullSolve or preset) != None : 
+        if (self.fullSolve or preset) is not None:
             Morig.setSize(nr, nr+1)
             for i in range(0, nr):
                 for j in range(0, nr):
@@ -866,34 +888,35 @@ class LemkeLCPSolver(LemkeSolverBase):
             InvBasis.setSize(nr, nr)
             col.setSize(nr)
 
-        double qmin = Double.POSITIVE_INFINITY
-        int pivotCnt = 0
-        int maxPivotCnt = 1000 # nr*nr
+        qmin = Double.POSITIVE_INFINITY
+        pivotCnt = 0
+        maxPivotCnt = 1000  # nr*nr
 
         Mbuf = M
         qbuf = q
         msize = nr
-        
-        if !incrementalPivoting :
-        for i in range(0, nr):
-            for j in range(0, nr):
-                Mv[i*nc+j] = M[i*nr+j]
-            Mv[i*nc+nr] = cvec[i]
+
+        if not self.incrementalPivoting:
+            for i in range(0, nr):
+                for j in range(0, nr):
+                    Mv[i*nc+j] = M[i*nr+j]
+                    Mv[i*nc+nr] = cvec[i]
             #  for j in range(nr+1, 2*nr+1):
             #   {
-      # set the last nr columns to an nrXnr identity
+            # set the last nr columns to an nrXnr identity
             # Mv[i*nc+j] = (i == j-(nr+1)) ? 1 : 0
             #   }
             qv[i] = q[i]
         else:
             for i in range(0, msize):
                 qv[i] = q[i]
-            asize = 0
-            Raa.setSize (asize, asize)
-            avec0.setSize (asize)
-            avec1.setSize (asize)
-            avec2.setSize (asize)
-            avec3.setSize (asize)
+            self.asize = 0
+            asize = self.asize
+            Raa.setSize(asize, asize)
+            avec0.setSize(asize)
+            avec1.setSize(asize)
+            avec2.setSize(asize)
+            avec3.setSize(asize)
 
         for i in range(0, nr):
             Variable wvar = wVars[i]
@@ -908,61 +931,60 @@ class LemkeLCPSolver(LemkeSolverBase):
             qv[i] = q[i]
 
         z0Var = zVars[nr]
-        z0Var.init (Z0, null)
+        z0Var.init(Z0, null)
 
         nonBasicVars[nr] = z0Var
         nonCompIdx = nr
 
+        if preset is not None:
 
-        if (preset != null):
-
-            int numActive = 0
+            numActive = 0
             # initialize cover vector
             for i in range(0, nr):
                 cvec[i] = 0
-          
+
             for i in range(0, min(preset.length, nr)):
                 if preset[i]:
-                    zVars[i].isBasic = true
-                    wVars[i].isBasic = false
+                    zVars[i].isBasic = True
+                    wVars[i].isBasic = False
 
                     basicVars[i] = zVars[i]
                     nonBasicVars[i] = wVars[i]
-                    numActive++
+                    numActive += 1
                     
             for j in range(0, nr):
-                if (zVars[j].isBasic):
+                if zVars[j].isBasic:
                     for i in range(0, nr):
                         cvec[i] -= M[i*nr+j]
                 else:
                     cvec[j] += 3
 
-            if (numActive > 0):
+            if numActive > 0:
              
-                if (!computeMvFromBasis (1000*DOUBLE_PREC)):
+                if not computeMvFromBasis(1000*DOUBLE_PREC):
                     print ("pre-basis ill-conditioned; ignoring ...")
                     for i in range(0, nr):
-                        zVars[i].isBasic = false
-                        wVars[i].isBasic = true
+                        zVars[i].isBasic = False
+                        wVars[i].isBasic = True
                         cvec[i] = 1
 
                         basicVars[i] = wVars[i]
                         nonBasicVars[i] = zVars[i]
                 else:
-                    basisWasPreset = true
+                    basisWasPreset = True
             
         else:
             for i in range(0, nr):
                 cvec[i] = 1
         
-        if ((debug & SHOW_MINRATIO) != 0):
+        if (debug & SHOW_MINRATIO) != 0:
             print ("Initial qv:")
-            NumberFormat fmt = new NumberFormat("%14.8f"):
+            NumberFormat fmt = new NumberFormat("%14.8f")
             for i in range(0, nr):
-                print (basicVars[i].getName() + " " +fmt.format(qv[i])):
+                print (basicVars[i].getName() + " " +fmt.format(qv[i]))
 
         for i in range(0, nr):
-            if (basisWasPreset):
+            if basisWasPreset:
                 mv[i] = wVars[i].isBasic ? 3 : 1
             else:
                 mv[i] = cvec[i]
@@ -970,19 +992,19 @@ class LemkeLCPSolver(LemkeSolverBase):
         for i in range(0, nr):
             mv[i] = -mv[i]
 
-        int imin = lexicoMinRatioTest (mv, qv, nr, -1, true)
-        if (imin == -1):
+        int imin = lexicoMinRatioTest(mv, qv, nr, -1, True)
+        if imin == -1:
             # then q >= 0 and so z = 0 is a solution
-            computeSolution (w, z, M, q, qv, nr)
+            self.computeSolution(w, z, M, q, qv, nr)
             # print ("basis: " + basisString(null))
-            return SOLVED
+            return self.SOLVED
         
         '''
-        #     if (preset != null):
+        #     if preset != null:
         #      {
          for i in range(0, nr):
         #         {
-            if (zVars[i].isBasic):
+            if zVars[i].isBasic:
         #        {
            Mv[i*nc+nr] = 1
         #        }
@@ -995,92 +1017,92 @@ class LemkeLCPSolver(LemkeSolverBase):
         '''    
         # zx to be the smallest zx s.t. w = q + d zx >= 0
         # double zx = qmin
-        int r = imin
-        int i_zx = r
+        r = imin
+        i_zx = r
 
-        if ((debug & SHOW_MINRATIO) != 0):
+        if (self.debug & self.SHOW_MINRATIO) != 0:
             print ("Initial:")
         
 
-        if (wVars[r].isBasic):
-            driveVar = pivot (wVars[r], z0Var)
+        if wVars[r].isBasic:
+            driveVar = pivot(wVars[r], z0Var)
         else:
-            driveVar = pivot (zVars[r], z0Var)
+            driveVar = pivot(zVars[r], z0Var)
 
-        if (cycleCheck):
-            currentBasis.init (driveVar)
+        if cycleCheck:
+            currentBasis.init(driveVar)
 
         # CandidateList listCopy = null
 
-        while (pivotCnt < maxPivotCnt):
+        while pivotCnt < maxPivotCnt:
             # driving variable is indexed by r.
             # find the blocking variable from the r-th column
-            computeMvCol (mv, driveVar)
+            computeMvCol(mv, driveVar)
 
-            if ((debug & (SHOW_MINRATIO | SHOW_BASIS)) != 0):
+            if (debug & (SHOW_MINRATIO | SHOW_BASIS)) != 0:
                 print ("Basis: " + basisString(driveVar))
             
-            if ((debug & SHOW_MINRATIO) != 0):
+            if (debug & SHOW_MINRATIO) != 0:
                 print ("epsilon=" + epsilon)
                 print ("driving variable="+ driveVar.getName())
             
             int z_i = incrementalPivoting ? wzVar.idx : i_zx
-            int s = lexicoMinRatioTest (mv, qv, nr, z_i, /*initial=*/false)
-            if (s == -1):
+            int s = lexicoMinRatioTest(mv, qv, nr, z_i, /*initial=*/False)
+            if s == -1:
                 # then driving variable is unblocked, so we can't find a solution
                 print ("unbounded ray")
                 return UNBOUNDED_RAY
             
-            elif (s == z_i):
+            elif s == z_i:
                 # zx blocks the driving variable
-                pivot (z0Var, driveVar)
-                if ((debug & SHOW_MINRATIO) != 0):
-                    printQv ("Final:", qv, nr)
-                computeSolution (w, z, M, q, qv, nr)
+                pivot(z0Var, driveVar)
+                if (debug & SHOW_MINRATIO) != 0:
+                    printQv("Final:", qv, nr)
+                computeSolution(w, z, M, q, qv, nr)
                 # print ("basis: " + basisString(null))
-                if (preset != null):
+                if preset != null:
                     for i in range(0, min(preset.length, nr)):
-                        preset[i] = zVars[i].isBasic; 
+                        preset[i] = zVars[i].isBasic
                 return SOLVED
             else:
-                driveVar = pivot (getBasic(s), driveVar)
+                driveVar = pivot(getBasic(s), driveVar)
             pivotCnt++
 
         return CYCLING_DETECTED
 
     # @return double
-    def getEpsilon():
+    def getEpsilon(self):
         return epsilon
 
     # @return boolean
-    # @param j int 
-    def wIsBasic(j):
-        return wVars[j].isBasic 
+    # @param j int
+    def wIsBasic(self, j):
+        return self.wVars[j].isBasic
 
     # @return void
-    def getBasisColumn(iv, j):
-        computeMvCol (iv, wVars[j])
+    def getBasisColumn(self, iv, j):
+        self.computeMvCol(iv, self.wVars[j])
 
     # @return Variable[]
-    def getBasicVars():
-        if (incrementalPivoting):
-            Variable[] vars = new Variable[msize]
+    def getBasicVars(self):
+        if self.incrementalPivoting:
+            _vars = [self.Variable]*self.msize
 
-            for i in range(0, msize):
-                if (wVars[i].isBasic):
-                    vars[i] = wVars[i]                
-                elif (zVars[i].isBasic):
-                    vars[i] = zVars[i]
+            for i in range(0, self.msize):
+                if self.wVars[i].isBasic:
+                    _vars[i] = self.wVars[i]
+                elif self.zVars[i].isBasic:
+                    _vars[i] = self.zVars[i]
                 else:
-                    vars[i] = z0Var
-            return vars
+                    _vars[i] = self.z0Var
+            return _vars
         else:
-            return basicVars
+            return self.basicVars
 
     # @return Variable
-    def getWzVar():
-        return wzVar
+    def getWzVar(self):
+        return self.wzVar
 
     # @return String
-    def getBasisString():
-        return basisString(null)
+    def getBasisString(self):
+        return self.basisString(None)
