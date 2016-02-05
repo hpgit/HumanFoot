@@ -130,32 +130,18 @@ class LemkeSolverBase:
     # @param oldArray Object
     # @param length int
     # @param classType Class
-    def growObjectArray (Object oldArray, int length, Class classType):
-    {
-
-        int oldLength = Array.getLength (oldArray)
-        Object newArray = Array.newInstance (classType, length)
-
-        for i in range(0, oldLength)
-        {
-            Array.set (newArray, i, Array.get (oldArray, i))
-        }
-        for i in range(oldLength, length)
-        {
-            try
-            {
-                Array.set (newArray, i, classType.newInstance())
-            }
-            catch (Exception e)
-            {
+    def growObjectArray(Object oldArray, int length, Class classType):
+        int oldLength = Array.getLength(oldArray)
+        Object newArray = Array.newInstance(classType, length)
+        for i in range(0, oldLength):
+            Array.set(newArray, i, Array.get(oldArray, i))
+        for i in range(oldLength, length):
+            try:
+                Array.set(newArray, i, classType.newInstance())
+            catch(Exception e):
                 e.printStackTrace()
                 System.exit(1)
-            }
-        }
         return newArray
-    }   
-
-
 
     # @return void
     # @param num int
@@ -172,38 +158,30 @@ class LemkeSolverBase:
 
     # @return boolean
     def cycleCheckingEnabled():
-    {
         return cycleCheckingEnabled
-    }
 
     # @return void
     # @param enable boolean
-    def setCycleChecking (boolean enable):
+    def setCycleChecking(boolean enable):
         cycleCheckingEnabled = enable
-    
+
     # @return int
     def getPivotCount():
         return cumulativePivotCnt
 
     # @return void
-    def resetPivotCount ():
-    {
+    def resetPivotCount():
         cumulativePivotCnt = 0
-    }
 
     # @return void
     # @param cnt int
-    def setPivotCount (int cnt):
-    {
+    def setPivotCount(int cnt):
         cumulativePivotCnt = cnt
-    }
 
     # @return void
     # @param code int
-    def setDebug (int code):
-    {
+    def setDebug(int code):
         debug = code
-    }
 
     # @return int
     # @param candidates int[]
@@ -211,22 +189,17 @@ class LemkeSolverBase:
     # @param qv double[]
     # @param nr int
     # @param maxQ double
-    def makeZeroList (int[] candidates, double[] mv, double[] qv, int nr, double maxQ):
-    {
+    def makeZeroList(int[] candidates, double[] mv, double[] qv, int nr, double maxQ):
         double tol0 = Math.max(epsilon, maxQ*WORKING_PREC)
         int numCand = 0
-        System.out.println ("adding zeros")
-        for k in range(0, nr)
-        {
+        print ("adding zeros")
+        for k in range(0, nr):
             if qv[k] < tol0:
-            {
                 candidates[numCand++] = k
-                System.out.println ("k=" + k + " qv=" + qv[k])
-            }
-        }
-        System.out.println (" num candidates=" + numCand++)
+                System.out.println("k=" + k + " qv=" + qv[k])
+        System.out.println(" num candidates=" + numCand++)
         return numCand
-    }
+
 
     # @return int
     # @param candidates int[]
@@ -236,67 +209,49 @@ class LemkeSolverBase:
     # @param z_i int
     # @param tie boolean
     # @param takeFirst boolean
-    def minRatio (int[] candidates, int numc, double[] mv, double[] qv, int z_i, boolean tie, boolean takeFirst):
-    {
+    def minRatio(int[] candidates, int numc, double[] mv, double[] qv, int z_i, boolean tie, boolean takeFirst):
         double minRatio = Double.POSITIVE_INFINITY
         int imin = -1
 
-        for k in range(0, numc)
-        {
+        for k in range(0, numc):
             int i = candidates[k]
             double ratio = -qv[i]/mv[i]
             if (qv[i] > 0) or tie:
-            {
                 if ratio < minRatio:
-                {
                     minRatio = ratio
                     imin = i
-                }
-            }
             else:
-            {
                 minRatio = 0
                 imin = i
-            }
-        }
-
         if (imin != -1) and takeFirst:
-        {
             candidates[0] = imin
             return 1
-        }
 
         int newc = 0
-        for k in range(0, numc)
-        {
+        for k in range(0, numc):
             int i = candidates[k]
             double ratio = -qv[i]/mv[i]
-            if (Math.abs(ratio-minRatio) <= epsilon) || (!tie && (qv[i] <= 0)):
-            {
+            if (abs(ratio-minRatio) <= epsilon) or (!tie and (qv[i] <= 0)):
                 candidates[newc++] = i
                 if i == z_i:
-                {
                     candidates[0] = i
                     return 1
-                }
-            }
-        }
+        
         return newc
-    }
 
     # @return boolean
     # @param j int
-    def wIsBasic (int j):
+    def wIsBasic(int j):
         raise NotImplementedError
 
     # @return void
     # @param iv double[]
     # @param j int
-    def getBasisColumn (double[] iv, int j):
+    def getBasisColumn(double[] iv, int j):
         raise NotImplementedError
 
     # @return Variable[]
-    def getBasicVars ():
+    def getBasicVars():
         raise NotImplementedError
 
     # @return Variable
@@ -307,46 +262,31 @@ class LemkeSolverBase:
     # @param candidates int[]
     # @param numc int
     # @param numv int
-    def getDisplayedRows (int[] candidates, int numc, int numv):
-    {
+    def getDisplayedRows(int[] candidates, int numc, int numv):
         boolean[] displayRow = new boolean[numv]
-        for i in range(0, numc)
-        {
-            displayRow[candidates[i]] = true; 
-        }
+        for i in range(0, numc):
+            displayRow[candidates[i]] = true
         return displayRow
-    }
+    
 
     # @return int
     # @param mv double[]
     # @param qv double[]
     # @param numv int
     # @param initial boolean
-    def initCandidates (double[] mv, double[] qv, int numv, boolean initial):
-    {
+    def initCandidates(double[] mv, double[] qv, int numv, boolean initial):
         int numc = 0
         if initial:
-        {
-            for i in range(0, numv)
-            {
+            for i in range(0, numv):
                 if qv[i] < -epsilon:
-                {
                     candidates[numc++] = i
-                }
-            }
-        }
         else:
-        {
-            for i in range(0, numv)
-            {
+            for i in range(0, numv):
                 if mv[i] < -epsilon:
-                {
                     candidates[numc++] = i
-                }
-            } 
-        }
+
         return numc
-    }
+    
 
     # @return int
     # @param mv double[]
@@ -354,83 +294,55 @@ class LemkeSolverBase:
     # @param numv int
     # @param z_i int
     # @param initial boolean
-    def lexicoMinRatioTest (double[] mv, double[] qv, int numv, int z_i, boolean initial):
-    {
-
+    def lexicoMinRatioTest(double[] mv, double[] qv, int numv, int z_i, boolean initial):
         int blocking_i = -1
-        boolean[] displayRow = null; // rows to print for debug
+        boolean[] displayRow = null  # rows to print for debug
 
         boolean printCols = (debug & SHOW_MINRATIO) != 0
-        boolean printLexicoCols =
-            (debug & SHOW_LEXICO_MINRATIO) == SHOW_LEXICO_MINRATIO
+        boolean printLexicoCols = (debug & SHOW_LEXICO_MINRATIO) == SHOW_LEXICO_MINRATIO
 
-        int numc = initCandidates (mv, qv, numv, initial)
+        int numc = initCandidates(mv, qv, numv, initial)
         if numc == 0:
-        {
             if printCols:
-            {
-                printMinRatioInfo (mv, qv, numv, z_i, -1, null, 0)
-            }
+                printMinRatioInfo(mv, qv, numv, z_i, -1, null, 0)
             return -1
-        }
-        numc = minRatio (candidates, numc, mv, qv, z_i, initial, initial)
+        
+        numc = minRatio(candidates, numc, mv, qv, z_i, initial, initial)
 
         if numc > 1:
-        {
+        
             if printLexicoCols:
-            {
-                printMinRatioInfo (mv, qv, numv, z_i, -1, candidates, numc)
-                displayRow = getDisplayedRows (candidates, numc, numv)
-            }
-            for j in range(0, numv && numc>1)
-            {
-                if wIsBasic (j):
-                {
-                    // then iv is simply e(iv_j)
-                    numc = minRatioElementaryTest (candidates, j, numc)
+                printMinRatioInfo(mv, qv, numv, z_i, -1, candidates, numc)
+                displayRow = getDisplayedRows(candidates, numc, numv)
+            for j in range(0, numv && numc>1):
+                if wIsBasic(j):
+                    # then iv is simply e(iv_j)
+                    numc = minRatioElementaryTest(candidates, j, numc)
                     if (debug & SHOW_LEXICO_MINRATIO) != 0:
-                    {
-                        for i in range(0, numv)
-                        {
+                        for i in range(0, numv):
                             iv[i] = (i==j ? 1 : 0); 
-                        }
-                    }
-                }
                 else:
-                {
-                    getBasisColumn (iv, j)
-                    for i in range(0, numv)
-                    {
-                        iv[i] = -iv[i]; 
-                    }
-                    numc = minRatio (candidates, numc, mv, iv, -1, true, false)
-                }
+                    getBasisColumn(iv, j)
+                    for i in range(0, numv):
+                        iv[i] = -iv[i]
+                    numc = minRatio(candidates, numc, mv, iv, -1, true, false)
                 if printLexicoCols:
-                {
                     int b_i = (numc==1 || j==numv-1) ? candidates[0] : -1
-                    System.out.println ("TIE break, basis column " + j + " :")
-                    printMinRatioInfo (mv, iv, numv, z_i, b_i,
-                            candidates, numc, displayRow); 
-                    displayRow = getDisplayedRows (candidates, numc, numv)
-                }
-            }
+                    System.out.println("TIE break, basis column " + j + " :")
+                    printMinRatioInfo(mv, iv, numv, z_i, b_i, candidates, numc, displayRow)
+                    displayRow = getDisplayedRows(candidates, numc, numv)
+            
             if numc > 1:
-            {
-                System.out.println (
-                        "Warning: lexicoMinRatio finished with " + numc + " candidates")
-            }
-        }
+                System.out.println("Warning: lexicoMinRatio finished with " + numc + " candidates")
+        
         blocking_i = candidates[0]
 
         if printCols && displayRow==null:
-        {
-            numc = initCandidates (mv, qv, numv, initial)
-            numc = minRatio (candidates, numc, mv, qv, z_i, initial, initial)
-            printMinRatioInfo (mv, qv, numv, z_i,
-                    blocking_i, candidates, numc)
-        }
+            numc = initCandidates(mv, qv, numv, initial)
+            numc = minRatio(candidates, numc, mv, qv, z_i, initial, initial)
+            printMinRatioInfo(mv, qv, numv, z_i, blocking_i, candidates, numc)
         return blocking_i
-    }
+    
 
     '''
     /**
@@ -438,67 +350,49 @@ class LemkeSolverBase:
      * i.e., e(i) = 0 if i != ei and e(ei) = 1.
      *
      * All we do in this case is eliminate any node from
-     * the list whose index is ei.   
+     * the list whose index is ei.
      */
     '''
     # @return int
     # @param candidates int[]
     # @param ei int
     # @param numCand int
-    def minRatioElementaryTest (int[] candidates, int ei, int numCand):
-    {
+    def minRatioElementaryTest(int[] candidates, int ei, int numCand):
         int k
-        for (k=0; k<numCand; k++)
-        {
+        for (k=0; k<numCand; k++):
             if candidates[k] == ei:
-            {
                 break
-            }
-        }
+        
         if k == numCand:
-        {
             return numCand
-        }
+        
         else:
-        {
             while (k < numCand-1):
-            {
                 candidates[k] = candidates[k+1]
                 k++
-            }
             return numCand-1
-        }
-    }
+    
 
     # @return boolean
     # @param i int
     # @param candidates int[]
     # @param numCand int
-    def isCandidate (int i, int[] candidates, int numCand):
-    {
-        for k in range(0, numCand)
-        {
+    def isCandidate(int i, int[] candidates, int numCand):
+        for k in range(0, numCand):
             if candidates[k] == i:
-            {
                 return true; 
-            }
-        }
         return false
-    }
+    
 
     # @return void
     # @param driveVar Variable
-    def printBasis (Variable driveVar):
-    {
-        System.out.println ("Basis: " + basisString(driveVar))
-    }
-
+    def printBasis(Variable driveVar):
+        System.out.println("Basis: " + basisString(driveVar))
+    
     # @return String
     # @param driveVar Variable
-    def basisString (Variable driveVar):
-    {
+    def basisString(Variable driveVar):
         return ""
-    }
 
     # @return void
     # @param mv double[] 
@@ -507,55 +401,35 @@ class LemkeSolverBase:
     # @param z_i int
     # @param blocking_i int
     # @param candidates int[] candidates, int numc)
-    def printMinRatioInfo (double[] mv, double[] qv, int numv, int z_i, int blocking_i, int[] candidates, int numc):
-    {
-        printMinRatioInfo (mv, qv, numv, z_i, blocking_i,
-                candidates, numc, null)
-    }
+    def printMinRatioInfo(double[] mv, double[] qv, int numv, int z_i, int blocking_i, int[] candidates, int numc):
+        printMinRatioInfo(mv, qv, numv, z_i, blocking_i, candidates, numc, null)
 
     # @return int[]
     # @param basicVars Variable[]
     # @param numv int
     # @param displayRow boolean[]
     # @param z_i int
-    def getDisplayIndices (Variable[] basicVars, int numv, boolean[] displayRow, int z_i):
-    {
+    def getDisplayIndices(Variable[] basicVars, int numv, boolean[] displayRow, int z_i):
         int[] idxs
-
         if displayRow == null:
-        {
             idxs = new int[numv]
-            for i in range(0, numv)
-            {
-                idxs[i] = i; 
-            }
-        }
+            for i in range(0, numv):
+                idxs[i] = i
         else:
-        {
             int numdisp = 0
-            for i in range(0, numv)
-            {
+            for i in range(0, numv):
                 if displayRow[i]:
-                {
-                    numdisp++; 
-                }
-            }
+                    numdisp++
             idxs = new int[numdisp]
             int k = 0
-            for i in range(0, numv)
-            {
+            for i in range(0, numv):
                 if displayRow[i]:
-                {
                     idxs[k++] = i
-                }
-            }
-        }
-        
         '''
         //     // bubble sort indices by variable index
-        //     for i in range(0, idxs.length-1)
+        //     for i in range(0, idxs.length-1):
         //      {
-        //for j in range(i+1, idxs.length)
+        //for j in range(i+1, idxs.length):
             //         {
         //    int idx_i = basicVars[idxs[i]].idx
         //       int idx_j = basicVars[idxs[j]].idx
@@ -576,55 +450,41 @@ class LemkeSolverBase:
         '''
 
         return idxs
-    }
+    
 
     # @return int
     # @param vars_ Variable[]
     # @param numv int
-    private int getMaxNameLength (Variable[] vars, int numv)
-    {
+    def getMaxNameLength(Variable[] vars, int numv):
         int maxNameLength = 0
-        for i in range(0, numv)
-        {
+        for i in range(0, numv):
             if vars[i].getName().length() > maxNameLength:
-            {
                 maxNameLength = vars[i].getName().length()
-            }
-        }
         return maxNameLength
-    }
 
     # @return void
     # @param msg String
     # @param qv double[]
     # @param numv int
-    def printQv (String msg, double[] qv, int numv):
-    {
+    def printQv(String msg, double[] qv, int numv):
         Variable[] basicVars = getBasicVars()
-        int maxNameLength = getMaxNameLength (basicVars, numv)
+        int maxNameLength = getMaxNameLength(basicVars, numv)
 
-        NumberFormat ffmt = new NumberFormat ("%24g")
+        NumberFormat ffmt = new NumberFormat("%24g")
         StringBuffer sbuf = new StringBuffer(256)
 
         if msg != null:
-        {
-            System.out.println (msg); 
-        }
-        for i in range(0, numv)
-        {
-
+            System.out.println(msg)
+        for i in range(0, numv):
             sbuf.setLength(0)
-            sbuf.append ("  ")
-            sbuf.append (basicVars[i].getName())
-            while (sbuf.length() < maxNameLength+2)
-            {
-                sbuf.insert (2, ' '); 
-            }         
-            sbuf.append ("   ")
-            sbuf.append (ffmt.format(qv[i]))
-            System.out.println (sbuf.toString())
-        }
-    }
+            sbuf.append("  ")
+            sbuf.append(basicVars[i].getName())
+            while (sbuf.length() < maxNameLength+2):
+                sbuf.insert(2, ' ')
+            sbuf.append("   ")
+            sbuf.append(ffmt.format(qv[i]))
+            System.out.println(sbuf.toString())
+    
 
     # @return void
     # @param mv double[]
@@ -635,52 +495,39 @@ class LemkeSolverBase:
     # @param candidates int[]
     # @param numc int
     # @param displayRow boolean[]
-    def printMinRatioInfo (double[] mv, double[] qv, int numv, int z_i, int blocking_i, int[] candidates, int numc, boolean[] displayRow):
-    {
+    def printMinRatioInfo(double[] mv, double[] qv, int numv, int z_i, int blocking_i, int[] candidates, int numc, boolean[] displayRow):
         Variable[] basicVars = getBasicVars()
 
-        int idxs[] = getDisplayIndices (basicVars, numv, displayRow, z_i)
+        int idxs[] = getDisplayIndices(basicVars, numv, displayRow, z_i)
         boolean[] isCandidate = new boolean[numv]
 
         if candidates != null:
-        {
-            for i in range(0, numc)
-            {
+            for i in range(0, numc):
                 isCandidate[candidates[i]] = true; 
-            }
-        }
 
-        NumberFormat ifmt = new NumberFormat ("%3d")
-        NumberFormat ffmt = new NumberFormat ("%24g")
+        NumberFormat ifmt = new NumberFormat("%3d")
+        NumberFormat ffmt = new NumberFormat("%24g")
         StringBuffer sbuf = new StringBuffer(256)
 
         if blocking_i != -1:
-        {
-            System.out.println ("blocking variable=" + basicVars[blocking_i].getName())
-        }
+            System.out.println("blocking variable=" + basicVars[blocking_i].getName())
 
-        int maxNameLength = getMaxNameLength (basicVars, numv)
+        int maxNameLength = getMaxNameLength(basicVars, numv)
 
-        for k in range(0, idxs.length)
-        {
+        for k in range(0, idxs.length):
             int i = idxs[k]
             sbuf.setLength(0)
-            sbuf.append (basicVars[i].isZ() ? "z " : "  ")
-            sbuf.append (basicVars[i].getName())
+            sbuf.append(basicVars[i].isZ() ? "z " : "  ")
+            sbuf.append(basicVars[i].getName())
             while (sbuf.length() < maxNameLength+2):
-            {
-                sbuf.insert (2, ' '); 
-            }
-            sbuf.append (' ')
-
-            sbuf.append (isCandidate[i] ? '*' : ' ')
-            sbuf.append (i == blocking_i ? "XX " : "   ")
-            sbuf.append (ffmt.format(mv[i]))
-            sbuf.append (ffmt.format(qv[i]))
-            sbuf.append (ffmt.format(-qv[i]/mv[i]))
-            System.out.println (sbuf.toString())
-        }
-    }
+                sbuf.insert(2, ' ')
+            sbuf.append(' ')
+            sbuf.append(isCandidate[i] ? '*' : ' ')
+            sbuf.append(i == blocking_i ? "XX " : "   ")
+            sbuf.append(ffmt.format(mv[i]))
+            sbuf.append(ffmt.format(qv[i]))
+            sbuf.append(ffmt.format(-qv[i]/mv[i]))
+            System.out.println(sbuf.toString())
 
     # @return double
     def getEpsilon(self):
