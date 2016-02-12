@@ -133,6 +133,12 @@ class hpContactForceGraphWnd(fltk.Fl_Widget, ybu.Observer):
         self.curFrame = -1
         self.viewer = None
 
+        self.zoomslider = fltk.Fl_Hor_Value_Slider(self.x()+self.w() - 280, self.y()+20, 250, 18, "zoom")
+        self.zoomslider.bounds(1, 10)
+        self.zoomslider.value(1)
+        self.zoomslider.step(1)
+        self.zoomslider.callback(self.checkBtnCallback)
+
     def update(self, ev, doc):
         if ev == ysvOri.EV_addObject:
             self.dataLength = doc.motionSystem.getMaxFrame()
@@ -162,6 +168,7 @@ class hpContactForceGraphWnd(fltk.Fl_Widget, ybu.Observer):
     def draw(self):
         fltk.fl_draw_box(fltk.FL_FLAT_BOX, 40+self.x(), self.y(), self.w()-40, self.h(), fltk.fl_rgb_color(192, 192, 192))
         ratio = float(self.w()-40)/self.dataLength
+        ratio *= self.zoomslider.value()
         for dataIdx in range(len(self.data)):
             if self.dataCheckBtn[dataIdx].value():
                 for valIdx in range(1, self.dataLength-1):
@@ -175,6 +182,7 @@ class hpContactForceGraphWnd(fltk.Fl_Widget, ybu.Observer):
             fltk.fl_color(fltk.FL_BLUE)
             fltk.fl_line(40+self.x()+int(ratio * frame), int(self.y()+self.h())-3,
                          40+self.x()+int(ratio * frame), int(self.y()-3))
+        self.zoomslider.redraw()
 
     def checkBtnCallback(self, ptr):
         self.redraw()

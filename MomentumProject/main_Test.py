@@ -129,8 +129,8 @@ def init():
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_chiken_foot()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('fastswim.bvh')
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
-    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_leg('kneeAndFoot.bvh')
+    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
+    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_leg('kneeAndFoot.bvh')
     mcfg_motion = mit.normal_mcfg()
 
     vpWorld = cvw.VpWorld(wcfg)
@@ -302,6 +302,7 @@ class Callback:
         self.setTimeStamp()
         simulContactForces = np.zeros(3)
 
+        print "heheheheheheheheh", stepsPerFrame
         for i in range(int(stepsPerFrame)):
             if desForceFrame[0] <= frame <= desForceFrame[1]:
                 if True:
@@ -342,6 +343,7 @@ class Callback:
         # print ddth_des_flat
         # print torques
 
+        '''
         self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, torques \
             = hls.calcLCPControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wTorque, ddth_des_flat, 8)
         del rd_cForcesControl[:]
@@ -356,10 +358,11 @@ class Callback:
             # print expected force
             rd_ForceControl.append(sum(self.cForces) / 50.)
             rd_Position.append(np.array([0., 0., 0.1]))
+        '''
         # graph
         if self.cForces is not None:
             sumForce = sum(self.cForces)
-            viewer.cForceWnd.insertData('expForce', frame, sumForce[1]/10)
+            viewer.cForceWnd.insertData('expForce', frame, sumForce[1])
         else:
             viewer.cForceWnd.insertData('expForce', frame, 0.)
         try:
@@ -367,7 +370,7 @@ class Callback:
             # print torques[:]
         except Exception, e:
             pass
-
+        '''
         self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, tmptmp \
             = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques)
         del rd_cForces[:]
@@ -389,18 +392,20 @@ class Callback:
         # if self.cForces is not None:
         #     rd_ForceDes.append(sum(self.cForces)[1]/50. * [0., 1., 0.])
         #     rd_PositionDes.append(np.array([0., 0., -0.1]))
-
+        '''
         # graph
+        '''
         if self.cForces is not None:
             sumForce = sum(self.cForces)
             # viewer.cForceWnd.insertData('realForce', frame, sumForce[1])
-            viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame/10)
+            viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame)
         else:
             viewer.cForceWnd.insertData('realForce', frame, 0.)
-
+        '''
+        viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame)
         if desForceFrame[0] <= frame <= desForceFrame[1]:
-            viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1] * .8/10)
-            viewer.cForceWnd.insertData('desForceMax', frame, totalForce[1] * 1.2/10)
+            viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1] * .9)
+            viewer.cForceWnd.insertData('desForceMax', frame, totalForce[1] * 1.1)
         else:
             viewer.cForceWnd.insertData('desForceMin', frame, 0.)
             viewer.cForceWnd.insertData('desForceMax', frame, 0.)

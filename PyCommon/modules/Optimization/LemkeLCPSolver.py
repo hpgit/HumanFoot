@@ -217,8 +217,6 @@ class LemkeLCPSolver(LemkeSolverBase):
         maxnorm = max(Mnorm1, qnorm1)
         return 100. * math.sqrt(nc) * maxnorm * self.DOUBLE_PREC
 
-    # TODO:
-    # return row instead of call-by-reference
     # @return void
     # @param row VectorNd
     # @param i int
@@ -234,8 +232,6 @@ class LemkeLCPSolver(LemkeSolverBase):
         return buf
 
 
-    # TODO:
-    # return col instead of call-by-reference
     # @return void
     # @param col VectorNd
     # @param j int
@@ -274,6 +270,8 @@ class LemkeLCPSolver(LemkeSolverBase):
         return Maa
 
 
+    #TODO:
+    # return RaaBuf instead of call-by-reference
     # @return void
     # @param Raa MatrixNd
     # @param Rcol VectorNd
@@ -311,8 +309,8 @@ class LemkeLCPSolver(LemkeSolverBase):
                 col = entering.idx
                 row = dropping.idx
 
-                self.getMaaCol(Mcol, col)
-                self.getMaaRow(Mrow, row)
+                Mcol = self.getMaaCol(Mcol, col)
+                Mrow = self.getMaaRow(Mrow, row)
 
                 Rvec = self.avec2
                 Rrow = self.avec3
@@ -348,15 +346,15 @@ class LemkeLCPSolver(LemkeSolverBase):
                 oldRow = entering.idx
                 newRow = dropping.idx
 
-                VectorNd MrowOld = avec0
-                VectorNd MrowDel = avec1
+                MrowOld = self.avec0
+                MrowDel = self.avec1
 
-                getMaaRow(MrowOld, oldRow)
-                getMaaRow(MrowDel, newRow)
+                MrowOld = self.getMaaRow(MrowOld, oldRow)
+                MrowDel = self.getMaaRow(MrowDel, newRow)
                 MrowDel.sub(MrowOld)
 
-                VectorNd Rcol = avec2
-                VectorNd Rvec = avec3
+                Rcol = self.avec2
+                Rvec = self.avec3
 
                 int col = entering.col
                 Raa.getColumn(col, Rcol)
@@ -454,8 +452,8 @@ class LemkeLCPSolver(LemkeSolverBase):
                 VectorNd McolOld = avec0
                 VectorNd McolDel = avec1
 
-                getMaaCol(McolOld, oldCol)
-                getMaaCol(McolDel, newCol)
+                McolOld = self.getMaaCol(McolOld, oldCol)
+                McolDel = self.getMaaCol(McolDel, newCol)
                 McolDel.sub(McolOld)
 
                 VectorNd Rrow = avec2
@@ -766,7 +764,7 @@ class LemkeLCPSolver(LemkeSolverBase):
 
             col = var.idx
 
-            self.getMaaCol(MabCol, col)
+            MabCol = self.getMaaCol(MabCol, col)
             self.Raa.mul(Rprod, MabCol)
             for ia in range(0, asize):
                 if zAlpha[ia] == self.z0Var:
@@ -777,7 +775,7 @@ class LemkeLCPSolver(LemkeSolverBase):
             for i in range(0, msize):
                 if wVars[i].isBasic:
                     row = wVars[i].idx
-                    self.getMaaRow(MbaRow, row)
+                    MbaRow = self.getMaaRow(MbaRow, row)
                     y[row] = self.Mbuf[row*msize+col] - Rprod.dot(MbaRow)
         else:  # var.isW()
             Rprod = avec0
@@ -794,7 +792,7 @@ class LemkeLCPSolver(LemkeSolverBase):
             for i in range(0, msize):
                 if wVars[i].isBasic:
                     row = wVars[i].idx
-                    self.getMaaRow(MbaRow, row)
+                    MbaRow = self.getMaaRow(MbaRow, row)
                     y[row] = Rprod.dot(MbaRow)
 
 
@@ -825,7 +823,7 @@ class LemkeLCPSolver(LemkeSolverBase):
             for i in range(0, msize):
                 if self.wVars[i].isBasic:
                     row = self.wVars[i].idx
-                    self.getMaaRow(MbaRow, row)
+                    MbaRow = self.getMaaRow(MbaRow, row)
                     y[row] = self.qbuf[row] - Rprod.dot(MbaRow)
 
     # @return Variable

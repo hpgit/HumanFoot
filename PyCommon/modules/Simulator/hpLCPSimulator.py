@@ -281,6 +281,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
 
 
 def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wTorque, tau0=None, numFrictionBases=8):
+    # tau0 = None
     # model = VpControlModel
     # numFrictionBases = 8
     contactNum, bodyIDs, contactPositions, contactPositionsLocal, JTN, JTD, E, N, D \
@@ -311,6 +312,7 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wTorque
 
     h = world.GetTimeStep()
     invh = 1./h
+    print "TimeStep: :", h
     mus = mu * np.eye(contactNum)
     temp_NM = JTN.T.dot(pinvM0)
     temp_DM = JTD.T.dot(pinvM0)
@@ -392,8 +394,18 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wTorque
             Qfqp = np.concatenate((N[:3], D[:3], np.zeros_like(N[:3])), axis=1)
             pfqp = -totalForce[:3]
 
-            Qqp = cvxMatrix(2.*A + wTorque * np.dot(Qfqp.T, Qfqp))
-            pqp = cvxMatrix(b + wTorque * np.dot(pfqp.T, Qfqp))
+            # TODO:
+            # add tau norm term ||tau||^2
+            # and momentum derivative term
+            QtauNormqp = np.hstack((np.dot(pinvM1, np.hstack((JTN, JTD))), np.zeros((pinvM1.shape[0], N.shape[1]))))
+            ptauNormqp = np.dot(pinvM1, (-np.asarray(c)+np.asarray(tau0))) + np.asarray(tau0)
+
+            Qqp = cvxMatrix(2.*A + wTorque * np.dot(Qfqp.T, Qfqp) + np.dot(QtauNormqp.T, QtauNormqp))
+            pqp = cvxMatrix(b + wTorque * np.dot(pfqp.T, Qfqp) + np.dot(ptauNormqp.T, QtauNormqp))
+
+            # Qqp = cvxMatrix(2.*A + wTorque * np.dot(Qfqp.T, Qfqp) )
+            # pqp = cvxMatrix(b + wTorque * np.dot(pfqp.T, Qfqp))
+
 
             equalConstForce = False
             G = np.vstack((-A, -np.eye(A.shape[0])))
@@ -409,10 +421,10 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wTorque
                 G[-4] *= -1.
                 hnp = np.hstack((hnp, np.zeros(6)))
                 hnp[-6] = -totalForce[0] - constFric
-                hnp[-5] = -totalForce[1] * .0
+                hnp[-5] = -totalForce[1] * .9
                 hnp[-4] = -totalForce[2] - constFric
                 hnp[-3] = totalForce[0] + constFric
-                hnp[-2] = totalForce[1] * 10.
+                hnp[-2] = totalForce[1] * 1.1
                 hnp[-1] = totalForce[2] + constFric
 
 
