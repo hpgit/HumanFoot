@@ -109,15 +109,17 @@ class GlWindow(Fl_Gl_Window):
         self.prevRotY = 0
         self.viewMode = VIEW_PERSPECTIVE
         
-        self.sceneList= None
+        self.sceneList = None
         self.groundList = None
         self.axisList = None
+
+        self.projectionMode = None
 
         self.cameraMode = True
         self.force = [0, 0, 0]
         self.forceMag = 1.0
         self.forceDir = 0
-        
+
     def setupLights(self):
         if self.drawStyle == POLYGON_LINE:
             glDisable(GL_LIGHTING)
@@ -142,20 +144,22 @@ class GlWindow(Fl_Gl_Window):
         
     def projectOrtho(self, distance):
         self.projectionMode = True
+        glViewport(0, 0, self.w(), self.h())
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
         x = float(self.w())/float(self.h()) * distance
         y = 1. * distance
-#        glOrtho(-x/2., x/2., -y/2., y/2., .1 ,1000.)
+        # glOrtho(-x/2., x/2., -y/2., y/2., .1 ,1000.)
         glOrtho(-x/2., x/2., -y/2., y/2., -1000. ,1000.)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
         
     def projectPerspective(self):
         self.projectionMode = False
+        glViewport(0, 0, self.w(), self.h())
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        gluPerspective( 45., float(self.w())/float(self.h()), 0.1, 1000.)
+        gluPerspective(45., float(self.w())/float(self.h()), 0.1, 1000.)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
         
@@ -188,7 +192,7 @@ class GlWindow(Fl_Gl_Window):
                 count += 1
         glEnd()
     def drawGround(self):
-        if self.groundList==None:
+        if self.groundList is None:
             self.groundList = glGenLists(1)
             glNewList(self.groundList, GL_COMPILE_AND_EXECUTE)
         
@@ -239,7 +243,7 @@ class GlWindow(Fl_Gl_Window):
         glEnd()
      
     def drawGround_grey(self):
-        if self.groundList==None:
+        if self.groundList is None:
             self.groundList = glGenLists(1)
             glNewList(self.groundList, GL_COMPILE_AND_EXECUTE)
             
@@ -267,18 +271,18 @@ class GlWindow(Fl_Gl_Window):
             glCallList(self.groundList)
 
     def drawGround_color(self):        
-        if self.groundList==None:         
+        if self.groundList is None:
             self.groundList = glGenLists(1)
             glNewList(self.groundList, GL_COMPILE_AND_EXECUTE)
             size = 60
             nSquares = 60
-#            size = 100
-#            nSquares = 100
+            # size = 100
+            # nSquares = 100
            
-            maxX = size /2.0
-            maxY = size /2.0
-            minX = -size /2.0
-            minY = -size /2.0
+            maxX = size / 2.0
+            maxY = size / 2.0
+            minX = -size / 2.0
+            minY = -size / 2.0
         
             xd = (maxX - minX) / nSquares
             yd = (maxY - minY) / nSquares
@@ -292,13 +296,13 @@ class GlWindow(Fl_Gl_Window):
             glBegin(GL_QUADS)
             
             glNormal3f(0.0, 1.0, 0.0)
-            #glNormal3f(0.0, 0.0, 1.0)
+            # glNormal3f(0.0, 0.0, 1.0)
             for x in range(0,nSquares):
                 for y in range(0,nSquares):
-                    if i %2 == 1:
-                        glColor4f(0.78 ,0.78, 0.78,0.5)
+                    if i % 2 == 1:
+                        glColor4f(0.78, 0.78, 0.78, 0.5)
                     else:
-                        glColor4f(0.9, 0.9, 0.9,0.5)   
+                        glColor4f(0.9, 0.9, 0.9, 0.5)
                     glVertex3d(xp,      self.planeHeight-h, yp)
                     glVertex3d(xp,      self.planeHeight-h, yp + yd)
                     glVertex3d(xp + xd, self.planeHeight-h, yp + yd)
@@ -351,7 +355,8 @@ class GlWindow(Fl_Gl_Window):
         glMultMatrixf(mat)
              
     def draw(self):
-        if self.initGLFlag == True:
+        if self.valid():
+        # if self.initGLFlag:
             self.initGL()
             self.initGLFlag = False
             
@@ -379,8 +384,9 @@ class GlWindow(Fl_Gl_Window):
         glLightfv(GL_LIGHT0, GL_POSITION, (.5,1.,.5,0))
                 
         glLineWidth(1.)
-        #self.drawGround()
-        #self.drawAxis()
+        # self.drawGround()
+        # self.drawAxis()
+        self.drawCoordinate((0, 0, 0))
         self.drawGround_color()
         #self.drawGroundFilled()
         #self.drawGround_grey()
@@ -577,10 +583,10 @@ class GlWindow(Fl_Gl_Window):
             self.redraw()
             
         return returnVal
-#        return Fl_Gl_Window.handle(self, e)
+        # return Fl_Gl_Window.handle(self, e)
 
     def getState(self):
-#        print '[FRAMELOG]newlist', self.parent.frame
+        # print '[FRAMELOG]newlist', self.parent.frame
         ls1 = glGenLists(1)
         glNewList(ls1, GL_COMPILE)
         self.drawScene()
@@ -602,9 +608,9 @@ class GlWindow(Fl_Gl_Window):
         glDeleteLists(state, 1)
         
     def resize(self, x, y, w, h):
-        glViewport(0,0,w,h)
+    #     glViewport(0, 0, self.w(), self.h())
+        Fl_Gl_Window.resize(self, x, y, w, h)
         self.projectionChanged = True
-        Fl_Window.resize(self, x, y, w, h)
 
     def GetForce(self):
         return self.force

@@ -17,7 +17,7 @@ class hpSimpleViewer(ysvOri.SimpleViewer):
         self.cForceWnd = hpContactForceGraphWnd(0, self.h()-cForceHeight, self.w()-panelWidth-40, cForceHeight, self.doc)
         self.end()
         self.resizable(self.motionViewWnd)
-        self.resizable(self.cForceWnd)
+        # self.resizable(self.cForceWnd)
         self.size_range(600, 400)
 
         self.cForceWnd.viewer = self
@@ -139,6 +139,12 @@ class hpContactForceGraphWnd(fltk.Fl_Widget, ybu.Observer):
         self.zoomslider.step(1)
         self.zoomslider.callback(self.checkBtnCallback)
 
+        self.yzoomslider = fltk.Fl_Hor_Value_Slider(self.x()+self.w() - 280, self.y()+60, 250, 18, "y zoom")
+        self.yzoomslider.bounds(1, 20)
+        self.yzoomslider.value(1)
+        self.yzoomslider.step(1)
+        self.yzoomslider.callback(self.checkBtnCallback)
+
     def update(self, ev, doc):
         if ev == ysvOri.EV_addObject:
             self.dataLength = doc.motionSystem.getMaxFrame()
@@ -169,12 +175,13 @@ class hpContactForceGraphWnd(fltk.Fl_Widget, ybu.Observer):
         fltk.fl_draw_box(fltk.FL_FLAT_BOX, 40+self.x(), self.y(), self.w()-40, self.h(), fltk.fl_rgb_color(192, 192, 192))
         ratio = float(self.w()-40)/self.dataLength
         ratio *= self.zoomslider.value()
+        dataRatio = 1./self.yzoomslider.value()
         for dataIdx in range(len(self.data)):
             if self.dataCheckBtn[dataIdx].value():
                 for valIdx in range(1, self.dataLength-1):
                     fltk.fl_color(self.dataSetColor[dataIdx])
-                    fltk.fl_line(40+self.x()+int(ratio * (valIdx-1)), int(self.y()+self.h() - self.data[dataIdx][valIdx-1]/2.)-3,
-                                 40+self.x()+int(ratio * valIdx), int(self.y()+self.h() - self.data[dataIdx][valIdx]/2.)-3)
+                    fltk.fl_line(40+self.x()+int(ratio * (valIdx-1)), int(self.y()+self.h() - self.data[dataIdx][valIdx-1]*dataRatio)-3,
+                                 40+self.x()+int(ratio * valIdx), int(self.y()+self.h() - self.data[dataIdx][valIdx]*dataRatio)-3)
 
 
         frame = self.viewer.getCurrentFrame()
@@ -182,7 +189,9 @@ class hpContactForceGraphWnd(fltk.Fl_Widget, ybu.Observer):
             fltk.fl_color(fltk.FL_BLUE)
             fltk.fl_line(40+self.x()+int(ratio * frame), int(self.y()+self.h())-3,
                          40+self.x()+int(ratio * frame), int(self.y()-3))
+
         self.zoomslider.redraw()
+        self.yzoomslider.redraw()
 
     def checkBtnCallback(self, ptr):
         self.redraw()

@@ -19,8 +19,11 @@ class Observer:
         raise NotImplementedError("Must subclass me")
     
 class BaseSettings:
-    def __init__(self):
-        self.x = 100; self.y = 100; self.w = 1200; self.h = 1440
+    def __init__(self, x=100, y=100, w=800, h=600):
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
     def load(self, fileName):
         try:
             self.__dict__.update(cPickle.load(open(fileName, 'r')).__dict__)
@@ -36,15 +39,15 @@ class BaseSettings:
 
 class BaseWnd(Fl_Window):
     def __init__(self, rect=None, title='BaseWnd', settings=BaseSettings()):
-        Fl_Window.__init__(self, 100, 100, 1200, 900, title)
-        
-        self.settingsFile = ''
-        if rect == None:
-            self.settingsFile = title+'.settings'
-        else:    
-            self.position(rect[0], rect[1])
-            self.size(rect[2], rect[3])
-            
+        self.settingsFile = title+'.settings'
+        if rect is not None:
+            settings.x = rect[0]
+            settings.y = rect[1]
+            settings.w = rect[2]
+            settings.h = rect[3]
+
+        Fl_Window.__init__(self, settings.x, settings.y, settings.w, settings.h, title)
+
         self.settings = settings
         self.callback(self.onClose)
     def show(self):

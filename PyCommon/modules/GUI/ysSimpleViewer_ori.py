@@ -16,8 +16,8 @@ EV_selectObjectElement   = 3
 EV_selectObject          = 4
 
 class SimpleSetting(ybu.BaseSettings):
-    def __init__(self):
-        ybu.BaseSettings.__init__(self)
+    def __init__(self, x=100, y=100, w=1600, h=1200):
+        ybu.BaseSettings.__init__(self, x, y, w, h)
         self.camera = yv3.Camera().__dict__
         self.ortho = False
         self.viewMode = yv3.VIEW_PERSPECTIVE
