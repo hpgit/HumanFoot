@@ -82,6 +82,11 @@ infoData = None
 markerName = None
 markerPosi = None
 
+tibia_marker_idx = None
+backfoot_marker_idx = None
+midfoot_marker_idx = None
+forefoot_marker_idx = None
+
 
 def init():
     global motion
@@ -102,6 +107,11 @@ def init():
     global infoData
     global markerName
     global markerPosi
+
+    global tibia_marker_idx
+    global backfoot_marker_idx
+    global forefoot_marker_idx
+    global midfoot_marker_idx
 
     np.set_printoptions(precision=4, linewidth=200)
     motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
@@ -125,10 +135,10 @@ def init():
     viewer = hsv.hpSimpleViewer([100, 100, 1280, 960])
     viewer.doc.addObject('motion', motion)
     viewer.doc.addRenderer('rd_jointPos', yr.PointsRenderer(rd_jointPos, color=(255,0,0), pointStyle=0))
-    viewer.doc.addRenderer('rd_tibia', yr.PointsRenderer(rd_tibia, color=(255,255,0), pointStyle=0))
+    viewer.doc.addRenderer('rd_tibia', yr.PointsRenderer(rd_tibia, color=(255,0,255), pointStyle=0))
     viewer.doc.addRenderer('rd_backfoot', yr.PointsRenderer(rd_backfoot, color=(0,0,255), pointStyle=0))
     viewer.doc.addRenderer('rd_midfoot', yr.PointsRenderer(rd_midfoot, color=(0,255,0), pointStyle=0))
-    viewer.doc.addRenderer('rd_forefoot', yr.PointsRenderer(rd_forefoot, color=(255,255,255), pointStyle=0))
+    viewer.doc.addRenderer('rd_forefoot', yr.PointsRenderer(rd_forefoot, color=(0,0,0), pointStyle=0))
 
     viewer.objectInfoWnd.add1DSlider(
         'PD gain', minVal=0., maxVal=1000., initVal=180., valStep=.1)
@@ -145,14 +155,19 @@ def init():
      'V_Mid_ASIS', 'V_Pelvis_Origin', 'V_R.Hip_JC', 'V_L.Hip_JC', 'V_R.Knee_JC', 'V_L.Knee_JC', 'V_R.Ankle_JC', 'V_L.Ankle_JC', 'V_Mid_Hip', 'V_Mid_Shoulder', 'V_R.Hand', 'V_L.Hand', 'V_R.Toe_Offset_Static', 'V_L.Toe_Offset_Static', 'V_R.Toe_Offset', 'V_L.Toe_Offset']
     '''
 
-    tibia_marker = ['R.Knee', 'R.Shank', 'R.Ankle', 'L.Thigh', 'L.Knee', 'L.Shank', 'L.Ankle']
+    tibia_marker = ['R.Knee', 'R.Shank', 'R.Ankle', 'L.Knee', 'L.Shank', 'L.Ankle']
     forefoot_marker = ['R1', 'R2', 'R.Toe', 'R7', 'L1', 'L2', 'L.Toe', 'L7']
     midfoot_marker = ['R3', 'R6', 'L3', 'L6']
-    backfoot_marker = ['R4', 'R.Heel', 'R5', 'L4', 'R.Heel', 'L5']
+    backfoot_marker = ['R4', 'R.Heel', 'R5', 'L4', 'L.Heel', 'L5']
     tibia_marker_idx = [markerName.index(i) for i in tibia_marker]
     midfoot_marker_idx = [markerName.index(i) for i in midfoot_marker]
     forefoot_marker_idx = [markerName.index(i) for i in forefoot_marker]
-    backfoot_marker = [markerName.index(i) for i in backfoot_marker]
+    backfoot_marker_idx = [markerName.index(i) for i in backfoot_marker]
+
+    print tibia_marker_idx
+    print forefoot_marker_idx
+    print midfoot_marker_idx
+    print backfoot_marker_idx
 
 
 init()
@@ -178,11 +193,22 @@ class Callback:
 
     def simulateCallback(self, frame):
         self.frame = frame
-        print "main:frame : ", frame
+        # print "main:frame : ", frame
 
         del rd_jointPos[:]
         rd_jointPos.extend(markerPosi[frame][:39])
-
+        del rd_tibia[:]
+        rd_tibia.extend([markerPosi[frame][i] for i in tibia_marker_idx])
+        del rd_backfoot[:]
+        rd_backfoot.extend([markerPosi[frame][i] for i in backfoot_marker_idx])
+        del rd_midfoot[:]
+        rd_midfoot.extend([markerPosi[frame][i] for i in midfoot_marker_idx])
+        del rd_forefoot[:]
+        try:
+            rd_forefoot.extend([markerPosi[frame][i] for i in forefoot_marker_idx])
+        except Exception, e:
+            print markerPosi[frame]
+            # raise e
 
 
 callback = Callback()
