@@ -6,30 +6,21 @@
 
 ## How to build and run
 #### In linux,
-1. setup boost
+1. download and setup boost
 	
 		$ ./bootstrap.sh
 		$ sudo ./b2 install
 	
-2. sudo apt-get install
-python-dev
-python-opengl
-freeglut3-dev
-pypy
-g++
-python-fltk
-libgle3
+2. setup using apt-get
 
-2. 
+        sudo apt-get install python-dev python-numpy freeglut3-dev python-fltk libgle3
+
+3. setup using pip
 
     pip install --upgrade pip setuptools
-    pip install numpy
-    pip install PyOpenGL PyOpenGL-accelerate
-    pip install cvxopt
-    pip install pyode
-    pip install openopt
+    pip install PyOpenGL PyOpenGL-accelerate cvxopt pyode
 
-3. build VirtualPhysics2010 (remove -fPIC in vpLib.makefile) & copy libvpLib.a to PyCommon/modules/usr/lib/
+3. build VirtualPhysics2010 and copy libvpLib.a to PyCommon/modules/usr/lib/
 4. make in PyCommon/modules (if there is a copy error, edit setup.py in Renderer and Simulator)
 5. Run main_MomentumProject.py in MomentumProject/
 
