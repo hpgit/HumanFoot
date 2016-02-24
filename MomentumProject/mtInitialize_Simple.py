@@ -393,6 +393,93 @@ def create_leg(motionFile='kneeAndFoot.bvh'):
     return motion, mcfg, wcfg, stepsPerFrame, config
 
 
+def create_biped_basic(motionName):
+    scale = 1.
+    motion = yf.readBvhFile(motionName, scale)
+    wcfg = ypc.WorldConfig()
+    wcfg.planeHeight = 0.
+    wcfg.useDefaultContactModel = False
+    stepsPerFrame = 120.
+    wcfg.timeStep = (1/30.)/stepsPerFrame
+    #stepsPerFrame = 10
+    #wcfg.timeStep = (1/120.)/(stepsPerFrame)
+    #wcfg.timeStep = (1/1800.)
+
+
+    mcfg = ypc.ModelConfig()
+    mcfg.defaultDensity = 1000.
+    mcfg.defaultBoneRatio = 1.
+
+    for name in massMap:
+        node = mcfg.addNode(name)
+        node.mass = massMap[name]
+
+    # parameter
+    config = {}
+    config['Kt'] = 200;      config['Dt'] = 2*(config['Kt']**.5) # tracking gain
+    config['Kl'] = .10;       config['Dl'] = 2*(config['Kl']**.5) # linear balance gain
+    config['Kh'] = 0.1;       config['Dh'] = 2*(config['Kh']**.5) # angular balance gain
+    config['Ks'] = 20000;   config['Ds'] = 2*(config['Ks']**.5) # penalty force spring gain
+    config['Bt'] = 1.
+    config['Bl'] = 1.#0.5
+    config['Bh'] = 1.
+
+    config['weightMap'] = {RIGHT_ARM:.2, RIGHT_FORE_ARM:.2, LEFT_ARM:.2, LEFT_FORE_ARM:.2, SPINE:.3, SPINE1:.2, RIGHT_FOOT:.3, LEFT_FOOT:.3, HIP:.3,
+                           RIGHT_UP_LEG:.1, RIGHT_LEG:.2, LEFT_UP_LEG:.1, LEFT_LEG:.2,
+                           LEFT_TALUS_1:.1, RIGHT_TALUS_1:.1, LEFT_TALUS_2:.1, RIGHT_TALUS_2:.1,
+                           RIGHT_CALCANEUS_1:.2, LEFT_CALCANEUS_1:.2, RIGHT_CALCANEUS_2:.2, LEFT_CALCANEUS_2:.2,
+                           LEFT_PHALANGE_1:.1, LEFT_PHALANGE_2:.1, RIGHT_PHALANGE_1:.1, RIGHT_PHALANGE_2:.1}
+
+    config['weightMap2'] = {RIGHT_ARM:.2, RIGHT_FORE_ARM:.2, LEFT_ARM:.2, LEFT_FORE_ARM:.2, SPINE:.5, SPINE1:.3, RIGHT_FOOT:.7, LEFT_FOOT:.7, HIP:.5,
+                            RIGHT_UP_LEG:.7, RIGHT_LEG:.7, LEFT_UP_LEG:.7, LEFT_LEG:.7,
+                            LEFT_TALUS_1:.7, RIGHT_TALUS_1:.7, LEFT_TALUS_2:.7, RIGHT_TALUS_2:.7,
+                            RIGHT_CALCANEUS_1:.7, LEFT_CALCANEUS_1:.7, RIGHT_CALCANEUS_2:.7, LEFT_CALCANEUS_2:.7,
+                            LEFT_PHALANGE_1:.4, LEFT_PHALANGE_2:.4, RIGHT_PHALANGE_1:.4, RIGHT_PHALANGE_2:.4}
+    '''
+    (1, 'RightUpLeg')
+    (2, 'RightLeg')
+    (3, 'RightFoot')
+    (4, 'Spine')
+    (5, 'Spine1')
+    (6, 'LeftArm')
+    (7, 'LeftForeArm')
+    (8, 'RightArm')
+    (9, 'RightForeArm')
+    (10, 'LeftUpLeg')
+    (11, 'LeftLeg')
+    (12, 'LeftFoot')
+    (13, 'LeftTalus_1')
+    (14, 'LeftTalus_2')
+    (15, 'RightTalus_1')
+    (16, 'RightTalus_2')
+    (17, 'LeftPhalange_1')
+    (18, 'LeftPhalange_2')
+    (19, 'RightPhalange_1')
+    (20, 'RightPhalange_2')
+    (21, 'LeftCalcaneus_1')
+    (22, 'LeftCalcaneus_2')
+    (23, 'RightCalcaneus_1')
+    (24, 'RightCalcaneus_2')
+    '''
+    config['trackWMap']={10, 5, .1, 20, 10, 5, 2, 10, 5, .1,
+                         0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.10, 0.01}
+
+    config['supLink'] = LEFT_FOOT
+    config['supLink2'] = RIGHT_FOOT
+    # config['end'] = HIP
+    config['end'] = SPINE1
+
+    config['trunk'] = SPINE
+    config['const'] = HIP
+    config['root'] = HIP
+
+    config['FootPartNum'] = FOOT_PART_NUM
+
+    config['FootLPart'] = [LEFT_FOOT, LEFT_CALCANEUS_1, LEFT_CALCANEUS_2, LEFT_TALUS_1, LEFT_TALUS_2, LEFT_PHALANGE_1, LEFT_PHALANGE_2]
+    config['FootRPart'] = [RIGHT_FOOT, RIGHT_CALCANEUS_1, RIGHT_CALCANEUS_2, RIGHT_TALUS_1, RIGHT_TALUS_2, RIGHT_PHALANGE_1, RIGHT_PHALANGE_2]
+
+    return motion, mcfg, wcfg, stepsPerFrame, config
+
 def create_biped():            
     # motion
     # motionName = 'wd2_n_kick.bvh'

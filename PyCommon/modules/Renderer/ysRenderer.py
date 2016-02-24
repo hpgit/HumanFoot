@@ -159,6 +159,21 @@ class PointsRenderer(Renderer):
                 elif self.pointStyle==POINT_CUBE:
                     self.rc.drawCube(point)
 
+class LinesRenderer(Renderer):
+    def __init__(self, points, color = (255,0,0), lineWidth=.02):
+        Renderer.__init__(self, points, color)
+        self.points = points
+        self.lineWidth = lineWidth
+        self.rc.setLineWidth(lineWidth)
+    def render(self, renderType=RENDER_OBJECT):
+        glColor3ubv(self.totalColor)
+        self.rc.beginDraw()
+        for i in range(len(self.points)-1):
+            if self.points[i] is not None:
+                point1 = self.points[i]
+                point2 = self.points[i+1]
+                self.rc.drawLine(point1, point2)
+
 class VectorsRenderer(Renderer):
     def __init__(self, vectors, origins, color = (255,0,0), lineWidth=.02):
         Renderer.__init__(self, vectors, color)

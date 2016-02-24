@@ -1303,7 +1303,6 @@ bp::list VpControlModel::getDOFAxeses()
 
 	bp::list ls = getInternalJointOrientationsGlobal();
 	for(int i=0; i<len(ls); ++i)
-	for(int i=0; i<len(ls); ++i)
 	{
 		numeric::array lsTmp = (numeric::array)ls[i];
 		ls[i] = transpose_pySO3(lsTmp);
