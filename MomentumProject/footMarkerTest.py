@@ -121,7 +121,8 @@ def init():
     global rd_midfoot_cog
 
     np.set_printoptions(precision=4, linewidth=200)
-    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped_basic('../P_3_test01_Dynamic.bvh')
+    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped_basic('../P_3_test01_Dynamic.bvh')
+    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped_basic('../2_Test01_Dynamic.bvh')
     mcfg_motion = mit.normal_mcfg()
 
     infoNames, infoData, markerName, markerPosi = trc.import_trc('../P_3_test01_Dynamic.trc')
@@ -159,6 +160,8 @@ def init():
 
     viewer.objectInfoWnd.add1DSlider(
         'PD gain', minVal=0., maxVal=1000., initVal=180., valStep=.1)
+    viewer.objectInfoWnd.addBtn('image', viewer.motionViewWnd.dump)
+    viewer.objectInfoWnd.addBtn('movie', viewer.motionViewWnd.dumpMov)
 
     print info
     print markerName
@@ -222,8 +225,6 @@ class Callback:
     def simulateCallback(self, frame):
         self.frame = frame
         # print "main:frame : ", frame
-
-        print len(markerPosi[frame])
 
         del rd_jointPos[:]
         del rd_tibia[:]

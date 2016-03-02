@@ -3,7 +3,7 @@
 
 #include <math.h>
 #include <VP/vphysics.h>
-#include "../../../PyCommon/externalLibs/common/boostPythonUtil.h"
+#include "boostPythonUtil.h"
 
 // #define MAKE_SO3 numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
 // #define MAKE_SE3 numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );

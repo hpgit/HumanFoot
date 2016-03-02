@@ -275,8 +275,6 @@ class QP:
 
     
 if __name__ == '__main__':
-    import psyco; psyco.full()
-    
     def test_LSE():
         
         # minimize :    f(x,y) = x^2 + y^2 + z^2

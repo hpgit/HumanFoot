@@ -19,7 +19,8 @@ import cPickle
 
 import matplotlib
 #matplotlib.interactive(True)
-matplotlib.use('FltkAgg')
+#matplotlib.use('FltkAgg')
+matplotlib.use('agg')
 
 from pylab import *
 from matplotlib.widgets import*

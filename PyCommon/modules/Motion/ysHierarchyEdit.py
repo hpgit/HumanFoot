@@ -60,7 +60,7 @@ def updateGlobalT(motion):
         
 def addJoint(motion, parent_joint_name_or_index, joint_name, offset=None, update=True):
     if isinstance(parent_joint_name_or_index, int):
-        parentIndex = joint_name_or_index
+        parentIndex = parent_joint_name_or_index
     else:
         parentIndex = motion[0].skeleton.getElementIndex(parent_joint_name_or_index)
         

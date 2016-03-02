@@ -1,44 +1,18 @@
 from fltk import *
-import copy
 import numpy as np
-import numpy.linalg as npl
 import time
 
-import sys
-# if '../PyCommon/modules' not in sys.path:
-#     sys.path.append('../PyCommon/modules')
-# if './modules' not in sys.path:
-#    sys.path.append('./modules')
-
 import math
-import Math.mmMath as mm
-import Resource.ysMotionLoader as yf
 import Renderer.ysRenderer as yr
 import Renderer.csVpRenderer as cvr
 import Simulator.csVpWorld as cvw
 import Simulator.csVpModel as cvm
-import Simulator.csVpWorld_tmp as cvwt
 
 import Simulator.hpLCPSimulator as hls
 import GUI.hpSimpleViewer as hsv
-import Optimization.ysAnalyticConstrainedOpt as yac
 import Util.ysPythonEx as ype
-import ArticulatedBody.ysJacobian as yjc
-import ArticulatedBody.ysReferencePoints as yrp
-import ArticulatedBody.ysMomentum as ymt
 import ArticulatedBody.ysControl as yct
-import GUI.ysMultiViewer as ymv
-import Motion.ysHierarchyEdit as yme
-import Simulator.ysPhysConfig as ypc
 
-import VirtualPhysics.vpWorld as VPW
-import VirtualPhysics.vpBody as VPB
-import VirtualPhysics.vpJoint as VPJ
-import VirtualPhysics.vpGeom as VPG
-import VirtualPhysics.LieGroup as VPL
-
-
-import mtOptimize as mot
 import mtInitialize_Simple as mit
 
 MOTION_COLOR = (213, 111, 162)
@@ -329,9 +303,9 @@ class Callback:
             if len(cBodyIDs) > 0:
                 # apply contact forces
                 vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForces)
-                for idx in range(len(cForces)):
-                    if cForces[idx][1] > 1.:
-                        print frame, cForces[idx]
+                # for idx in range(len(cForces)):
+                #     if cForces[idx][1] > 1.:
+                #         print frame, cForces[idx]
                 simulContactForces += sum(cForces)
 
             ype.nested(torques, torques_nested)

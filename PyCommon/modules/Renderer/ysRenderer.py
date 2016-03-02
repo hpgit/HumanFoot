@@ -8,7 +8,9 @@ import sys
 if '..' not in sys.path:
     sys.path.append('..')
 import Math.mmMath as mm
+import Util.ysGlHelper as ygh
 import Motion.ysMotion as ym
+import Mesh.ysMesh as yms
 
 # RendererContext
 NORMAL_FLAT = 0
@@ -45,7 +47,56 @@ class Renderer:
     def render(self, renderType):
         print "Renderer.render() : Must subclass me"
         raise NotImplementedError
-    
+
+
+class SelectedGeomRenderer(Renderer):
+    def __init__(self, color):
+        Renderer.__init__(self, None, color = (255,0,0))
+        self.geom = None
+        self.rc.setPolygonStyle(POLYGON_LINE)
+    def render(self):
+        if self.geom:
+            glColor3ubv(self.totalColor)
+            self.rc.renderSelectedOdeGeom(self.geom, self.totalColor)
+
+class OdeRenderer(Renderer):
+    def __init__(self, target, color = (255,255,255)):
+        Renderer.__init__(self, target, color)
+        self.space = target
+    def render(self):
+        glColor3ubv(self.totalColor)
+        for i in range(self.space.getNumGeoms()):
+            geom = self.space.getGeom(i)
+
+            if geom == self.selectedElement:
+                glColor3ubv(SELECTION_COLOR)
+
+            self.rc.renderOdeGeom(geom)
+
+            if geom == self.selectedElement:
+                glColor3ubv(self.totalColor)
+
+class OdeModelRenderer(Renderer):
+    def __init__(self, target, color = (255,255,255), polygonStyle = POLYGON_FILL):
+        Renderer.__init__(self, target, color)
+        self.model = target
+        self.rc.setPolygonStyle(polygonStyle)
+    def render(self):
+        glColor3ubv(self.totalColor)
+        for node in self.model.nodes.values():
+            geom = node.geom
+            #            if node.name in self.partColors:
+            #                glColor3ubv(self.partColors[node.name])
+            #            else:
+            #                glColor3ubv(self.totalColor)
+            if geom == self.selectedElement:
+                glColor3ubv(SELECTION_COLOR)
+
+            self.rc.renderOdeGeom(geom)
+
+            if geom == self.selectedElement:
+                glColor3ubv(self.totalColor)
+
 class JointMotionRenderer(Renderer):
     def __init__(self, target, color = (0,255,255), linkStyle = LINK_LINE, lineWidth=1.):
         Renderer.__init__(self, target, color)
@@ -137,7 +188,96 @@ class JointMotionRenderer(Renderer):
         for childJoint in joint.children:
             self._renderJoint(childJoint, posture)
         glPopMatrix()
-        
+
+class PointMotionRenderer(Renderer):
+    def __init__(self, target, color = (0,0,255)):
+        Renderer.__init__(self, target, color)
+        self.motion = target
+    def render(self):
+        glColor3ubv(self.totalColor)
+        posture = self.motion[self.motion.frame]
+        self.renderPointPosture(posture)
+    def renderPointPosture(self, posture):
+        for point in posture.positions:
+            #            if name in self.partColors:
+            #                glColor3ubv(self.partColors[name])
+            #            else:
+            #                glColor3ubv(self.totalColor)
+            glPushMatrix()
+
+            if point == self.selectedElement:
+                glColor3ubv(SELECTION_COLOR)
+
+            self.rc.drawPoint(point)
+
+            if point == self.selectedElement:
+                glColor3ubv(self.totalColor)
+
+            glPopMatrix()
+
+class MMMotionRenderer(Renderer):
+    def __init__(self, target, color = (0,0,255)):
+        Renderer.__init__(self, target, color)
+        self.motion = target
+    def render(self):
+        glColor3ubv(self.totalColor)
+        posture = self.motion[self.motion.frame]
+        self.renderPointPosture(posture)
+    def renderPointPosture(self, posture):
+        for name, point in posture.pointMap.items():
+            #            if name in self.partColors:
+            #                glColor3ubv(self.partColors[name])
+            #            else:
+            #                glColor3ubv(self.totalColor)
+            glPushMatrix()
+
+            if point == self.selectedElement:
+                glColor3ubv(SELECTION_COLOR)
+
+            self.rc.drawPoint(point)
+
+            if point == self.selectedElement:
+                glColor3ubv(self.totalColor)
+
+            glPopMatrix()
+        for link in posture.skeleton.links:
+            self.rc.drawLine(posture.pointMap[link[0]], posture.pointMap[link[1]])
+
+
+class MeshRenderer(Renderer):
+    def __init__(self, mesh, color = (127,127,127), drawStyle = POLYGON_LINE):
+        Renderer.__init__(self, mesh, color)
+        self.mesh = mesh
+        self.rc.setPolygonStyle(drawStyle)
+    def render(self):
+        if isinstance(self.selectedElement, yms.Vertex):
+            glColor3ubv(SELECTION_COLOR)
+            self.rc.drawPoint(self.selectedElement.pos)
+
+        pmid = None
+        glPolygonMode(GL_FRONT, GL_LINE)
+        glColor3ubv(self.totalColor)
+        glBegin(GL_TRIANGLES)
+        for f in self.mesh.faces:
+            if f == self.selectedElement:
+                glColor3ubv(SELECTION_COLOR)
+
+            p0 = self.mesh.vertices[f.vertexIndex[0]].pos
+            p1 = self.mesh.vertices[f.vertexIndex[1]].pos
+            p2 = self.mesh.vertices[f.vertexIndex[2]].pos
+            glVertex3f(p0[0], p0[1], p0[2])
+            glVertex3f(p1[0], p1[1], p1[2])
+            glVertex3f(p2[0], p2[1], p2[2])
+
+            if f == self.selectedElement:
+                pmid = (p0+p1+p2)/3.
+                glColor3ubv(self.totalColor)
+        glEnd()
+
+        if pmid!=None:
+            glColor3ubv(SELECTION_COLOR)
+            self.rc.drawPoint(pmid)
+
 #===============================================================================
 # # debugging renderers
 #===============================================================================
@@ -188,7 +328,60 @@ class VectorsRenderer(Renderer):
             if (self.vectors[i] is not None) and (self.origins[i] is not None):
                 origin = self.origins[i]; vector = self.vectors[i]
                 self.rc.drawLine(origin, (origin[0]+vector[0],origin[1]+vector[1],origin[2]+vector[2]))
-            
+
+class PolygonRenderer(Renderer):
+    def __init__(self, vertices, color = (0,255,0)):
+        Renderer.__init__(self, vertices, color)
+        self.points = vertices
+        if len(self.points) == 3:
+            self.polygonMode = GL_TRIANGLES
+        else:
+            self.polygonMode = GL_QUADS
+    def render(self):
+        glColor3ubv(self.totalColor)
+        glDisable(GL_CULL_FACE)
+        glPolygonMode(GL_FRONT, GL_FILL)
+        glPolygonMode(GL_BACK, GL_LINE)
+        glBegin(self.polygonMode)
+        for v in self.points:
+            glVertex3fv(v)
+        glEnd()
+        glEnable(GL_CULL_FACE)
+
+class FramesRenderer(Renderer):
+    def __init__(self, Ts, color = (0,255,0), axisLength = .5):
+        Renderer.__init__(self, Ts, color)
+        self.Ts = Ts
+        self.axisLength = axisLength
+    def render(self, renderType=RENDER_OBJECT):
+        for T in self.Ts:
+            if T!=None:
+                glPushMatrix()
+                glMultMatrixf(T.transpose())
+                ygh.drawCoordinate(self.totalColor, self.axisLength)
+                glPopMatrix()
+                #        R, p = mm.T2Rp(self.T)
+                #        axes = R.transpose()
+                #        ygh.drawVector(axes[0], p, (255,0,0))
+                #        ygh.drawVector(axes[1], p, (0,255,0))
+                #        ygh.drawVector(axes[2], p, (0,0,255))
+
+class OrientationsRenderer(Renderer):
+    def __init__(self, Rs, ps, color = (0,255,0), axisLength = .5):
+        Renderer.__init__(self, Rs, color)
+        self.Rs = Rs
+        self.ps = ps
+        self.axisLength = axisLength
+    def render(self):
+        for i in range(len(self.Rs)):
+            if self.Rs[i]!=None and self.ps[i]!=None:
+                T = mm.Rp2T(self.Rs[i], self.ps[i])
+                glPushMatrix()
+                glMultMatrixf(T.transpose())
+                ygh.drawCoordinate(self.totalColor, self.axisLength)
+                glPopMatrix()
+
+
 class ForcesRenderer(Renderer):
     def __init__(self, forces, points, color=(255,0,0), ratio=1., lineWidth=.02, fromPoint=True):
         Renderer.__init__(self, None, color)
@@ -198,15 +391,234 @@ class ForcesRenderer(Renderer):
         self.lineWidth = lineWidth
         self.fromPoint = fromPoint
         self.rc.setNormalStyle(NORMAL_SMOOTH)
+
+    def render(self, renderType=RENDER_OBJECT):
+        if renderType == RENDER_OBJECT:
+            self.rc.beginDraw()
+            glColor3ubv(self.totalColor)
+            for i in range(len(self.forces)):
+                if (self.forces[i] is not None) and (self.points[i] is not None):
+                    if not self.fromPoint:
+                        self.rc.drawArrow(None, self.points[i], mm.v3_scale(self.forces[i], self.ratio), self.lineWidth)
+                    else:
+                        self.rc.drawArrow(self.points[i], None, mm.v3_scale(self.forces[i], self.ratio), self.lineWidth)
+
+class WideArrowRenderer(Renderer):
+    def __init__(self, forces, points, color=(255,0,0), ratio=1., lineWidth=.02, heightRatio=.2, fromPoint=True, polygonStyle=POLYGON_FILL):
+        Renderer.__init__(self, None, color)
+        self.forces = forces
+        self.points = points
+        self.ratio = ratio
+        self.lineWidth = lineWidth
+        self.fromPoint = fromPoint
+        self.heightRatio = heightRatio
+        self.rc.setPolygonStyle(polygonStyle)
+        self.rc.setNormalStyle(NORMAL_SMOOTH)
+    def render(self, renderType=RENDER_OBJECT):
+        if renderType==RENDER_OBJECT:
+            self.rc.beginDraw()
+            glColor3ubv(self.totalColor)
+            for i in range(len(self.forces)):
+                if self.forces[i]!=None and self.points[i]!=None:
+                    glPushMatrix()
+                    glScalef(1,self.heightRatio,1)
+                    if self.fromPoint==False:
+                        self.rc.drawArrow(None, self.points[i], mm.v3_scale(self.forces[i], self.ratio), self.lineWidth)
+                    else:
+                        self.rc.drawArrow(self.points[i], None, mm.v3_scale(self.forces[i], self.ratio), self.lineWidth)
+                    glPopMatrix()
+
+class TorquesRenderer(Renderer):
+    def __init__(self, torques, points, color=(255,0,0), ratio=1., lineWidth=.02, radius=.1, fromPoint=True):
+        Renderer.__init__(self, None, color)
+        self.torques = torques
+        self.points = points
+        self.ratio = ratio
+        self.radius = radius
+        self.lineWidth = lineWidth
+        self.fromPoint = fromPoint
+        self.rc.setNormalStyle(NORMAL_SMOOTH)
+    def render(self):
+        self.rc.beginDraw()
+        glColor3ubv(self.totalColor)
+        for i in range(len(self.torques)):
+            if self.torques[i]!=None and self.points[i]!=None:
+                if self.fromPoint==False:
+                    self.rc.drawCircularArrow(None, self.points[i], mm.v3_scale(self.torques[i], self.ratio), self.lineWidth, self.radius)
+                else:
+                    self.rc.drawCircularArrow(self.points[i], None, mm.v3_scale(self.torques[i], self.ratio), self.lineWidth, self.radius)
+
+class VpBodyRenderer(Renderer):
+    # boxSizes[i] = (lx, ly, lz)
+    # Ts[i] = SE3
+    def __init__(self, body, color=(255,0,0), polygonStyle=POLYGON_FILL, lineWidth=1.):
+        Renderer.__init__(self, None, color)
+        self.body = body
+        self.rc.setPolygonStyle(polygonStyle)
+        self.lineWidth = lineWidth
+    def render(self, renderType=RENDER_OBJECT):
+        self.rc.beginDraw()
+        if renderType == RENDER_OBJECT:
+            glColor3ubv(self.totalColor)
+        else:
+            glColor3ubv(self.shadowColor)
+
+        boxSize = self.body.getShape(); T = self.body.getFrame()
+        glPushMatrix()
+        glMultMatrixf(T.T)
+        glLineWidth(self.lineWidth)
+        self.rc.drawBox(boxSize[0], boxSize[1], boxSize[2])
+        glLineWidth(1.)
+        glPopMatrix()
+
+class VpBodiesRenderer(Renderer):
+    # boxSizes[i] = (lx, ly, lz)
+    # Ts[i] = SE3
+    def __init__(self, bodies, color=(255,0,0), polygonStyle=POLYGON_FILL, lineWidth=1.):
+        Renderer.__init__(self, None, color)
+        self.bodies = bodies
+        self.rc.setPolygonStyle(polygonStyle)
+        self.lineWidth = lineWidth
+
+        #                randomSize = 100
+        #                variation = mm.v3(randomSize*random.random(), randomSize*random.random(), randomSize*random.random())
+        #                resultColor = variation + self.totalColor
+        #                for i in range(3):
+        #                    if resultColor[i]<0: resultColor[i]=0.
+        #                    elif resultColor[i]>255: resultColor[i]=255
+        #                glColor3ubv(resultColor)
+
+        #        self.colors = [self.totalColor]*len(self.bodies)
+        self.colors = [mm.s2v(self.totalColor)*(1-(float(i)/len(self.bodies) * .5)) for i in range(len(self.bodies))]
+
+    def render(self, renderType=RENDER_OBJECT):
+        self.rc.beginDraw()
+
+        for i in range(len(self.bodies)):
+            body = self.bodies[i]
+
+            if renderType == RENDER_OBJECT:
+                glColor3ubv(self.colors[i])
+            else:
+                glColor3ubv(self.shadowColor)
+
+            boxSize = body.getShape(); T = body.getFrame()
+            glPushMatrix()
+            glMultMatrixf(T.T)
+            glLineWidth(self.lineWidth)
+            self.rc.drawBox(boxSize[0], boxSize[1], boxSize[2])
+            glLineWidth(1.)
+            glPopMatrix()
+
+class MyFootRenderer(Renderer):
+    def __init__(self, boxsize, T, color=(255,0,0), polygonStyle=POLYGON_FILL, lineWidth=1.):
+        Renderer.__init__(self, None, color)
+        self.boxsize = boxsize
+        self.T = T
+        self.lineWidth = lineWidth
+
+    def render(self, renderType=RENDER_OBJECT):
+        self.rc.beginDraw()
+        if renderType == RENDER_OBJECT:
+            glColor3ubv(self.totalColor)
+        else:
+            glColor3ubv(self.shadowColor)
+
+        boxSize = self.boxsize
+        glPushMatrix()
+        glMultMatrixf(self.T.T)
+        glLineWidth(self.lineWidth)
+        self.rc.drawBox(boxSize[0], boxSize[1], boxSize[2])
+        glLineWidth(1.)
+        glPopMatrix()
+
+class BoxesRenderer(Renderer):
+    # boxSizes[i] = (lx, ly, lz)
+    # Ts[i] = SE3
+    def __init__(self, boxSizes, Ts, color=(255,0,0), polygonStyle=POLYGON_FILL, lineWidth=1.):
+        Renderer.__init__(self, None, color)
+        self.boxSizes = boxSizes
+        self.Ts = Ts
+        self.rc.setPolygonStyle(polygonStyle)
+        self.lineWidth = lineWidth
+
+    def render(self, renderType=RENDER_OBJECT):
+        self.rc.beginDraw()
+        if renderType == RENDER_OBJECT:
+            glColor3ubv(self.totalColor)
+        else:
+            glColor3ubv(self.shadowColor)
+        for i in range(len(self.boxSizes)):
+            if (self.boxSizes[i] is not None) and (self.Ts[i] is not None):
+                boxSize = self.boxSizes[i]; T = self.Ts[i]
+                glPushMatrix()
+                glMultMatrixf(T.T)
+                glLineWidth(self.lineWidth)
+                self.rc.drawBox(boxSize[0], boxSize[1], boxSize[2])
+                glLineWidth(1.)
+                glPopMatrix()
+
+class CylindersRenderer(Renderer):
+    # cylinderSizes[i] = (radius, length_z)
+    # Ts[i] = SE3
+    def __init__(self, cylinderSizes, Ts, color=(255,0,0)):
+        Renderer.__init__(self, None, color)
+        self.cylinderSizes = cylinderSizes
+        self.Ts = Ts
+        self.rc.setNormalStyle(NORMAL_SMOOTH)
+
+    def render(self, renderType=RENDER_OBJECT):
+        self.rc.beginDraw()
+        if renderType == RENDER_OBJECT:
+            glColor3ubv(self.totalColor)
+        else:
+            glColor3ubv(self.shadowColor)
+        for i in range(len(self.cylinderSizes)):
+            if self.cylinderSizes[i]!=None and self.Ts[i]!=None:
+                cylinderSize = self.cylinderSizes[i]; T = self.Ts[i]
+                glPushMatrix()
+                glMultMatrixf(T.T)
+                self.rc.drawCylinder(cylinderSize[0], cylinderSize[1])
+                glPopMatrix()
+
+class SpheresRenderer(Renderer):
+    # radius = radius of sphere
+    # position = position of center of sphere
+    def __init__(self, radiuses, positions, color=(255,0,0), polygonStyle = POLYGON_FILL):
+        Renderer.__init__(self, None, color)
+        self.radiuses = radiuses
+        self.positions = positions
+        self.rc.setNormalStyle(NORMAL_SMOOTH)
+        self.rc.setPolygonStyle(polygonStyle)
+        self.rc.setLineWidth(2.)
     def render(self, renderType=RENDER_OBJECT):
         self.rc.beginDraw()
         glColor3ubv(self.totalColor)
-        for i in range(len(self.forces)):
-            if (self.forces[i] is not None) and (self.points[i] is not None):
-                if self.fromPoint==False:
-                    self.rc.drawArrow(None, self.points[i], mm.v3_scale(self.forces[i], self.ratio), self.lineWidth)
-                else:
-                    self.rc.drawArrow(self.points[i], None, mm.v3_scale(self.forces[i], self.ratio), self.lineWidth)
+        for i in range(len(self.radiuses)):
+            if self.radiuses[i]!=None and self.positions[i]!=None:
+                rad = self.radiuses[i]; pos = self.positions[i]
+
+                #                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+                eqr=(0.0,-1.0, 0.0, 0.0001)
+                glDisable(GL_CULL_FACE)
+                glEnable(GL_CLIP_PLANE0)
+
+                #                glEnable(GL_COLOR_MATERIAL);
+                #                glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+                #                glColorMaterial(GL_BACK, GL_DIFFUSE);
+
+                glPushMatrix()
+                glTranslatef(pos[0], pos[1], pos[2])
+                glClipPlane(GL_CLIP_PLANE0, eqr)
+                glRotatef(90, 1,0,0)
+                self.rc.drawSphere(rad)
+                glPopMatrix()
+
+                #                glDisable(GL_COLOR_MATERIAL);
+
+                glDisable(GL_CLIP_PLANE0)
+                glEnable(GL_CULL_FACE)
+
 
 #===============================================================================
 # # common class
@@ -268,6 +680,16 @@ class RenderContext:
         glPopMatrix()
     def drawCylinder(self, radius, length_z):
         gluCylinder(self.quad, radius, radius, length_z, 16, 1)
+        # gleSetNumSides(20)
+        # glePolyCylinder(((0,0,-length_z/2.), (0,0,-length_z/2.), (0,0,length_z/2.), (0,0,length_z/2.)), None, radius)
+        # gleSetNumSides(12)
+
+    def drawSphere(self, radius):
+        SLICE = 20; STACK = 20
+        if self.polygonStyle == POLYGON_LINE:
+            glutWireSphere(radius, SLICE, STACK)
+        else:
+            glutSolidSphere(radius, SLICE, STACK)
 
     #===============================================================================
     # draw primitives at its position        
@@ -471,5 +893,87 @@ class RenderContext:
             
         elif type(geom) == ode.GeomRay:
             length = geom.getLength()
-            
 
+
+if __name__=='__main__':
+    from fltk import *
+    import math
+    import Resource.ysOgreDataLoader as yol
+    import GUI.ysSimpleViewer as ysv
+    import Resource.ysMotionLoader as yf
+
+    def test_MeshRenderer():
+        meshFilePath = '../samples/woody2_15.mesh.xml'
+        mesh = yol.readOgreMeshFileAsMesh(meshFilePath)
+
+        viewer = ysv.SimpleViewer()
+        viewer.doc.addRenderer('mesh', MeshRenderer(mesh))
+        viewer.doc.addObject('mesh', mesh)
+
+        viewer.startTimer(1./30.)
+        viewer.show()
+
+        Fl.run()
+
+    def test_FramesRenderer_OrientationsRenderer():
+        frame0 = mm.I_SE3()
+        frame1 = mm.Rp2T(mm.exp(mm.v3(0,1,0), math.pi/8.), (1,0,0))
+
+        viewer = ysv.SimpleViewer()
+        viewer.doc.addRenderer('frame0', FramesRenderer([frame0], (255,0,0)))
+        viewer.doc.addRenderer('frame1', FramesRenderer([frame1], (255,0,0)))
+        viewer.doc.addRenderer('orientation0', OrientationsRenderer([mm.T2R(frame0)], [mm.T2p(frame0)], (0,255,0)))
+        viewer.doc.addRenderer('orientation1', OrientationsRenderer([mm.T2R(frame1)], [mm.T2p(frame1)], (0,255,0)))
+
+        viewer.show()
+        Fl.run()
+
+    def test_ForcesRenderer_TorquesRenderer():
+        forces = [None]*5
+        points1 = [None]*5
+        torques = [None]*5
+        points2 = [None]*5
+
+        for i in range(len(forces)):
+            forces[i] = (0,i,0)
+            points1[i] = (i,0,0)
+
+        for i in range(len(torques)):
+            points2[i] = (-i,0,0)
+            torques[i] = (0,0,i)
+
+        viewer = ysv.SimpleViewer()
+        viewer.doc.addRenderer('forces', ForcesRenderer(forces, points1, (255,0,0), 1., .1))
+        viewer.doc.addRenderer('torques', TorquesRenderer(torques, points2, (0,255,0), 1., .1, .3))
+
+        viewer.show()
+        Fl.run()
+
+    def test_primitives_renderers():
+        boxSize = [1,1,1]
+        boxFrame = mm.I_SE3()
+
+        cylinderSize = [1,1]
+        cylinderFrame = mm.I_SE3()
+
+        sphereRadius = 1.
+        spherePosition = (0,0.5,0)
+
+        arrowVector = (1,0,0)
+        arrowPoint = (0,0,0)
+
+        viewer = ysv.SimpleViewer()
+        #        viewer.doc.addRenderer('box', BoxesRenderer([boxSize], [boxFrame], (255,0,0)))
+        #        viewer.doc.addRenderer('cylinder', CylindersRenderer([cylinderSize], [cylinderFrame], (0,0,255)))
+        #        viewer.doc.addRenderer('sphere', SpheresRenderer([sphereRadius], [spherePosition], (0,0,255)))
+        viewer.doc.addRenderer('sphere', WideArrowRenderer([arrowVector], [arrowPoint], (255,0,0), 1., .1))
+
+        viewer.show()
+        Fl.run()
+
+
+    pass
+    #    test_MeshRenderer()
+    #    test_FramesRenderer_OrientationsRenderer()
+    #    test_ForcesRenderer_TorquesRenderer()
+    test_primitives_renderers()

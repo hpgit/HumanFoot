@@ -78,3 +78,86 @@ def getIntegralDOF(th, d_th, dt):
     for i in range(1, len(th)):
         new_th[i] = np.dot(th[i], mm.exp([d_th[i][0]*dt, d_th[i][1]*dt, d_th[i][2]*dt]))
     return new_th
+
+
+if __name__ == '__main__':
+    from fltk import *
+    
+    import Resource.ysMotionLoader as yf
+    import Simulator.ysPhysConfig as ypc
+    import Renderer.ysRenderer as yr
+    import Renderer.csVpRenderer as cvr
+    import Simulator.csVpWorld as cvw
+    import Simulator.csVpModel as cvm
+    import GUI.ysSimpleViewer as ysv
+    import Optimization.csEQP as ceq
+    import ArticulatedBody.ysJacobian as yjc
+    import Util.ysPythonEx as ype
+    import Motion.ysSkeletonEdit as yme
+    import ArticulatedBody.ysMomentum as ymt
+
+    
+    def test_getDesiredAngAccelerations():
+#        motion = yf.readBvhFile('block_3_rotate.bvh', 1)
+        motion = yf.readBvhFile('../samples/block_tree_rotate.bvh', 1)
+        motion = motion[0:]
+        
+        mcfg = ypc.ModelConfig()
+        mcfg.defaultDensity = 1000.
+        mcfg.defaultBoneRatio = .8
+        for i in range(motion[0].skeleton.getElementNum()):
+            mcfg.addNode(motion[0].skeleton.getElementName(i))
+        wcfg = ypc.WorldConfig()
+        wcfg.planeHeight = -1.
+        wcfg.gravity = (0,0,0)
+        stepsPerFrame = 30
+        wcfg.timeStep = (1/30.)/stepsPerFrame
+        
+        vpWorld = cvw.VpWorld(wcfg)
+        motionModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)
+        controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
+        vpWorld.initialize()
+        controlModel.initializeHybridDynamics()
+        
+        controlModel.fixBody(0)
+    
+    
+        p = []
+        ddth_des = []
+    
+        viewer = ysv.SimpleViewer()
+    #    viewer.record(False)
+        viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,255,255), yr.LINK_BONE))
+        viewer.doc.addObject('motion', motion)
+        viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(motionModel, (255,240,255), yr.POLYGON_LINE))
+        viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_FILL))
+        
+        viewer.doc.addRenderer('ddth_des', yr.VectorsRenderer(ddth_des, p, (255,0,0)))
+        
+        def simulateCallback(frame):
+            th_r = motion.getInternalJointOrientationsLocal(frame)
+            th = controlModel.getInternalJointOrientationsLocal()
+            dth_r = motion.getInternalJointAngVelocitiesLocal(frame)
+            dth = controlModel.getInternalJointAngVelocitiesLocal()
+            ddth_r = motion.getInternalJointAngAccelerationsLocal(frame)
+            
+            ddth_des[:] = getDesiredAngAccelerations(th_r, th, dth_r, dth, ddth_r, 1, 1)
+            
+            for i in range(stepsPerFrame):
+                controlModel.setInternalJointAngAccelerationsLocal(ddth_des)
+                controlModel.solveHybridDynamics()
+
+                vpWorld.step()
+                
+            motionModel.update(motion[frame])
+            p[:] = motion.getInternalJointPositionsGlobal(frame)
+                
+        viewer.setSimulateCallback(simulateCallback)
+        
+        viewer.startTimer(1/30.)
+        viewer.show()
+        
+        Fl.run()
+                
+    pass
+    test_getDesiredAngAccelerations()

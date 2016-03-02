@@ -5,6 +5,8 @@ import sys
 if '..' not in sys.path:
     sys.path.append('..')
 import Motion.ysMotion as ym
+import Motion.ysMotionAnalysis as yma
+import Math.ysFunctionGraph as yfg
 import Math.mmMath as mmMath
 
 #===============================================================================
@@ -39,3 +41,49 @@ def _addParentJointIndex(skeleton, jointIndex, ls):
     if parentJointIndex!=None:
         ls.append(parentJointIndex)
         _addParentJointIndex(skeleton, parentJointIndex, ls)
+
+
+if __name__=='__main__':
+    from fltk import *
+    import numpy
+    import operator as op
+    import Motion.ysMotion as ym
+    import Resource.ysMotionLoader as yf
+    import Motion.ysMotionConverter as ymc
+    import Util.ysMatplotEx as ymp
+    import Util.ysPythonEx as ype
+    import Util.ysGlHelper as ygh
+    #    import GUI.ysViewer2 as yv2
+    import Renderer.ysRenderer as yr
+    import GUI.ysSimpleViewer as ysv
+    from pylab import *
+    import copy
+
+    def test_getAllParentIndexes():
+        bvhFilePath = '../samples/wd2_WalkSameSame00.bvh'
+        motion = yf.readBvhFile(bvhFilePath)
+        skeleton = motion[0].skeleton
+
+        print 'getAllParentIndexes'
+        masks = getAllParentIndexes(skeleton)
+        print masks
+        for i in range(len(masks)):
+            print 'parents of', skeleton.getElementName(i), ':',
+            for parent in masks[i]:
+                print skeleton.getElementName(parent),
+            print
+        print
+
+        print 'getAllParentJointIndexes'
+        masks = getAllParentJointIndexes(skeleton)
+        print masks
+        for i in range(len(masks)):
+            print 'parents of', skeleton.getJointName(i), ':',
+            for parent in masks[i]:
+                print skeleton.getJointName(parent),
+            print
+        print
+
+
+    pass
+    test_getAllParentIndexes()

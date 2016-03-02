@@ -61,6 +61,7 @@ public:
 	typedef vector<Node*>::iterator NODES_ITOR;
 
 	map<string, int> _name2index;
+	map<int, int> _id2index;
 
 	vector<SE3> _boneTs;	// joint position, orientation -> body position, orientation (body�� �߽����� body�� position)
 
@@ -87,6 +88,8 @@ public:	// expose to python
 	int index2id(int index) { return _nodes[index]->body.GetID(); }
 	int name2index(const string& name) { if(_name2index.find(name)!=_name2index.end()) return _name2index.find(name)->second; else return -1; }
 	int name2id(const string& name) { return index2id(name2index(name)); }
+	int id2index(int id);
+	// int id2index(int id) { return _id2index[id]; }
 
 	/////////////////////////////////////////////////////////////////
 	// body inertia
@@ -126,11 +129,14 @@ public:	// expose to python
 	void translateByOffset(const object& offset);
 	void rotate(const object& rotation);
 
+	// collision
+	void ignoreCollisionWith(vpBody* pBody);
+	void ignoreCollisionWith_py(vpBody* pBody);
+
 
 	/////////////////////////////////////////
 	// Additional
 	void addBody(bool flagControl);
-	int id2index(int id);
 	void SetBodyColor(int id, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 };
 
@@ -227,6 +233,7 @@ public:	// expose to python
 	object getJointAngVelocityGlobal( int index );
 	object getJointAngAccelerationGlobal( int index );
 
+	object getJointFrame(int index);
 
 	object getJointVelocityLocal(int index);
 	object getJointAccelerationLocal(int index);

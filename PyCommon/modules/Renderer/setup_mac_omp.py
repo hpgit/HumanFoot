@@ -1,4 +1,5 @@
 from distutils.core import setup, Extension
+import sys
 
 module_csVpRenderer = Extension('csVpRenderer',
 		include_dirs = ['../usr/include/', '/usr/local/include/libiomp'],
@@ -7,6 +8,7 @@ module_csVpRenderer = Extension('csVpRenderer',
 		library_dirs = ['../usr/lib'],
 		sources = ['csVpRenderer.cpp'])
 	
+print sys.argv
 setup (name = 'csVpRenderer',
 	version = '0.1',
 	description = 'csVpRenderer',

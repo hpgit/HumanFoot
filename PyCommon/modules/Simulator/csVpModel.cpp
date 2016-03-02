@@ -332,6 +332,8 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 		SE3 newT = T * boneT;
 
 		pNode->body.SetFrame(newT);
+
+		_id2index[pNode->body.GetID()] = joint_index;
 	}
 
 	for( int i=0 ; i<len_joint_children; ++i)
@@ -782,6 +784,17 @@ void VpModel::rotate( const object& rotation )
 
 	// �ٲ� root body frame�� ���� joint�� ����� ������ body�� frame ������Ʈ. �̰��� ���� ������ root body �ϳ��� rotation�� ����ȴ�. 
 	_pWorld->UpdateFrame();
+}
+
+void VpModel::ignoreCollisionWith( vpBody* pBody )
+{
+	for(int i=0; i<_nodes.size(); ++i)
+		_pWorld->IgnoreCollision( &_nodes[i]->body, pBody );
+}
+
+void VpModel::ignoreCollisionWith_py( vpBody* pBody )
+{
+	ignoreCollisionWith(pBody);
 }
 
 Vec3 VpModel::getBodyPositionGlobal( int index, const Vec3* pPositionLocal )
@@ -1559,6 +1572,15 @@ boost::python::object VpControlModel::getJointAngAccelerationGlobal( int index )
 	return getBodyAngAccelerationGlobal(index);
 }
 
+boost::python::object VpControlModel::getJointFrame( int index )
+{
+	numeric::array frame( make_tuple(make_tuple(1.,0.,0.,0.), make_tuple(0.,1.,0.,0.), make_tuple(0.,0.,1.,0.), make_tuple(0.,0.,0.,1.)) );
+	
+	SE3 T = _nodes[index]->body.GetFrame() * Inv(_boneTs[0]);
+	SE3_2_pySE3(T, frame);
+	return frame;
+}
+
 object VpControlModel::getJointVelocityLocal( int index )
 {
 	numeric::array O(make_tuple(0.,0.,0.));
@@ -1951,19 +1973,19 @@ void VpModel::addBody(bool flagControl)
 
 }
 
-int VpModel::id2index(int id)
-{
-	int index = 0;
-	for (int i = 0; i < getBodyNum(); i++)
-	{
-		if (id == index2id(i))
-		{
-			index = i;
-			break;
-		}
-	}
-	return index;
-}
+ int VpModel::id2index(int id)
+ {
+ 	int index = 0;
+ 	for (int i = 0; i < getBodyNum(); i++)
+ 	{
+ 		if (id == index2id(i))
+ 		{
+ 			index = i;
+ 			break;
+ 		}
+ 	}
+ 	return index;
+ }
 
 void VpModel::SetBodyColor(int id, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {

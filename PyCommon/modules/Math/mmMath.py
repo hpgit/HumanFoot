@@ -35,9 +35,11 @@ def linearInterpol(v0, v1, t):
 
 def slerp(R1, R2, t):
     return np.dot(R1, exp(t * logSO3( np.dot(R1.transpose(), R2) )))
+    #return np.dot(R1, cm.exp(t * cm.log( np.dot(R1.T, R2) )))
 
 def scaleSO3(R, t):
     return exp(t*logSO3(R))
+    #return cm.exp(t*cm.log(R))
 
 def deg2Rad(deg):
     return float(deg) / 180.0 * math.pi
@@ -399,6 +401,18 @@ def projectionOnVector2(inputVector, directionVector):
     residualVector = inputVector - projectedVector
     return projectedVector, residualVector
 
+# R = axisR * residualR
+def projectRotation(axis, R):
+    axisR = exp(projectionOnVector(logSO3(R), s2v(axis)))
+    residualR = np.dot(axisR.transpose(), R)
+    return axisR, residualR
+
+# R = residualR * axisR
+def projectRotation2(axis, R):
+#    axisR = exp(projectionOnVector(logSO3(R), s2v(axis)))
+    axisR = cm.exp(projectionOnVector(cm.log(R), s2v(axis)))
+    residualR = np.dot(R, axisR.T)
+    return axisR, residualR
 #===============================================================================
 # list vector manipulation functions
 #===============================================================================
@@ -467,11 +481,13 @@ def seq2Vec3(sequence):
     return vec
 s2v = seq2Vec3
 
-# R = axisR * residualR
-def projectRotation(axis, R):
-    axisR = exp(projectionOnVector(logSO3(R), s2v(axis)))
-    residualR = np.dot(axisR.transpose(), R)
-    return axisR, residualR
+def SO3(nine_scalars):
+    R = _I_SO3.copy()
+    R[0,0] = nine_scalars[0];R[0,1] = nine_scalars[1];R[0,2] = nine_scalars[2]
+    R[1,0] = nine_scalars[3];R[1,1] = nine_scalars[4];R[1,2] = nine_scalars[5]
+    R[2,0] = nine_scalars[6];R[2,1] = nine_scalars[7];R[2,2] = nine_scalars[8]
+    return R
+
 
 def R2ZYX(R):
     return v3(math.atan2(R[1,0], R[0,0]), \
@@ -504,5 +520,206 @@ from numpy import sum,where
 
 def matrixrank(A,tol=1e-8):
     s = svd(A,compute_uv=0)
-    return sum( where( s>tol, 1, 0 ) )    
+    return sum( where( s>tol, 1, 0 ) ) 
 
+def rotX(theta):   
+    R = _I_SO3.copy()
+    c = math.cos(theta)
+    s = math.sin(theta)
+    R[1,1]=c; R[1,2]=-s
+    R[2,1]=s; R[2,2]=c
+    return R
+
+def rotY(theta):   
+    R = _I_SO3.copy()
+    c = math.cos(theta)
+    s = math.sin(theta)
+    R[0,0]=c; R[0,2]=s
+    R[2,0]=-s; R[2,2]=c
+    return R
+
+def rotZ(theta):   
+    R = _I_SO3.copy()
+    c = math.cos(theta)
+    s = math.sin(theta)
+    R[0,0]=c; R[0,1]=-s
+    R[1,0]=s; R[1,1]=c
+    return R
+
+
+if __name__ == '__main__':
+    import profile
+    import os, time, copy
+    import operator as op
+
+    from fltk import *
+    import sys
+    if '..' not in sys.path:
+        sys.path.append('..')
+    import GUI.ysSimpleViewer as ysv
+    import Util.ysGlHelper as ygh
+    import Renderer.ysRenderer as yr
+    
+    def test_array_copy():
+        I = np.identity(4, float)
+        print 'I', I
+        Icopy = I.copy()
+        print 'Icopy', Icopy
+        Iview = I.view()
+        print 'Iview', Iview
+        
+        Icopy[0,0] = 0
+        print 'Icopy', Icopy
+        print 'I', I
+        
+        Iview[0,0] = 0
+        print 'Iview', Iview
+        print 'I', I
+        
+        print
+         
+        I = np.identity(4, float)
+        print 'I', I
+        Ipythondeepcopy = copy.deepcopy(I)
+        print 'Ipythondeepcopy', Ipythondeepcopy
+        Ipythoncopy = copy.copy(I)
+        print 'Ipythoncopy', Ipythoncopy
+        
+        Ipythondeepcopy[0,0] = 0
+        print 'Ipythondeepcopy', Ipythondeepcopy
+        print 'I', I
+        
+        Ipythoncopy[0,0] = 0
+        print 'Ipythoncopy', Ipythoncopy
+        print 'I', I
+    
+    def test_tupleSO3_funcs():
+#        A_tuple = (12,3,434,5643,564,213,43,5,13)
+#        B_tuple = (65,87,6457,345,78,74,534,245,87)
+#        A_numpy = odeSO3ToSO3(A_tuple)
+#        B_numpy = odeSO3ToSO3(B_tuple)
+        A_numpy = exp((1,0,0), math.pi/2.)
+        B_numpy = exp((1,0,1), -0.2)
+        A_tuple = numpySO3_2_tupleSO3(A_numpy)
+        B_tuple = numpySO3_2_tupleSO3(B_numpy)
+        
+        print A_tuple 
+        print A_numpy
+        
+        print dot_tupleSO3(A_tuple, B_tuple)
+        print np.dot(A_numpy, B_numpy)
+        
+        print transpose_tupleSO3(A_tuple)
+        print A_np.transpose()
+        
+        print logSO3(A_numpy)
+        print logSO3_tupleSO3(A_tuple)
+        
+    def test_getSO3FromVectors():
+        vec1 = np.array([0,0,1])
+#        vec1 = np.array([0.0000000001,0,1])
+        vec2 = np.array([0,0,-1])
+        
+        R = getSO3FromVectors(vec1, vec2)
+        print R
+        
+    def test_logSO3():
+        A = I_SO3()
+        B = exp((0,1,0), math.pi)
+        print logSO3(A)
+        print logSO3(B)
+        
+    def test_slerp():
+        R1 = exp(v3(1.0, 0.0, 0.0), math.pi/2)
+        R2 = exp(v3(0.0, 1.0, 0.0), math.pi/2)
+        print logSO3(R1), logSO3(R2)
+    
+        R = slerp(R1, R2, 0.1)
+        print logSO3(R)
+    
+    def test_projectRotation():
+        orig_pol = [(1,0,0), (0,0,0), (0,0,1)]
+        num = len(orig_pol)
+        
+        R = exp(v3(1,1,0), math.pi/2)
+        R_pol = map(np.dot, [R]*num, orig_pol)
+        
+        # R = Rv * Rp
+        v_axis = (0,1,0)
+        Rv = exp(projectionOnVector(logSO3(R), s2v(v_axis)))
+        Rv_pol = map(np.dot, [Rv]*num, orig_pol)
+        Rp = np.dot(Rv.T, R)
+        Rp_pol = map(np.dot, [Rp]*num, orig_pol)
+        Rv_dot_Rp_pol = map(np.dot, [np.dot(Rv, Rp)]*num, orig_pol)
+        
+        # R = Rv * Rp
+        Rv2, Rp2 = projectRotation(v_axis, R)
+        Rv_pol2 = map(np.dot, [Rv2]*num, orig_pol)
+        Rp_pol2 = map(np.dot, [Rp2]*num, orig_pol)
+        Rv_dot_Rp_pol2 = map(np.dot, [np.dot(Rv2, Rp2)]*num, orig_pol)
+        
+        viewer = ysv.SimpleViewer()
+        viewer.record(False)
+#        viewer.doc.addRenderer('orig_pol', yr.PolygonRenderer(orig_pol, (255,0,0)))
+        viewer.doc.addRenderer('R_pol', yr.PolygonRenderer(R_pol, (0,0,255)))
+#        viewer.doc.addRenderer('Rv_pol', yr.PolygonRenderer(Rv_pol, (100,100,0)))
+#        viewer.doc.addRenderer('Rp_pol', yr.PolygonRenderer(Rp_pol, (0,100,100)))
+        viewer.doc.addRenderer('Rv_dot_Rp_pol', yr.PolygonRenderer(Rv_dot_Rp_pol, (0,255,0)))
+#        viewer.doc.addRenderer('Rv_pol2', yr.PolygonRenderer(Rv_pol2, (100,100,0)))
+#        viewer.doc.addRenderer('Rp_pol2', yr.PolygonRenderer(Rp_pol2, (0,100,100)))
+        viewer.doc.addRenderer('Rv_dot_Rp_pol2', yr.PolygonRenderer(Rv_dot_Rp_pol2, (255,255,255)))
+        
+        viewer.startTimer(1/30.)
+        viewer.show()
+        
+        Fl.run()
+        
+    def test_diff_orientation():
+        points = [(0,0,-.1),(0,0,.1),(2,0,.1),(2,0,-.1)]
+        
+        Ra = exp(v3(0,1,1), 1)
+        Rb = exp(v3(1,0,0), 1)
+        
+        # Ra - Rb
+        diffVec1 = logSO3(Ra)-logSO3(Rb)
+        diffVec2_1 = logSO3(np.dot(Ra, np.transpose(Rb)))
+        diffVec2_2 = logSO3(np.dot(np.transpose(Rb), Ra))
+        diffVec2_3 = logSO3(np.dot(Rb, np.transpose(Ra)))
+        diffVec2_4 = logSO3(np.dot(np.transpose(Ra), Rb))
+        
+        print diffVec1
+        print diffVec2_1
+        print diffVec2_2
+        print diffVec2_3
+        print diffVec2_4
+        
+        viewer = ysv.SimpleViewer()
+        viewer.record(False)
+        viewer.doc.addRenderer('I', yr.PolygonRenderer(points, (255,255,255)))
+        viewer.doc.addRenderer('Ra', yr.PolygonRenderer(map(np.dot, [Ra]*len(points), points), (255,0,0)))
+        viewer.doc.addRenderer('Rb', yr.PolygonRenderer(map(np.dot, [Rb]*len(points), points), (0,0,255)))
+        
+        
+        viewer.startTimer(1/30.)
+        viewer.show()
+        
+        Fl.run()
+        
+    def test_matrixrank():
+        A = np.array([[ 0. ,  0. ,  1. ,  0. ,  0. ,  0.5],
+                   [ 0. ,  0. ,  0. ,  0. ,  0. ,  0. ],
+                   [-1. ,  0. ,  0. , -0.5,  0. ,  0. ],
+                   [ 1. ,  0. ,  0. ,  1. ,  0. ,  0. ],
+                   [ 0. ,  1. ,  0. ,  0. ,  1. ,  0. ],
+                   [ 0. ,  0. ,  1. ,  0. ,  0. ,  1. ]]) 
+        print matrixrank(A)
+        
+    pass
+#    test_array_copy()
+#    test_tupleSO3_funcs()
+#    test_getSO3FromVectors()
+#    test_logSO3()
+#    test_slerp()
+    test_projectRotation()
+#    test_diff_orientation()
+#    test_matrixrank()

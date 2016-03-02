@@ -1,5 +1,13 @@
 .PHONY: all
-all: Simulator Renderer Optimization VirtualPhysics
+all: Math Simulator Renderer Optimization VirtualPhysics
+
+.PHONY: Math
+Math:
+	make --directory="Math/" --file=Math.makefile
+
+.PHONY: Mesh
+Mesh:
+	make --directory="Mesh/" --file=Mesh.makefile
 
 .PHONY: Renderer
 Renderer:
@@ -19,6 +27,7 @@ VirtualPhysics:
 
 .PHONY: clean
 clean:
+	rm -rf Math/build
 	rm -rf Renderer/build
 	rm -rf Simulator/build
 	rm -rf Optimization/build

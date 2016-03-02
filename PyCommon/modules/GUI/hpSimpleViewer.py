@@ -2,6 +2,9 @@ import ysSimpleViewer_ori as ysvOri
 import GUI.ysBaseUI as ybu
 import fltk
 import cPickle
+import OpenGL.GL as gl
+from PIL import Image as im
+import numpy as np
 
 class hpSimpleViewer(ysvOri.SimpleViewer):
     def __init__(self, rect=None, title='hpSimpleViewer'):
@@ -22,7 +25,6 @@ class hpSimpleViewer(ysvOri.SimpleViewer):
 
         self.cForceWnd.viewer = self
         self.motionViewWnd.cForceWnd = self.cForceWnd
-    pass
 
 
 class hpMotionViewWnd(ysvOri.MotionViewWnd):
@@ -40,6 +42,36 @@ class hpMotionViewWnd(ysvOri.MotionViewWnd):
 
         if self.timeInterval:
             fltk.Fl.repeat_timeout(self.timeInterval, self.onTimer)
+
+    def dump(self, ptr, outfile="output.png"):
+        gl.glPixelStorei(gl.GL_PACK_ALIGNMENT, 1)
+        gl.glReadBuffer(gl.GL_BACK_LEFT)
+        image = np.array(255*gl.glReadPixelsf(0, 0, 1000, 1000, gl.GL_RGB))
+        #  image = [img_line.flatten() for img_line in image]
+
+        img = im.new('RGB', (self.w(), self.h()-55))
+        pix = img.load()
+        for i in range(self.w()):
+            for j in range(55, self.h()):
+                pix[i, j-55] = tuple(image[self.h()-j, i])
+        img.save(outfile, "PNG")
+        # f = open('image.png', 'wb')
+        # w = png.Writer(self.h()-10, self.w())
+        # w.write(f, image)
+        # f.close()
+
+    def dumpMov(self, ptr):
+        print type(self)
+        import os
+        os.mkdir("_movtmp")
+        for i in range(110, 120):
+            self.onFrame(i)
+
+            self.dump(ptr, "_movtmp/tmp"+str(i)+".png")
+
+    def dummyCallback(self):
+        self.redraw()
+        pass
 
 class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
     def __init__(self, x, y, w, h, doc):
@@ -87,6 +119,13 @@ class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
             objValDict[k] = v.value()
         return objValDict
 
+    def addBtn(self, name, callback):
+        self.begin()
+        btn = fltk.Fl_Button(10, self.valObjOffset, 80, 20, name)
+        btn.callback(callback)
+        self.end()
+        self.valObjOffset += 40
+
     def add1DSlider(self, name, minVal, maxVal, valStep, initVal):
         self.begin()
         slider = fltk.Fl_Hor_Value_Slider(10, self.valObjOffset, 250, 18, name)
@@ -116,6 +155,8 @@ class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
         for k, v in objVals.iteritems():
             if k in self.valObjects.keys():
                 self.valObjects[k].value(v)
+
+
 
 class hpContactForceGraphWnd(fltk.Fl_Widget, ybu.Observer):
     def __init__(self, x, y, w, h, doc):

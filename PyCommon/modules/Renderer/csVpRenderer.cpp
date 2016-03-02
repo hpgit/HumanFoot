@@ -167,6 +167,73 @@ void _draw_capsule(const scalar &rad, const scalar &height)
 	glEnd();
 }
 
+void _draw_cylinder(const scalar &rad, const scalar &height)
+{
+	int i, j;
+	scalar ct_i, st_i, ct_im1 = SCALAR_1, st_im1 = SCALAR_0, cp_i, sp_i, cp_im1, sp_im1;
+
+	glBegin(GL_QUADS);
+	for ( i = 1; i < _SLICE_SIZE + 1; i++ )
+	{
+		ct_i = cos(M_2PI * (scalar)i / (scalar)_SLICE_SIZE);
+		st_i = sin(M_2PI * (scalar)i / (scalar)_SLICE_SIZE);
+
+		glTexCoord2d((double)(i - 1) / (double)_SLICE_SIZE, (double)SCALAR_0);
+		glNormal3d(ct_im1, st_im1, SCALAR_0);
+		glVertex3d(rad * ct_im1, rad * st_im1, -SCALAR_1_2 * height);
+		glTexCoord2d((double)i / (double)_SLICE_SIZE, SCALAR_0);
+		glNormal3d(ct_i, st_i, SCALAR_0);
+		glVertex3d(rad * ct_i, rad * st_i, -SCALAR_1_2 * height);
+		glTexCoord2d((double)i / (double)_SLICE_SIZE, SCALAR_1);
+		glNormal3d(ct_i, st_i, SCALAR_0);
+		glVertex3d(rad * ct_i, rad * st_i, SCALAR_1_2 * height);
+		glTexCoord2d((double)(i - 1) / (double)_SLICE_SIZE, SCALAR_1);
+		glNormal3d(ct_im1, st_im1, SCALAR_0);
+		glVertex3d(rad * ct_im1, rad * st_im1, SCALAR_1_2 * height);
+
+		cp_im1 = SCALAR_1;
+		sp_im1 = SCALAR_0;
+//		for ( j = 1; j < _SLICE_SIZE + 1; j++ )
+//		{
+//			cp_i = cos(SCALAR_1_2 * (scalar)M_PI * (scalar)j / (scalar)_SLICE_SIZE);
+//			sp_i = sin(SCALAR_1_2 * (scalar)M_PI * (scalar)j / (scalar)_SLICE_SIZE);
+//
+//			glTexCoord2d((double)(i - 1) / (double)_SLICE_SIZE, SCALAR_1 - (double)(j - 1) / (double)_SLICE_SIZE);
+//			glNormal3d(ct_im1 * cp_im1, st_im1 * cp_im1,  sp_im1);
+//			glVertex3d(rad * ct_im1 * cp_im1, rad * st_im1 * cp_im1, rad * sp_im1 + SCALAR_1_2 * height);
+//			glTexCoord2d((double)(i) / (double)_SLICE_SIZE, SCALAR_1 - (double)(j - 1) / (double)_SLICE_SIZE);
+//			glNormal3d(ct_i * cp_im1, st_i * cp_im1,  sp_im1);
+//			glVertex3d(rad * ct_i * cp_im1, rad * st_i * cp_im1, rad * sp_im1 + SCALAR_1_2 * height);
+//			glTexCoord2d((double)(i) / (double)_SLICE_SIZE, SCALAR_1 - (double)(j) / (double)_SLICE_SIZE);
+//			glNormal3d(ct_i * cp_i, st_i * cp_i,  sp_i);
+//			glVertex3d(rad * ct_i * cp_i, rad * st_i * cp_i, rad * sp_i + SCALAR_1_2 * height);
+//			glTexCoord2d((double)(i-1) / (double)_SLICE_SIZE, SCALAR_1 - (double)(j) / (double)_SLICE_SIZE);
+//			glNormal3d(ct_im1 * cp_i, st_im1 * cp_i,  sp_i);
+//			glVertex3d(rad * ct_im1 * cp_i, rad * st_im1 * cp_i, rad * sp_i + SCALAR_1_2 * height);
+//
+//			glTexCoord2d((double)(i - 1) / (double)_SLICE_SIZE, (double)(j - 1) / (double)_SLICE_SIZE);
+//			glNormal3d(ct_im1 * cp_im1, st_im1 * cp_im1,  -sp_im1);
+//			glVertex3d(rad * ct_im1 * cp_im1, rad * st_im1 * cp_im1, -rad * sp_im1 - SCALAR_1_2 * height);
+//			glTexCoord2d((double)(i) / (double)_SLICE_SIZE, (double)(j - 1) / (double)_SLICE_SIZE);
+//			glNormal3d(ct_i * cp_im1, st_i * cp_im1,  -sp_im1);
+//			glVertex3d(rad * ct_i * cp_im1, rad * st_i * cp_im1, -rad * sp_im1 - SCALAR_1_2 * height);
+//			glTexCoord2d((double)(i) / (double)_SLICE_SIZE, (double)(j) / (double)_SLICE_SIZE);
+//			glNormal3d(ct_i * cp_i, st_i * cp_i,  -sp_i);
+//			glVertex3d(rad * ct_i * cp_i, rad * st_i * cp_i, -rad * sp_i - SCALAR_1_2 * height);
+//			glTexCoord2d((double)(i-1) / (double)_SLICE_SIZE, (double)(j) / (double)_SLICE_SIZE);
+//			glNormal3d(ct_im1 * cp_i, st_im1 * cp_i,  -sp_i);
+//			glVertex3d(rad * ct_im1 * cp_i, rad * st_im1 * cp_i, -rad * sp_i - SCALAR_1_2 * height);
+//
+//			cp_im1 = cp_i;
+//			sp_im1 = sp_i;
+//		}
+
+		ct_im1 = ct_i;
+		st_im1 = st_i;
+	}
+	glEnd();
+}
+
 
 void renderVpBody(const vpBody* pBody)
 {
