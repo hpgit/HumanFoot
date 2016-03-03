@@ -1,11 +1,11 @@
-# momentum
+## momentum
 1. first, `ctags -R .`
 
-# vundle (old version)
+## vundle (old version)
 	git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
 
 ## How to build and run
-#### In linux,
+### In linux,
 1. download and setup boost
 	
 		$ ./bootstrap.sh
@@ -17,14 +17,14 @@
 
 3. setup using pip
 
-    pip install --upgrade pip setuptools
-    pip install PyOpenGL PyOpenGL-accelerate cvxopt pyode
+    	pip install --upgrade pip setuptools
+    	pip install PyOpenGL PyOpenGL-accelerate cvxopt pyode
 
 3. build VirtualPhysics2010 and copy libvpLib.a to PyCommon/modules/usr/lib/
 4. make in PyCommon/modules (if there is a copy error, edit setup.py in Renderer and Simulator)
 5. Run main_MomentumProject.py in MomentumProject/
 
-#### In MAC OS X,
+### In MAC OS X,
 
 in OSX terminal,
 
@@ -49,8 +49,8 @@ after make virtual environment,
     pip install openopt
 
 setup pyfltk1.3.3 (google and download)
-     in python/fltk_wrap.cpp,
-     add void in front of free_color
+     in python/fltk\_wrap.cpp,
+     add void in front of free\_color
 
      python setup.py build
      python setup.py install

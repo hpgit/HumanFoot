@@ -533,20 +533,19 @@ class GlWindow(Fl_Gl_Window):
                 self.viewPerspective()
             elif Fl.event_key()==ord('a'):
                 self.cameraMode ^= True
+            elif Fl.event_key()==ord('q'):
+                self.viewFromFront()
+            elif Fl.event_key()==ord('w'):
+                self.viewFromRight()
+            elif Fl.event_key()==ord('e'):
+                self.viewFromTop()
+            elif Fl.event_key()==ord('r'):
+                self.viewPerspective()
+
             elif Fl.event_key()==ord('v'):
                 self.force = [0, -self.forceMag/4., self.forceMag]
                 #self.force = [self.forceMag, -self.forceMag/2, self.forceMag]
                 self.forceDir = 1
-            elif Fl.event_key()==ord('r'):
-                self.force = [0, -self.forceMag/4., -self.forceMag]
-                self.forceDir = 2
-            elif Fl.event_key()==ord('d'):
-                self.force = [-self.forceMag, -self.forceMag/4., 0]
-                self.forceDir = 3
-            elif Fl.event_key()==ord('g'):
-                self.force = [self.forceMag, -self.forceMag/4., 0]
-                #self.force = [self.forceMag, 0, -self.forceMag]
-                self.forceDir = 4
             elif Fl.event_key()==ord('f'):
                 self.force = [0, 0, 0]
                 self.forceDir = 0            

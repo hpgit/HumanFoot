@@ -31,12 +31,6 @@ import GUI.ysMultiViewer as ymv
 import Motion.ysHierarchyEdit as yme
 import Simulator.ysPhysConfig as ypc
 
-import VirtualPhysics.vpWorld as VPW
-import VirtualPhysics.vpBody as VPB
-import VirtualPhysics.vpJoint as VPJ
-import VirtualPhysics.vpGeom as VPG
-import VirtualPhysics.LieGroup as VPL
-
 
 import Motion.import_trc as trc
 
@@ -74,6 +68,11 @@ rd_tibia = None
 rd_backfoot = None
 rd_midfoot = None
 rd_forefoot = None
+
+rd_tibia_tri = None
+rd_backfoot_tri = None
+rd_midfoot_tri = None
+rd_forefoot_tri = None
 
 viewer = None
 
@@ -120,16 +119,25 @@ def init():
     global rd_backfoot_cog
     global rd_midfoot_cog
 
+    global rd_tibia_tri
+    global rd_backfoot_tri
+    global rd_midfoot_tri
+    global rd_forefoot_tri
+
     np.set_printoptions(precision=4, linewidth=200)
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped_basic('../P_3_test01_Dynamic.bvh')
     motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped_basic('../2_Test01_Dynamic.bvh')
     mcfg_motion = mit.normal_mcfg()
 
-    infoNames, infoData, markerName, markerPosi = trc.import_trc('../P_3_test01_Dynamic.trc')
-    # infoNames, infoData, markerName, markerPosi = trc.import_trc('../rawmotions/P_2_test01-Dynamic.trc')
+    # infoNames, infoData, markerName, markerPosi = trc.import_trc('../trc/2_test01_Dynamic.trc')
+    # infoNames, infoData, markerName, markerPosi = trc.import_trc('../trc/2_test02_Dynamic.trc')
+    infoNames, infoData, markerName, markerPosi = trc.import_trc('../trc/P_1_test01_Dynamic.trc')
+    # infoNames, infoData, markerName, markerPosi = trc.import_trc('../trc/P_2_test01_Dynamic.trc')
+    # infoNames, infoData, markerName, markerPosi = trc.import_trc('../trc/P_3_test01_Dynamic.trc')
 
     info = dict(zip(infoNames, infoData))
     numFrame = int(info['NumFrames'])-1
+
+    motion[:] = [motion[0]]*numFrame
 
     rd_jointPos = [None]
 
@@ -138,30 +146,48 @@ def init():
     rd_midfoot = [None]
     rd_forefoot = [None]
 
+    rd_tibia_tri = [None]
+    rd_backfoot_tri = [None]
+    rd_midfoot_tri = [None]
+    rd_forefoot_tri = [None]
+
     rd_tibia_cog = [None]
     rd_backfoot_cog = [None]
     rd_midfoot_cog = [None]
 
     viewer = hsv.hpSimpleViewer([100, 100, 1280, 960])
     viewer.doc.addObject('motion', motion)
-    viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion))
-    viewer.doc.addRenderer('rd_jointPos', yr.PointsRenderer(rd_jointPos, color=(255,0,0), pointStyle=0))
-    viewer.doc.addRenderer('rd_tibia', yr.PointsRenderer(rd_tibia, color=(255,0,255), pointStyle=0))
-    viewer.doc.addRenderer('rd_backfoot', yr.PointsRenderer(rd_backfoot, color=(0,0,255), pointStyle=0))
-    viewer.doc.addRenderer('rd_midfoot', yr.PointsRenderer(rd_midfoot, color=(0,255,0), pointStyle=0))
-    viewer.doc.addRenderer('rd_forefoot', yr.PointsRenderer(rd_forefoot, color=(0,0,0), pointStyle=0))
+    # viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion))
+    viewer.doc.addRenderer('rd_jointPos', yr.PointsRenderer(rd_jointPos, color=(255,0,0), pointStyle=1))
+
+    viewer.doc.addRenderer('rd_tibia', yr.PointsRenderer(rd_tibia, color=(255,0,255), pointStyle=1))
+    viewer.doc.addRenderer('rd_tibia_tri', yr.LinesRenderer(rd_tibia_tri, color=(255,0,255)))
+
+    viewer.doc.addRenderer('rd_backfoot', yr.PointsRenderer(rd_backfoot, color=(0,0,255), pointStyle=1))
+    viewer.doc.addRenderer('rd_backfoot_tri', yr.LinesRenderer(rd_backfoot_tri, color=(0,0,255)))
+
+    viewer.doc.addRenderer('rd_midfoot', yr.PointsRenderer(rd_midfoot, color=(0,255,0), pointStyle=1))
+    viewer.doc.addRenderer('rd_midfoot_tri', yr.LinesRenderer(rd_midfoot_tri, color=(0,255,0)))
+
+    viewer.doc.addRenderer('rd_forefoot', yr.PointsRenderer(rd_forefoot, color=(0,0,0), pointStyle=1))
+    viewer.doc.addRenderer('rd_forefoot_tri', yr.LinesRenderer(rd_forefoot_tri, color=(0,0,0)))
 
     # viewer.doc.addRenderer('rd_tibia_cog', yr.PointsRenderer(rd_tibia_cog, color=(255,0,255), pointStyle=0))
     # viewer.doc.addRenderer('rd_backfoot_cog', yr.PointsRenderer(rd_backfoot_cog, color=(0,0,255), pointStyle=0))
     # viewer.doc.addRenderer('rd_midfoot_cog', yr.PointsRenderer(rd_midfoot_cog, color=(0,255,0), pointStyle=0))
-    viewer.doc.addRenderer('rd_tibia_cog', yr.LinesRenderer(rd_tibia_cog, color=(255,0,255)))
-    viewer.doc.addRenderer('rd_backfoot_cog', yr.LinesRenderer(rd_backfoot_cog, color=(0,0,255)))
-    viewer.doc.addRenderer('rd_midfoot_cog', yr.LinesRenderer(rd_midfoot_cog, color=(0,255,0)))
+    # viewer.doc.addRenderer('rd_tibia_cog', yr.LinesRenderer(rd_tibia_cog, color=(255,0,255)))
+    # viewer.doc.addRenderer('rd_backfoot_cog', yr.LinesRenderer(rd_backfoot_cog, color=(0,0,255)))
+    # viewer.doc.addRenderer('rd_midfoot_cog', yr.LinesRenderer(rd_midfoot_cog, color=(0,255,0)))
+
 
     viewer.objectInfoWnd.add1DSlider(
         'PD gain', minVal=0., maxVal=1000., initVal=180., valStep=.1)
     viewer.objectInfoWnd.addBtn('image', viewer.motionViewWnd.dump)
     viewer.objectInfoWnd.addBtn('movie', viewer.motionViewWnd.dumpMov)
+
+    viewer.cForceWnd.addDataSet('midfoot_height', FL_BLACK)
+    viewer.cForceWnd.addDataSet('midfoot_top_angle', FL_GREEN)
+    viewer.cForceWnd.addDataSet('midfoot_front_angle', FL_RED)
 
     print info
     print markerName
@@ -204,6 +230,21 @@ def init():
 init()
 
 
+def unit(x):
+    _x = np.array(x)
+    return _x/np.linalg.norm(_x)
+
+
+def getCenterAndBasisFromPoints(points):
+    center = sum(points)/3.
+    first_coord = unit(points[0] - points[2])
+    temp_coord = points[2] - points[1]
+    third_coord = unit(np.cross(first_coord, temp_coord))
+    second_coord = unit(temp_coord - np.dot(temp_coord, first_coord)*first_coord)
+
+    return center, [third_coord, first_coord, second_coord]
+
+
 class Callback:
 
     def __init__(self):
@@ -242,9 +283,47 @@ class Callback:
         rd_backfoot_cog.append(sum([markerPosi[frame][i] for i in backfoot_marker_idx[:3]])/3)
         rd_midfoot_cog.append(sum([markerPosi[frame][i] for i in midfoot_marker_idx[:2]])/2)
 
-        # tibia_points = [markerPosi[frame][i] for i in tibia_marker_idx[:3]]
-        # backfoot_points = [markerPosi[frame][i] for i in backfoot_marker_idx[:3]]
-        # midfoot_points = [markerPosi[frame][i] for i in midfoot_marker_idx[:2]]
+        tibia_points = [np.array(markerPosi[frame][i]) for i in tibia_marker_idx[:3]]
+        backfoot_points = [np.array(markerPosi[frame][i]) for i in backfoot_marker_idx[:3]]
+        midfoot_points = [np.array(markerPosi[frame][i]) for i in midfoot_marker_idx[:2]]
+        forefoot_points = [np.array(markerPosi[frame][i]) for i in forefoot_marker_idx[:4]]
+
+        center, basis = getCenterAndBasisFromPoints(backfoot_points)
+        basis = [basis[2], basis[0], basis[1]]
+        rotation = np.zeros((3, 3))
+        for i in range(3):
+            rotation[i, :] = basis[i]
+
+        offset = np.array((0., 0.10, 0.))
+
+        del rd_tibia[:]
+        tibia_trans_points = [np.dot(rotation, point-center) + offset for point in tibia_points]
+        rd_tibia.extend(tibia_trans_points)
+        del rd_backfoot[:]
+        backfoot_trans_points = [np.dot(rotation, point-center) + offset for point in backfoot_points]
+        rd_backfoot.extend(backfoot_trans_points)
+        del rd_midfoot[:]
+        midfoot_trans_points = [np.dot(rotation, point-center) + offset for point in midfoot_points]
+        rd_midfoot.extend(midfoot_trans_points)
+        del rd_forefoot[:]
+        forefoot_trans_points = [np.dot(rotation, point-center) + offset for point in forefoot_points]
+        rd_forefoot.extend(forefoot_trans_points)
+
+        del rd_tibia_tri[:]
+        rd_tibia_tri.extend(tibia_trans_points)
+        rd_tibia_tri.append(tibia_trans_points[0])
+        del rd_backfoot_tri[:]
+        rd_backfoot_tri.extend(backfoot_trans_points)
+        rd_backfoot_tri.append(backfoot_trans_points[0])
+        del rd_midfoot_tri[:]
+        rd_midfoot_tri.extend(midfoot_trans_points)
+        rd_midfoot_tri.append(midfoot_trans_points[0])
+        del rd_forefoot_tri[:]
+        rd_forefoot_tri.extend(forefoot_trans_points)
+        rd_forefoot_tri.append(forefoot_trans_points[0])
+
+        viewer.cForceWnd.insertData('midfoot_height', frame, sum(midfoot_trans_points)[1]*1000/2.)
+
 
 callback = Callback()
 
