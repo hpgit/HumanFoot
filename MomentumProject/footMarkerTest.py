@@ -31,6 +31,7 @@ import GUI.ysMultiViewer as ymv
 import Motion.ysHierarchyEdit as yme
 import Simulator.ysPhysConfig as ypc
 
+import matplotlib.pyplot as plt
 
 import Motion.import_trc as trc
 
@@ -128,9 +129,9 @@ def init():
     motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped_basic('../2_Test01_Dynamic.bvh')
     mcfg_motion = mit.normal_mcfg()
 
-    # infoNames, infoData, markerName, markerPosi = trc.import_trc('../trc/2_test01_Dynamic.trc')
+    infoNames, infoData, markerName, markerPosi = trc.import_trc('../trc/2_test01_Dynamic.trc')
     # infoNames, infoData, markerName, markerPosi = trc.import_trc('../trc/2_test02_Dynamic.trc')
-    infoNames, infoData, markerName, markerPosi = trc.import_trc('../trc/P_1_test01_Dynamic.trc')
+    # infoNames, infoData, markerName, markerPosi = trc.import_trc('../trc/P_1_test01_Dynamic.trc')
     # infoNames, infoData, markerName, markerPosi = trc.import_trc('../trc/P_2_test01_Dynamic.trc')
     # infoNames, infoData, markerName, markerPosi = trc.import_trc('../trc/P_3_test01_Dynamic.trc')
 
@@ -226,9 +227,43 @@ def init():
     print midfoot_marker_idx
     print backfoot_marker_idx
 
+    midfoot_height = []
+    midfoot_top_angle = []
+    midfoot_front_angle = []
 
-init()
+    for frame in range(numFrame):
+        tibia_points = [np.array(markerPosi[frame][i]) for i in tibia_marker_idx[:3]]
+        backfoot_points = [np.array(markerPosi[frame][i]) for i in backfoot_marker_idx[:3]]
+        midfoot_points = [np.array(markerPosi[frame][i]) for i in midfoot_marker_idx[:2]]
+        forefoot_points = [np.array(markerPosi[frame][i]) for i in forefoot_marker_idx[:4]]
+        center, basis = getCenterAndBasisFromPoints(backfoot_points)
+        basis = [basis[2], basis[0], basis[1]]
+        rotation = np.zeros((3, 3))
+        for i in range(3):
+            rotation[i, :] = basis[i]
 
+        offset = np.array((0., 0.10, 0.))
+
+        tibia_trans_points = [np.dot(rotation, point-center) + offset for point in tibia_points]
+        backfoot_trans_points = [np.dot(rotation, point-center) + offset for point in backfoot_points]
+        midfoot_trans_points = [np.dot(rotation, point-center) + offset for point in midfoot_points]
+        forefoot_trans_points = [np.dot(rotation, point-center) + offset for point in forefoot_points]
+
+        # viewer.cForceWnd.insertData('midfoot_height', frame, sum(midfoot_trans_points)[1]*1000/2.)
+        midfoot_height.append(sum(midfoot_trans_points)[1]/2.)
+
+        mf_ang_vec = midfoot_trans_points[1] - midfoot_trans_points[0]
+        mf_front_ang = math.asin(abs(mf_ang_vec[1])/npl.norm(mf_ang_vec))
+        mf_top_ang = math.atan2(mf_ang_vec[2], mf_ang_vec[0])
+
+        midfoot_top_angle.append(mf_top_ang)
+        midfoot_front_angle.append(mf_front_ang)
+
+        # viewer.cForceWnd.insertData('midfoot_top_angle', frame, mf_top_ang*50)
+        # viewer.cForceWnd.insertData('midfoot_front_angle', frame, mf_front_ang)
+
+    plt.plot(mf_front_ang)
+    plt.show()
 
 def unit(x):
     _x = np.array(x)
@@ -243,6 +278,10 @@ def getCenterAndBasisFromPoints(points):
     second_coord = unit(temp_coord - np.dot(temp_coord, first_coord)*first_coord)
 
     return center, [third_coord, first_coord, second_coord]
+
+init()
+
+
 
 
 class Callback:
@@ -323,6 +362,14 @@ class Callback:
         rd_forefoot_tri.append(forefoot_trans_points[0])
 
         viewer.cForceWnd.insertData('midfoot_height', frame, sum(midfoot_trans_points)[1]*1000/2.)
+
+        mf_ang_vec = midfoot_trans_points[1] - midfoot_trans_points[0]
+        mf_front_ang = math.asin(abs(mf_ang_vec[1])/npl.norm(mf_ang_vec))
+        mf_top_ang = math.atan2(mf_ang_vec[2], mf_ang_vec[0])
+
+        viewer.cForceWnd.insertData('midfoot_top_angle', frame, mf_top_ang*50)
+        viewer.cForceWnd.insertData('midfoot_front_angle', frame, mf_front_ang)
+
 
 
 callback = Callback()
