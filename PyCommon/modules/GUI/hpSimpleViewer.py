@@ -28,6 +28,10 @@ class hpSimpleViewer(ysvOri.SimpleViewer):
 
 
 class hpMotionViewWnd(ysvOri.MotionViewWnd):
+    def __init__(self, x, y, w, h, doc):
+        ysvOri.MotionViewWnd.__init__(self, x, y, w, h, doc)
+        self.mov = False
+
     def goToFrame(self, frame):
         super(hpMotionViewWnd, self).goToFrame(frame)
         self.cForceWnd.redraw()
@@ -38,7 +42,8 @@ class hpMotionViewWnd(ysvOri.MotionViewWnd):
             if self.frame > self.maxFrame:
                 self.frame = 0
             self.onFrame(self.frame)
-            self.cForceWnd.redraw()
+            if self.mov:
+                self.dump(self, "_movtmp/tmp"+str(self.frame)+".png")
 
         if self.timeInterval:
             fltk.Fl.repeat_timeout(self.timeInterval, self.onTimer)
@@ -46,14 +51,18 @@ class hpMotionViewWnd(ysvOri.MotionViewWnd):
     def dump(self, ptr, outfile="output.png"):
         gl.glPixelStorei(gl.GL_PACK_ALIGNMENT, 1)
         gl.glReadBuffer(gl.GL_BACK_LEFT)
-        image = np.array(255*gl.glReadPixelsf(0, 0, 1000, 1000, gl.GL_RGB))
+        image = None
+        if self.w() > 1000:
+            image = np.array(255*gl.glReadPixelsf(0, 0, 2000, 2000, gl.GL_RGB))
+        else:
+            image = np.array(255*gl.glReadPixelsf(0, 0, 1000, 1000, gl.GL_RGB))
         #  image = [img_line.flatten() for img_line in image]
 
-        img = im.new('RGB', (self.w(), self.h()-55))
+        img = im.new('RGB', (self.w(), self.h()-56))
         pix = img.load()
         for i in range(self.w()):
-            for j in range(55, self.h()):
-                pix[i, j-55] = tuple(image[self.h()-j, i])
+            for j in range(56, self.h()):
+                pix[i, j-56] = tuple(image[self.h()-j, i])
         img.save(outfile, "PNG")
         # f = open('image.png', 'wb')
         # w = png.Writer(self.h()-10, self.w())
@@ -61,17 +70,18 @@ class hpMotionViewWnd(ysvOri.MotionViewWnd):
         # f.close()
 
     def dumpMov(self, ptr):
-        print type(self)
-        import os
-        os.mkdir("_movtmp")
-        for i in range(110, 120):
-            self.onFrame(i)
+        if self.mov:
+            self.mov = False
+        else:
+            self.mov = True
 
-            self.dump(ptr, "_movtmp/tmp"+str(i)+".png")
+        # import os
+        # os.mkdir("_movtmp")
+        # for i in range(110, 120):
+        #     self.onFrame(i)
+        #
+        #     self.dump(ptr, "_movtmp/tmp"+str(self.frame)+".png")
 
-    def dummyCallback(self):
-        self.redraw()
-        pass
 
 class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
     def __init__(self, x, y, w, h, doc):
