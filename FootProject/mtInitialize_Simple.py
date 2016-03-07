@@ -229,7 +229,8 @@ def create_chiken_foot():
     node = mcfg.getNode('foot11')
     node.geom = 'MyFoot4'
     node.mass = .5
-    
+
+
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
@@ -292,6 +293,15 @@ def create_foot(motionFile='foot3.bvh'):
     node = mcfg.getNode('foot_2_1')
     node.geom = 'MyFoot4'
     node.mass = .5
+
+    def mcfgFix(_mcfg):
+        for v in _mcfg.nodes.itervalues():
+            if len(v.geoms) == 0:
+                v.geoms.append(v.geom)
+                v.geomMass.append(v.mass)
+                v.geomTs.append(None)
+
+    mcfgFix(mcfg)
 
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.
@@ -364,6 +374,69 @@ def create_leg(motionFile='kneeAndFoot.bvh'):
     node = mcfg.getNode('foot21')
     node.geom = 'MyFoot4'
     node.mass = .5
+
+    wcfg = ypc.WorldConfig()
+    wcfg.planeHeight = 0.
+    wcfg.useDefaultContactModel = False
+    stepsPerFrame = 40
+    simulSpeedInv = 1.
+
+    wcfg.timeStep = (1/30.*simulSpeedInv)/stepsPerFrame
+
+    # parameter
+    config = dict([])
+    config['Kt'] = 20; config['Dt'] = 2*(config['Kt']**.5)  # tracking gain
+    config['Kl'] = 1; config['Dl'] = 2*(config['Kl']**.5)  # linear balance gain
+    config['Kh'] = 1; config['Dh'] = 2*(config['Kh']**.5)  # angular balance gain
+    config['Ks'] = 5000; config['Ds'] = 2*(config['Ks']**.5)  # penalty force spring gain
+    config['Bt'] = 1.
+    config['Bl'] = 1.
+    config['Bh'] = 1.
+    config['stepsPerFrame'] = stepsPerFrame
+    config['simulSpeedInv'] = simulSpeedInv
+
+    # etc
+    config['weightMap'] = {'root': 2., 'knee': 2., 'foot00': 1., 'foot10': 1., 'foot20': 1., 'foot01': .2, 'foot11': .2, 'foot21': .2}
+    config['weightMapTuple'] = (2., 2., 1., .2, 1., .2, 1., .2)
+    # config['supLink'] = 'link0'
+
+    return motion, mcfg, wcfg, stepsPerFrame, config
+
+def create_legs(motionFile='legs.bvh'):
+    # motion
+    motion = yf.readBvhFile(motionFile, .06)
+
+    # world, model
+    mcfg = ypc.ModelConfig()
+    mcfg.defaultDensity = 1000.
+    mcfg.defaultBoneRatio = 1.
+    for i in range(motion[0].skeleton.getElementNum()):
+        mcfg.addNode(motion[0].skeleton.getElementName(i))
+    node = mcfg.getNode('Hips')
+    # node.geom = ''
+    # node.length = 40.
+    # node.length = 1.
+    node.mass = 3.
+
+    node = mcfg.getNode('RightUpLeg')
+    node.geom = 'MyFoot4'
+    node.mass = 10.
+    # node.length = 40.
+
+    node = mcfg.getNode('RightLeg')
+    node.geom = 'MyFoot4'
+    node.mass = 10.
+    # node.length = 40.
+
+    node = mcfg.getNode('LeftUpLeg')
+    node.geom = 'MyFoot4'
+    node.mass = 10.
+    # node.length = 40.
+
+    node = mcfg.getNode('LeftLeg')
+    node.geom = 'MyFoot4'
+    node.mass = 10.
+    # node.length = 40.
 
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.

@@ -269,6 +269,63 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 		_nodes[joint_index] = pNode;
 
 		object cfgNode = _config.attr("getNode")(joint_name);
+		/*
+		int numGeom = len(cfgNode.attr("geoms"));
+		string geomType = XS(cfgNode.attr("geoms")[0]);
+		if (geomType == "MyFoot3" || geomType == "MyFoot4")
+		{
+		    scalar radius = .05;
+		    if( cfgNode.attr("width") != object() )
+		        radius = XD(cfgNode.attr("width"));
+
+		    scalar length = Norm(offset) + 2*radius;
+		    scalar density = XD(cfgNode.attr("density"));
+		    scalar mass = 1.;
+		    if( cfgNode.attr("mass") != object() )
+		    {
+		        mass = XD(cfgNode.attr("mass"));
+		        density = mass/ (radius * radius * M_PI * length);
+		    }
+		    else
+		        mass = density * radius * radius * M_PI * length;
+
+		    // density = mass/ (width*width*M_PI*(length+width));
+		    if (geomType == "MyFoot3")
+		        pNode->body.AddGeometry(new MyFoot3(radius, length));
+		    else
+		        pNode->body.AddGeometry(new MyFoot4(radius, length));
+		    pNode->body.SetInertia(CylinderInertia(density, radius,length));
+		}
+		else
+		{
+            scalar length;
+            if( cfgNode.attr("length") != object() )
+                length = XD(cfgNode.attr("length")) * XD(cfgNode.attr("boneRatio"));
+            else
+                length = Norm(offset) * XD(cfgNode.attr("boneRatio"));
+
+            scalar density = XD(cfgNode.attr("density"));
+            scalar width, height;
+            if( cfgNode.attr("width") != object() )
+            {
+                width = XD(cfgNode.attr("width"));
+                if( cfgNode.attr("mass") != object() )
+                    height = (XD(cfgNode.attr("mass")) / (density * length)) / width;
+                else
+                    height = .1;
+            }
+            else
+            {
+                if( cfgNode.attr("mass") != object() )
+                    width = sqrt( (XD(cfgNode.attr("mass")) / (density * length)) );
+                else
+                    width = .1;
+                height = width;
+            }
+			pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)));
+			pNode->body.SetInertia(BoxInertia(density, Vec3(width/2.,height/2.,length/2.)));
+		//*/	
+		///*
 		string geomType = XS(cfgNode.attr("geom"));
 		if (geomType == "MyFoot3" || geomType == "MyFoot4")
 		{
@@ -322,6 +379,7 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
             }
 			pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)));
 			pNode->body.SetInertia(BoxInertia(density, Vec3(width/2.,height/2.,length/2.)));
+			//*/
 		}
 
 //		pNode->body.SetInertia(BoxInertia(density, Vec3(width,height,length)));

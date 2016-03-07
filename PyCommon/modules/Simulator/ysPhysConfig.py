@@ -48,7 +48,16 @@ class ModelConfig:
             self.contactSoftERP = 0.0
             self.contactSoftCFM = 0.0
             ##########################################33
-            
+
+            self.geoms = []
+            self.geomTs = []
+            self.geomMass = []
+
+        def addGeom(self, geom, geomT, mass):
+            self.geoms.append(geom)
+            self.geomTs.append(geomT)
+            self.geomMass.append(mass)
+
     def __init__(self):
         self.nodes = {}
         tempNode = ModelConfig.Node('')

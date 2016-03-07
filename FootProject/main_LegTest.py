@@ -98,13 +98,7 @@ def init():
     global viewer
 
     np.set_printoptions(precision=4, linewidth=200)
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_1()
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_5()
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_chiken_foot()
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('fastswim.bvh')
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
-    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_leg('kneeAndFoot.bvh')
+    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_legs()
     mcfg_motion = mit.normal_mcfg()
 
     vpWorld = cvw.VpWorld(wcfg)
@@ -116,7 +110,7 @@ def init():
     # vpWorld.SetGlobalDamping(0.001)
     # controlModel.initializeHybridDynamics()
     controlModel.initializeForwardDynamics()
-    ModelOffset = np.array([0., .07, 0.])
+    ModelOffset = np.array([0., 7., 0.])
     controlModel.translateByOffset(ModelOffset)
 
     totalDOF = controlModel.getTotalDOF()
@@ -254,6 +248,7 @@ class Callback:
             th_r, th, dth_r, dth, ddth_r, Kt, Dt)
         ddth_c = controlModel.getDOFAccelerations()
         ype.flatten(ddth_des, ddth_des_flat)
+        print "ddth_des: ", ddth_des
 
         desForceFrameBegin = getVal('des force begin')
         desForceDuration = getVal('des force dur') * simulSpeedInv
@@ -296,9 +291,13 @@ class Callback:
                 torque_None = False
             else:
                 torques = ddth_des_flat
+            print "torques :", torques
 
             cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
                 = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques)
+            print controlModel.getBodyPositionGlobal(0)
+
+            print cForces
 
             if len(cBodyIDs) > 0:
                 # apply contact forces
@@ -308,8 +307,10 @@ class Callback:
                 #         print frame, cForces[idx]
                 simulContactForces += sum(cForces)
 
+
             ype.nested(torques, torques_nested)
-            controlModel.setDOFTorques(torques_nested[1:])
+            print "torques_nested: ", torques_nested
+            #controlModel.setDOFTorques(torques_nested[1:])
             vpWorld.step()
 
         self.setTimeStamp()
