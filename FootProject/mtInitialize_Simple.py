@@ -428,6 +428,30 @@ def create_legs(motionFile='legs.bvh'):
     node.mass = 10.
     # node.length = 40.
 
+    node = mcfg.getNode('RightFoot')
+    node.geom = 'MyFoot4'
+    node.mass = 3.
+
+    node = mcfg.getNode('RightToe')
+    node.geom = 'MyFoot4'
+    node.mass = 1.
+
+    node = mcfg.getNode('RightCal')
+    node.geom = 'MyFoot4'
+    node.mass = 1.
+
+    node = mcfg.getNode('RightHeel')
+    node.geom = 'MyFoot4'
+    node.mass = 1.
+
+    node = mcfg.getNode('RightCune')
+    node.geom = 'MyFoot4'
+    node.mass = 2.
+
+    node = mcfg.getNode('RightMt5')
+    node.geom = 'MyFoot4'
+    node.mass = 1.
+
     node = mcfg.getNode('LeftUpLeg')
     node.geom = 'MyFoot4'
     node.mass = 10.
@@ -437,6 +461,30 @@ def create_legs(motionFile='legs.bvh'):
     node.geom = 'MyFoot4'
     node.mass = 10.
     # node.length = 40.
+
+    node = mcfg.getNode('LeftFoot')
+    node.geom = 'MyFoot4'
+    node.mass = 3.
+
+    node = mcfg.getNode('LeftToe')
+    node.geom = 'MyFoot4'
+    node.mass = 1.
+
+    node = mcfg.getNode('LeftCal')
+    node.geom = 'MyFoot4'
+    node.mass = 1.
+
+    node = mcfg.getNode('LeftHeel')
+    node.geom = 'MyFoot4'
+    node.mass = 1.
+
+    node = mcfg.getNode('LeftCune')
+    node.geom = 'MyFoot4'
+    node.mass = 2.
+
+    node = mcfg.getNode('LeftMt5')
+    node.geom = 'MyFoot4'
+    node.mass = 1.
 
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.

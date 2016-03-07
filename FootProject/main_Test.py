@@ -103,8 +103,8 @@ def init():
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_chiken_foot()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('fastswim.bvh')
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
-    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_leg('kneeAndFoot.bvh')
+    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
+    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_leg('kneeAndFoot.bvh')
     mcfg_motion = mit.normal_mcfg()
 
     vpWorld = cvw.VpWorld(wcfg)
