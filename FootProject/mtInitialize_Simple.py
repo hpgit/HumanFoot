@@ -402,6 +402,7 @@ def create_leg(motionFile='kneeAndFoot.bvh'):
 
     return motion, mcfg, wcfg, stepsPerFrame, config
 
+
 def create_legs(motionFile='legs.bvh'):
     # motion
     motion = yf.readBvhFile(motionFile, .06)
@@ -412,11 +413,17 @@ def create_legs(motionFile='legs.bvh'):
     mcfg.defaultBoneRatio = 1.
     for i in range(motion[0].skeleton.getElementNum()):
         mcfg.addNode(motion[0].skeleton.getElementName(i))
+
     node = mcfg.getNode('Hips')
     # node.geom = ''
     # node.length = 40.
     # node.length = 1.
-    node.mass = 3.
+    node.mass = 4.
+
+    node = mcfg.getNode('Spine')
+    node.geom = 'MyFoot4'
+    node.mass = 10.
+    node.width = .1
 
     node = mcfg.getNode('RightUpLeg')
     node.geom = 'MyFoot4'
@@ -601,7 +608,8 @@ def create_biped_basic(motionName):
 
     return motion, mcfg, wcfg, stepsPerFrame, config
 
-def create_biped():            
+
+def create_biped():
     # motion
     # motionName = 'wd2_n_kick.bvh'
     

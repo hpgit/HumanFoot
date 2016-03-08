@@ -291,13 +291,9 @@ class Callback:
                 torque_None = False
             else:
                 torques = ddth_des_flat
-            print "torques :", torques
 
             cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
                 = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques)
-            print controlModel.getBodyPositionGlobal(0)
-
-            print cForces
 
             if len(cBodyIDs) > 0:
                 # apply contact forces
@@ -307,10 +303,8 @@ class Callback:
                 #         print frame, cForces[idx]
                 simulContactForces += sum(cForces)
 
-
             ype.nested(torques, torques_nested)
-            print "torques_nested: ", torques_nested
-            #controlModel.setDOFTorques(torques_nested[1:])
+            controlModel.setDOFTorques(torques_nested[1:])
             vpWorld.step()
 
         self.setTimeStamp()
