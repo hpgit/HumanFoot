@@ -1,8 +1,6 @@
-## momentum
-1. first, `ctags -R .`
+# HumanFoot
 
-## vundle (old version)
-	git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
+Simulation system for humanoid walking with segmented foot
 
 ## How to build and run
 ### In linux,

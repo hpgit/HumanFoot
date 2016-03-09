@@ -2,6 +2,9 @@ from fltk import *
 import numpy as np
 import time
 
+import sys
+sys.path.append("../PyCommon/modules")
+
 import math
 import Renderer.ysRenderer as yr
 import Renderer.csVpRenderer as cvr
@@ -171,7 +174,11 @@ def init():
     viewer.objectInfoWnd.add1DSlider(
         'des force dur', minVal=0., maxVal=len(motion) - 1, initVal=20., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
-        'torque weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
+        'force weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
+    viewer.objectInfoWnd.add1DSlider(
+        'tracking weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
+    viewer.objectInfoWnd.add1DSlider(
+        'tau weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
 
     viewer.cForceWnd.addDataSet('expForce', FL_BLACK)
     viewer.cForceWnd.addDataSet('desForceMin', FL_RED)
@@ -241,14 +248,15 @@ class Callback:
         Dt = 2. * (Kt**.5)
         controlModel.SetJointsDamping(damp)
 
-        wTorque = math.pow(10, getVal('torque weight'))
+        wForce = math.pow(10, getVal('force weight'))
+        wTorque = math.pow(10, getVal('tau weight'))
 
         # tracking
-        th_r = motion.getDOFPositions(frame)
+        th_r = motion.getDOFPositions(0)
         th = controlModel.getDOFPositions()
-        dth_r = motion.getDOFVelocities(frame)
+        dth_r = motion.getDOFVelocities(0)
         dth = controlModel.getDOFVelocities()
-        ddth_r = motion.getDOFAccelerations(frame)
+        ddth_r = motion.getDOFAccelerations(0)
         # config['weightMapTuple'])
         ddth_des = yct.getDesiredDOFAccelerations(
             th_r, th, dth_r, dth, ddth_r, Kt, Dt)
@@ -289,16 +297,20 @@ class Callback:
                     # totalForceImpulse = stepsPerFrame * totalForce
                     cBodyIDs, cPositions, cPositionLocals, cForces, torques \
                         = hls.calcLCPControl(
-                            motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wTorque, ddth_des_flat)
+                            motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wForce, wTorque, ddth_des_flat)
+                    if cForces is not None:
+                        print "control: ", sum(cForces)
 
             if torques is not None:
-                print torques[:6]
+                # print torques[:6]
                 torque_None = False
             else:
                 torques = ddth_des_flat
 
             cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
                 = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques)
+            if (not torque_None) and cForces is not None:
+                print "calcul: ", sum(cForces)
 
             if len(cBodyIDs) > 0:
                 # apply contact forces
@@ -317,7 +329,7 @@ class Callback:
         # print torques
 
         self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, torques \
-            = hls.calcLCPControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wTorque, ddth_des_flat, 8)
+            = hls.calcLCPControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wForce, wTorque, ddth_des_flat, 8)
         del rd_cForcesControl[:]
         del rd_cPositionsControl[:]
         for i in range(len(self.cBodyIDs)):
@@ -367,8 +379,9 @@ class Callback:
             viewer.cForceWnd.insertData('realForce', frame, 0.)
         viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame)
         if desForceFrame[0] <= frame <= desForceFrame[1]:
-            viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1] * .9)
-            viewer.cForceWnd.insertData('desForceMax', frame, totalForce[1] * 1.1)
+            viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1])
+            # viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1] * 1.0)
+            # viewer.cForceWnd.insertData('desForceMax', frame, totalForce[1] * 1.1)
         else:
             viewer.cForceWnd.insertData('desForceMin', frame, 0.)
             viewer.cForceWnd.insertData('desForceMax', frame, 0.)

@@ -280,7 +280,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
     return bodyIDs, contactPositions, contactPositionsLocal, forces, timeStamp
 
 
-def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wTorque, tau0=None, numFrictionBases=8):
+def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wForce, wTorque, tau0=None, numFrictionBases=8):
     # tau0 = None
     # model = VpControlModel
     # numFrictionBases = 8
@@ -312,7 +312,6 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wTorque
 
     h = world.GetTimeStep()
     invh = 1./h
-    print "TimeStep: :", h
     mus = mu * np.eye(contactNum)
     temp_NM = JTN.T.dot(pinvM0)
     temp_DM = JTD.T.dot(pinvM0)
@@ -394,17 +393,26 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wTorque
             Qfqp = np.concatenate((N[:3], D[:3], np.zeros_like(N[:3])), axis=1)
             pfqp = -totalForce[:3]
 
+            Qfqp = np.concatenate((N[1:2], D[1:2], np.zeros_like(N[1:2])), axis=1)
+            pfqp = -totalForce[1:2]
+
             # TODO:
             # add tau norm term ||tau||^2
             # and momentum derivative term
             QtauNormqp = np.hstack((np.dot(pinvM1, np.hstack((JTN, JTD))), np.zeros((pinvM1.shape[0], N.shape[1]))))
             ptauNormqp = np.dot(pinvM1, (-np.asarray(c)+np.asarray(tau0))) + np.asarray(tau0)
 
-            Qqp = cvxMatrix(2.*A + wTorque * np.dot(Qfqp.T, Qfqp) + np.dot(QtauNormqp.T, QtauNormqp))
-            pqp = cvxMatrix(b + wTorque * np.dot(pfqp.T, Qfqp) + np.dot(ptauNormqp.T, QtauNormqp))
+            QqNormqp = np.hstack((np.dot(pinvM0, np.hstack((JTN, JTD))), np.zeros((pinvM0.shape[0], N.shape[1]))))
+            pqNormqp = np.dot(pinvM0, (-np.asarray(c)+np.asarray(tau0))) + np.asarray(tau0)
 
-            # Qqp = cvxMatrix(2.*A + wTorque * np.dot(Qfqp.T, Qfqp) )
-            # pqp = cvxMatrix(b + wTorque * np.dot(pfqp.T, Qfqp))
+            # Qqp = cvxMatrix(2.*A + wTorque * np.dot(Qfqp.T, Qfqp) + np.dot(QqNormqp.T, QqNormqp))
+            # pqp = cvxMatrix(b + wTorque * np.dot(pfqp.T, Qfqp) + np.dot(pqNormqp.T, QqNormqp))
+
+            Qqp = cvxMatrix(2.*A + wForce * np.dot(Qfqp.T, Qfqp) + wTorque * np.dot(QtauNormqp.T, QtauNormqp))
+            pqp = cvxMatrix(b + wForce * np.dot(pfqp.T, Qfqp) + wTorque * np.dot(ptauNormqp.T, QtauNormqp))
+
+            # Qqp = cvxMatrix(2.*A + wForce * np.dot(Qfqp.T, Qfqp) )
+            # pqp = cvxMatrix(b + wForce * np.dot(pfqp.T, Qfqp))
 
 
             equalConstForce = False
@@ -505,7 +513,7 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wTorque
     return bodyIDs, contactPositions, contactPositionsLocal, forces, tau
 
 
-def calcIterLCPControl(iterNum, motion, world, model, bodyIDsToCheck, mu, totalForce, wTorque, tau0=None, numFrictionBases=8):
+def calcIterLCPControl(iterNum, motion, world, model, bodyIDsToCheck, mu, totalForce, wForce, wTorque=0., tau0=None, numFrictionBases=8):
     # tau0 = None
     # model = VpControlModel
     # numFrictionBases = 8
@@ -619,14 +627,15 @@ def calcIterLCPControl(iterNum, motion, world, model, bodyIDsToCheck, mu, totalF
             Qfqp = np.concatenate((N[:3], D[:3], np.zeros_like(N[:3])), axis=1)
             pfqp = -totalForce[:3]
 
+
             # TODO:
             # add tau norm term ||tau||^2
             # and momentum derivative term
             QtauNormqp = np.hstack((np.dot(pinvM1, np.hstack((JTN, JTD))), np.zeros((pinvM1.shape[0], N.shape[1]))))
             ptauNormqp = np.dot(pinvM1, (-np.asarray(c)+np.asarray(tau0))) + np.asarray(tau0)
 
-            Qqp = cvxMatrix(2.*A + wTorque * np.dot(Qfqp.T, Qfqp) + np.dot(QtauNormqp.T, QtauNormqp))
-            pqp = cvxMatrix(b + wTorque * np.dot(pfqp.T, Qfqp) + np.dot(ptauNormqp.T, QtauNormqp))
+            Qqp = cvxMatrix(2.*A + wForce * np.dot(Qfqp.T, Qfqp) + wTorque * np.dot(QtauNormqp.T, QtauNormqp))
+            pqp = cvxMatrix(b + wForce * np.dot(pfqp.T, Qfqp) + wTorque * np.dot(ptauNormqp.T, QtauNormqp))
 
             # Qqp = cvxMatrix(2.*A + wTorque * np.dot(Qfqp.T, Qfqp) )
             # pqp = cvxMatrix(b + wTorque * np.dot(pfqp.T, Qfqp))

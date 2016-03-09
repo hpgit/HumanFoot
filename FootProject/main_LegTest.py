@@ -110,7 +110,7 @@ def init():
     # vpWorld.SetGlobalDamping(0.001)
     # controlModel.initializeHybridDynamics()
     controlModel.initializeForwardDynamics()
-    ModelOffset = np.array([0., 7., 0.])
+    ModelOffset = np.array([0., 5.5, 0.])
     controlModel.translateByOffset(ModelOffset)
 
     totalDOF = controlModel.getTotalDOF()
@@ -248,7 +248,6 @@ class Callback:
             th_r, th, dth_r, dth, ddth_r, Kt, Dt)
         ddth_c = controlModel.getDOFAccelerations()
         ype.flatten(ddth_des, ddth_des_flat)
-        print "ddth_des: ", ddth_des
 
         desForceFrameBegin = getVal('des force begin')
         desForceDuration = getVal('des force dur') * simulSpeedInv
@@ -310,6 +309,7 @@ class Callback:
         self.setTimeStamp()
         # print ddth_des_flat
         # print torques
+        print simulContactForces
 
         self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, torques \
             = hls.calcLCPControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wTorque, ddth_des_flat, 8)
@@ -367,6 +367,7 @@ class Callback:
         else:
             viewer.cForceWnd.insertData('desForceMin', frame, 0.)
             viewer.cForceWnd.insertData('desForceMax', frame, 0.)
+
 
         self.setTimeStamp()
         # print self.timeStamp
