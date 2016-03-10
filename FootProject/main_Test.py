@@ -285,6 +285,8 @@ class Callback:
         simulContactForces = np.zeros(3)
         torque_None = True
 
+
+
         for i in range(int(stepsPerFrame)):
             torques = None
             torque_None = True
@@ -296,7 +298,7 @@ class Callback:
                 if True:
                     # totalForceImpulse = stepsPerFrame * totalForce
                     cBodyIDs, cPositions, cPositionLocals, cForces, torques \
-                        = hls.calcLCPControl(
+                        = hls.calcLCPbasicControl(
                             motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wForce, wTorque, ddth_des_flat)
                     if cForces is not None:
                         print "control: ", sum(cForces)
@@ -319,7 +321,8 @@ class Callback:
                 #     if cForces[idx][1] > 1.:
                 #         print frame, cForces[idx]
                 simulContactForces += sum(cForces)
-
+            print ddth_des_flat
+            print torques
             ype.nested(torques, torques_nested)
             controlModel.setDOFTorques(torques_nested[1:])
             vpWorld.step()
@@ -329,7 +332,7 @@ class Callback:
         # print torques
 
         self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, torques \
-            = hls.calcLCPControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wForce, wTorque, ddth_des_flat, 8)
+            = hls.calcLCPbasicControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wForce, wTorque, ddth_des_flat, 8)
         del rd_cForcesControl[:]
         del rd_cPositionsControl[:]
         for i in range(len(self.cBodyIDs)):
