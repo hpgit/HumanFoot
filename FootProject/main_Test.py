@@ -294,35 +294,44 @@ class Callback:
             cPositions = []
             cPositionLocals = []
             cForces = []
+
+            cBodyIDsControl = []
+            cPositionsControl = []
+            cPositionLocalsControl = []
+            cForcesControl = []
             if desForceFrame[0] <= frame <= desForceFrame[1]:
                 if True:
                     # totalForceImpulse = stepsPerFrame * totalForce
-                    cBodyIDs, cPositions, cPositionLocals, cForces, torques \
+                    cBodyIDs, cPositions, cPositionLocals, cForcesControl, torques \
                         = hls.calcLCPbasicControl(
                             motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wForce, wTorque, ddth_des_flat)
-                    if cForces is not None:
-                        print "control: ", sum(cForces)
+                    # if cForces is not None:
+                    #     print "control: ", sum(cForces)
 
             if torques is not None:
                 # print torques[:6]
                 torque_None = False
+                # cForcesControl = cForces.copy()
+                # cBodyIDsControl = cBodyIDs.copy()
+                # cPositionsControl = cPositions.copy()
+                # cPositionLocalsControl = cPositionLocals.copy()
             else:
                 torques = ddth_des_flat
 
             cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
                 = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques)
-            if (not torque_None) and cForces is not None:
-                print "calcul: ", sum(cForces)
+            # if (not torque_None) and cForces is not None:
+            #     print "calcul: ", sum(cForces)
 
             if len(cBodyIDs) > 0:
                 # apply contact forces
-                vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForces)
-                # for idx in range(len(cForces)):
-                #     if cForces[idx][1] > 1.:
-                #         print frame, cForces[idx]
-                simulContactForces += sum(cForces)
-            print ddth_des_flat
-            print torques
+                if False and not torque_None:
+                    vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForcesControl)
+                    simulContactForces += sum(cForcesControl)
+                else:
+                    vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForces)
+                    simulContactForces += sum(cForces)
+                # simulContactForces += sum(cForces)
             ype.nested(torques, torques_nested)
             controlModel.setDOFTorques(torques_nested[1:])
             vpWorld.step()
