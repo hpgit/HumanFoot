@@ -16,6 +16,8 @@ import numpy as np
 import numpy.linalg as npl
 import math
 
+import scipy.optimize as spopt
+
 import time
 
 import cvxpy as cvx
@@ -643,6 +645,9 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
             Qqp = cvxMatrix(2.*A + wForce * np.dot(Qfqp.T, Qfqp) )
             pqp = cvxMatrix(b + wForce * np.dot(pfqp.T, Qfqp))
 
+            QQ = 2.*A + wForce * np.dot(Qfqp.T, Qfqp)
+            pp = b + wForce * np.dot(pfqp.T, Qfqp)
+
             # Qqp = cvxMatrix(2.*A )
             # pqp = cvxMatrix(b)
 
@@ -721,6 +726,27 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
             # print "QP z: ", np.dot(xqp, zqp)
             # if np.dot(xqp, zqp) < np.dot(x, z):
             x = xqp.copy()
+            cons = []
+
+            for ii in range(A.shape[0]):
+                cons.append({'type': 'eq',
+                             'fun' : lambda xx: np.dot(Atauqp[i], xx)
+                             #,'jac' : lambda xx: Atauqp[i]
+                })
+
+            for ii in range(G.shape[0]):
+                cons.append({'type':'ineq',
+                             'fun' : lambda xx: -np.dot(G[i], xx)+hnp[i]
+                            #,'jac' : lambda xx: -G[i]
+                             })
+            print cons
+            res = spopt.minimize(lambda xx: np.dot(xx, .5*np.dot(QQ, xx)+pp), np.zeros_like(xqp), constraints=cons, options={'disp': True})
+            # res = spopt.minimize(lambda xx: np.dot(xx, .5*np.dot(QQ, xx)+pp) , xqp)
+            # print res.x
+            # print res.message
+
+
+
         except Exception, e:
             print 'LCPbasicControl!!', e
             pass
