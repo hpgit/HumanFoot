@@ -63,6 +63,17 @@ m.sources = ['csLCPDantzigSolver.cpp', 'btDantzigLCP.cpp']
 m.depends = ['stdafx.h', 'csLCPDantzigSolver.h', 'btDantzigLCP.h', 'btDantzigSolver.h']
 modules.append(m)
 
+m = setupmodule('csQPOASES')
+m.libraries = ['boost_python', ompLib]
+if isMAC and isOMP:
+    m.extra_compile_args = ['-fopenmp', '-D __APPLE_OMP__']
+elif isOMP:
+    m.extra_compile_args = ['-fopenmp']
+else:
+    m.libraries.pop()
+m.depends = ['stdafx.h']
+modules.append(m)
+
 '''
 m = setupmodule('csEQP')
 m.libraries = ['boost_python', 'LinearMath', ompLib]
