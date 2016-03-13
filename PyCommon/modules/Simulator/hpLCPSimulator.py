@@ -160,7 +160,7 @@ def getLCPMatrix(world, model, invM, invMc, mu, tau, contactNum, contactPosition
         if abs(contactPositions[i][1]) > penDepth:
             bPenDepth[i] = contactPositions[i][1] + penDepth
 
-    b1 = JTN.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau) + 0.5*invh*bPenDepth
+    b1 = JTN.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau)# + 0.5*invh*bPenDepth
     b2 = JTD.T.dot(qdot_0 - h*invMc) + h*temp_DM.dot(tau)
     b3 = np.zeros(mus.shape[0])
     b = np.hstack((np.hstack((b1, b2)), b3)) * factor
@@ -260,8 +260,8 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
             xqp = np.array(solution['x']).flatten()
             # xqp = np.array(cvxSolvers.qp(Aqp, bqp, Gqp, hqp)['x']).flatten()
             x = xqp.copy()
-            # zqp = np.dot(A,x)+b
-            # print "value: ", np.dot(x, zqp)
+            zqp = np.dot(A,x)+b
+            print "force value: ", np.dot(x, zqp)
         except Exception, e:
             # print e
             pass
@@ -645,7 +645,7 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
             Qqp = cvxMatrix(2.*A + wForce * np.dot(Qfqp.T, Qfqp) )
             pqp = cvxMatrix(b + wForce * np.dot(pfqp.T, Qfqp))
 
-            QQ = 2.*A + wForce * np.dot(Qfqp.T, Qfqp)
+            QQ = A+A.T + wForce * np.dot(Qfqp.T, Qfqp)
             pp = b + wForce * np.dot(pfqp.T, Qfqp)
 
             # Qqp = cvxMatrix(2.*A )
@@ -728,23 +728,32 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
             x = xqp.copy()
             cons = []
 
-            for ii in range(A.shape[0]):
-                cons.append({'type': 'eq',
-                             'fun' : lambda xx: np.dot(Atauqp[i], xx)
-                             #,'jac' : lambda xx: Atauqp[i]
-                })
+            # for ii in range(A.shape[0]):
+            #     cons.append({'type': 'eq',
+            #                  'fun' : lambda xx: np.dot(Atauqp[i], xx)
+            #                  #,'jac' : lambda xx: Atauqp[i]
+            #     })
 
             for ii in range(G.shape[0]):
                 cons.append({'type':'ineq',
-                             'fun' : lambda xx: -np.dot(G[i], xx)+hnp[i]
+                             'fun' : lambda xx: -np.dot(G[:,6:][i], xx)+hnp[i]
                             #,'jac' : lambda xx: -G[i]
                              })
-            print cons
-            res = spopt.minimize(lambda xx: np.dot(xx, .5*np.dot(QQ, xx)+pp), np.zeros_like(xqp), constraints=cons, options={'disp': True})
+
+            '''
+            L-BFGS-B
+            TNC
+            COBYLA
+            SLSQP
+            res = spopt.minimize(lambda xx: np.dot(xx, .5*np.dot(QQ[6:, 6:], xx)+pp[6:]), xqp[6:],
+                                 # jac=lambda xx: np.dot(np.dot(QQ, xx)+pp),
+                                 method='SLSQP', constraints=cons, options={'disp': True})
             # res = spopt.minimize(lambda xx: np.dot(xx, .5*np.dot(QQ, xx)+pp) , xqp)
-            # print res.x
+            print res.x
+            # print res.hess
             # print res.message
 
+            '''
 
 
         except Exception, e:
