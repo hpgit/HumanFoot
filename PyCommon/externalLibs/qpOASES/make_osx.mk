@@ -76,8 +76,8 @@ endif
 ################################################################################
 # do not touch this
 
-CPP = clang++
-CC  = clang
+CPP = clang-omp++
+CC  = clang-omp
 AR  = ar
 RM  = rm
 F77 = gfortran

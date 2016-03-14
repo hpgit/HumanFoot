@@ -17,6 +17,7 @@ import numpy.linalg as npl
 import math
 
 import scipy.optimize as spopt
+import Optimization.csQPOASES as qpos
 
 import time
 
@@ -160,7 +161,7 @@ def getLCPMatrix(world, model, invM, invMc, mu, tau, contactNum, contactPosition
         if abs(contactPositions[i][1]) > penDepth:
             bPenDepth[i] = contactPositions[i][1] + penDepth
 
-    b1 = JTN.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau)# + 0.5*invh*bPenDepth
+    b1 = JTN.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau) #+ 0.5*invh*bPenDepth
     b2 = JTD.T.dot(qdot_0 - h*invMc) + h*temp_DM.dot(tau)
     b3 = np.zeros(mus.shape[0])
     b = np.hstack((np.hstack((b1, b2)), b3)) * factor
@@ -261,10 +262,15 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
             # xqp = np.array(cvxSolvers.qp(Aqp, bqp, Gqp, hqp)['x']).flatten()
             x = xqp.copy()
             zqp = np.dot(A,x)+b
-            print "force value: ", np.dot(x, zqp)
+            # print "force value: ", np.dot(x, zqp)
         except Exception, e:
             # print e
             pass
+
+    if solver == 'qpOASES':
+        # solve using qpOASES
+        pass
+
 
     normalForce = x[:contactNum]
     tangenForce = x[contactNum:contactNum + numFrictionBases*contactNum]
@@ -622,11 +628,11 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
             # Qqp = cvxMatrix(2.*A + wTorque * np.dot(Qtauqp.T, Qtauqp))
             # pqp = cvxMatrix(b + wTorque * np.dot(ptauqp.T, Qtauqp))
 
-            # Qfqp = np.concatenate((np.zeros((3, totalDOF)), N[:3], D[:3], np.zeros_like(N[:3])), axis=1)
-            # pfqp = -totalForce[:3]
+            Qfqp = np.concatenate((np.zeros((3, totalDOF)), N[:3], D[:3], np.zeros_like(N[:3])), axis=1)
+            pfqp = -totalForce[:3]
 
-            Qfqp = np.concatenate((np.zeros((1, totalDOF)),N[1:2], D[1:2], np.zeros_like(N[1:2])), axis=1)
-            pfqp = -totalForce[1:2]
+            # Qfqp = np.concatenate((np.zeros((1, totalDOF)),N[1:2], D[1:2], np.zeros_like(N[1:2])), axis=1)
+            # pfqp = -totalForce[1:2]
 
             # TODO:
             # add momentum term
@@ -719,13 +725,29 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
             cvxSolvers.options['maxiters'] = 100
             cvxSolvers.options['refinement'] = 1
             cvxSolvers.options['kktsolver'] = "robust"
-            xqp = np.array(cvxSolvers.qp(Qqp, pqp, Gqp, hqp, Aqp, bqp)['x']).flatten()
-            # xqp = np.asarray(cvxSolvers.qp(Qqp, pqp, Gqp, hqp)['x']).flatten()
+            # xqp = np.array(cvxSolvers.qp(Qqp, pqp, Gqp, hqp, Aqp, bqp)['x']).flatten()
+            # x = xqp.copy()
+
             # print "x: ", x
             # zqp = np.dot(A, xqp).T + b
             # print "QP z: ", np.dot(xqp, zqp)
             # if np.dot(xqp, zqp) < np.dot(x, z):
-            x = xqp.copy()
+
+
+            # bp::list qp(const object &H, const object &g, const object &A, const object &lb, const object &ub, const object &lbA, const object ubA, int nWSR)
+            # print qpos.qp
+            lb = [-10.]*totalDOF
+            lb.extend([0.]*(A.shape[0]-totalDOF))
+
+            xqpos = qpos.qp(QQ[6:, 6:], pp[6:], G[:, 6:], lb, None, None, hnp, 200)
+            # xqpos=np.array(qpos.qp(QQ, pp, G, None, None, None, hnp, 10))
+            xtmp = [0.]*6
+            xtmp.extend(xqpos[:])
+            x = np.array(xtmp)
+            # print xqpos
+            # x = xqpos.copy()
+
+            '''
             cons = []
 
             # for ii in range(A.shape[0]):
@@ -740,7 +762,6 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
                             #,'jac' : lambda xx: -G[i]
                              })
 
-            '''
             L-BFGS-B
             TNC
             COBYLA
@@ -771,11 +792,14 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
     tangenForce = x[totalDOF+contactNum:totalDOF+contactNum + numFrictionBases*contactNum]
     minTangenVel = x[totalDOF+contactNum + numFrictionBases*contactNum:]
 
+    # print np.array(tau)
+
     zqp = np.dot(A, x)+b
 
-
-
-    print "value: ", np.dot(x[totalDOF:], zqp[totalDOF:])
+    print "LCP value: ", np.dot(x[totalDOF:], zqp[totalDOF:])
+    print "tau value: ", np.dot(zqp[:totalDOF], zqp[:totalDOF])
+    Qfqpx = np.dot(Qfqp, x)+pfqp
+    print "For value: ", wForce*np.dot(Qfqpx, Qfqpx)
     # print "x: ", x[totalDOF:]
     # print "z: ", zqp[totalDOF:]
     # print "b: ", b[totalDOF:]

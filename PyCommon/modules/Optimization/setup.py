@@ -64,7 +64,8 @@ m.depends = ['stdafx.h', 'csLCPDantzigSolver.h', 'btDantzigLCP.h', 'btDantzigSol
 modules.append(m)
 
 m = setupmodule('csQPOASES')
-m.libraries = ['boost_python', ompLib]
+m.libraries = ['boost_python', 'qpOASES', 'clapack', 'cblas', ompLib]
+m.include_dirs.append('../usr/include/qpOASES')
 if isMAC and isOMP:
     m.extra_compile_args = ['-fopenmp', '-D __APPLE_OMP__']
 elif isOMP:

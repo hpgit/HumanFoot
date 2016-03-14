@@ -18,6 +18,7 @@ import ArticulatedBody.ysControl as yct
 
 import mtInitialize_Simple as mit
 
+
 MOTION_COLOR = (213, 111, 162)
 CHARACTER_COLOR = (20, 166, 188)
 FEATURE_COLOR = (255, 102, 0)
@@ -248,8 +249,8 @@ class Callback:
         Dt = 2. * (Kt**.5)
         controlModel.SetJointsDamping(damp)
 
-        wForce = math.pow(10, getVal('force weight'))
-        wTorque = math.pow(10, getVal('tau weight'))
+        wForce = math.pow(2., getVal('force weight'))
+        wTorque = math.pow(2., getVal('tau weight'))
 
         # tracking
         th_r = motion.getDOFPositions(0)
@@ -284,8 +285,7 @@ class Callback:
         self.setTimeStamp()
         simulContactForces = np.zeros(3)
         torque_None = True
-
-
+        # print ddth_des_flat
 
         for i in range(int(stepsPerFrame)):
             torques = None
@@ -325,7 +325,7 @@ class Callback:
 
             if len(cBodyIDs) > 0:
                 # apply contact forces
-                if False and not torque_None:
+                if not torque_None:
                     vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForcesControl)
                     simulContactForces += sum(cForcesControl)
                 else:

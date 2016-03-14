@@ -1,16 +1,95 @@
 #include <qpOASES/qpOASES.hpp>
+#include "stdafx.h"
 #include "../../../PyCommon/externalLibs/common/boostPythonUtil.h"
+
+
+int example(void);
+bp::list qp(const object &H, const object &g, const object &A, const object &lb, const object &ub, const object &lbA, const object &ubA, int nWSR);
 
 BOOST_PYTHON_MODULE(csQPOASES)
 {
 	numeric::array::set_module_and_type("numpy", "ndarray");
-	def("solve", solve);
+	def("example", example);
+	def("qp", qp);
+}
+
+bp::list qp(const object &H, const object &g, const object &A, const object &lb, const object &ub, const object &lbA, const object &ubA, int nWSR)
+{
+	USING_NAMESPACE_QPOASES
+
+
+	int nV = XI(H.attr("shape")[1]);
+	int nC = XI(A.attr("shape")[0]);
+
+	real_t H_qp[nV*nV];
+	real_t A_qp[nC*nV];
+	real_t g_qp[nV];
+	real_t lb_qp[nV];
+	real_t ub_qp[nV];
+	real_t lbA_qp[nC];
+	real_t ubA_qp[nC];
+
+	bool Blb = true;
+	bool Bub = true;
+	bool BlbA = true;
+	bool BubA = true;
+	if(lb==object())
+		Blb = false;
+	if(ub==object())
+		Bub = false;
+	if(lbA==object())
+		BlbA = false;
+	if(ubA==object())
+		BubA = false;
+
+	for(int i=0; i < nV ; i++){
+		for(int j=0; j< nV ; j++){
+			H_qp[i*nV + j] = XD(H[i][j]);
+		}
+	}
+
+	for(int i=0; i<nV; i++){
+		g_qp[i] = XD(g[i]);
+		if(Blb) lb_qp[nV] = XD(lb[i]);
+		if(Bub) ub_qp[nV] = XD(ub[i]);
+	}
+
+	for(int i=0; i< nC; i++){
+		for(int j=0; j<nV; j++){
+			A_qp[i*nV + j] = XD(A[i][j]);
+		}
+	}
+
+	for(int i=0; i<nC; i++){
+		if(BlbA) lbA_qp[nV] = XD(lbA[i]);
+		if(BubA) ubA_qp[nV] = XD(ubA[i]);
+	}
+
+	QProblem qp(nV, nC);
+
+	Options options;
+	// options.printLevel = PL_LOW;
+	options.printLevel = PL_NONE;
+	qp.setOptions(options);
+
+
+	qp.init(H_qp, g_qp, A_qp, (Blb ? lb_qp : NULL), (Bub ? ub_qp : NULL), (BlbA ? lbA_qp : NULL), (BubA ? ubA_qp : NULL), nWSR);
+
+	real_t xOpt[nV];
+	qp.getPrimalSolution(xOpt);
+
+	//qp.printOptions();
+
+	printf("objVal : %e\n", qp.getObjVal());
+	bp::list ls;
+	for(int i=0; i<nV; i++)
+		ls.append(xOpt[i]);
+	return ls;
 }
 
 
-
 /** Example for qpOASES main function using the QProblem class. */
-int solve( )
+int example( )
 {
 	USING_NAMESPACE_QPOASES
 
