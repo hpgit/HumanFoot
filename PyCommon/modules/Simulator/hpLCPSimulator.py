@@ -75,6 +75,7 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
     for cIdx in range(cNum):
         for fcIdx in range(numFrictionBases):
             E[cIdx*numFrictionBases + fcIdx][cIdx] = 1.
+    print Jic
 
 
     return len(cVpBodyIds), cVpBodyIds, cPositions, cPositionsLocal, JTN, JTD, E, N, D
@@ -161,7 +162,7 @@ def getLCPMatrix(world, model, invM, invMc, mu, tau, contactNum, contactPosition
         if abs(contactPositions[i][1]) > penDepth:
             bPenDepth[i] = contactPositions[i][1] + penDepth
 
-    b1 = JTN.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau) #+ 0.5*invh*bPenDepth
+    b1 = JTN.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau) + 0.5*invh*bPenDepth
     b2 = JTD.T.dot(qdot_0 - h*invMc) + h*temp_DM.dot(tau)
     b3 = np.zeros(mus.shape[0])
     b = np.hstack((np.hstack((b1, b2)), b3)) * factor
@@ -261,6 +262,8 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
             xqp = np.array(solution['x']).flatten()
             # xqp = np.array(cvxSolvers.qp(Aqp, bqp, Gqp, hqp)['x']).flatten()
             x = xqp.copy()
+            print x.shape[0]
+            print x
             zqp = np.dot(A,x)+b
             # print "force value: ", np.dot(x, zqp)
         except Exception, e:
@@ -269,6 +272,21 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
 
     if solver == 'qpOASES':
         # solve using qpOASES
+        QQ = A+A.T
+        pp = b
+        # GG = np.vstack((A, np.eye(A.shape[0])))
+        # hh = np.hstack((-b.T, np.zeros(A.shape[0])))
+        GG = A.copy()
+        hh = -b
+
+        # bp::list qp(const object &H, const object &g, const object &A, const object &lb, const object &ub, const object &lbA, const object ubA, int nWSR)
+        lb = [0.]*A.shape[0]
+        xqpos = qpos.qp(QQ, pp, GG, lb, None, hh, None, 1000)
+        x = np.array(xqpos)
+        zqp = np.dot(A,x)+b
+        print np.dot(x, zqp)
+        # print xqpos
+        # x = xqpos.copy()
         pass
 
 
@@ -736,7 +754,7 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
 
             # bp::list qp(const object &H, const object &g, const object &A, const object &lb, const object &ub, const object &lbA, const object ubA, int nWSR)
             # print qpos.qp
-            lb = [-10.]*totalDOF
+            lb = [-1000.]*totalDOF
             lb.extend([0.]*(A.shape[0]-totalDOF))
 
             xqpos = qpos.qp(QQ[6:, 6:], pp[6:], G[:, 6:], lb, None, None, hnp, 200)

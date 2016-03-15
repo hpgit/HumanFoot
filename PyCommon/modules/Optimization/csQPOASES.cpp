@@ -69,7 +69,8 @@ bp::list qp(const object &H, const object &g, const object &A, const object &lb,
 
 	Options options;
 	// options.printLevel = PL_LOW;
-	options.printLevel = PL_NONE;
+	options.printLevel = PL_MEDIUM;
+	// options.printLevel = PL_NONE;
 	qp.setOptions(options);
 
 

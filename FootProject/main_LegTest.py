@@ -160,9 +160,9 @@ def init():
     viewer.objectInfoWnd.add1DSlider(
         '1/simul speed', minVal=1., maxVal=100., initVal=config['simulSpeedInv'], valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
-        'normal des force min', minVal=0., maxVal=1000., initVal=80., valStep=1.)
+        'normal des force min', minVal=0., maxVal=3000., initVal=80., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
-        'normal des force max', minVal=0., maxVal=1000., initVal=80., valStep=1.)
+        'normal des force max', minVal=0., maxVal=3000., initVal=80., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
         'des force begin', minVal=0., maxVal=len(motion) - 1, initVal=70., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
@@ -271,6 +271,7 @@ class Callback:
                 (1 - desForceRelFrame) + desNormalForceMax * desForceRelFrame
 
         totalForce = np.array([0., desNormalForce, 0., 0., 0., 0.])
+        # totalForce = np.array([0., 720., 0., 0., 0., 0.])
         # totalForce = np.array([50., 150.])
 
         torques = None
@@ -311,13 +312,13 @@ class Callback:
                 torques = ddth_des_flat
 
             cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
-                = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques)
+                = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques, solver='qpOASES')
             # if (not torque_None) and cForces is not None:
             #     print "calcul: ", sum(cForces)
 
             if len(cBodyIDs) > 0:
                 # apply contact forces
-                if not torque_None:
+                if False and not torque_None:
                     vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForcesControl)
                     simulContactForces += sum(cForcesControl)
                 else:
@@ -331,7 +332,7 @@ class Callback:
         self.setTimeStamp()
         # print ddth_des_flat
         # print torques
-        print simulContactForces
+        print simulContactForces/stepsPerFrame
 
         self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, torques \
             = hls.calcLCPbasicControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wForce, wTorque, ddth_des_flat)
@@ -355,7 +356,7 @@ class Callback:
             viewer.cForceWnd.insertData('expForce', frame, 0.)
 
         self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, tmptmp \
-            = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques)
+            = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques, solver='qpOASES')
         del rd_cForces[:]
         del rd_cPositions[:]
         for i in range(len(self.cBodyIDs)):
@@ -384,8 +385,9 @@ class Callback:
             viewer.cForceWnd.insertData('realForce', frame, 0.)
         viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame)
         if desForceFrame[0] <= frame <= desForceFrame[1]:
-            viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1] * .9)
-            viewer.cForceWnd.insertData('desForceMax', frame, totalForce[1] * 1.1)
+            viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1] * 1.)
+            # viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1] * .9)
+            # viewer.cForceWnd.insertData('desForceMax', frame, totalForce[1] * 1.1)
         else:
             viewer.cForceWnd.insertData('desForceMin', frame, 0.)
             viewer.cForceWnd.insertData('desForceMax', frame, 0.)

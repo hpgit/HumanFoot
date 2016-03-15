@@ -319,7 +319,7 @@ class Callback:
                 torques = ddth_des_flat
 
             cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
-                = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques)
+                = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques, solver='qp')
             # if (not torque_None) and cForces is not None:
             #     print "calcul: ", sum(cForces)
 
@@ -362,7 +362,7 @@ class Callback:
             viewer.cForceWnd.insertData('expForce', frame, 0.)
 
         self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, tmptmp \
-            = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques)
+            = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques, solver='qp')
         del rd_cForces[:]
         del rd_cPositions[:]
         for i in range(len(self.cBodyIDs)):
