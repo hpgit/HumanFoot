@@ -16,7 +16,7 @@ import numpy as np
 import numpy.linalg as npl
 import math
 
-import scipy.optimize as spopt
+# import scipy.optimize as spopt
 import Optimization.csQPOASES as qpos
 
 import time
