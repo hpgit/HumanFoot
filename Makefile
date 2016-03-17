@@ -19,12 +19,16 @@ install_dependencies:
 	cd $(MODULE_INC_DIR);[ -e VP ] || ln -s ../../../../$(VP_DIR)/usr/include/VP ./ ;[ -e gear ] || ln -s ../../../../$(GEAR_DIR)/include ./gear;[ -e qpOASES ] || ln -s ../../../../$(qpOASES_DIR)/include ./qpOASES
 	cd $(VP_DIR);make;cd ../../modules/usr;[ -e lib ] || mkdir lib;cd lib;[ ! -e libvpLib.a ] || rm libvpLib.a
 	cp $(VP_DIR)/usr/lib/Win32/gccRelease/libvpLib.a $(MODULE_LIB_DIR)/
+	cd $(qpOASES_DIR);[ -e bin ] || mkdir -p bin;make
+	cp $(qpOASES_DIR)/bin/libqpOASES.a $(MODULE_LIB_DIR)/
 
 install_dependencies_mac:
 	[ -e $(MODULE_INC_DIR) ] || mkdir -p $(MODULE_INC_DIR)
 	cd $(MODULE_INC_DIR);[ -e VP ] || ln -s ../../../../$(VP_DIR)/usr/include/VP ./ ;[ -e gear ] || ln -s ../../../../$(GEAR_DIR)/include ./gear;[ -e qpOASES ] || ln -s ../../../../$(qpOASES_DIR)/include ./qpOASES
 	cd $(VP_DIR);make;cd ../../modules/usr;[ -e lib ] || mkdir lib;cd lib;[ ! -e libvpLib.a ] || rm libvpLib.a
 	cp $(VP_DIR)/usr/lib/Win32/gccRelease/libvpLib.a $(MODULE_LIB_DIR)/
+	cd $(qpOASES_DIR);[ -e bin ] || mkdir -p bin;make
+	cp $(qpOASES_DIR)/bin/libqpOASES.a $(MODULE_LIB_DIR)/
 
 run:
 	cd MomentumProject;python -i $(PYTHON_FILE)
