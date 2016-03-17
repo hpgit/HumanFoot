@@ -64,7 +64,10 @@ modules = []
 # modules.append(m)
 
 m = setupmodule('csQPOASES')
-m.libraries = ['boost_python', 'qpOASES', 'clapack', 'cblas', ompLib]
+if isMAC:
+    m.libraries = ['boost_python', 'qpOASES', 'clapack', 'cblas', ompLib]
+else:
+    m.libraries = ['boost_python', 'qpOASES', 'lapack', 'blas', ompLib]
 m.include_dirs.append('../usr/include/qpOASES')
 if isMAC and isOMP:
     m.extra_compile_args = ['-fopenmp', '-D __APPLE_OMP__']
