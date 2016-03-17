@@ -13,7 +13,7 @@ all:
 	cd PyCommon/modules;make
 
 install_dependencies:
-	sudo apt-get install python-dev python-opengl freeglut3-dev pypy g++ python-fltk python-numpy python-pyode libgle3 python-pip liblapack-dev libblas-dev libboost-python-dev
+	sudo apt-get install python-dev python-opengl freeglut3-dev pypy g++ python-fltk python-numpy python-pyode libgle3 python-pip liblapack-dev libblas-dev libboost-python-dev python-scipy
 	pip install cvxopt --user
 	[ -e $(MODULE_INC_DIR) ] || mkdir -p $(MODULE_INC_DIR)
 	cd $(MODULE_INC_DIR);[ -e VP ] || ln -s ../../../../$(VP_DIR)/usr/include/VP ./ ;[ -e gear ] || ln -s ../../../../$(GEAR_DIR)/include ./gear;[ -e qpOASES ] || ln -s ../../../../$(qpOASES_DIR)/include ./qpOASES
