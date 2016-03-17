@@ -21,7 +21,7 @@ import Optimization.csQPOASES as qpos
 
 import time
 
-import cvxpy as cvx
+# import cvxpy as cvx
 
 
 def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
