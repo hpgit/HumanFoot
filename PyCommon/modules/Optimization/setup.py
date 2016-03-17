@@ -31,37 +31,37 @@ elif '--with-mac' in sys.argv:
 
 modules = []
 
-m = setupmodule('csLCPLemkeSolver')
-if isMAC:
-    m.include_dirs.append('/usr/local/include/bullet/')
-else:
-    m.include_dirs.append('/usr/include/bullet/')
-m.libraries = ['boost_python', 'LinearMath', ompLib]
-if isMAC and isOMP:
-    m.extra_compile_args = ['-fopenmp', '-D __APPLE_OMP__']
-elif isOMP:
-    m.extra_compile_args = ['-fopenmp']
-else:
-    m.libraries.pop()
-m.sources = ['csLCPLemkeSolver.cpp', 'btLemkeSolver.cpp', 'btLemkeAlgorithm.cpp']
-m.depends = ['stdafx.h', 'csLCPLemkeSolver.h', 'btLemkeSolver.h', 'btLemkeAlgorithm.h']
-modules.append(m)
+# m = setupmodule('csLCPLemkeSolver')
+# if isMAC:
+#     m.include_dirs.append('/usr/local/include/bullet/')
+# else:
+#     m.include_dirs.append('/usr/include/bullet/')
+# m.libraries = ['boost_python', 'LinearMath', ompLib]
+# if isMAC and isOMP:
+#     m.extra_compile_args = ['-fopenmp', '-D __APPLE_OMP__']
+# elif isOMP:
+#     m.extra_compile_args = ['-fopenmp']
+# else:
+#     m.libraries.pop()
+# m.sources = ['csLCPLemkeSolver.cpp', 'btLemkeSolver.cpp', 'btLemkeAlgorithm.cpp']
+# m.depends = ['stdafx.h', 'csLCPLemkeSolver.h', 'btLemkeSolver.h', 'btLemkeAlgorithm.h']
+# modules.append(m)
 
-m = setupmodule('csLCPDantzigSolver')
-if isMAC:
-    m.include_dirs.append('/usr/local/include/bullet/')
-else:
-    m.include_dirs.append('/usr/include/bullet/')
-m.libraries = ['boost_python', 'LinearMath', ompLib]
-if isMAC and isOMP:
-    m.extra_compile_args = ['-fopenmp', '-D __APPLE_OMP__']
-elif isOMP:
-    m.extra_compile_args = ['-fopenmp']
-else:
-    m.libraries.pop()
-m.sources = ['csLCPDantzigSolver.cpp', 'btDantzigLCP.cpp']
-m.depends = ['stdafx.h', 'csLCPDantzigSolver.h', 'btDantzigLCP.h', 'btDantzigSolver.h']
-modules.append(m)
+# m = setupmodule('csLCPDantzigSolver')
+# if isMAC:
+#     m.include_dirs.append('/usr/local/include/bullet/')
+# else:
+#     m.include_dirs.append('/usr/include/bullet/')
+# m.libraries = ['boost_python', 'LinearMath', ompLib]
+# if isMAC and isOMP:
+#     m.extra_compile_args = ['-fopenmp', '-D __APPLE_OMP__']
+# elif isOMP:
+#     m.extra_compile_args = ['-fopenmp']
+# else:
+#     m.libraries.pop()
+# m.sources = ['csLCPDantzigSolver.cpp', 'btDantzigLCP.cpp']
+# m.depends = ['stdafx.h', 'csLCPDantzigSolver.h', 'btDantzigLCP.h', 'btDantzigSolver.h']
+# modules.append(m)
 
 m = setupmodule('csQPOASES')
 m.libraries = ['boost_python', 'qpOASES', 'clapack', 'cblas', ompLib]

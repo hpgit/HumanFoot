@@ -1,5 +1,5 @@
-import Optimization.csLCPLemkeSolver as lcp
-import Optimization.csLCPDantzigSolver as lcpD
+# import Optimization.csLCPLemkeSolver as lcp
+# import Optimization.csLCPDantzigSolver as lcpD
 from cvxopt import matrix as cvxMatrix
 from cvxopt import solvers as cvxSolvers
 
@@ -75,8 +75,6 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
     for cIdx in range(cNum):
         for fcIdx in range(numFrictionBases):
             E[cIdx*numFrictionBases + fcIdx][cIdx] = 1.
-    print Jic
-
 
     return len(cVpBodyIds), cVpBodyIds, cPositions, cPositionsLocal, JTN, JTD, E, N, D
 
@@ -262,9 +260,9 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
             xqp = np.array(solution['x']).flatten()
             # xqp = np.array(cvxSolvers.qp(Aqp, bqp, Gqp, hqp)['x']).flatten()
             x = xqp.copy()
-            print x.shape[0]
-            print x
-            zqp = np.dot(A,x)+b
+            # print x.shape[0]
+            # print x
+            # zqp = np.dot(A,x)+b
             # print "force value: ", np.dot(x, zqp)
         except Exception, e:
             # print e
@@ -309,6 +307,136 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
     timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
     return bodyIDs, contactPositions, contactPositionsLocal, forces, timeStamp
 
+
+def calcLCPForcesVert(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictionBases=8, solver='qp'):
+    timeStamp = []
+    timeIndex = 0
+    prevTime = time.time()
+
+    # model = VpControlModel
+    contactNum, bodyIDs, contactPositions, contactPositionsLocal, JTN, JTD, E, N, D \
+        = makeFrictionCone(motion[0].skeleton, world, model, bodyIDsToCheck, numFrictionBases)
+
+    if contactNum == 0:
+        return bodyIDs, contactPositions, contactPositionsLocal, None, None
+    timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
+
+    totalDOF = model.getTotalDOF()
+
+    invM = np.zeros((totalDOF, totalDOF))
+    invMc = np.zeros(totalDOF)
+    model.getInverseEquationOfMotion(invM, invMc)
+    timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
+
+    # pdb.set_trace()
+    # A =[ A11,  A12, 0]
+    #   [ A21,  A22, E]
+    #   [ mus, -E.T, 0]
+
+    totalDOF = model.getTotalDOF()
+
+    h = world.GetTimeStep()
+    invh = 1./h
+    temp_NM = JTN.T.dot(invM)
+
+    qdot_0 = ype.makeFlatList(totalDOF)
+    ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
+    qdot_0 = np.asarray(qdot_0)
+    if tau is None:
+        tau = np.zeros(np.shape(qdot_0))
+
+    factor = 1.
+    A = h*temp_NM.dot(JTN)
+    b = JTN.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau) #+ 0.5*invh*bPenDepth
+
+
+    # lo = np.zeros(A.shape[0])
+    lo = 0.*np.ones(A.shape[0])
+    hi = 1000000. * np.ones(A.shape[0])
+    x = 100.*np.ones(A.shape[0])
+
+    # normalizeMatrix(A, b)
+    # print A[0]
+
+    if solver == 'bulletLCP':
+        # solve using bullet LCP solver
+        lcpSolver = lcp.LemkeSolver()
+        # lcpSolver = lcpD.DantzigSolver()
+        lcpSolver.solve(A.shape[0], A, b, x, lo, hi)
+
+    if solver == 'openOptLCP':
+        # solve using openOpt LCP solver
+        # p = openLCP(A, b)
+        # r = p.solve('lcpsolve')
+        # f_opt, x_opt = r.ff, r.xf
+        # w, x = x_opt[x_opt.size/2:], x_opt[:x_opt.size/2]
+        pass
+
+    if solver == 'qp':
+        # solve using cvxopt QP
+        # if True:
+        try:
+            Aqp = cvxMatrix(A+A.T)
+            bqp = cvxMatrix(b)
+            Gqp = cvxMatrix(np.vstack((-A, -np.eye(A.shape[0]))))
+            hqp = cvxMatrix(np.hstack((b.T, np.zeros(A.shape[0]))))
+            timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
+            cvxSolvers.options['show_progress'] = False
+            cvxSolvers.options['maxiters'] = 100
+            # cvxSolvers.options['kktreg'] = 1e-6
+            # cvxSolvers.options['refinement'] = 10
+            solution = cvxSolvers.qp(Aqp, bqp, Gqp, hqp)
+            xqp = np.array(solution['x']).flatten()
+            # xqp = np.array(cvxSolvers.qp(Aqp, bqp, Gqp, hqp)['x']).flatten()
+            x = xqp.copy()
+            print x.shape[0]
+            print x
+            zqp = np.dot(A,x)+b
+            print "force value: ", np.dot(x, zqp)
+        except Exception, e:
+            # print e
+            pass
+
+    if solver == 'qpOASES':
+        # solve using qpOASES
+        QQ = A+A.T
+        pp = b
+        # GG = np.vstack((A, np.eye(A.shape[0])))
+        # hh = np.hstack((-b.T, np.zeros(A.shape[0])))
+        GG = A.copy()
+        hh = -b
+
+        # bp::list qp(const object &H, const object &g, const object &A, const object &lb, const object &ub, const object &lbA, const object ubA, int nWSR)
+        lb = [0.]*A.shape[0]
+        xqpos = qpos.qp(QQ, pp, GG, lb, None, hh, None, 1000)
+        x = np.array(xqpos)
+        zqp = np.dot(A,x)+b
+        print np.dot(x, zqp)
+        # print xqpos
+        # x = xqpos.copy()
+        pass
+
+
+    normalForce = x[:contactNum]
+    # tangenForce = x[contactNum:contactNum + numFrictionBases*contactNum]
+    # minTangenVel = x[contactNum + numFrictionBases*contactNum:]
+
+    forces = []
+    for cIdx in range(contactNum):
+        force = np.zeros(3)
+        force[1] = normalForce[cIdx]
+        '''
+        for fcIdx in range(numFrictionBases):
+            d = np.array((math.cos(2.*math.pi*fcIdx/numFrictionBases), 0., math.sin(2.*math.pi*fcIdx/numFrictionBases)))
+            force += tangenForce[cIdx*numFrictionBases + fcIdx] * d
+        '''
+        # print force
+        forces.append(force)
+
+    # repairForces(forces, contactPositions)
+    # print forces
+    timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
+    return bodyIDs, contactPositions, contactPositionsLocal, forces, timeStamp
 
 def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wForce, wTorque, tau0=None, numFrictionBases=8):
     # tau0 = None

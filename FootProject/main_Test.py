@@ -287,6 +287,21 @@ class Callback:
         torque_None = True
         # print ddth_des_flat
 
+        cBodyIDsControl = []
+        cPositionsControl = []
+        cPositionLocalsControl = []
+        cForcesControl = []
+        torques_control = None
+        if desForceFrame[0] <= frame <= desForceFrame[1]:
+            if True:
+                # totalForceImpulse = stepsPerFrame * totalForce
+                cBodyIDs, cPositions, cPositionLocals, cForcesControl, torques_control \
+                    = hls.calcLCPbasicControl(
+                    motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wForce, wTorque, ddth_des_flat)
+                # if cForces is not None:
+                #     print "control: ", sum(cForces)
+                print "torques_control: ", torques_control
+
         for i in range(int(stepsPerFrame)):
             torques = None
             torque_None = True
@@ -295,10 +310,7 @@ class Callback:
             cPositionLocals = []
             cForces = []
 
-            cBodyIDsControl = []
-            cPositionsControl = []
-            cPositionLocalsControl = []
-            cForcesControl = []
+            '''
             if desForceFrame[0] <= frame <= desForceFrame[1]:
                 if True:
                     # totalForceImpulse = stepsPerFrame * totalForce
@@ -307,9 +319,11 @@ class Callback:
                             motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wForce, wTorque, ddth_des_flat)
                     # if cForces is not None:
                     #     print "control: ", sum(cForces)
+            '''
 
-            if torques is not None:
+            if torques_control is not None:
                 # print torques[:6]
+                torques = torques_control.copy()
                 torque_None = False
                 # cForcesControl = cForces.copy()
                 # cBodyIDsControl = cBodyIDs.copy()
@@ -325,7 +339,7 @@ class Callback:
 
             if len(cBodyIDs) > 0:
                 # apply contact forces
-                if not torque_None:
+                if False and not torque_None:
                     vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForcesControl)
                     simulContactForces += sum(cForcesControl)
                 else:
