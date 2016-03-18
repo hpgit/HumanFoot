@@ -9,6 +9,7 @@ import numpy as np
 class hpSimpleViewer(ysvOri.SimpleViewer):
     def __init__(self, rect=None, title='hpSimpleViewer'):
         ybu.BaseWnd.__init__(self, rect, title, ysvOri.SimpleSetting())
+        self.title = title
         self.doc = ysvOri.SimpleDoc()
         self.begin()
         panelWidth = 280
@@ -25,6 +26,7 @@ class hpSimpleViewer(ysvOri.SimpleViewer):
 
         self.cForceWnd.viewer = self
         self.motionViewWnd.cForceWnd = self.cForceWnd
+        self.objectInfoWnd.viewer = self
 
 
 class hpMotionViewWnd(ysvOri.MotionViewWnd):
@@ -154,17 +156,23 @@ class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
         pass
 
     def save(self, obj):
-        f = file('params.settings', 'w')
+        f = file(self.viewer.title+'.param', 'w')
         cPickle.dump(self.getNameAndVals(), f)
         f.close()
 
     def load(self, obj):
-        f = file('params.settings', 'r')
-        objVals = cPickle.load(f)
-        f.close()
-        for k, v in objVals.iteritems():
-            if k in self.valObjects.keys():
-                self.valObjects[k].value(v)
+        filefile = fltk.Fl_File_Chooser('.', '*.param', fltk.FL_SINGLE, 'load parameter file')
+        filefile.show()
+        while filefile.shown():
+            fltk.Fl.wait()
+        if filefile.count() == 1:
+            # f = file(self.viewer.title+'param', 'r')
+            f = file(filefile.value(), 'r')
+            objVals = cPickle.load(f)
+            f.close()
+            for k, v in objVals.iteritems():
+                if k in self.valObjects.keys():
+                    self.valObjects[k].value(v)
 
 
 

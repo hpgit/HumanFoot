@@ -279,7 +279,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
 
         # bp::list qp(const object &H, const object &g, const object &A, const object &lb, const object &ub, const object &lbA, const object ubA, int nWSR)
         lb = [0.]*A.shape[0]
-        xqpos = qpos.qp(QQ, pp, GG, lb, None, hh, None, 1000)
+        xqpos = qpos.qp(QQ, pp, GG, lb, None, hh, None, 1000, False, "NONE")
         x = np.array(xqpos)
         zqp = np.dot(A,x)+b
         print np.dot(x, zqp)
@@ -800,6 +800,9 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
             QQ = A+A.T + wForce * np.dot(Qfqp.T, Qfqp)
             pp = b + wForce * np.dot(pfqp.T, Qfqp)
 
+            # QQ = A+A.T
+            # pp = b.copy()
+
             # Qqp = cvxMatrix(2.*A )
             # pqp = cvxMatrix(b)
 
@@ -885,7 +888,7 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
             lb = [-1000.]*totalDOF
             lb.extend([0.]*(A.shape[0]-totalDOF))
 
-            xqpos = qpos.qp(QQ[6:, 6:], pp[6:], G[:, 6:], lb, None, None, hnp, 200)
+            xqpos = qpos.qp(QQ[6:, 6:], pp[6:], G[:, 6:], lb, None, None, hnp, 200, False, "NONE")
             # xqpos=np.array(qpos.qp(QQ, pp, G, None, None, None, hnp, 10))
             xtmp = [0.]*6
             xtmp.extend(xqpos[:])
@@ -940,12 +943,12 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
 
     # print np.array(tau)
 
-    zqp = np.dot(A, x)+b
+    # zqp = np.dot(A, x)+b
 
-    print "LCP value: ", np.dot(x[totalDOF:], zqp[totalDOF:])
-    print "tau value: ", np.dot(zqp[:totalDOF], zqp[:totalDOF])
-    Qfqpx = np.dot(Qfqp, x)+pfqp
-    print "For value: ", wForce*np.dot(Qfqpx, Qfqpx)
+    # print "LCP value: ", np.dot(x[totalDOF:], zqp[totalDOF:])
+    # print "tau value: ", np.dot(zqp[:totalDOF], zqp[:totalDOF])
+    # Qfqpx = np.dot(Qfqp, x)+pfqp
+    # print "For value: ", wForce*np.dot(Qfqpx, Qfqpx)
     # print "x: ", x[totalDOF:]
     # print "z: ", zqp[totalDOF:]
     # print "b: ", b[totalDOF:]

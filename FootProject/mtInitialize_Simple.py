@@ -426,7 +426,7 @@ def create_legs(motionFile='legs.bvh'):
     node.width = .1
 
     node = mcfg.getNode('RightUpLeg')
-    node.geom = 'MyFoot4'
+    node.geom = 'MyFoot3'
     node.mass = 10.
     # node.length = 40.
 
@@ -460,7 +460,7 @@ def create_legs(motionFile='legs.bvh'):
     node.mass = 1.
 
     node = mcfg.getNode('LeftUpLeg')
-    node.geom = 'MyFoot4'
+    node.geom = 'MyFoot3'
     node.mass = 10.
     # node.length = 40.
 

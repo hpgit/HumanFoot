@@ -10,6 +10,7 @@ import Renderer.ysRenderer as yr
 import Renderer.csVpRenderer as cvr
 import Simulator.csVpWorld as cvw
 import Simulator.csVpModel as cvm
+import Math.mmMath as mm
 
 import Simulator.hpLCPSimulator as hls
 import GUI.hpSimpleViewer as hsv
@@ -17,7 +18,6 @@ import Util.ysPythonEx as ype
 import ArticulatedBody.ysControl as yct
 
 import mtInitialize_Simple as mit
-
 
 MOTION_COLOR = (213, 111, 162)
 CHARACTER_COLOR = (20, 166, 188)
@@ -74,6 +74,8 @@ rd_jointPos = None
 viewer = None
 
 
+pushTime = 0.
+
 def init():
     global motion
     global mcfg
@@ -100,15 +102,10 @@ def init():
     global rd_Position
     global rd_PositionDes
     global viewer
+    global pushTime
 
     np.set_printoptions(precision=4, linewidth=200)
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_1()
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_5()
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_chiken_foot()
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('fastswim.bvh')
-    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_leg('kneeAndFoot.bvh')
+    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_legs('legs_robust.bvh')
     mcfg_motion = mit.normal_mcfg()
 
     vpWorld = cvw.VpWorld(wcfg)
@@ -120,7 +117,7 @@ def init():
     # vpWorld.SetGlobalDamping(0.001)
     # controlModel.initializeHybridDynamics()
     controlModel.initializeForwardDynamics()
-    ModelOffset = np.array([0., .07, 0.])
+    ModelOffset = np.array([0., 2.5, 0.])
     controlModel.translateByOffset(ModelOffset)
 
     totalDOF = controlModel.getTotalDOF()
@@ -144,7 +141,7 @@ def init():
     rd_PositionDes = [None]
     rd_jointPos = [None]
 
-    viewer = hsv.hpSimpleViewer(title='main_Test')
+    viewer = hsv.hpSimpleViewer(title='main_LegPush')
     viewer.doc.addObject('motion', motion)
     viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(
         controlModel, CHARACTER_COLOR, yr.POLYGON_FILL))
@@ -167,9 +164,9 @@ def init():
     viewer.objectInfoWnd.add1DSlider(
         '1/simul speed', minVal=1., maxVal=100., initVal=config['simulSpeedInv'], valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
-        'normal des force min', minVal=0., maxVal=1000., initVal=80., valStep=1.)
+        'normal des force min', minVal=0., maxVal=3000., initVal=80., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
-        'normal des force max', minVal=0., maxVal=1000., initVal=80., valStep=1.)
+        'normal des force max', minVal=0., maxVal=3000., initVal=80., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
         'des force begin', minVal=0., maxVal=len(motion) - 1, initVal=70., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
@@ -180,7 +177,20 @@ def init():
         'tracking weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
     viewer.objectInfoWnd.add1DSlider(
         'tau weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
-    viewer.objectInfoWnd.addBtn('image', viewer.motionViewWnd.dump)
+    viewer.objectInfoWnd.add1DSlider(
+        'push x', minVal=-500., maxVal=500., initVal=0., valStep=10.)
+    viewer.objectInfoWnd.add1DSlider(
+        'push y', minVal=-500., maxVal=500., initVal=0., valStep=10.)
+    viewer.objectInfoWnd.add1DSlider(
+        'push z', minVal=-500., maxVal=500., initVal=0., valStep=10.)
+    viewer.objectInfoWnd.add1DSlider(
+        'push time', minVal=0., maxVal=10., initVal=0.1, valStep=.01)
+
+    def pushCallback(ptr):
+        global pushTime
+        pushTime += viewer.objectInfoWnd.getVal('push time')
+
+    viewer.objectInfoWnd.addBtn('Push', pushCallback)
 
     viewer.cForceWnd.addDataSet('expForce', FL_BLACK)
     viewer.cForceWnd.addDataSet('desForceMin', FL_RED)
@@ -254,11 +264,11 @@ class Callback:
         wTorque = math.pow(2., getVal('tau weight'))
 
         # tracking
-        th_r = motion.getDOFPositions(0)
+        th_r = motion.getDOFPositions(frame)
         th = controlModel.getDOFPositions()
-        dth_r = motion.getDOFVelocities(0)
+        dth_r = motion.getDOFVelocities(frame)
         dth = controlModel.getDOFVelocities()
-        ddth_r = motion.getDOFAccelerations(0)
+        ddth_r = motion.getDOFAccelerations(frame)
         # config['weightMapTuple'])
         ddth_des = yct.getDesiredDOFAccelerations(
             th_r, th, dth_r, dth, ddth_r, Kt, Dt)
@@ -279,66 +289,52 @@ class Callback:
                 (1 - desForceRelFrame) + desNormalForceMax * desForceRelFrame
 
         totalForce = np.array([0., desNormalForce, 0., 0., 0., 0.])
+        # totalForce = np.array([0., 720., 0., 0., 0., 0.])
         # totalForce = np.array([50., 150.])
 
         torques = None
         ddth_des_flat[0:6] = [0.] * 6
         self.setTimeStamp()
         simulContactForces = np.zeros(3)
-        torque_None = True
-        # print ddth_des_flat
 
-        cBodyIDsControl = []
-        cPositionsControl = []
-        cPositionLocalsControl = []
-        cForcesControl = []
-        torques_control = None
         if desForceFrame[0] <= frame <= desForceFrame[1]:
             if True:
                 # totalForceImpulse = stepsPerFrame * totalForce
-                cBodyIDs, cPositions, cPositionLocals, cForcesControl, torques_control \
+                cBodyIDs, cPositions, cPositionLocals, cForcesControl, torques \
                     = hls.calcLCPbasicControl(
                     motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wForce, wTorque, ddth_des_flat)
                 # if cForces is not None:
                 #     print "control: ", sum(cForces)
-                print "torques_control: ", torques_control
+
+        cBodyIDs = None
+        cPositions = None
+        cPositionLocals = None
+        cForces = None
+        timeStamp = None
+
+        torque_None = False
+        if torques == None:
+            torque_None = True
+            torques = ddth_des_flat
 
         for i in range(int(stepsPerFrame)):
-            torques = None
-            torque_None = True
-            cBodyIDs = []
-            cPositions = []
-            cPositionLocals = []
-            cForces = []
+            cBodyIdsReal = []
+            cPositionLocalsReal = []
+            cForcesReal = []
+            if i%5 == 0:
+                cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
+                    = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques, solver='qp')
+            cVpBodyIds, cVpPositions, cVpPositionsLocal, cVpVelocities = vpWorld.getContactPoints(bodyIDsToCheck)
 
-            '''
-            if desForceFrame[0] <= frame <= desForceFrame[1]:
-                if True:
-                    # totalForceImpulse = stepsPerFrame * totalForce
-                    cBodyIDs, cPositions, cPositionLocals, cForcesControl, torques \
-                        = hls.calcLCPbasicControl(
-                            motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wForce, wTorque, ddth_des_flat)
-                    # if cForces is not None:
-                    #     print "control: ", sum(cForces)
-            '''
+            for jj in range(len(cBodyIDs)):
+                for kk in range(len(cVpBodyIds)):
+                    if cBodyIDs[jj] == cVpBodyIds[kk]:
+                        if np.linalg.norm(cPositionLocals[jj]-cVpPositionsLocal[kk]) < mm.LIE_EPS:
+                            cBodyIdsReal.append(cBodyIDs[jj])
+                            cPositionLocalsReal.append(cPositionLocals[jj])
+                            cForcesReal.append(cForces[jj])
 
-            if torques_control is not None:
-                # print torques[:6]
-                torques = torques_control.copy()
-                torque_None = False
-                # cForcesControl = cForces.copy()
-                # cBodyIDsControl = cBodyIDs.copy()
-                # cPositionsControl = cPositions.copy()
-                # cPositionLocalsControl = cPositionLocals.copy()
-            else:
-                torques = ddth_des_flat
-
-            cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
-                = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques, solver='qp')
-            # if (not torque_None) and cForces is not None:
-            #     print "calcul: ", sum(cForces)
-
-            if len(cBodyIDs) > 0:
+            if False and len(cBodyIDs) > 0:
                 # apply contact forces
                 if False and not torque_None:
                     vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForcesControl)
@@ -346,7 +342,13 @@ class Callback:
                 else:
                     vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForces)
                     simulContactForces += sum(cForces)
-                # simulContactForces += sum(cForces)
+                    # simulContactForces += sum(cForces)
+            if len(cBodyIdsReal) > 0:
+                vpWorld.applyPenaltyForce(cBodyIdsReal, cPositionLocalsReal, cForcesReal)
+                simulContactForces += sum(cForcesReal)
+
+            if pushTime > 0.:
+                vpWorld.applyPenaltyForce([0], [[0., 0., 0.]], [[getVal('push x'), getVal('push y'), getVal('push z')]])
             ype.nested(torques, torques_nested)
             controlModel.setDOFTorques(torques_nested[1:])
             vpWorld.step()
@@ -354,9 +356,10 @@ class Callback:
         self.setTimeStamp()
         # print ddth_des_flat
         # print torques
+        print simulContactForces/stepsPerFrame
 
         self.cBodyIDs, self.cPositions, self.cPositionLocals, self.cForces, torques \
-            = hls.calcLCPbasicControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wForce, wTorque, ddth_des_flat, 8)
+            = hls.calcLCPbasicControl(motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wForce, wTorque, ddth_des_flat)
         del rd_cForcesControl[:]
         del rd_cPositionsControl[:]
         for i in range(len(self.cBodyIDs)):
@@ -406,12 +409,13 @@ class Callback:
             viewer.cForceWnd.insertData('realForce', frame, 0.)
         viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame)
         if desForceFrame[0] <= frame <= desForceFrame[1]:
-            viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1])
-            # viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1] * 1.0)
+            viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1] * 1.)
+            # viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1] * .9)
             # viewer.cForceWnd.insertData('desForceMax', frame, totalForce[1] * 1.1)
         else:
             viewer.cForceWnd.insertData('desForceMin', frame, 0.)
             viewer.cForceWnd.insertData('desForceMax', frame, 0.)
+
 
         self.setTimeStamp()
         # print self.timeStamp

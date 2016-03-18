@@ -1,0 +1,35 @@
+(dp1
+S'des force begin'
+p2
+F20
+sS'steps per frame'
+p3
+F80
+sS'PD gain'
+p4
+F180
+sS'Joint Damping'
+p5
+F35
+sS'des force dur'
+p6
+F18
+sS'normal des force max'
+p7
+F241
+sS'force weight'
+p8
+F0
+sS'tau weight'
+p9
+F-0.54000000000000004
+sS'tracking weight'
+p10
+F0
+sS'normal des force min'
+p11
+F80
+sS'1/simul speed'
+p12
+F1
+s.

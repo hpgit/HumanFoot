@@ -1,10 +1,11 @@
 #include <qpOASES/qpOASES.hpp>
 #include "stdafx.h"
 #include "../../../PyCommon/externalLibs/common/boostPythonUtil.h"
+#include <string>
 
 
 int example(void);
-bp::list qp(const object &H, const object &g, const object &A, const object &lb, const object &ub, const object &lbA, const object &ubA, int nWSR);
+bp::list qp(const object &H, const object &g, const object &A, const object &lb, const object &ub, const object &lbA, const object &ubA, int nWSR, bool printObjVal, std::string printLevel);
 
 BOOST_PYTHON_MODULE(csQPOASES)
 {
@@ -13,7 +14,7 @@ BOOST_PYTHON_MODULE(csQPOASES)
 	def("qp", qp);
 }
 
-bp::list qp(const object &H, const object &g, const object &A, const object &lb, const object &ub, const object &lbA, const object &ubA, int nWSR)
+bp::list qp(const object &H, const object &g, const object &A, const object &lb, const object &ub, const object &lbA, const object &ubA, int nWSR, bool printObjVal, std::string printLevel)
 {
 	USING_NAMESPACE_QPOASES
 
@@ -68,9 +69,14 @@ bp::list qp(const object &H, const object &g, const object &A, const object &lb,
 	QProblem qp(nV, nC);
 
 	Options options;
-	// options.printLevel = PL_LOW;
-	options.printLevel = PL_MEDIUM;
-	// options.printLevel = PL_NONE;
+	options.printLevel = PL_NONE;
+	if(!printLevel.compare("LOW"))
+		options.printLevel = PL_LOW;
+	else if(!printLevel.compare("MEDIUM"))
+		options.printLevel = PL_MEDIUM;
+	else if(!printLevel.compare("HIGH"))
+		options.printLevel = PL_HIGH;
+
 	qp.setOptions(options);
 
 
@@ -81,7 +87,8 @@ bp::list qp(const object &H, const object &g, const object &A, const object &lb,
 
 	//qp.printOptions();
 
-	printf("objVal : %e\n", qp.getObjVal());
+	if(printObjVal)
+		printf("objVal : %e\n", qp.getObjVal());
 	bp::list ls;
 	for(int i=0; i<nV; i++)
 		ls.append(xOpt[i]);
