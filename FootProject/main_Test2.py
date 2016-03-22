@@ -15,7 +15,7 @@ import Simulator.hpLCPSimulator as hls
 import GUI.hpSimpleViewer as hsv
 import Util.ysPythonEx as ype
 import ArticulatedBody.ysControl as yct
-import Simulator.hpSplineEdiotr as hse
+import GUI.hpSplineEditor as hse
 
 import mtInitialize_Simple as mit
 
@@ -430,7 +430,7 @@ viewer.setSimulateCallback(callback.simulateCallback)
 
 viewer.startTimer(1 / 30.)
 viewer.show()
+splineEditor = hse.SplineEditor()
+splineEditor.show()
 
-# splineEditor = hse.SplineEditor()
-# splineEditor.show()
 Fl.run()

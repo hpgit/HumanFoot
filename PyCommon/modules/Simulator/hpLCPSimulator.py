@@ -721,7 +721,7 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
                         A2,
                         A3), axis=0) * factor
 
-    A = 0.1 * np.eye(A.shape[0])*factor
+    # A = 0.1 * np.eye(A.shape[0])*factor
 
     # bx= h * (M*qdot_0 + tau - c)
     # b =[N.T * Jc * invM * kx]
@@ -942,8 +942,8 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
     tangenForce = x[totalDOF+contactNum:totalDOF+contactNum + numFrictionBases*contactNum]
     minTangenVel = x[totalDOF+contactNum + numFrictionBases*contactNum:]
 
-    # for i in range(len(tau)):
-    #     tau[i] = x[i]
+    for i in range(len(tau)):
+        tau[i] = 1.2*x[i]
 
 
     # print np.array(tau)

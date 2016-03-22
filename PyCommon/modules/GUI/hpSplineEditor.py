@@ -50,7 +50,7 @@ class BezierSpline:
 
     def getValue(self, tt):
         if len(self.ctrlPoint) == 0:
-            return Point2D()
+            return None
 
         idx = 3*int(tt)
         t = tt - int(tt)
@@ -158,7 +158,8 @@ class SplineWindow(Fl_Gl_Window):
         glBegin(GL_LINE_STRIP)
         for i in range(101):
             t = float(i)/100
-            glVertex2dv(getCurve(t))
+            curvePoint = getCurve(t)
+            glVertex2d(curvePoint[0], curvePoint[1])
         glEnd()
 
 
@@ -174,13 +175,20 @@ class SplineWindow(Fl_Gl_Window):
         glVertex2f(0., -10.)
         glVertex2f(0., 10.)
 
-        for i in range(-2, 10):
+        glVertex2f(3., -10.)
+        glVertex2f(3., 10.)
+
+        for i in range(-10, 10):
             glVertex2f(-.05, i/2.)
             glVertex2f(.05, i/2.)
 
         for i in range(-2, 30):
             glVertex2f(i/5., -.2)
             glVertex2f(i/5., .2)
+
+        for i in range(-10, 10):
+            glVertex2f(2.95, i/2.)
+            glVertex2f(3.05, i/2.)
         glEnd()
 
         glPopMatrix()
@@ -240,7 +248,7 @@ class SplineWindow(Fl_Gl_Window):
             else:
                 for i in range(len(points)):
                     dist = np.linalg.norm(points[i]-pos)
-                    if dist < 0.03:
+                    if dist < 0.05:
                         self.isPick = True
                         self.pickIdx = i
                         break
@@ -292,16 +300,49 @@ class SplineUi(Fl_Window):
         Fl_Window.__init__(self, x, y, w, z)
         self.base = parent
 
+        self.xtotal = 10
+        self.ygradation = 100
+
+        self.valObjOffset = 30
+        self.begin()
+
+        self.xGradationSlider = Fl_Hor_Value_Slider(10, self.valObjOffset, 180, 18, 'x total')
+        self.xGradationSlider.step(1)
+        self.xGradationSlider.bounds(3, 100)
+        self.xGradationSlider.value(self.xtotal)
+        self.valObjOffset += 40
+
+        self.yGradationSlider = Fl_Hor_Value_Slider(10, self.valObjOffset, 180, 18, 'y Gradation')
+        self.yGradationSlider.step(10)
+        self.yGradationSlider.bounds(10, 1000)
+        self.yGradationSlider.value(self.ygradation)
+        self.valObjOffset += 40
+
+        self.sendBtn = Fl_Button(10, self.valObjOffset, 180, 18, 'send')
+        self.sendBtn.callback(self.sendBtnCallback)
+        self.valObjOffset += 40
+
+        self.end()
+
+    def sendBtnCallback(self, ptr):
+        if ptr.base.receiver is not None and ptr.base.receiver.getForceProfCtrlPt is not None:
+            ptr.base.receiver.getForceProfCtrlPt(ptr.base.curve)
+
+
+
+
 
 
 class SplineEditor(Fl_Window):
-    def __init__(self, rect=None, title='SplineEditor'):
+    def __init__(self, rect=None, title='SplineEditor', receiver=None):
         if False and rect is not None:
             settings.x = rect[0]
             settings.y = rect[1]
             settings.w = rect[2]
             settings.h = rect[3]
         Fl_Window.__init__(self, 300, 400, 1400, 400, title)
+
+        self.receiver = receiver
 
         self.curve = BezierSpline()
         self.curve.addControlPoint(Point2D(0., 0.))
@@ -314,19 +355,19 @@ class SplineEditor(Fl_Window):
         self.splineui = SplineUi(1200, 0, 200, 400, self)
         self.end()
 
-        self.callback(self.onClose)
+        # self.callback(self.onClose)
 
 
-    def show(self):
-        if False and len(self.settingsFile)>0:
-            self.settings.load(self.settingsFile)
-            self.settings.setToApp(self)
-        Fl_Window.show(self)
-    def onClose(self, data):
-        if False and len(self.settingsFile)>0:
-            self.settings.getFromApp(self)
-            self.settings.save(self.settingsFile)
-        self.default_callback(self, data)
+    # def show(self):
+    #     if False and len(self.settingsFile)>0:
+    #         self.settings.load(self.settingsFile)
+    #         self.settings.setToApp(self)
+    #     Fl_Window.show(self)
+    # def onClose(self, data):
+    #     if False and len(self.settingsFile)>0:
+    #         self.settings.getFromApp(self)
+    #         self.settings.save(self.settingsFile)
+    #     self.default_callback(self, data)
 
 
 if __name__=='__main__':
