@@ -7,6 +7,10 @@ import ode, numpy
 import sys
 if '..' not in sys.path:
     sys.path.append('..')
+# from PyCommon.modules.Math import mmMath as mm
+# from PyCommon.modules.Util import ysGlHelper as ygh
+# from PyCommon.modules.Motion import ysMotion as ym
+# from PyCommon.modules.Mesh import ysMesh as yms
 import Math.mmMath as mm
 import Util.ysGlHelper as ygh
 import Motion.ysMotion as ym
@@ -372,7 +376,7 @@ class OrientationsRenderer(Renderer):
         self.Rs = Rs
         self.ps = ps
         self.axisLength = axisLength
-    def render(self):
+    def render(self, renderType=None):
         for i in range(len(self.Rs)):
             if self.Rs[i]!=None and self.ps[i]!=None:
                 T = mm.Rp2T(self.Rs[i], self.ps[i])
@@ -963,9 +967,9 @@ if __name__=='__main__':
         arrowPoint = (0,0,0)
 
         viewer = ysv.SimpleViewer()
-        #        viewer.doc.addRenderer('box', BoxesRenderer([boxSize], [boxFrame], (255,0,0)))
-        #        viewer.doc.addRenderer('cylinder', CylindersRenderer([cylinderSize], [cylinderFrame], (0,0,255)))
-        #        viewer.doc.addRenderer('sphere', SpheresRenderer([sphereRadius], [spherePosition], (0,0,255)))
+        # viewer.doc.addRenderer('box', BoxesRenderer([boxSize], [boxFrame], (255,0,0)))
+        # viewer.doc.addRenderer('cylinder', CylindersRenderer([cylinderSize], [cylinderFrame], (0,0,255)))
+        # viewer.doc.addRenderer('sphere', SpheresRenderer([sphereRadius], [spherePosition], (0,0,255)))
         viewer.doc.addRenderer('sphere', WideArrowRenderer([arrowVector], [arrowPoint], (255,0,0), 1., .1))
 
         viewer.show()
@@ -973,7 +977,7 @@ if __name__=='__main__':
 
 
     pass
-    #    test_MeshRenderer()
+    test_MeshRenderer()
     #    test_FramesRenderer_OrientationsRenderer()
     #    test_ForcesRenderer_TorquesRenderer()
-    test_primitives_renderers()
+    # test_primitives_renderers()

@@ -143,6 +143,7 @@ def getLCPMatrix(world, model, invM, invMc, mu, tau, contactNum, contactPosition
                 np.concatenate((mus, -E.T, np.zeros((mus.shape[0], E.shape[1]))),  axis=1),
             ), axis=0
     )
+    # A = A + 0.1*np.eye(A.shape[0])
 
     qdot_0 = ype.makeFlatList(totalDOF)
     ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
@@ -160,7 +161,7 @@ def getLCPMatrix(world, model, invM, invMc, mu, tau, contactNum, contactPosition
         if abs(contactPositions[i][1]) > penDepth:
             bPenDepth[i] = contactPositions[i][1] + penDepth
 
-    b1 = JTN.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau) + 0.5*invh*bPenDepth
+    b1 = JTN.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau) + 0.05 * invh * bPenDepth
     b2 = JTD.T.dot(qdot_0 - h*invMc) + h*temp_DM.dot(tau)
     b3 = np.zeros(mus.shape[0])
     b = np.hstack((np.hstack((b1, b2)), b3)) * factor
@@ -720,7 +721,7 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
                         A2,
                         A3), axis=0) * factor
 
-    # A = 0.1 * np.eye(A.shape[0])*factor
+    A = 0.1 * np.eye(A.shape[0])*factor
 
     # bx= h * (M*qdot_0 + tau - c)
     # b =[N.T * Jc * invM * kx]
@@ -940,6 +941,10 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
     normalForce = x[totalDOF:totalDOF+contactNum]
     tangenForce = x[totalDOF+contactNum:totalDOF+contactNum + numFrictionBases*contactNum]
     minTangenVel = x[totalDOF+contactNum + numFrictionBases*contactNum:]
+
+    # for i in range(len(tau)):
+    #     tau[i] = x[i]
+
 
     # print np.array(tau)
 

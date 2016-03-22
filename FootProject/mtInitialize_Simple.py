@@ -1,10 +1,10 @@
 import copy
 
 import sys
-#if '../PyCommon/modules' not in sys.path:
-#    sys.path.append('../PyCommon/modules')
-if './modules' not in sys.path:
-    sys.path.append('./modules')
+if '../PyCommon/modules' not in sys.path:
+   sys.path.append('../PyCommon/modules')
+# if './modules' not in sys.path:
+#     sys.path.append('./modules')
 
 import Resource.ysMotionLoader as yf
 import Simulator.ysPhysConfig as ypc
@@ -268,7 +268,7 @@ def create_foot(motionFile='foot3.bvh'):
     node = mcfg.getNode('root')
     node.geom = 'MyFoot3'
     node.length = 1.
-    node.mass = 5.
+    node.mass = .5
 
     node = mcfg.getNode('foot_0_0')
     node.geom = 'MyFoot4'
@@ -324,8 +324,8 @@ def create_foot(motionFile='foot3.bvh'):
     config['simulSpeedInv'] = simulSpeedInv
 
     # etc
-    config['weightMap'] = {'root': 2., 'foot00': 1., 'foot10': 1., 'foot20': 1., 'foot01': .2, 'foot11': .2, 'foot21': .2}
-    config['weightMapTuple'] = (2., 1., .2, 1., .2, 1., .2)
+    config['weightMap'] = {'root': 2., 'foot_0_0': 1., 'foot_1_0': 1., 'foot_2_0': 1., 'foot_0_1': .2, 'foot_1_1': .2, 'foot_2_1': .2}
+    config['weightMapTuple'] = (1., .5, .2, .5, .2, .5, .2)
     # config['supLink'] = 'link0'
 
     return motion, mcfg, wcfg, stepsPerFrame, config

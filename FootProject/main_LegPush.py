@@ -103,9 +103,12 @@ def init():
     global rd_PositionDes
     global viewer
     global pushTime
+    global Rs
+    global ps
 
     np.set_printoptions(precision=4, linewidth=200)
     motion, mcfg, wcfg, stepsPerFrame, config = mit.create_legs('legs_robust.bvh')
+    motion[:] = [motion[0]]*1000
     mcfg_motion = mit.normal_mcfg()
 
     vpWorld = cvw.VpWorld(wcfg)
@@ -321,7 +324,7 @@ class Callback:
             cBodyIdsReal = []
             cPositionLocalsReal = []
             cForcesReal = []
-            if i%5 == 0:
+            if i%20 == 0:
                 cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
                     = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques, solver='qp')
             cVpBodyIds, cVpPositions, cVpPositionsLocal, cVpVelocities = vpWorld.getContactPoints(bodyIDsToCheck)

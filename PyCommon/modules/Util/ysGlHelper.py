@@ -23,6 +23,7 @@ from OpenGL.GLUT import *
 import sys
 if '..' not in sys.path:
     sys.path.append('..')
+# from PyCommon.modules.Math import mmMath as mmMath
 import Math.mmMath as mmMath
 
 class DrawingSet:

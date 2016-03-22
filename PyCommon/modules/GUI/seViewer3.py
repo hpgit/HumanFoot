@@ -599,7 +599,7 @@ class GlWindow(Fl_Gl_Window):
     def handle(self, e):
 #        print yse.Fl_Event.text[e], id(self)
 #        print id(Fl.focus())
-       
+
         returnVal = 0
         if e == FL_RELEASE:
             self.mouseX = Fl.event_x()
