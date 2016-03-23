@@ -141,7 +141,7 @@ class SplineWindow(Fl_Gl_Window):
         glLoadIdentity()
 
         glTranslatef(-.9, -.2, .0)
-        glScalef(.5, .25, .5)
+        glScalef(1.5, .25, .5)
 
         self.draw_coord()
 
@@ -175,20 +175,20 @@ class SplineWindow(Fl_Gl_Window):
         glVertex2f(0., -10.)
         glVertex2f(0., 10.)
 
-        glVertex2f(3., -10.)
-        glVertex2f(3., 10.)
+        glVertex2f(1., -10.)
+        glVertex2f(1., 10.)
 
         for i in range(-10, 10):
-            glVertex2f(-.05, i/2.)
-            glVertex2f(.05, i/2.)
-
-        for i in range(-2, 30):
-            glVertex2f(i/5., -.2)
-            glVertex2f(i/5., .2)
-
+            glVertex2f(-.02, i)
+            glVertex2f(.02, i)
         for i in range(-10, 10):
-            glVertex2f(2.95, i/2.)
-            glVertex2f(3.05, i/2.)
+            glVertex2f(0.98, i)
+            glVertex2f(1.02, i)
+
+        for i in range(-6, 30, 1):
+            glVertex2f(i/6., -.2)
+            glVertex2f(i/6., .2)
+
         glEnd()
 
         glPopMatrix()
@@ -346,9 +346,9 @@ class SplineEditor(Fl_Window):
 
         self.curve = BezierSpline()
         self.curve.addControlPoint(Point2D(0., 0.))
+        self.curve.addControlPoint(Point2D(1./3., 0.))
+        self.curve.addControlPoint(Point2D(2./3., 0.))
         self.curve.addControlPoint(Point2D(1., 0.))
-        self.curve.addControlPoint(Point2D(2., 0.))
-        self.curve.addControlPoint(Point2D(3., 0.))
 
         self.begin()
         self.splinewindow = SplineWindow(0, 0, 1200, 400, self)

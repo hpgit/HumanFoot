@@ -254,6 +254,72 @@ def create_chiken_foot():
     
     return motion, mcfg, wcfg, stepsPerFrame, config
 
+def create_foot_2(motionFile='foot3.bvh'):
+    # motion
+    motion = yf.readBvhFile(motionFile, .05)
+
+    # world, model
+    mcfg = ypc.ModelConfig()
+    mcfg.defaultDensity = 1000.
+    mcfg.defaultBoneRatio = 1.
+    for i in range(motion[0].skeleton.getElementNum()):
+        mcfg.addNode(motion[0].skeleton.getElementName(i))
+    node = mcfg.getNode('root')
+    node.geom = 'MyFoot3'
+    node.length = 1.
+    node.mass = .5
+
+    node = mcfg.getNode('foot_0_0')
+    node.geom = 'MyFoot4'
+    node.mass = .5
+
+    node = mcfg.getNode('foot_0_1')
+    node.geom = 'MyFoot4'
+    node.mass = .5
+
+    node = mcfg.getNode('foot_1_0')
+    node.geom = 'MyFoot4'
+    node.mass = .5
+
+    node = mcfg.getNode('foot_1_1')
+    node.geom = 'MyFoot4'
+    node.mass = .5
+
+    def mcfgFix(_mcfg):
+        for v in _mcfg.nodes.itervalues():
+            if len(v.geoms) == 0:
+                v.geoms.append(v.geom)
+                v.geomMass.append(v.mass)
+                v.geomTs.append(None)
+
+    mcfgFix(mcfg)
+
+    wcfg = ypc.WorldConfig()
+    wcfg.planeHeight = 0.
+    wcfg.useDefaultContactModel = False
+    stepsPerFrame = 40
+    simulSpeedInv = 1.
+
+    wcfg.timeStep = (1/30.*simulSpeedInv)/stepsPerFrame
+
+    # parameter
+    config = dict([])
+    config['Kt'] = 20; config['Dt'] = 2*(config['Kt']**.5)  # tracking gain
+    config['Kl'] = 1; config['Dl'] = 2*(config['Kl']**.5)  # linear balance gain
+    config['Kh'] = 1; config['Dh'] = 2*(config['Kh']**.5)  # angular balance gain
+    config['Ks'] = 5000; config['Ds'] = 2*(config['Ks']**.5)  # penalty force spring gain
+    config['Bt'] = 1.
+    config['Bl'] = 1.
+    config['Bh'] = 1.
+    config['stepsPerFrame'] = stepsPerFrame
+    config['simulSpeedInv'] = simulSpeedInv
+
+    # etc
+    config['weightMap'] = {'root': 2., 'foot_0_0': 1., 'foot_1_0': 1., 'foot_2_0': 1., 'foot_0_1': .2, 'foot_1_1': .2, 'foot_2_1': .2}
+    config['weightMapTuple'] = (1., .5, .2, .5, .2, .5, .2)
+    # config['supLink'] = 'link0'
+
+    return motion, mcfg, wcfg, stepsPerFrame, config
 
 def create_foot(motionFile='foot3.bvh'):
     # motion

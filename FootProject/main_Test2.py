@@ -17,6 +17,9 @@ import Util.ysPythonEx as ype
 import ArticulatedBody.ysControl as yct
 import GUI.hpSplineEditor as hse
 
+import VirtualPhysics.vpBody as vpB
+import VirtualPhysics.LieGroup as vpL
+
 import mtInitialize_Simple as mit
 
 
@@ -108,6 +111,7 @@ def init():
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_chiken_foot()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('fastswim.bvh')
+    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot_2('simpleJump_2.bvh')
     motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_leg('kneeAndFoot.bvh')
     mcfg_motion = mit.normal_mcfg()
@@ -252,7 +256,7 @@ class Callback:
         # Dt = 2. * (Kt**.5)
         Dt = 0.
         # controlModel.SetJointsDamping(damp)
-        controlModel.SetJointsDamping(.2)
+        controlModel.SetJointsDamping(1.)
 
         wForce = math.pow(2., getVal('force weight'))
         wTorque = math.pow(2., getVal('tau weight'))
@@ -306,13 +310,14 @@ class Callback:
             # totalForceImpulse = stepsPerFrame * totalForce
             cBodyIDsControl, cPositionsControl, cPositionLocalsControl, cForcesControl, torques \
                 = hls.calcLCPbasicControl(
-                motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wForce, wTorque, ddth_des_flat)
+                motion, vpWorld, controlModel, bodyIDsToCheck, .1, totalForce, wForce, wTorque, ddth_des_flat)
             # if cForces is not None:
             #     print "control: ", sum(cForces)
 
         timeStamp = None
 
         cBodyIdsReal = []
+        cPositionsReal = []
         cPositionLocalsReal = []
         cForcesReal = []
 
@@ -324,11 +329,12 @@ class Callback:
 
         for i in range(int(stepsPerFrame)):
             del cBodyIdsReal[:]
+            del cPositionsReal[:]
             del cPositionLocalsReal[:]
             del cForcesReal[:]
             if i%5 == 0:
                 cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
-                    = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques, solver='qp')
+                    = hls.calcLCPForcesIter(motion, vpWorld, controlModel, bodyIDsToCheck, .1, torques, solver='qp')
             cVpBodyIds, cVpPositions, cVpPositionsLocal, cVpVelocities = vpWorld.getContactPoints(bodyIDsToCheck)
 
             for jj in range(len(cBodyIDs)):
@@ -336,6 +342,7 @@ class Callback:
                     if cBodyIDs[jj] == cVpBodyIds[kk]:
                         if np.linalg.norm(cPositionLocals[jj]-cVpPositionsLocal[kk]) < mm.LIE_EPS:
                             cBodyIdsReal.append(cBodyIDs[jj])
+                            cPositionsReal.append(cPositions[jj])
                             cPositionLocalsReal.append(cPositionLocals[jj])
                             cForcesReal.append(cForces[jj])
 
@@ -348,17 +355,15 @@ class Callback:
                     vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForces)
                     simulContactForces += sum(cForces)
                     # simulContactForces += sum(cForces)
+
             if len(cBodyIdsReal) > 0:
                 vpWorld.applyPenaltyForce(cBodyIdsReal, cPositionLocalsReal, cForcesReal)
                 simulContactForces += sum(cForcesReal)
-
             ype.nested(torques, torques_nested)
             controlModel.setDOFTorques(torques_nested[1:])
             vpWorld.step()
 
-
         self.setTimeStamp()
-
 
         del rd_cForcesControl[:]
         del rd_cPositionsControl[:]
@@ -366,13 +371,13 @@ class Callback:
             print cBodyIDsControl
             for i in range(len(cBodyIDsControl)):
                 # print expected force
-                rd_cForcesControl.append(cForcesControl[i].copy() / 50.)
+                rd_cForcesControl.append(cForcesControl[i].copy() /50.)
                 rd_cPositionsControl.append(cPositionsControl[i].copy())
         del rd_ForceControl[:]
         del rd_Position[:]
         if cForcesControl is not None:
             # print expected force
-            rd_ForceControl.append(sum(cForcesControl) / 50.)
+            rd_ForceControl.append(sum(cForcesControl) /50.)
             rd_Position.append(np.array([0., 0., 0.1]))
         # graph
         if cForcesControl is not None:
@@ -410,7 +415,7 @@ class Callback:
             viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame)
         else:
             viewer.cForceWnd.insertData('realForce', frame, 0.)
-        viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame)
+        # viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame)
         if desForceFrame[0] <= frame <= desForceFrame[1]:
             viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1])
             # viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1] * 1.0)
@@ -430,7 +435,7 @@ viewer.setSimulateCallback(callback.simulateCallback)
 
 viewer.startTimer(1 / 30.)
 viewer.show()
-splineEditor = hse.SplineEditor()
-splineEditor.show()
+# splineEditor = hse.SplineEditor()
+# splineEditor.show()
 
 Fl.run()
