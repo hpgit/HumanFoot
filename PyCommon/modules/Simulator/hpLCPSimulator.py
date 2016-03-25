@@ -140,7 +140,7 @@ def getLCPMatrix(world, model, invM, invMc, mu, tau, contactNum, contactPosition
             (
                 np.concatenate((A11, A12,  np.zeros((A11.shape[0], E.shape[1]))),  axis=1),
                 np.concatenate((A21, A22,  E),                                     axis=1),
-                np.concatenate((mus, -E.T, np.zeros((mus.shape[0], E.shape[1]))),  axis=1),
+                h * np.concatenate((mus, -E.T, np.zeros((mus.shape[0], E.shape[1]))),  axis=1),
             ), axis=0
     )
     # A = A + 0.1*np.eye(A.shape[0])
@@ -262,11 +262,11 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
             # xqp = np.array(cvxSolvers.qp(Aqp, bqp, Gqp, hqp)['x']).flatten()
             x = xqp.copy()
             # print x.shape[0]
-            print "x: ", x
-            zqp = np.dot(A,x)+b
-            print "z: ", zqp
-            print "El: ", np.dot(E, x[contactNum + numFrictionBases*contactNum:])
-            print "Ep: ", np.dot(E.T, x[contactNum:contactNum + numFrictionBases*contactNum])
+            # print "x: ", x
+            # zqp = np.dot(A,x)+b
+            # print "z: ", zqp
+            # print "El: ", np.dot(E, x[contactNum + numFrictionBases*contactNum:])
+            # print "Ep: ", np.dot(E.T, x[contactNum:contactNum + numFrictionBases*contactNum])
             # print "force value: ", np.dot(x, zqp)
         except Exception, e:
             # print e
@@ -358,6 +358,7 @@ def calcLCPForcesIter(motion, world, model, bodyIDsToCheck, mu, tau=None, numFri
             solution = cvxSolvers.qp(Aqp, bqp, Gqp, hqp)
             xqp = np.array(solution['x']).flatten()
             x = xqp.copy()
+            print x
 
         except Exception, e:
             # print e
@@ -414,7 +415,6 @@ def calcLCPForcesIter(motion, world, model, bodyIDsToCheck, mu, tau=None, numFri
             xqp2 = np.array(solution2['x']).flatten()
             x2 = xqp2.copy()
 
-            print np.dot(x2, np.dot(A2, x2) + b2)
 
         except Exception, e:
             # print e
@@ -434,11 +434,11 @@ def calcLCPForcesIter(motion, world, model, bodyIDsToCheck, mu, tau=None, numFri
             x_final.append(x2[jj])
             jj += 1
 
+    print x_final
 
     normalForce = np.array(x_final[:contactNum])
     tangenForce = np.array(x_final[contactNum:contactNum + numFrictionBases*contactNum])
     minTangenVel = np.array(x_final[contactNum + numFrictionBases*contactNum:])
-
 
 
 
@@ -636,7 +636,7 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wForce,
     A = np.concatenate((A1,
                         A2,
                         A3), axis=0) * factor
-    A = 0.01 * np.eye(A.shape[0])*factor
+    # A = 0.01 * np.eye(A.shape[0])*factor
     # print npl.eigvals(A+A.T)
     # npl.eigvals(A+A.T)
 
@@ -1089,8 +1089,8 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
     tangenForce = x[totalDOF+contactNum:totalDOF+contactNum + numFrictionBases*contactNum]
     minTangenVel = x[totalDOF+contactNum + numFrictionBases*contactNum:]
 
-    for i in range(len(tau)):
-        tau[i] = 1.2*x[i]
+    # for i in range(len(tau)):
+    #     tau[i] = 10.*x[i]
 
 
     # print np.array(tau)

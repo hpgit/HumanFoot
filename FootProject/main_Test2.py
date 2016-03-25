@@ -179,7 +179,7 @@ def init():
     viewer.objectInfoWnd.add1DSlider(
         'des force begin', minVal=0., maxVal=len(motion) - 1, initVal=70., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
-        'des force dur', minVal=0., maxVal=len(motion) - 1, initVal=20., valStep=1.)
+        'des force dur', minVal=0., maxVal=len(motion) - 1, initVal=5., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
         'force weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
     viewer.objectInfoWnd.add1DSlider(
@@ -316,11 +316,6 @@ class Callback:
 
         timeStamp = None
 
-        cBodyIdsReal = []
-        cPositionsReal = []
-        cPositionLocalsReal = []
-        cForcesReal = []
-
         torque_None = False
 
         if not (desForceFrame[0] <= frame <= desForceFrame[1]) or torques is None:
@@ -328,25 +323,11 @@ class Callback:
             torques = ddth_des_flat
 
         for i in range(int(stepsPerFrame)):
-            del cBodyIdsReal[:]
-            del cPositionsReal[:]
-            del cPositionLocalsReal[:]
-            del cForcesReal[:]
-            if i%5 == 0:
+            if i%10 == 0:
                 cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
-                    = hls.calcLCPForcesIter(motion, vpWorld, controlModel, bodyIDsToCheck, .1, torques, solver='qp')
-            cVpBodyIds, cVpPositions, cVpPositionsLocal, cVpVelocities = vpWorld.getContactPoints(bodyIDsToCheck)
+                    = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, .1, torques, solver='qp')
 
-            for jj in range(len(cBodyIDs)):
-                for kk in range(len(cVpBodyIds)):
-                    if cBodyIDs[jj] == cVpBodyIds[kk]:
-                        if np.linalg.norm(cPositionLocals[jj]-cVpPositionsLocal[kk]) < mm.LIE_EPS:
-                            cBodyIdsReal.append(cBodyIDs[jj])
-                            cPositionsReal.append(cPositions[jj])
-                            cPositionLocalsReal.append(cPositionLocals[jj])
-                            cForcesReal.append(cForces[jj])
-
-            if False and len(cBodyIDs) > 0:
+            if i%10 == 0 and len(cBodyIDs) > 0:
                 # apply contact forces
                 if False and not torque_None:
                     vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForcesControl)
@@ -356,38 +337,42 @@ class Callback:
                     simulContactForces += sum(cForces)
                     # simulContactForces += sum(cForces)
 
-            if len(cBodyIdsReal) > 0:
-                vpWorld.applyPenaltyForce(cBodyIdsReal, cPositionLocalsReal, cForcesReal)
-                simulContactForces += sum(cForcesReal)
+
             ype.nested(torques, torques_nested)
             controlModel.setDOFTorques(torques_nested[1:])
             vpWorld.step()
 
         self.setTimeStamp()
 
+        # rendering expected force
         del rd_cForcesControl[:]
         del rd_cPositionsControl[:]
         if cBodyIDsControl is not None:
-            print cBodyIDsControl
+            # print cBodyIDsControl
             for i in range(len(cBodyIDsControl)):
                 # print expected force
                 rd_cForcesControl.append(cForcesControl[i].copy() /50.)
                 rd_cPositionsControl.append(cPositionsControl[i].copy())
+
+        # rendering sum of expected force
         del rd_ForceControl[:]
         del rd_Position[:]
         if cForcesControl is not None:
             # print expected force
             rd_ForceControl.append(sum(cForcesControl) /50.)
             rd_Position.append(np.array([0., 0., 0.1]))
-        # graph
+
+        # graph expected force
         if cForcesControl is not None:
             sumForce = sum(cForcesControl)
+            if sumForce[1] > 10000:
+                sumForce[1] = 10000
             viewer.cForceWnd.insertData('expForce', frame, sumForce[1])
         else:
             viewer.cForceWnd.insertData('expForce', frame, 0.)
 
 
-
+        # rendering calculated forces
         del rd_cForces[:]
         del rd_cPositions[:]
         for i in range(len(cBodyIDs)):
@@ -395,10 +380,12 @@ class Callback:
             rd_cForces.append(cForces[i].copy() / 50.)
             rd_cPositions.append(cPositions[i].copy())
 
+        # rendering joint position
         del rd_jointPos[:]
         for i in range(motion[0].skeleton.getJointNum()):
             rd_jointPos.append(motion[frame].getJointPositionGlobal(i))
 
+        # rendering desired force
         del rd_ForceDes[:]
         del rd_PositionDes[:]
         # rd_ForceDes.append(totalForce/50.)
@@ -408,7 +395,7 @@ class Callback:
         #     rd_ForceDes.append(sum(self.cForces)[1]/50. * [0., 1., 0.])
         #     rd_PositionDes.append(np.array([0., 0., -0.1]))
 
-        # graph
+        # graph calculated force
         if cForces is not None:
             sumForce = sum(cForces)
             # viewer.cForceWnd.insertData('realForce', frame, sumForce[1])
@@ -416,6 +403,8 @@ class Callback:
         else:
             viewer.cForceWnd.insertData('realForce', frame, 0.)
         # viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame)
+
+        # graph desired force
         if desForceFrame[0] <= frame <= desForceFrame[1]:
             viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1])
             # viewer.cForceWnd.insertData('desForceMin', frame, totalForce[1] * 1.0)
@@ -423,9 +412,9 @@ class Callback:
         else:
             viewer.cForceWnd.insertData('desForceMin', frame, 0.)
             viewer.cForceWnd.insertData('desForceMax', frame, 0.)
+
+
         self.setTimeStamp()
-        # print self.timeStamp
-        # print self.LCPTimeStamp
 
 
 callback = Callback()
