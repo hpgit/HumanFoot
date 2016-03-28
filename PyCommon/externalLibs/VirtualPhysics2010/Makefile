@@ -28,6 +28,10 @@ ragdoll: vpRenderer vpLib
 tutorial: vpRenderer vpLib 
 	make --directory="Examples/tutorial/" --file=tutorial.makefile
 
+.PHONY: pymodule
+pymodule:
+	make --directory="pyVirtualPhysics/" --file=pyLib.makefile
+
 # Cleans all projects...
 .PHONY: clean
 clean:
@@ -36,4 +40,5 @@ clean:
 	make --directory="Examples/stacking/" --file=stacking.makefile clean
 	make --directory="Examples/ragdoll/" --file=ragdoll.makefile clean
 	make --directory="Examples/tutorial/" --file=tutorial.makefile clean
+	make --directory="pyVirtualPhysics/" --file=pyLib.makefile clean
 

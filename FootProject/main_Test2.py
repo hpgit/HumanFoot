@@ -4,6 +4,7 @@ import time
 
 import sys
 sys.path.append('../PyCommon/modules')
+sys.path.append('..')
 
 import math
 import Math.mmMath as mm
@@ -17,8 +18,8 @@ import Util.ysPythonEx as ype
 import ArticulatedBody.ysControl as yct
 import GUI.hpSplineEditor as hse
 
-import VirtualPhysics.vpBody as vpB
-import VirtualPhysics.LieGroup as vpL
+# import VirtualPhysics.vpBody as vpB
+# import VirtualPhysics.LieGroup as vpL
 
 import mtInitialize_Simple as mit
 
@@ -27,7 +28,6 @@ MOTION_COLOR = (213, 111, 162)
 CHARACTER_COLOR = (20, 166, 188)
 FEATURE_COLOR = (255, 102, 0)
 CHARACTER_COLOR2 = (200, 200, 200)
-
 
 def getPartJacobian(_Jsys, _jIdx):
     # warning : only Jsys works.

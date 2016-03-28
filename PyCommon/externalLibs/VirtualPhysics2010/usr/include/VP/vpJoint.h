@@ -195,7 +195,7 @@ public:
 	const scalar			&GetAcceleration(void) const;
 	void					 SetImpulsiveTorque(const scalar &);
 	const scalar			&GetImpulsiveTorque(void) const;
-	void					 SetSpringDamperTorque(const scalar &);
+	//void					 SetSpringDamperTorque(const scalar &);
 	scalar					 GetTorque(void) const;
 	void					 SetTorque(const scalar &);
 	const scalar			&GetRestitution(void) const;

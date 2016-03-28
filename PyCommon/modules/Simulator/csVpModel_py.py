@@ -4,11 +4,26 @@
 
 QP = True
 
-import VirtualPhysics.VpWorld as vpw
-import VirtualPhysics.LieGroup as lie
+import sys
+sys.path.append('../../..')
+import math
+import numpy as np
+
+from PyCommon.modules.pyVirtualPhysics import *
 
 
 class VpModel:
+    class Node:
+        def __init__(self, _name):
+            self.name = _name
+            self.body = vpBody()
+            self.material = vpMaterial()
+            self.joint = vpBJoint()
+            self.dof = 3
+            self.color = [0., 0., 0., 255.]
+            self.use_joint = False
+            self.body.SetMaterial(self.material)
+
     def __init__(self, pWorld, createPosture, config):
         self._pWorld = pWorld._world
         self._config = config
@@ -19,7 +34,7 @@ class VpModel:
 
         num = createPosture.skeleton.getJointNum()
         self._nodes.resize(num, None)
-        self._boneTs.resize(num, lie.SE3())
+        self._boneTs.resize(num, SE3())
 
         self.createBodies(createPosture)
         self.build_name2index()
@@ -30,7 +45,7 @@ class VpModel:
     def createBodies(self, posture):
         joint = posture.skeleton.root
         rootPos = posture.rootPos
-        T = lie.SE3(rootPos)
+        T = SE3(rootPos)
         tpose = posture.getTPose()
         self._createBody(joint, T, tpose)
 
@@ -40,7 +55,7 @@ class VpModel:
             return
 
         T = parentT
-        P = lie.SE3(joint.offset)
+        P = SE3(joint.offset)
         T = T * P
 
         joint_name = joint.name
@@ -51,89 +66,60 @@ class VpModel:
         T = T * R
 
         if self._config.hasNode(joint_name):
-            offset = lie.Vec3(0.)
+            offset = Vec3(0.)
             for i in range(len_joint_children):
-                offset += lie.Vec3(joint.children[i].offset)
+                offset += Vec3(joint.children[i].offset)
 
             #if joint.parent is None:
             if True:
                 offset *= 1./len_joint_children
 
-            boneT = lie.SE3(offset*.5)
+            boneT = SE3(offset*.5)
             if QP:
                 if not joint_name.compare("Hips"):
-                    boneT = lie.SE3()
+                    boneT = SE3()
 
-            defaultBoneV = lie.Vec3(0, 0, 1)
+            defaultBoneV = Vec3(0, 0, 1)
             #TODO: getSE3FromVectors
-            boneR = lie.SE3(getSE3FromVectors(defaultBoneV, offset))
+            boneR = SE3(getSE3FromVectors(defaultBoneV, offset))
 
             if QP:
                 if not joint_name.compare("Hips"):
                     boneT = boneT * boneR
 
-            pNonde = Node(joint_name)
+            pNode = Node(joint_name)
+            self._nodes[joint_index] = pNode
+            cfgNode = self._config.getNode(joint_name)
 
+            '''
+            int numGeom = len(cfgNode.attr("geoms"));
+		string geomType = XS(cfgNode.attr("geoms")[0]);
+		if (geomType == "MyFoot3" || geomType == "MyFoot4")
+		{
+		    scalar radius = .05;
+		    if( cfgNode.attr("width") != object() )
+		        radius = XD(cfgNode.attr("width"));
 
+		    scalar length = Norm(offset) + 2*radius;
+		    scalar density = XD(cfgNode.attr("density"));
+		    scalar mass = 1.;
+		    if( cfgNode.attr("mass") != object() )
+		    {
+		        mass = XD(cfgNode.attr("mass"));
+		        density = mass/ (radius * radius * M_PI * length);
+		    }
+		    else
+		        mass = density * radius * radius * M_PI * length;
 
-
-
-
-
-
-
-void VpModel::_createBody( const object& joint, const SE3& parentT, const object& posture )
-{
-    T = T * R;
-
-//  if (len_joint_children > 0 && _config.attr("hasNode")(joint_name))
-    if (_config.attr("hasNode")(joint_name))
-    {
-
-        SE3 boneT(offset*.5);
-#ifdef QP
-        if(!joint_name.compare("Hips"))
-            boneT=SE3();
-#endif
-        Vec3 defaultBoneV(0,0,1);
-        SE3 boneR = getSE3FromVectors(defaultBoneV, offset);
-
-#ifdef QP
-        if(joint_name.compare("Hips"))
-#endif
-            boneT = boneT * boneR;
-
-        Node* pNode = new Node(joint_name);
-        _nodes[joint_index] = pNode;
-
-        object cfgNode = _config.attr("getNode")(joint_name);
-        string geomType = XS(cfgNode.attr("geom"));
-        if (geomType == "MyFoot3" || geomType == "MyFoot4")
-        {
-            scalar radius = .05;
-            if( cfgNode.attr("width") != object() )
-                radius = XD(cfgNode.attr("width"));
-
-            scalar length = Norm(offset) + 2*radius;
-            scalar density = XD(cfgNode.attr("density"));
-            scalar mass = 1.;
-            if( cfgNode.attr("mass") != object() )
-            {
-                mass = XD(cfgNode.attr("mass"));
-                density = mass/ (radius * radius * M_PI * length);
-            }
-            else
-                mass = density * radius * radius * M_PI * length;
-
-            // density = mass/ (width*width*M_PI*(length+width));
-            if (geomType == "MyFoot3")
-                pNode->body.AddGeometry(new MyFoot3(radius, length));
-            else
-                pNode->body.AddGeometry(new MyFoot4(radius, length));
-            pNode->body.SetInertia(CylinderInertia(density, radius,length));
-        }
-        else
-        {
+		    // density = mass/ (width*width*M_PI*(length+width));
+		    if (geomType == "MyFoot3")
+		        pNode->body.AddGeometry(new MyFoot3(radius, length));
+		    else
+		        pNode->body.AddGeometry(new MyFoot4(radius, length));
+		    pNode->body.SetInertia(CylinderInertia(density, radius,length));
+		}
+		else
+		{
             scalar length;
             if( cfgNode.attr("length") != object() )
                 length = XD(cfgNode.attr("length")) * XD(cfgNode.attr("boneRatio"));
@@ -158,277 +144,280 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
                     width = .1;
                 height = width;
             }
-            pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)));
-            pNode->body.SetInertia(BoxInertia(density, Vec3(width/2.,height/2.,length/2.)));
-        }
+			pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)));
+			pNode->body.SetInertia(BoxInertia(density, Vec3(width/2.,height/2.,length/2.)));
+            '''
 
-//      pNode->body.SetInertia(BoxInertia(density, Vec3(width,height,length)));
-        //pNode->body.SetInertia(BoxInertia(density, Vec3(width/2.,height/2.,length/2.)));
+            geomType = cfgNode.geom
+            if (geomType == "MyFoot3") or (geomType == "MyFoot4"):
+                radius = .05
+                if cfgNode.width is not None:
+                    radius = cfgNode.width
+                length = Norm(offset) + 2*radius
+                density = cfgNode.density
+                mass = 1.
+                if cfgNode.mass is not None:
+                    mass = cfgNode.mass
+                    density = mass/(radius*radius*M_PI*length)
+                else
+                    mass = density * radius *radius * M_PI * length
 
-        boneT = boneT * SE3(pyVec3_2_Vec3(cfgNode.attr("offset")));
-        _boneTs[joint_index] = boneT;
-        SE3 newT = T * boneT;
+                if geomType == "MyFoot3":
+                    pNode.body.AddGeometry(MyFoot3(radius, length))
+                else:
+                    pNode.body.AddGeometry(MyFoot4(radius, length))
+                pNode.body.SetInertia(CylinderInertia(density, radius, length))
 
-        pNode->body.SetFrame(newT);
+            else:
+                length = 1.
+                if cfgNode.length is not None:
+                    length = cfgNode.length * cfgNode.boneRatio
+                else:
+                    length = Norm(offset) * cfgNode.boneRatio
 
-        _id2index[pNode->body.GetID()] = joint_index;
-    }
+                density = cfgNode.density
+                width = .1
+                height = .1
 
-    for( int i=0 ; i<len_joint_children; ++i)
-        _createBody(joint.attr("children")[i], T, posture);
-}
+                if cfgNode.width is not None:
+                    width = cfgNode.width
+                    if cfgNode.mass is not None:
+                        height = cfgNode.mass / (density*length*width)
+                    else:
+                        height = .1
+                else:
+                    if cfgNode.mass is not None:
+                        width = math.sqrt(cfgNode.mass/(density*length))
+                    else:
+                        width = .1
+                    height = width
 
-//int VpModel::getParentIndex( int index )
-//{
-//  object parent = _skeleton.attr("getParentJointIndex")(index);
-//  if(parent==object())
-//      return -1;
-//  else
-//      return XI(parent);
-//}
+                pNode.body.AddGeometry(vpBox(Vec3(width, height, length)))
+                pNode.body.SetInertia(BoxInertia(density, Vec3(width/2., height/2., length/2.)))
 
-std::string VpModel::__str__()
-{
-    stringstream ss;
-//  ss << "<NODES>" << endl;
-//  for(int i=0; i<_nodes.size(); ++i)
-//  {
-//      ss << "[" << i << "]:";
-////        if(_nodes[i]==NULL)
-////            ss << "NULL, ";
-////        else
-//          ss << _nodes[i]->name << ", ";
-//  }
-//  ss << endl;
+            boneT = boneT * SE3(cfgNode.offset)
+            self._boneTs[joint_index] = boneT
+            newT = T * boneT
+
+            pNode.body.SetFrame(newT)
+            self._id2index[pNode.body.GetID()] = joint_index
+
+        for i in range(len_joint_children):
+            self._createBody(joint.children[i], T, posture)
+
+    def __str__(self):
+        '''
+//	ss << "<NODES>" << endl;
+//	for(int i=0; i<_nodes.size(); ++i)
+//	{
+      //		ss << "[" << i << "]:";
+////		if(_nodes[i]==NULL)
+        ////			ss << "NULL, ";
+////		else
+//			ss << _nodes[i]->name << ", ";
+//	}
+//	ss << endl;
 //
-//  ss << "<BODIES INDEX:(NODE INDEX) NODE NAME>\n";
-//  for(int i=0; i<_bodyElementIndexes.size(); ++i)
-//      ss << "[" << i << "]:(" << _bodyElementIndexes[i] << ") " << _nodes[_bodyElementIndexes[i]]->name << ", ";
-//  ss << endl;
+//	ss << "<BODIES INDEX:(NODE INDEX) NODE NAME>\n";
+//	for(int i=0; i<_bodyElementIndexes.size(); ++i)
+//		ss << "[" << i << "]:(" << _bodyElementIndexes[i] << ") " << _nodes[_bodyElementIndexes[i]]->name << ", ";
+//	ss << endl;
 
-    ss << "<BODIES (,JOINTS)>" << endl;
-    for(int i=0; i<_nodes.size(); ++i)
-        ss << "[" << i << "]:" << _nodes[i]->name << ", ";
-    ss << endl;
+        '''
+        strstr = "<BODIES (,JOINTS)>"
+        for i in range(len(self._nodes)):
+            strstr += "[" + str(i) + "]" + self._nodes[i].name + ", \n"
+        strstr += "\n"
+        strstr = "<BODY MASSES>"
+        for i in range(len(self._nodes)):
+            strstr += "[" + str(i) + "]" + str(self._nodes[i].body.GetInertia().GetMass()) + ", \n"
+        strstr += "\n"
+        '''
+//	ss << "<BODY INERTIAS>" << endl;
+//	ss << "I11 I22 I33 I12 I13 I23 offset.x offset.y offset.z mass" << endl;
+//	for(int i=0; i<_nodes.size(); ++i)
+//		if(_nodes[i])
+    //		{
+              //			ss << "[" << i << "]:";
+//			for(int j=0; j<10; ++j)
+//				ss << _nodes[i]->body.GetInertia()[j] << " ";
+//			ss << endl;
+//		}
+//	ss << endl;
+        '''
+        return strstr
 
-    ss << "<BODY MASSES>" << endl;
-    for(int i=0; i<_nodes.size(); ++i)
-//      if(_nodes[i])
-            ss << "[" << i << "]:" << _nodes[i]->body.GetInertia().GetMass() << ", ";
-    ss << endl;
+    def getBodyMasses(self):
+        ls = []
+        for i in range(len(self._nodes)):
+            ls.append(self._nodes[i].body.GetInertia().GetMass())
+        return ls
 
-//  ss << "<BODY INERTIAS>" << endl;
-//  ss << "I11 I22 I33 I12 I13 I23 offset.x offset.y offset.z mass" << endl;
-//  for(int i=0; i<_nodes.size(); ++i)
-//      if(_nodes[i])
-//      {
-//          ss << "[" << i << "]:";
-//          for(int j=0; j<10; ++j)
-//              ss << _nodes[i]->body.GetInertia()[j] << " ";
-//          ss << endl;
-//      }
-//  ss << endl;
+    def getTotalMass(self):
+        mass = 0.
+        for i in range(len(self._nodes)):
+            mass += self._nodes[i].body.GetInertia().GetMass()
 
-    return ss.str();
-}
+    def getBodyShape(self, index):
+        _type = 'C'
+        data = [0., 0., 0.]
+        self._nodes[index].body.GetGeometry(0).GetShape(_type, data)
+        return data
 
-bp::list VpModel::getBodyMasses()
+    def getBodyVerticesPositionGlobal(self, index):
+        _type = 'C'
+        ls_point = []
+        data = [0., 0., 0.]
+        pGeom = self._nodes[index].body.GetGeometry(0)
+        #TODO:
+        #check if GetShape work well
+        pGeom.GetShape(_type, data)
+        geomFrame = pGeom.GetGlobalFrame()
+
+        for i in range(8):
+            #TODO:
+            # point[0] =
+            point = geomFrame * Vec3(point[0], point[1], point[2])
+
+            ls_point.append(point)
+
+        return ls_point
+
+    def getBodyInertiaLocal(self, index):
+        iner = self._nodes[index].body.GetInertia()
+        # Tin = SE3()
+        Tin = np.zeros((3,3))
+
+        Tin[0, 0] = iner[0]
+        Tin[1, 1] = iner[1]
+        Tin[2, 2] = iner[2]
+        Tin[0, 1] = Tin[1, 0] = iner[3]
+        Tin[0, 2] = Tin[2, 0] = iner[4]
+        Tin[1, 2] = Tin[2, 1] = iner[5]
+
+        return Tin
+
+    def getBodyInertiaGlobal(self, index):
+        Tin = SE3()
+        iner = self._nodes[index].body.GetInertia()
+        Tin[0] = iner[0]
+        Tin[4] = iner[1]
+        Tin[8] = iner[2]
+        Tin[3] = Tin[1] = iner[3]
+        Tin[6] = Tin[2] = iner[4]
+        Tin[7] = Tin[5] = iner[5]
+        bodyFrame = self._nodes.body.GetFrame()
+        return bodyFrame * Tin * Inv(bodyFrame)
+
+    def getBodyInertiasLocal(self):
+        ls = []
+        for i in range(len(self._nodes)):
+            ls.append(self.getBodyInertiaLocal(i))
+
+        return ls
+
+    def getBodyInertiasGlobal(self):
+        ls = []
+        for i in range(len(self._nodes)):
+            ls.append(self.getBodyInertiaGlobal(i))
+
+        return ls
+
+    def getCOM(self):
+        com = Vec3(0., 0., 0.)
+        for i in range(len(self._nodes)):
+            com += self._nodes[i].body.GetInertia().GetMass() * self._nodes[i].body.GetFrame().GetPosition()
+        com *= 1./self.getTotalMass()
+
+        return com
+
+    def getBodyPositionGlobal(self, index, pPositionLocal=None):
+        bodyFrame = self._nodes[index].body.GetFrame()
+        if pPositionLocal is None:
+            return bodyFrame.GetPosition()
+        return bodyFrame * pPositionLocal
+
+object VpModel::getBodyOrientationGlobal(int index)
 {
-    bp::list ls;
-    for(int i=0; i<_nodes.size(); ++i)
-        ls.append(_nodes[i]->body.GetInertia().GetMass());
-    return ls;
+    numeric::array I(make_tuple(make_tuple(1., 0., 0.), make_tuple(0., 1., 0.), make_tuple(0., 0., 1.)));
+SE3 bodyFrame;
+object pyR = I.copy();
+
+bodyFrame = _nodes[index]->body.GetFrame();
+SE3_2_pySO3(bodyFrame, pyR);
+return pyR;
 }
 
-scalar VpModel::getTotalMass()
+    def getBodyVelocityGlobal(self, index, positionLocal=None):
+        if positionLocal is None:
+            return self._nodes[index].body.GetLinVelocity(Vec3(0., 0., 0.))
+        return self._nodes[index].body.GetLinVelocity(positionLocal)
+
+        '''
+        //	static se3 genAccLocal, genAccGlobal;
+        //	genAccLocal = _nodes[index]->body.GetGenVelocityLocal();
+        //	genAccLocal = MinusLinearAd(positionLocal, genAccLocal);
+        //	genAccGlobal = Rotate(_nodes[index]->body.GetFrame(), genAccLocal);
+        //	return Vec3(genAccGlobal[3], genAccGlobal[4], genAccGlobal[5]);
+        '''
+
+    def getBodyVelocitiesGlobal(self):
+        ls = []
+        for i in range(len(self._nodes)):
+            ls.append(self.getBodyVelocityGlobal(i))
+        return ls
+
+    def getBodyAngVelocityGlobal(self, index):
+        # se3 genVel;
+        pyV = Vec3(0., 0., 0.)
+        genVel = self._nodes[index].body.GetGenVelocity()
+        pyV[0] = genVel[0]
+        pyV[1] = genVel[1]
+        pyV[2] = genVel[2]
+        return pyV
+
+    def getBodyAngVelocitiesGlobal(self):
+        ls = []
+        for i in range(len(self._nodes)):
+            ls.append(self.getBodyVelocityGlobal(i))
+        return ls
+
+bp::list VpModel::getBodyAccelerationsGlobal()
 {
-    scalar mass = 0.;
-    for(int i=0; i<_nodes.size(); ++i)
-        mass += _nodes[i]->body.GetInertia().GetMass();
-    return mass;
+bp::list ls;
+for(int i=0; i<_nodes.size(); ++i)
+ls.append(getBodyAccelerationGlobal_py(i));
+return ls;
 }
 
-object VpModel::getBodyShape(int index)
-{
-    numeric::array O(make_tuple(0.,0.,0.));
-    char type;
-    scalar data[3];
+    def getBodyAccelerationGlobal(self, index, pPositionLocal=None):
+        # se3 genAccLocal, genAccGlobal
+        genAccLocal = self._nodes[index].body.GetGenAccelerationLocal()
+        if pPositionLocal is not None:
+            genAccLocal = MinusLinearAd(pPositionLocal, genAccLocal)
 
-    _nodes[index]->body.GetGeometry(0)->GetShape(&type, data);
+        genAccGlobal = Rotate(self._nodes[index].body.GetFrame(), genAccLocal)
 
-    object pyV = O.copy();
-    pyV[0] = data[0];
-    pyV[1] = data[1];
-    pyV[2] = data[2];
+        return Vec3(genAccGlobal[3], genAccGlobal[4], genAccGlobal[5])
 
-    return pyV;
-}
+    def setBodyPositionGlobal(self, index, position):
+        # SE3 bodyFrame;
+        bodyFrame = self._nodes[index].body.GetFrame()
+        bodyFrame.SetPosition(position)
+        self._nodes[index].body.SetFrame(bodyFrame)
 
-bp::list VpModel::getBodyVerticesPositionGlobal(int index)
-{
-    numeric::array O(make_tuple(0.,0.,0.));
+    def setBodyAccelerationGlobal(self, index, acc, pPositionLocal=None):
+        if pPositionLocal is not None:
+            print "setBodyAccelerationGloba: not implemented pPositionLocal yet."
 
-    const vpGeom *pGeom;
-    char type;
-    scalar data[3];
+        # se3 genAcc;
+        genAcc = self._nodes[index].body.GetGenAcceleration()
+        genAcc[3] = acc[0]
+        genAcc[4] = acc[1]
+        genAcc[5] = acc[2]
 
-    bp::list ls_point;
+        self._nodes[index].body.SetGenAcceleration(genAcc)
 
-    pGeom = _nodes[index]->body.GetGeometry(0);
-    pGeom->GetShape(&type, data);
-    const SE3& geomFrame = pGeom->GetGlobalFrame();
-
-    Vec3 point;
-    for( int p=0; p<8; ++p)
-    {
-        point[0] = (p & MAX_X) ? data[0]/2. : -data[0]/2.;
-        point[1] = (p & MAX_Y) ? data[1]/2. : -data[1]/2.;
-        point[2] = (p & MAX_Z) ? data[2]/2. : -data[2]/2.;
-        point = geomFrame * point;
-
-        object pyV = O.copy();
-        Vec3_2_pyVec3(point, pyV);
-        ls_point.append(pyV);
-    }
-    return ls_point;
-}
-
-//bp::list VpModel::getBodyPoints()
-//{
-//  bp::list ls;
-//  char type;
-//  scalar data[3];
-//
-//  const vpGeom *pGeom;
-//
-//  for(int i=0; i<_nodes.size(); ++i)
-//      if(_nodes[i])
-//      {
-//          bp::list ls_point;
-//          for( int j=0; j<_nodes[i]->body.GetNumGeometry(); ++j)
-//          {
-//              pGeom = _nodes[i]->body.GetGeometry(j);
-//              pGeom->GetShape(&type, data);
-//              const SE3& geomFrame = pGeom->GetGlobalFrame();
-//
-//              Vec3 point;
-//              for( int p=0; p<8; ++p)
-//              {
-//                  point[0] = (p & MAX_X) ? data[0]/2. : -data[0]/2.;
-//                  point[1] = (p & MAX_Y) ? data[1]/2. : -data[1]/2.;
-//                  point[2] = (p & MAX_Z) ? data[2]/2. : -data[2]/2.;
-//                  point = geomFrame * point;
-//
-//                  object pyV = _O_Vec3->copy();
-//                  Vec3_2_pyVec3(point, pyV);
-//                  ls_point.append(pyV);
-//              }
-//          }
-//          ls.append(ls_point);
-//      }
-//  return ls;
-//}
-
-//bp::list VpModel::getBodyShapes()
-//{
-//  bp::list ls;
-//  char type;
-//  scalar data[3];
-//
-//  for(int i=0; i<_nodes.size(); ++i)
-//      if(_nodes[i])
-//      {
-//          bp::list ls_geom;
-//          for( int j=0; j<_nodes[i]->body.GetNumGeometry(); ++j)
-//          {
-//              _nodes[i]->body.GetGeometry(j)->GetShape(&type, data);
-//              ls_geom.append(make_tuple(data[0], data[1], data[2]));
-//          }
-//          ls.append(ls_geom);
-//      }
-//  return ls;
-//}
-
-void VpModel::getBodyInertiaLocal(int index, SE3& Tin)
-{
-//  if(!_nodes[index]) return;
-
-//  ss << "I11 I22 I33 I12 I13 I23 offset.x offset.y offset.z mass" << endl;
-
-//  pyIn[make_tuple(0,0)] = in[0];
-//  pyIn[make_tuple(1,1)] = in[1];
-//  pyIn[make_tuple(2,2)] = in[2];
-//  pyIn[make_tuple(0,1)] = pyIn[make_tuple(1,0)] = in[3];
-//  pyIn[make_tuple(0,2)] = pyIn[make_tuple(2,0)] = in[4];
-//  pyIn[make_tuple(1,2)] = pyIn[make_tuple(2,1)] = in[5];
-    
-//      | T[0]  T[3]    T[6]    T[ 9] |
-//      | T[1]  T[4]    T[7]    T[10] |
-//      | T[2]  T[5]    T[8]    T[11] |
-
-    const Inertia& in = _nodes[index]->body.GetInertia();
-
-    Tin[0] = in[0];
-    Tin[4] = in[1];
-    Tin[8] = in[2];
-    Tin[3] = Tin[1] = in[3];
-    Tin[6] = Tin[2] = in[4];
-    Tin[7] = Tin[5] = in[5];
-}
-
-boost::python::object VpModel::getBodyInertiaLocal_py( int index )
-{
-    numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
-    SE3 Tin;
-    object pyIn = I.copy();
-
-    getBodyInertiaLocal(index, Tin);
-    SE3_2_pySO3(Tin, pyIn);
-    return pyIn;
-}
-
-boost::python::object VpModel::getBodyInertiaGlobal_py( int index )
-{
-    numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
-    SE3 Tin_local, bodyFrame;
-    object pyIn = I.copy();
-
-    getBodyInertiaLocal(index, Tin_local);
-    bodyFrame = _nodes[index]->body.GetFrame();
-    SE3_2_pySO3(bodyFrame * Tin_local * Inv(bodyFrame), pyIn);
-    return pyIn;
-    
-}
-
-bp::list VpModel::getBodyInertiasLocal()
-{
-    bp::list ls;
-    for(int i=0; i<_nodes.size(); ++i)
-        ls.append(getBodyInertiaLocal_py(i));
-    return ls;
-}
-
-bp::list VpModel::getBodyInertiasGlobal()
-{
-    bp::list ls;
-    for(int i=0; i<_nodes.size(); ++i)
-        ls.append(getBodyInertiaGlobal_py(i));
-    return ls;
-}
-
-object VpModel::getCOM()
-{
-    object pyV;
-    make_pyVec3(pyV);
-    Vec3 com(0., 0., 0.);
-    for(int i=0; i<_nodes.size(); ++i)
-        com += _nodes[i]->body.GetInertia().GetMass() * _nodes[i]->body.GetFrame().GetPosition();
-    com *= 1./getTotalMass();
-
-    Vec3_2_pyVec3(com, pyV);
-    return pyV;
-
-}
 
 object VpModel::getBodyPositionGlobal_py( int index, const object& positionLocal/*=object() */ )
 {

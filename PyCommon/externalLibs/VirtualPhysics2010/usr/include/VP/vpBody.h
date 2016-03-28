@@ -255,7 +255,7 @@ public:
 	/*!
 		generate a display list
 	*/
-	void					 GenerateDisplayList(bool);
+	// void					 GenerateDisplayList(bool);
 
 	/*!
 		get a sum of all forces applied to the body including gravity
@@ -303,13 +303,13 @@ public:
 		Apply gravity for the body.
 		\sa vpWorld::SetGravity
 	*/
-	void					 ApplyGravity(bool flag = true);
+	// void					 ApplyGravity(bool flag = true);
 
 	/*!
 		return wheter the gravity is applied to the body
 		\sa vpBody::ApplyGravity
 	*/
-	bool					 IsApplyingGravity(void) const;
+	// bool					 IsApplyingGravity(void) const;
 	
 	/*!
 		return the world including with the body
