@@ -100,7 +100,7 @@ namespace VP
 		DYNAMIC				/*!< find acceleration for a given torque */
 	};
 
-	void SetLogFileName(const char *);
+	//void SetLogFileName(const char *);
 	void LogInfo(const char *, ...);
 }
 

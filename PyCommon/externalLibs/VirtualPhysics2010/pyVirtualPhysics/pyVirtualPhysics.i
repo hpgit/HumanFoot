@@ -31,11 +31,9 @@ import_array(); // This is essential. We will get a crash in Python without it.
 #include <VP/vpSystem.h>
 #include <VP/vpWorld.h>
 #include <VP/vpTimer.h>
+#include <VP/vpDataType.h>
 %}
 
-typedef  double scalar;
-typedef Inertia SpatialSpring;
-typedef Inertia SpatialDamper;
 %include <VP/LieGroup.h>
 %include <VP/vpMaterial.h>
 %include <VP/vpGeom.h>
@@ -52,6 +50,7 @@ typedef Inertia SpatialDamper;
 %include <VP/vpSystem.h>
 %include <VP/vpWorld.h>
 %include <VP/vpTimer.h>
+%include <VP/vpDataType.h>
 %extend Axis{
 	scalar __getitem__(int idx)
 	{

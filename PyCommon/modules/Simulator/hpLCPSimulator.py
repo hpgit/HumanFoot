@@ -38,7 +38,7 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
     DOFs = model.getDOFs()
     Jic = yjc.makeEmptyJacobian(DOFs, 1)
     jointPositions = model.getJointPositionsGlobal()
-    jointAxeses = model.getDOFAxesesLocal()
+    jointAxeses = model.getDOFAxeses()
 
     for vpidx in range(len(cVpBodyIds)):
         bodyidx = model.id2index(cVpBodyIds[vpidx])

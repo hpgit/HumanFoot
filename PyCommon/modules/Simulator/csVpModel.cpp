@@ -1454,7 +1454,8 @@ bp::list VpControlModel::getDOFAxesesLocal()
 	rootAxeses[4] = rootAxes[1];
 	rootAxeses[5] = rootAxes[2];
 
-	bp::list ls = getInternalJointOrientationsGlobal();
+//	bp::list ls = getInternalJointOrientationsGlobal();
+	bp::list ls = getInternalJointOrientationsLocal();
 	for(int i=0; i<len(ls); ++i)
 	{
 		numeric::array lsTmp = (numeric::array)ls[i];
@@ -1634,7 +1635,7 @@ boost::python::object VpControlModel::getJointFrame( int index )
 {
 	numeric::array frame( make_tuple(make_tuple(1.,0.,0.,0.), make_tuple(0.,1.,0.,0.), make_tuple(0.,0.,1.,0.), make_tuple(0.,0.,0.,1.)) );
 	
-	SE3 T = _nodes[index]->body.GetFrame() * Inv(_boneTs[0]);
+	SE3 T = _nodes[index]->body.GetFrame() * Inv(_boneTs[index]);
 	SE3_2_pySE3(T, frame);
 	return frame;
 }
