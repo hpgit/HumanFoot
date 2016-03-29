@@ -12,7 +12,7 @@ data_dir = pydart.misc.example_data_dir(__file__)
 print('data_dir = ' + data_dir)
 
 # world = pydart.create_world(1.0 / 2000.0, data_dir + '/skel/fullbody1.skel')
-world = pydart.create_world(1.0 / 2000.0, '../data/skel/fullbody1.skel')
+world = pydart.create_world(1.0 / 2000.0, '../data/skel/fullbody2.skel')
 # world = pydart.create_world(1.0 / 2000.0,
 #                             data_dir + '/skel/soft_fullbody.skel')
 print('pydart create_world OK')
