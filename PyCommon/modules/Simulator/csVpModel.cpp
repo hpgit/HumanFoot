@@ -265,6 +265,9 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 #endif
 			boneT = boneT * boneR;
 
+		std::cout << "offset: "<< offset <<std::endl;
+		std::cout << "boneR: " <<boneR << std::endl;
+
 		Node* pNode = new Node(joint_name);
 		_nodes[joint_index] = pNode;
 
@@ -388,6 +391,7 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 		boneT = boneT * SE3(pyVec3_2_Vec3(cfgNode.attr("offset")));
 		_boneTs[joint_index] = boneT;
 		SE3 newT = T * boneT;
+		std::cout << joint_name << "\n" << boneT << "\n" << newT << std::endl;
 
 		pNode->body.SetFrame(newT);
 

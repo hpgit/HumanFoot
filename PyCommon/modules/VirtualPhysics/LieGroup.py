@@ -83,7 +83,8 @@ class SO3(np.ndarray):
         elif isinstance(other, Axis):
             return Axis(np.dot(self, other))
         else:
-            super(SO3, self).__mul__(other)
+            return np.dot(self, other)
+            # return super(SO3, self).__mul__(other)
 
     def FromAngleAxis(self, v):
         pass
@@ -109,22 +110,22 @@ class SE3(np.ndarray):
             obj = np.asarray(np.eye(4, 4)).view(cls)
             return obj
         elif len(args) == 1:
-            if len(args[0]) == 3:
-                T = np.eye(4,4)
-                T[0, 3] = args[0][0]
-                T[1, 3] = args[0][1]
-                T[2, 3] = args[0][2]
-                obj = np.asarray(T).view(cls)
-                return obj
-            elif (args[0].shape is not None) and (len(args[0].shape) == 2):
+            if (args[0].shape is not None) and (len(args[0].shape) == 2):
                 if (args[0].shape[0] == 4) and (args[0].shape[1] == 4) :
                     obj = np.asarray(args[0]).view(cls)
                     return obj
                 elif (args[0].shape[0] == 3) and (args[0].shape[1] == 3) :
                     T = np.eye(4)
                     T[0:3, 0:3] = np.array(args)
-                    obj = np.asarray(args[0]).view(cls)
+                    obj = np.asarray(T).view(cls)
                     return obj
+            elif len(args[0]) == 3:
+                T = np.eye(4,4)
+                T[0, 3] = args[0][0]
+                T[1, 3] = args[0][1]
+                T[2, 3] = args[0][2]
+                obj = np.asarray(T).view(cls)
+                return obj
 
             raise DimNotSupportedError
 
@@ -149,8 +150,13 @@ class SE3(np.ndarray):
             return Vec3(np.dot(self[0:3, 0:3], other)) + Vec3(self[0:3, 3])
         elif isinstance(other, Axis):
             return Axis(np.dot(self[0:3, 0:3], other))
+        elif isinstance(other, SO3):
+            return np.dot(self, SE3(other))
+            # return super(SE3, self).__mul__(SE3(other))
         else:
-            super(SE3, self).__mul__(other)
+            return np.dot(self, other)
+            # return super(SE3, self).__mul__(other)
+
 
     def GetPosition(self):
         return self.GetVec3()

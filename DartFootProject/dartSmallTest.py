@@ -2,6 +2,8 @@ import sys
 import pydart
 import numpy as np
 # import controller
+import pydart.skeleton as dskel
+
 print('Example: bipedStand')
 
 
@@ -18,6 +20,8 @@ world = pydart.create_world(1.0 / 2000.0, '../data/skel/fullbody2.skel')
 print('pydart create_world OK')
 
 skel = world.skels[1]
+print skel.num_bodies()
+
 
 # Initialize the pose. q is an instance of SkelVector.
 q = skel.q

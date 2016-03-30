@@ -13,10 +13,10 @@ p5
 (dp6
 S'rotateX'
 p7
-F-0.36651914291880927
+F-0.174532925199433
 sS'rotateY'
 p8
-F-1.3613568165555763
+F-1.2042771838760864
 sS'center'
 p9
 cnumpy.core.multiarray
