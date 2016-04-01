@@ -262,11 +262,11 @@ class Callback:
         wTorque = math.pow(2., getVal('tau weight'))
 
         # tracking
-        th_r = motion.getDOFPositions(0)
+        th_r = motion.getDOFPositions(frame)
         th = controlModel.getDOFPositions()
-        dth_r = motion.getDOFVelocities(0)
+        dth_r = motion.getDOFVelocities(frame)
         dth = controlModel.getDOFVelocities()
-        ddth_r = motion.getDOFAccelerations(0)
+        ddth_r = motion.getDOFAccelerations(frame)
         weightMapTuple = config['weightMapTuple']
         weightMapTuple = None
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMapTuple)
@@ -310,7 +310,7 @@ class Callback:
             # totalForceImpulse = stepsPerFrame * totalForce
             cBodyIDsControl, cPositionsControl, cPositionLocalsControl, cForcesControl, torques \
                 = hls.calcLCPbasicControl(
-            motion, vpWorld, controlModel, bodyIDsToCheck, .1, totalForce, wForce, wTorque, ddth_des_flat)
+            motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wForce, wTorque, ddth_des_flat)
             # if cForces is not None:
             #     print "control: ", sum(cForces)
 
@@ -332,9 +332,9 @@ class Callback:
             del cPositionsReal[:]
             del cPositionLocalsReal[:]
             del cForcesReal[:]
-            if i%5 == 0:
+            if i % 5 == 0:
                 cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
-                    = hls.calcLCPForcesIter(motion, vpWorld, controlModel, bodyIDsToCheck, .1, torques, solver='qp')
+                    = hls.calcLCPForcesIter(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques, solver='qp')
             cVpBodyIds, cVpPositions, cVpPositionsLocal, cVpVelocities = vpWorld.getContactPoints(bodyIDsToCheck)
 
             for jj in range(len(cBodyIDs)):

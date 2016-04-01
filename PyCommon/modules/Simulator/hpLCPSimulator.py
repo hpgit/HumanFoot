@@ -161,7 +161,7 @@ def getLCPMatrix(world, model, invM, invMc, mu, tau, contactNum, contactPosition
         if abs(contactPositions[i][1]) > penDepth:
             bPenDepth[i] = contactPositions[i][1] + penDepth
 
-    b1 = JTN.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau) + 0.1 * invh * bPenDepth
+    b1 = JTN.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau) + 0.2 * invh * bPenDepth
     b2 = JTD.T.dot(qdot_0 - h*invMc) + h*temp_DM.dot(tau)
     b3 = np.zeros(mus.shape[0])
     b = np.hstack((np.hstack((b1, b2)), b3)) * factor
@@ -358,8 +358,7 @@ def calcLCPForcesIter(motion, world, model, bodyIDsToCheck, mu, tau=None, numFri
             solution = cvxSolvers.qp(Aqp, bqp, Gqp, hqp)
             xqp = np.array(solution['x']).flatten()
             x = xqp.copy()
-            print x
-
+            # print x
         except Exception, e:
             # print e
             pass
@@ -415,7 +414,6 @@ def calcLCPForcesIter(motion, world, model, bodyIDsToCheck, mu, tau=None, numFri
             xqp2 = np.array(solution2['x']).flatten()
             x2 = xqp2.copy()
 
-
         except Exception, e:
             # print e
             pass
@@ -434,7 +432,7 @@ def calcLCPForcesIter(motion, world, model, bodyIDsToCheck, mu, tau=None, numFri
             x_final.append(x2[jj])
             jj += 1
 
-    print x_final
+    # print x_final
 
     normalForce = np.array(x_final[:contactNum])
     tangenForce = np.array(x_final[contactNum:contactNum + numFrictionBases*contactNum])

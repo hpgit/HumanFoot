@@ -253,7 +253,7 @@ class Callback:
         wcfg.timeStep = 1 / (30. * simulSpeedInv * stepsPerFrame)
         vpWorld.SetTimeStep(wcfg.timeStep)
 
-        # Dt = 2. * (Kt**.5)
+        # Dt = 2. * (Kt**.5)/10.
         Dt = 0.
         # controlModel.SetJointsDamping(damp)
         controlModel.SetJointsDamping(1.)
@@ -262,11 +262,11 @@ class Callback:
         wTorque = math.pow(2., getVal('tau weight'))
 
         # tracking
-        th_r = motion.getDOFPositions(0)
+        th_r = motion.getDOFPositions(frame)
         th = controlModel.getDOFPositions()
-        dth_r = motion.getDOFVelocities(0)
+        dth_r = motion.getDOFVelocities(frame)
         dth = controlModel.getDOFVelocities()
-        ddth_r = motion.getDOFAccelerations(0)
+        ddth_r = motion.getDOFAccelerations(frame)
         weightMapTuple = config['weightMapTuple']
         weightMapTuple = None
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMapTuple)
@@ -306,7 +306,7 @@ class Callback:
         cForcesControl = None
 
         # if desForceFrame[0] <= frame <= desForceFrame[1]:
-        if False:
+        if True:
             # totalForceImpulse = stepsPerFrame * totalForce
             cBodyIDsControl, cPositionsControl, cPositionLocalsControl, cForcesControl, torques \
                 = hls.calcLCPbasicControl(
@@ -323,11 +323,11 @@ class Callback:
             torques = ddth_des_flat
 
         for i in range(int(stepsPerFrame)):
-            if i%5 == 0:
+            if i % 5 == 0:
                 cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
                     = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques, solver='qp')
 
-            if i%5 == 0 and len(cBodyIDs) > 0:
+            if i % 5 == 0 and len(cBodyIDs) > 0:
                 # apply contact forces
                 if False and not torque_None:
                     vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForcesControl)
