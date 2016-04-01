@@ -254,14 +254,17 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 
 		SE3 boneT(offset*.5);
 #ifdef QP
-		if(!joint_name.compare("Hips"))
+		// if(!joint_name.compare("Hips"))
+		if(joint.attr("parent") == object())
+
 			boneT=SE3();
 #endif
 		Vec3 defaultBoneV(0,0,1);
 		SE3 boneR = getSE3FromVectors(defaultBoneV, offset);
 
 #ifdef QP
-		if(joint_name.compare("Hips"))
+		// if(joint_name.compare("Hips"))
+		if(joint.attr("parent") != object())
 #endif
 			boneT = boneT * boneR;
 

@@ -104,6 +104,7 @@ class SO3(np.ndarray):
     def RotZ(self, angle):
         return SO3(np.array([[m.cos(angle), -m.sin(angle), 0.], [m.sin(angle), -m.sin(angle), 0.], [0., 0., 1.]]))
 
+
 class SE3(np.ndarray):
     def __new__(cls, *args):
         if len(args) == 0:

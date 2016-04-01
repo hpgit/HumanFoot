@@ -4,7 +4,7 @@ import numpy as np
 # import controller
 import pydart.skeleton as dskel
 
-print('Example: bipedStand')
+print('Example: SimpleJump')
 
 
 pydart.init()
@@ -14,16 +14,18 @@ data_dir = pydart.misc.example_data_dir(__file__)
 print('data_dir = ' + data_dir)
 
 # world = pydart.create_world(1.0 / 2000.0, data_dir + '/skel/fullbody1.skel')
-world = pydart.create_world(1.0 / 2000.0, '../data/skel/fullbody2.skel')
+# world = pydart.create_world(1.0 / 2000.0, '../data/skel/fullbody2.skel')
+world = pydart.create_world(1.0 / 2000.0, 'test.skel')
 # world = pydart.create_world(1.0 / 2000.0,
 #                             data_dir + '/skel/soft_fullbody.skel')
 print('pydart create_world OK')
 
 skel = world.skels[1]
-print skel.num_bodies()
+print (skel.num_bodies())
 
 
 # Initialize the pose. q is an instance of SkelVector.
+'''
 q = skel.q
 q["j_pelvis_pos_y"] = -0.05
 q["j_pelvis_rot_y"] = -0.2
@@ -31,6 +33,11 @@ q["j_thigh_left_z", "j_shin_left", "j_heel_left_1"] = 0.15, -0.4, 0.25
 q["j_thigh_right_z", "j_shin_right", "j_heel_right_1"] = 0.15, -0.4, 0.25
 q["j_abdomen_2"] = 0.0
 skel.set_positions(q)
+'''
+
+# q = skel.q
+# q["j_root_pos_y"] = 100.0
+
 print('skeleton position OK')
 
 # Initialize the controller

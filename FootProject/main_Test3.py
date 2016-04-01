@@ -112,8 +112,8 @@ def init():
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_chiken_foot()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('fastswim.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot_2('simpleJump_2.bvh')
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_capsule('simpleJump_onebody.bvh')
     motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
+    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_leg('kneeAndFoot.bvh')
     mcfg_motion = mit.normal_mcfg()
 
     vpWorld = cvw.VpWorld(wcfg)
@@ -124,7 +124,7 @@ def init():
     vpWorld.SetGlobalDamping(0.9999)
     # controlModel.initializeHybridDynamics()
     controlModel.initializeForwardDynamics()
-    ModelOffset = np.array([0., .4, 0.])
+    ModelOffset = np.array([0., .5, 0.])
     controlModel.translateByOffset(ModelOffset)
 
     vpWorld.initialize()
@@ -306,15 +306,20 @@ class Callback:
         cForcesControl = None
 
         # if desForceFrame[0] <= frame <= desForceFrame[1]:
-        if False:
+        if True:
             # totalForceImpulse = stepsPerFrame * totalForce
             cBodyIDsControl, cPositionsControl, cPositionLocalsControl, cForcesControl, torques \
                 = hls.calcLCPbasicControl(
-                motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wForce, wTorque, ddth_des_flat)
+            motion, vpWorld, controlModel, bodyIDsToCheck, .1, totalForce, wForce, wTorque, ddth_des_flat)
             # if cForces is not None:
             #     print "control: ", sum(cForces)
 
         timeStamp = None
+
+        cBodyIdsReal = []
+        cPositionsReal = []
+        cPositionLocalsReal = []
+        cForcesReal = []
 
         torque_None = False
 
@@ -323,11 +328,25 @@ class Callback:
             torques = ddth_des_flat
 
         for i in range(int(stepsPerFrame)):
+            del cBodyIdsReal[:]
+            del cPositionsReal[:]
+            del cPositionLocalsReal[:]
+            del cForcesReal[:]
             if i%5 == 0:
                 cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
-                    = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques, solver='qp')
+                    = hls.calcLCPForcesIter(motion, vpWorld, controlModel, bodyIDsToCheck, .1, torques, solver='qp')
+            cVpBodyIds, cVpPositions, cVpPositionsLocal, cVpVelocities = vpWorld.getContactPoints(bodyIDsToCheck)
 
-            if i%5 == 0 and len(cBodyIDs) > 0:
+            for jj in range(len(cBodyIDs)):
+                for kk in range(len(cVpBodyIds)):
+                    if cBodyIDs[jj] == cVpBodyIds[kk]:
+                        if np.linalg.norm(cPositionLocals[jj]-cVpPositionsLocal[kk]) < mm.LIE_EPS:
+                            cBodyIdsReal.append(cBodyIDs[jj])
+                            cPositionsReal.append(cPositions[jj])
+                            cPositionLocalsReal.append(cPositionLocals[jj])
+                            cForcesReal.append(cForces[jj])
+
+            if False and len(cBodyIDs) > 0:
                 # apply contact forces
                 if False and not torque_None:
                     vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForcesControl)
@@ -337,6 +356,9 @@ class Callback:
                     simulContactForces += sum(cForces)
                     # simulContactForces += sum(cForces)
 
+            if len(cBodyIdsReal) > 0:
+                vpWorld.applyPenaltyForce(cBodyIdsReal, cPositionLocalsReal, cForcesReal)
+                simulContactForces += sum(cForcesReal)
             ype.nested(torques, torques_nested)
             controlModel.setDOFTorques(torques_nested[1:])
             vpWorld.step()

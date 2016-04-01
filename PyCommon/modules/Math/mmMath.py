@@ -509,6 +509,14 @@ def ZYX2R(euler):
     outSO3[2][2] = cb * cg;
     return outSO3
 
+
+def R2XYZ(R):
+    return np.array((math.atan2(-R[1, 2], R[2, 2]),
+                     math.atan2(R[0, 2], math.sqrt(R[1, 2]*R[1, 2] + R[2, 2]*R[2, 2])),
+                     math.atan2(-R[0, 1], R[0, 0])
+                     ))
+
+
 def getCrossMatrixForm(w):
     W = _O_SO3.copy()
     W[0,1] = -w[2]; W[1,0] = w[2] 
