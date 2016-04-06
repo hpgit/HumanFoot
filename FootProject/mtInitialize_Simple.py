@@ -336,6 +336,10 @@ def create_capsule(motionFile='foot3.bvh'):
     node.length = 1.
     node.mass = .5
 
+    node = mcfg.getNode('foot_0_0')
+    node.geom = 'MyFoot4'
+    node.mass = .5
+
     def mcfgFix(_mcfg):
         for v in _mcfg.nodes.itervalues():
             if len(v.geoms) == 0:

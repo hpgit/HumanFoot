@@ -1,10 +1,10 @@
 (dp1
 S'des force begin'
 p2
-F399
+F2000
 sS'steps per frame'
 p3
-F40
+F1
 sS'PD gain'
 p4
 F10
@@ -13,7 +13,7 @@ p5
 F35
 sS'des force dur'
 p6
-F20
+F5
 sS'normal des force max'
 p7
 F80
@@ -31,5 +31,5 @@ p11
 F80
 sS'1/simul speed'
 p12
-F1
+F40
 s.

@@ -112,8 +112,8 @@ def init():
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_chiken_foot()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('fastswim.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot_2('simpleJump_2.bvh')
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_capsule('simpleJump_onebody.bvh')
-    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
+    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_capsule('simpleJump_onebody.bvh')
+    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
     mcfg_motion = mit.normal_mcfg()
 
     vpWorld = cvw.VpWorld(wcfg)
@@ -124,7 +124,7 @@ def init():
     vpWorld.SetGlobalDamping(0.9999)
     # controlModel.initializeHybridDynamics()
     controlModel.initializeForwardDynamics()
-    ModelOffset = np.array([0., .4, 0.])
+    ModelOffset = np.array([0., .8, 0.])
     controlModel.translateByOffset(ModelOffset)
 
     vpWorld.initialize()
@@ -179,7 +179,7 @@ def init():
     viewer.objectInfoWnd.add1DSlider(
         'des force begin', minVal=0., maxVal=len(motion) - 1, initVal=70., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
-        'des force dur', minVal=0., maxVal=len(motion) - 1, initVal=5., valStep=1.)
+        'des force dur', minVal=1., maxVal=len(motion) - 1, initVal=5., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
         'force weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
     viewer.objectInfoWnd.add1DSlider(
@@ -256,10 +256,15 @@ class Callback:
         # Dt = 2. * (Kt**.5)/10.
         Dt = 0.
         # controlModel.SetJointsDamping(damp)
-        controlModel.SetJointsDamping(1.)
+        controlModel.SetJointsDamping(10.)
 
         wForce = math.pow(2., getVal('force weight'))
         wTorque = math.pow(2., getVal('tau weight'))
+
+        # print(controlModel.getJointOrientationGlobal(0))
+        # print(controlModel.getJointPositionGlobal(0))
+        # print(controlModel.getBodyOrientationGlobal(0))
+        # print(controlModel.getBodyPositionGlobal(0))
 
         # tracking
         th_r = motion.getDOFPositions(frame)
@@ -288,7 +293,6 @@ class Callback:
 
         totalForce = np.array([0., desNormalForce, 0., 0., 0., 0.])
         # totalForce = np.array([50., 150.])
-
 
         torques = None
         ddth_des_flat[0:6] = [0.] * 6
@@ -321,6 +325,8 @@ class Callback:
         if not (desForceFrame[0] <= frame <= desForceFrame[1]) or torques is None:
             torque_None = True
             torques = ddth_des_flat
+        else:
+            torques *= 1.
 
         for i in range(int(stepsPerFrame)):
             if i % 5 == 0:

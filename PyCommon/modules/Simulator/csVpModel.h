@@ -47,6 +47,7 @@ public:
 	Vec3 getBodyVelocityGlobal( int index, const Vec3& positionLocal=Vec3(0.,0.,0.));
 	Vec3 getBodyAccelerationGlobal( int index, const Vec3* pPositionLocal=NULL);
 
+
 	void setBodyPositionGlobal(int index, const Vec3& position);
 	void setBodyAccelerationGlobal( int index, const Vec3& acc, const Vec3* pPositionLocal=NULL);
 
@@ -102,7 +103,11 @@ public:	// expose to python
 	/////////////////////////////////////////////////////////////////
 	// body
 	object getCOM();
-	
+	bp::list getBoneT(int index);
+	bp::list getInvBoneT(int index);
+
+	object getBodyGenVelLocal(int index);
+	object getBodyGenVelGlobal(int index);
 	object getBodyPositionGlobal_py( int index, const object& positionLocal=object() );
 	object getBodyVelocityGlobal_py( int index, const object& positionLocal=object() );
 	object getBodyAccelerationGlobal_py(int index, const object& positionLocal=object() );

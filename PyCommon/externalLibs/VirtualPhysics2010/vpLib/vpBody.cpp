@@ -104,7 +104,7 @@ void vpBody::SetJointFrame(vpJoint *pJ, const SE3 &T)
 {
 	assert((pJ->m_pLeftBody == this || pJ->m_pRightBody == this) && "vpBody::SetJointFrame");
 	if ( pJ->m_pLeftBody == this ) pJ->m_sLeftBodyFrame = T;
-	pJ->m_sRightBodyFrame = T;
+	else pJ->m_sRightBodyFrame = T;
 }
 
 dse3 vpBody::GetForce(void) const

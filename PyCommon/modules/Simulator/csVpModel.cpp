@@ -57,7 +57,11 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getBodyInertiasGlobal", &VpModel::getBodyInertiasGlobal)
 		
 		.def("getCOM", &VpModel::getCOM)
+        .def("getBoneT", &VpModel::getBoneT)
+        .def("getInvBoneT", &VpModel::getInvBoneT)
 
+        .def("getBodyGenVelLocal", &VpModel::getBodyGenVelLocal)
+        .def("getBodyGenVelGlobal", &VpModel::getBodyGenVelGlobal)
 		.def("getBodyPositionGlobal", &VpModel::getBodyPositionGlobal_py, getBodyPositionGlobal_py_overloads())
 		.def("getBodyVelocityGlobal", &VpModel::getBodyVelocityGlobal_py, getBodyVelocityGlobal_py_overloads())
 		.def("getBodyAccelerationGlobal", &VpModel::getBodyAccelerationGlobal_py, getBodyAccelerationGlobal_py_overloads())
@@ -253,19 +257,15 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 
 
 		SE3 boneT(offset*.5);
-#ifdef QP
-		// if(!joint_name.compare("Hips"))
-		if(joint.attr("parent") == object())
 
-			boneT=SE3();
-#endif
+
+		// if(joint.attr("parent") == object())
+		//  	boneT=SE3();
+
 		Vec3 defaultBoneV(0,0,1);
 		SE3 boneR = getSE3FromVectors(defaultBoneV, offset);
 
-#ifdef QP
-		// if(joint_name.compare("Hips"))
-		if(joint.attr("parent") != object())
-#endif
+		// if(joint.attr("parent") != object())
 			boneT = boneT * boneR;
 
 		Node* pNode = new Node(joint_name);
@@ -348,11 +348,11 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 		        mass = density * radius * radius * M_PI * length;
 
 		    // density = mass/ (width*width*M_PI*(length+width));
-		    if (geomType == "MyFoot3")
-		        pNode->body.AddGeometry(new MyFoot3(radius, length));
-		    else
-		        pNode->body.AddGeometry(new MyFoot4(radius, length));
-		    pNode->body.SetInertia(CylinderInertia(density, radius,length));
+            if (geomType == "MyFoot3")
+                pNode->body.AddGeometry(new MyFoot3(radius, length));
+            else
+                pNode->body.AddGeometry(new MyFoot4(radius, length));
+            pNode->body.SetInertia(CylinderInertia(density, radius, length));
 		}
 		else
 		{
@@ -389,9 +389,12 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 		//pNode->body.SetInertia(BoxInertia(density, Vec3(width/2.,height/2.,length/2.)));
 
 		boneT = boneT * SE3(pyVec3_2_Vec3(cfgNode.attr("offset")));
-		_boneTs[joint_index] = boneT;
+        _boneTs[joint_index] = boneT;
 		SE3 newT = T * boneT;
 
+//		if (joint.attr("parent") == object())
+//			pNode->body.SetFrame(T);
+//		else
 		pNode->body.SetFrame(newT);
 
 		_id2index[pNode->body.GetID()] = joint_index;
@@ -651,6 +654,51 @@ object VpModel::getCOM()
 	Vec3_2_pyVec3(com, pyV);
 	return pyV;
 
+}
+
+bp::list VpModel::getBoneT(int index)
+{
+	bp::list ls;
+	numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+	numeric::array O(make_tuple(0.,0.,0.));
+
+	SE3_2_pySO3(_boneTs[index], I);
+	Vec3_2_pyVec3(_boneTs[index].GetPosition(), O);
+
+	ls.append(I);
+	ls.append(O);
+
+	return ls;
+}
+bp::list VpModel::getInvBoneT(int index)
+{
+	bp::list ls;
+	numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+	numeric::array O(make_tuple(0.,0.,0.));
+
+	SE3 invBoneT = Inv(_boneTs[index]);
+
+	SE3_2_pySO3(invBoneT, I);
+	Vec3_2_pyVec3(invBoneT.GetPosition(), O);
+
+	ls.append(I);
+	ls.append(O);
+
+	return ls;
+}
+object VpModel::getBodyGenVelLocal(int index)
+{
+	numeric::array O( make_tuple(0., 0., 0., 0.,0.,0.) );
+	object pyV = O.copy();
+	se3_2_pyVec6(_nodes[index]->body.GetGenVelocityLocal(), pyV);
+	return pyV;
+}
+object VpModel::getBodyGenVelGlobal(int index)
+{
+	numeric::array O( make_tuple(0., 0., 0., 0.,0.,0.) );
+	object pyV = O.copy();
+	se3_2_pyVec6(_nodes[index]->body.GetGenVelocity(), pyV);
+	return pyV;
 }
 
 object VpModel::getBodyPositionGlobal_py( int index, const object& positionLocal/*=object() */ )
@@ -1457,8 +1505,8 @@ bp::list VpControlModel::getDOFAxesesLocal()
 	rootAxeses[4] = rootAxes[1];
 	rootAxeses[5] = rootAxes[2];
 
-//	bp::list ls = getInternalJointOrientationsGlobal();
-	bp::list ls = getInternalJointOrientationsLocal();
+	bp::list ls = getInternalJointOrientationsGlobal();
+//	bp::list ls = getInternalJointOrientationsLocal();
 	for(int i=0; i<len(ls); ++i)
 	{
 		numeric::array lsTmp = (numeric::array)ls[i];
@@ -2134,9 +2182,40 @@ bp::list VpControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
 		joint->SetTorque(zero_Vec3);
 	}
 	Hip->GetSystem()->ForwardDynamics();
-	 se3 hipAcc_tmp = Hip->GetGenAccelerationLocal(); // represented in body frame
-//	se3 hipAcc_tmp = Ad((_boneTs[0]), Hip->GetGenAccelerationLocal()); // represented in body frame
-	//SE3 hipFrame = Hip->GetFrame();
+	se3 hipAcc_tmp = Hip->GetGenAccelerationLocal(); // represented in body frame
+//	se3 hipAcc_tmp = InvAd((_boneTs[0]), Hip->GetGenAccelerationLocal()); // represented in body frame
+
+//	se3 hipAcc_tmp = InvAd(_boneTs[0], Hip->GetGenAccelerationLocal());
+//	se3 hipVelLocal_joint = InvAd(_boneTs[0], Hip->GetGenVelocityLocal());
+//	Vec3 hipAngVelLocal_joint(hipVelLocal_joint[0], hipVelLocal_joint[1], hipVelLocal_joint[2]);
+//	Vec3 hipLinVelLocal_joint(hipVelLocal_joint[3], hipVelLocal_joint[4], hipVelLocal_joint[5]);
+//
+//	hipAcc_tmp += Cross(hipAngVelLocal_joint, hipLinVelLocal_joint);
+
+//	Vec3 hipJointPosLocal = Inv(_boneTs[0]).GetPosition();
+//	SE3 hipFrame_joint = Hip->GetFrame() * Inv(_boneTs[0]);
+//	SE3 hipFrame_body = Hip->GetFrame();
+//
+//	Vec3 hipAngVelGlobal = Hip->GetAngVelocity();
+//
+//	se3 hipGenAccLocal_body = Hip->GetGenAccelerationLocal();
+//	Vec3 hipAngAccLocal_body(hipGenAccLocal_body[0], hipGenAccLocal_body[1], hipGenAccLocal_body[2]);
+//	Vec3 hipLinAccLocal_body(hipGenAccLocal_body[3], hipGenAccLocal_body[4], hipGenAccLocal_body[5]);
+//
+//	Vec3 hipAngAccGlobal_body = Rotate(hipFrame_body, hipAngAccLocal_body);
+//	Vec3 hipLinAccGlobal_body = Rotate(hipFrame_body, hipLinAccLocal_body);
+//
+//	Vec3 hipAngAccGlobal_joint = hipAngAccGlobal_body;
+//	Vec3 hipLinAccGlobal_joint = hipLinAccGlobal_body + Cross(hipAngAccGlobal_body, hipJointPosLocal)
+//							+ Cross(hipAngVelGlobal, Cross(hipAngVelGlobal, hipJointPosLocal));
+//
+//	Vec3 hipAngAccLocal_joint = InvRotate(hipFrame_joint, hipAngAccGlobal_joint);
+//	Vec3 hipLinAccLocal_joint = InvRotate(hipFrame_joint, hipLinAccGlobal_joint);
+//
+////	se3 hipAcc_tmp(hipAngAccGlobal_joint[0], hipAngAccGlobal_joint[1], hipAngAccGlobal_joint[2],
+////				   hipLinAccGlobal_joint[0], hipLinAccGlobal_joint[1], hipLinAccGlobal_joint[2]);
+//	se3 hipAcc_tmp(hipAngAccLocal_joint[0], hipAngAccLocal_joint[1], hipAngAccLocal_joint[2],
+//				   hipLinAccLocal_joint[0], hipLinAccLocal_joint[1], hipLinAccLocal_joint[2]);
 	{
 		invMb[0] = -hipAcc_tmp[3];
 		invMb[1] = -hipAcc_tmp[4];
@@ -2182,7 +2261,40 @@ bp::list VpControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
 
 		Hip->GetSystem()->ForwardDynamics();
 		 se3 hipAcc_tmp = Hip->GetGenAccelerationLocal();
-//		se3 hipAcc_tmp = Ad((_boneTs[0]), Hip->GetGenAccelerationLocal());
+////		 se3 hipAcc_tmp_1 = Ad((_boneTs[0]), Hip->GetGenAccelerationLocal());
+////		se3 hipAcc_tmp_1 = InvAd(_boneTs[0], Hip->GetGenAccelerationLocal());
+////		se3 hipVelLocal_joint_1 = InvAd(_boneTs[0], Hip->GetGenVelocityLocal());
+////		Vec3 hipAngVelLocal_joint_1(hipVelLocal_joint_1[0], hipVelLocal_joint_1[1], hipVelLocal_joint_1[2]);
+////		Vec3 hipLinVelLocal_joint_1(hipVelLocal_joint_1[3], hipVelLocal_joint_1[4], hipVelLocal_joint_1[5]);
+////
+////		hipAcc_tmp_1 += Cross(hipAngVelLocal_joint_1, hipLinVelLocal_joint_1);
+//
+//		Vec3 hipJointPosLocal = Inv(_boneTs[0]).GetPosition();
+//		SE3 hipFrame_joint = Hip->GetFrame() * Inv(_boneTs[0]);
+//		SE3 hipFrame_body = Hip->GetFrame();
+//
+//		Vec3 hipAngVelGlobal = Hip->GetAngVelocity();
+//
+//		se3 hipGenAccLocal_body = Hip->GetGenAccelerationLocal();
+//		Vec3 hipAngAccLocal_body(hipGenAccLocal_body[0], hipGenAccLocal_body[1], hipGenAccLocal_body[2]);
+//		Vec3 hipLinAccLocal_body(hipGenAccLocal_body[3], hipGenAccLocal_body[4], hipGenAccLocal_body[5]);
+//
+//		Vec3 hipAngAccGlobal_body = Rotate(hipFrame_body, hipAngAccLocal_body);
+//		Vec3 hipLinAccGlobal_body = Rotate(hipFrame_body, hipLinAccLocal_body);
+//
+//		Vec3 hipAngAccGlobal_joint = hipAngAccGlobal_body;
+//		Vec3 hipLinAccGlobal_joint = hipLinAccGlobal_body + Cross(hipAngAccGlobal_body, hipJointPosLocal)
+//									 + Cross(hipAngVelGlobal, Cross(hipAngVelGlobal, hipJointPosLocal));
+//
+//		Vec3 hipAngAccLocal_joint = InvRotate(hipFrame_joint, hipAngAccGlobal_joint);
+//		Vec3 hipLinAccLocal_joint = InvRotate(hipFrame_joint, hipLinAccGlobal_joint);
+//
+////	se3 hipAcc_tmp(hipAngAccGlobal_joint[0], hipAngAccGlobal_joint[1], hipAngAccGlobal_joint[2],
+////				   hipLinAccGlobal_joint[0], hipLinAccGlobal_joint[1], hipLinAccGlobal_joint[2]);
+//		se3 hipAcc_tmp(hipAngAccLocal_joint[0], hipAngAccLocal_joint[1], hipAngAccLocal_joint[2],
+//					   hipLinAccLocal_joint[0], hipLinAccLocal_joint[1], hipLinAccLocal_joint[2]);
+
+
 		for (int j = 0; j < 3; j++)
 		{
 			invM[j][i] = hipAcc_tmp[j+3] + invMb[j];
@@ -2215,7 +2327,7 @@ bp::list VpControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
 	//Hip->SetGenAcceleration(hipAccBackup);
 
 	Hip->ResetForce();
-	//Hip->ApplyGlobalForce(hipTorBackup, zero_Vec3);
+//	Hip->ApplyGlobalForce(hipTorBackup, zero_Vec3);
 	return ls;
 }
 
@@ -2280,6 +2392,7 @@ bp::list VpControlModel::getEquationOfMotion(object& M, object& b)
 	se3 zero_se3(0.0);
 	Vec3 zero_Vec3(0.0);
 	Hip->SetGenAccelerationLocal(zero_se3);
+//	Hip->SetGenAcceleration(zero_se3);
 	for(int i=0; i<n; i++)
 	{
 		vpBJoint *joint = &(_nodes.at(i+1)->joint);
@@ -2335,6 +2448,7 @@ bp::list VpControlModel::getEquationOfMotion(object& M, object& b)
 		{
 			se3 genAccBodyLocal(accang_hip, acc_hip);
 			Hip->SetGenAccelerationLocal(genAccBodyLocal);
+			// Hip->SetGenAcceleration(genAccBodyLocal);
 		}
 
 		Hip->GetSystem()->InverseDynamics();
