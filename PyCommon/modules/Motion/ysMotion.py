@@ -108,9 +108,9 @@ class Motion(list):
         if frame > -1 and frame < len(self):
             self.frame = frame
 
-    def translateByOffset(self, offset):
+    def translateByOffset(self, offset, update=True):
         for posture in self:
-            posture.translateByOffset(offset)
+            posture.translateByOffset(offset, update)
 
     def rotateByOffset(self, R_offset, update=True):
         for posture in self:

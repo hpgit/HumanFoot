@@ -83,13 +83,11 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
     DOFs = model.getDOFs()
     Jic = yjc.makeEmptyJacobian(DOFs, 1)
 
-    body0Ori = model.getBodyOrientationGlobal(0)
-
     jointPositions = model.getJointPositionsGlobal()
     jointPositions[0] = model.getBodyPositionGlobal(0)
 
     jointAxeses = model.getDOFAxeses()
-    # jointAxeses = model.getDOFAxesesLocal()
+    body0Ori = model.getBodyOrientationGlobal(0)
     for i in range(3):
         jointAxeses[0][i] = body0Ori.T[i]
         jointAxeses[0][i+3] = body0Ori.T[i]
@@ -108,11 +106,6 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
         contactJointMasks = [yjc.getLinkJointMask(skeleton, bodyidx)]
         # yjc.computeJacobian2(Jic, DOFs, jointPositions, jointAxeses, [cPositions[vpidx]], contactJointMasks)
         computeContactJacobian(Jic, DOFs, jointPositions, jointAxeses, [cPositions[vpidx]], contactJointMasks)
-        # print("bodyIdx:", bodyidx)
-        # print("bodyOri:", body0Ori)
-        # print("qdot_0:", qdot_0)
-        # print("qdot_0_g:", np.dot(body0Ori, qdot_0[0:3]))
-        # print("cV:", np.dot(Jic, qdot_0))
         n = np.array([[0., 1., 0., 0., 0., 0.]]).T
         JTn = Jic.T.dot(n)
         if N is None:

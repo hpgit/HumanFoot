@@ -20,47 +20,49 @@ class WorldConfig:
         self.CFM = 1E-5
         ##########################################33
 
+class Node:
+    def __init__(self, name):
+        self.name = name
+        self.mass = None
+        self.offset = (0,0,0)
+        self.length = None
+        self.width = None
+        self.geom = 'MyBox'
+
+        self.jointAxes = []
+        self.jointLoStop = -ode.Infinity
+        self.jointHiStop = ode.Infinity
+
+        self.density = 1000 # 1000 kg/m^3 = 1 g/cm^3 : density of liquid water at 4'C
+        self.boneRatio = 1.
+        self.Kp = 100
+        self.Kd = 5
+
+        ##########################################33
+        # for ODE
+        # below values are ODE default values
+        self.contactMode = ode.ContactBounce
+        self.contactMu = ode.Infinity
+        self.contactBounce = 0.1
+        self.contactSoftERP = 0.0
+        self.contactSoftCFM = 0.0
+        ##########################################33
+
+        self.geoms = []
+        self.geomTs = []
+        self.geomMass = []
+
+    def addGeom(self, geom, geomT, mass):
+        self.geoms.append(geom)
+        self.geomTs.append(geomT)
+        self.geomMass.append(mass)
+
+
 class ModelConfig:
-    class Node:
-        def __init__(self, name):
-            self.name = name
-            self.mass = None
-            self.offset = (0,0,0)
-            self.length = None
-            self.width = None
-            self.geom = 'MyBox'
-            
-            self.jointAxes = []
-            self.jointLoStop = -ode.Infinity
-            self.jointHiStop = ode.Infinity
-            
-            self.density = 1000 # 1000 kg/m^3 = 1 g/cm^3 : density of liquid water at 4'C
-            self.boneRatio = 1.
-            self.Kp = 100
-            self.Kd = 5
-            
-            ##########################################33
-            # for ODE
-            # below values are ODE default values
-            self.contactMode = ode.ContactBounce
-            self.contactMu = ode.Infinity
-            self.contactBounce = 0.1
-            self.contactSoftERP = 0.0
-            self.contactSoftCFM = 0.0
-            ##########################################33
-
-            self.geoms = []
-            self.geomTs = []
-            self.geomMass = []
-
-        def addGeom(self, geom, geomT, mass):
-            self.geoms.append(geom)
-            self.geomTs.append(geomT)
-            self.geomMass.append(mass)
-
     def __init__(self):
         self.nodes = {}
-        tempNode = ModelConfig.Node('')
+        # tempNode = ModelConfig.Node('')
+        tempNode = Node('')
         self.defaultDensity = tempNode.density
         self.defaultBoneRatio = tempNode.boneRatio
         self.defaultKp = tempNode.Kp
@@ -74,7 +76,8 @@ class ModelConfig:
         self.defaultContactSoftERP = tempNode.contactSoftERP
         self.defaultContactSoftCFM = tempNode.contactSoftCFM
     def addNode(self, name):
-        node = ModelConfig.Node(name)
+        # node = ModelConfig.Node(name)
+        node = Node(name)
         node.density = self.defaultDensity
         node.boneRatio = self.defaultBoneRatio
         node.Kp = self.defaultKp

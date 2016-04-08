@@ -724,8 +724,8 @@ def walkings():
                 rhip_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rUpLeg))
                 rknee_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rKnee))
                 rankle_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rFoot))
-            
-            rd_torques[:] = [controlModel.getJointTorqueLocal(i)/100. for i in range(skeleton.getJointNum())]
+
+            rd_torques[:] = [controlModel.getJointTorqueLocal(j)/100. for j in range(skeleton.getJointNum())]
             rd_joint_positions[:] = controlModel.getJointPositionsGlobal()
         
             vpWorld.step()

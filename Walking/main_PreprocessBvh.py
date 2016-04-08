@@ -303,5 +303,5 @@ def simulation_test():
     Fl.run()
                 
 if __name__=='__main__':
-#    preprocess()
-    simulation_test()
+   preprocess()
+    # simulation_test()

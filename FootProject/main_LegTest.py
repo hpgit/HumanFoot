@@ -109,7 +109,8 @@ def init():
 
     vpWorld.initialize()
     # vpWorld.SetIntegrator("RK4")
-    vpWorld.SetIntegrator("IMPLICIT_EULER_FAST")
+    # vpWorld.SetIntegrator("IMPLICIT_EULER_FAST")
+    vpWorld.SetIntegrator("EULER")
     # vpWorld.SetGlobalDamping(0.001)
     # controlModel.initializeHybridDynamics()
     controlModel.initializeForwardDynamics()
@@ -239,7 +240,8 @@ class Callback:
         wcfg.timeStep = 1 / (30. * simulSpeedInv * stepsPerFrame)
         vpWorld.SetTimeStep(wcfg.timeStep)
 
-        Dt = 2. * (Kt**.5)
+        # Dt = 2. * (Kt**.5)
+        Dt = 0.
         controlModel.SetJointsDamping(damp)
 
         wForce = math.pow(2., getVal('force weight'))

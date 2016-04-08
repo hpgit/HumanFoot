@@ -65,7 +65,7 @@ if __name__=='__main__':
         lHip = skeleton.getJointIndex('LeftUpLeg'); rHip = skeleton.getJointIndex('RightUpLeg')
         lKnee = skeleton.getJointIndex('LeftLeg');  rKnee = skeleton.getJointIndex('RightLeg')
         lFoot = skeleton.getJointIndex('LeftFoot'); rFoot = skeleton.getJointIndex('RightFoot')
-        
+
         mcfgfile = open(dir + 'mcfg', 'r')
         mcfg = cPickle.load(mcfgfile)
         mcfgfile.close()

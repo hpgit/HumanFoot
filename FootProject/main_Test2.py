@@ -119,12 +119,14 @@ def init():
     vpWorld = cvw.VpWorld(wcfg)
     controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
 
-    vpWorld.SetIntegrator("RK4")
+    # vpWorld.SetIntegrator("RK4")
     # vpWorld.SetIntegrator("IMPLICIT_EULER_FAST")
-    vpWorld.SetGlobalDamping(0.9999)
+    vpWorld.SetIntegrator("EULER")
+
+    # vpWorld.SetGlobalDamping(0.9999)
     # controlModel.initializeHybridDynamics()
     controlModel.initializeForwardDynamics()
-    ModelOffset = np.array([0., .8, 0.])
+    ModelOffset = np.array([0., .75, 0.])
     controlModel.translateByOffset(ModelOffset)
 
     vpWorld.initialize()
@@ -196,9 +198,9 @@ def init():
     for i in range(motion[0].skeleton.getJointNum()):
         print(i, motion[0].skeleton.getJointName(i))
 
-    print "(index, id, name)"
+    print("(index, id, name)")
     for i in range(controlModel.getBodyNum()):
-        print (i, controlModel.index2id(i), controlModel.index2name(i))
+        print(i, controlModel.index2id(i), controlModel.index2name(i))
 
 init()
 
@@ -238,7 +240,7 @@ class Callback:
 
         # reload(tf)
         self.frame = frame
-        print "main:frame : ", frame
+        print("main:frame : ", frame)
         # motionModel.update(motion[0])
         self.timeIndex = 0
         self.setTimeStamp()
@@ -260,11 +262,6 @@ class Callback:
 
         wForce = math.pow(2., getVal('force weight'))
         wTorque = math.pow(2., getVal('tau weight'))
-
-        # print(controlModel.getJointOrientationGlobal(0))
-        # print(controlModel.getJointPositionGlobal(0))
-        # print(controlModel.getBodyOrientationGlobal(0))
-        # print(controlModel.getBodyPositionGlobal(0))
 
         # tracking
         th_r = motion.getDOFPositions(frame)

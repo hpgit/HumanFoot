@@ -1941,7 +1941,7 @@ boost::python::object VpControlModel::getJointTorqueLocal( int index )
 	numeric::array O(make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 
-	if(index==0) return object();
+	if(index==0) return pyV;
 
 	Vec3_2_pyVec3(_nodes[index]->joint.GetTorque(), pyV);
 	return pyV;
