@@ -1,13 +1,13 @@
 (dp1
 S'des force begin'
 p2
-F2000
+F2399
 sS'steps per frame'
 p3
 F1
 sS'PD gain'
 p4
-F10
+F30.5
 sS'Joint Damping'
 p5
 F35

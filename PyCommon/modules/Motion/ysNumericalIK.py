@@ -258,7 +258,6 @@ class JTSolver_Skeleton(Solver):
         inoutPosture.updateGlobalT()
     
 if __name__=='__main__':
-    import psyco; psyco.full()
     import copy
     from fltk import *
     

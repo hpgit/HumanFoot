@@ -1,8 +1,11 @@
 from fltk import *
 import numpy as np
 import time
+import copy
 
 import sys
+
+
 sys.path.append('../PyCommon/modules')
 sys.path.append('..')
 
@@ -17,6 +20,7 @@ import GUI.hpSimpleViewer as hsv
 import Util.ysPythonEx as ype
 import ArticulatedBody.ysControl as yct
 import GUI.hpSplineEditor as hse
+import ArticulatedBody.hpInvKine as hik
 
 # import VirtualPhysics.vpBody as vpB
 # import VirtualPhysics.LieGroup as vpL
@@ -50,6 +54,8 @@ mcfg_motion = None
 
 vpWorld = None
 controlModel = None
+motionModel = None
+solver = None
 
 totalDOF = None
 DOFs = None
@@ -104,6 +110,7 @@ def init():
     global rd_Position
     global rd_PositionDes
     global viewer
+    global motionModel
 
     np.set_printoptions(precision=4, linewidth=200)
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_1()
@@ -112,22 +119,28 @@ def init():
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_chiken_foot()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('fastswim.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot_2('simpleJump_2.bvh')
-    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_capsule('simpleJump_onebody.bvh')
+    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_capsule('simpleJump_onebody.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
+    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump_long.bvh')
     mcfg_motion = mit.normal_mcfg()
 
     vpWorld = cvw.VpWorld(wcfg)
     controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
+    motionModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)
+
+    solver = hik.numIkSolver(wcfg, motion[0], mcfg)
 
     # vpWorld.SetIntegrator("RK4")
     # vpWorld.SetIntegrator("IMPLICIT_EULER_FAST")
     vpWorld.SetIntegrator("EULER")
 
-    # vpWorld.SetGlobalDamping(0.9999)
+    vpWorld.SetGlobalDamping(0.9999)
     # controlModel.initializeHybridDynamics()
     controlModel.initializeForwardDynamics()
     ModelOffset = np.array([0., .75, 0.])
     controlModel.translateByOffset(ModelOffset)
+    ModelOffset = np.array([1., .75, 0.])
+    motionModel.translateByOffset(ModelOffset)
 
     vpWorld.initialize()
 
@@ -154,6 +167,8 @@ def init():
 
     viewer = hsv.hpSimpleViewer(title='main_Test')
     viewer.doc.addObject('motion', motion)
+    # viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(
+    #     motionModel, MOTION_COLOR, yr.POLYGON_FILL))
     viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(
         controlModel, CHARACTER_COLOR, yr.POLYGON_FILL))
     viewer.doc.addRenderer('rd_contactForcesControl', yr.VectorsRenderer(
@@ -239,11 +254,19 @@ class Callback:
         global vpWorld
 
         # reload(tf)
+        motionModel.update(motion[0])
         self.frame = frame
         print("main:frame : ", frame)
         # motionModel.update(motion[0])
         self.timeIndex = 0
         self.setTimeStamp()
+
+        if False:
+            # IK solver
+            solver.clear()
+            solver.setInitPose(motion[0])
+
+
 
         # constant setting
         # (Kt, damp, stepsPerFrame, simulSpeedInv) = viewer.objectInfoWnd.getVals()
@@ -255,10 +278,10 @@ class Callback:
         wcfg.timeStep = 1 / (30. * simulSpeedInv * stepsPerFrame)
         vpWorld.SetTimeStep(wcfg.timeStep)
 
-        # Dt = 2. * (Kt**.5)/10.
-        Dt = 0.
+        Dt = 2. * (Kt**.5)/20.
+        # Dt = 0
         # controlModel.SetJointsDamping(damp)
-        controlModel.SetJointsDamping(10.)
+        controlModel.SetJointsDamping(1.)
 
         wForce = math.pow(2., getVal('force weight'))
         wTorque = math.pow(2., getVal('tau weight'))
@@ -289,6 +312,7 @@ class Callback:
                              (1 - desForceRelFrame) + desNormalForceMax * desForceRelFrame
 
         totalForce = np.array([0., desNormalForce, 0., 0., 0., 0.])
+        # totalForce = np.array([-desNormalForce, 34.3, 0., 0., 0., 0.])
         # totalForce = np.array([50., 150.])
 
         torques = None
@@ -315,11 +339,19 @@ class Callback:
             # if cForces is not None:
             #     print "control: ", sum(cForces)
 
+        sumControlForce = np.array([0.]*6)
+        if cForcesControl is not None:
+            sumControlForce = np.hstack((sum(cForcesControl), np.array([0., 0., 0.])))
+
         timeStamp = None
 
         torque_None = False
 
-        if not (desForceFrame[0] <= frame <= desForceFrame[1]) or torques is None:
+        if not (desForceFrame[0] <= frame <= desForceFrame[1]) or (torques is None):
+            torque_None = True
+            torques = ddth_des_flat
+        elif np.linalg.norm(sumControlForce - totalForce) > np.linalg.norm(totalForce):
+            print "control failed!"
             torque_None = True
             torques = ddth_des_flat
         else:

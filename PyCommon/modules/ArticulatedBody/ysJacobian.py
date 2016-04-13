@@ -28,6 +28,50 @@ def makeEmptyJacobian(jointDOFs, effectorNum, applyOrientation = True):
         colNum += jointDOFs[i]
     return np.zeros((rowNum, colNum), float)
 
+def computeLocalRootJacobian(J, jointDOFs, jointPositions, jointAxeses, effectorPositions, effectorJointMasks=None, linearFirst=True):
+    rowNum, colNum = J.shape
+    dof_per_effector = rowNum / len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
+
+    for e in range(len(effectorPositions)):
+        col = 0
+
+        for j in range(len(jointDOFs)):
+            jointDOF_jth_joint = jointDOFs[j]
+            jointPosition_jth_joint = jointPositions[j]
+            jointAxes_jth_joint = jointAxeses[j]
+
+            p = effectorPositions[e] - jointPosition_jth_joint
+
+            if effectorJointMasks[e][j] == 1:
+                if jointDOF_jth_joint == 6:
+                    jointAxes_jth_joint = jointAxeses[j][0:3, :]
+
+                    J[0:3, col+0:col+3] = jointAxes_jth_joint.T
+                    J[3:6, col+3:col+6] = jointAxes_jth_joint.T
+
+                    if linearFirst:
+                        for i in range(3):
+                            wxp = np.cross(jointAxes_jth_joint[i], p)
+                            for k in range(3):
+                                J[k, col+3+i] = wxp[k]
+                    else:
+                        for i in range(3):
+                            wxp = np.cross(jointAxes_jth_joint[i], p)
+                            for k in range(3):
+                                J[k+3, col+i] = wxp[k]
+                    col += 6
+                else:
+
+                    for i in range(3):
+                        wxp = np.cross(jointAxes_jth_joint[i], p)
+                        for k in range(3):
+                            J[k, col+i] = wxp[k]
+                    J[3:6, col:col+3] = jointAxes_jth_joint.T
+                    col += 3
+            else:
+                J[0:6, col:col+jointDOF_jth_joint] = np.zeros((6, jointDOF_jth_joint))
+                col += jointDOF_jth_joint
+
 #===============================================================================
 # # Treat one 3DOF joint as one 3DOF joint
 #===============================================================================
@@ -1364,11 +1408,11 @@ if __name__=='__main__':
         Fl.run()
     
     pass
-#    test_IK()
+    test_IK()
 #    test_computeJacobian()
 #    test_computeJacobian2()
 #    test_velocity_relation_simple()
 #    test_effector_joint_masks_funcs()
 #    test_get_dP_effector_from_joint()
 #    test_computeJacobian2_VpModel()
-    test_force_torque()
+#     test_force_torque()

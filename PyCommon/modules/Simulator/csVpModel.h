@@ -108,6 +108,8 @@ public:	// expose to python
 
 	object getBodyGenVelLocal(int index);
 	object getBodyGenVelGlobal(int index);
+	object getBodyGenAccLocal(int index);
+	object getBodyGenAccGlobal(int index);
 	object getBodyPositionGlobal_py( int index, const object& positionLocal=object() );
 	object getBodyVelocityGlobal_py( int index, const object& positionLocal=object() );
 	object getBodyAccelerationGlobal_py(int index, const object& positionLocal=object() );
@@ -221,6 +223,18 @@ public:	// expose to python
 
 	// [I<vmerge>R_l[0], R_l[1]^t, R_l[2]^t, ... R_l[n-1]^t]
 	bp::list getDOFAxesesLocal();
+
+
+
+	// [lv_l[0]<hmerge>av_l[0], av_l[1], av_l[2], ... av_l[n-1]]
+	bp::list getBodyRootDOFVelocitiesLocal();
+
+	// [la_l[0]<hmerge>aa_l[0], aa_l[1], aa_l[2], ... aa_l[n-1]]
+	bp::list getBodyRootDOFAccelerationsLocal();
+
+	// [I<vmerge>R_l[0], R_l[1]^t, R_l[2]^t, ... R_l[n-1]^t]
+	bp::list getBodyRootDOFAxeses();
+
 
 	void setDOFAccelerations(const bp::list& dofaccs);
 	void setDOFTorques(const bp::list& dofTorque);

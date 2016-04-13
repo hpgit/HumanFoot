@@ -62,6 +62,8 @@ BOOST_PYTHON_MODULE(csVpModel)
 
         .def("getBodyGenVelLocal", &VpModel::getBodyGenVelLocal)
         .def("getBodyGenVelGlobal", &VpModel::getBodyGenVelGlobal)
+        .def("getBodyGenAccLocal", &VpModel::getBodyGenAccLocal)
+        .def("getBodyGenAccGlobal", &VpModel::getBodyGenAccGlobal)
 		.def("getBodyPositionGlobal", &VpModel::getBodyPositionGlobal_py, getBodyPositionGlobal_py_overloads())
 		.def("getBodyVelocityGlobal", &VpModel::getBodyVelocityGlobal_py, getBodyVelocityGlobal_py_overloads())
 		.def("getBodyAccelerationGlobal", &VpModel::getBodyAccelerationGlobal_py, getBodyAccelerationGlobal_py_overloads())
@@ -120,6 +122,10 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getDOFVelocitiesLocal", &VpControlModel::getDOFVelocitiesLocal)
 		.def("getDOFAccelerationsLocal", &VpControlModel::getDOFAccelerationsLocal)
 		.def("getDOFAxesesLocal", &VpControlModel::getDOFAxesesLocal)
+
+		.def("getBodyRootDOFVelocitiesLocal", &VpControlModel::getBodyRootDOFVelocitiesLocal)
+		.def("getBodyRootDOFAccelerationsLocal", &VpControlModel::getBodyRootDOFAccelerationsLocal)
+		.def("getBodyRootDOFAxeses", &VpControlModel::getBodyRootDOFAxeses)
 
 		.def("setDOFAccelerations", &VpControlModel::setDOFAccelerations)
 		.def("setDOFTorques", &VpControlModel::setDOFTorques)
@@ -698,6 +704,21 @@ object VpModel::getBodyGenVelGlobal(int index)
 	numeric::array O( make_tuple(0., 0., 0., 0.,0.,0.) );
 	object pyV = O.copy();
 	se3_2_pyVec6(_nodes[index]->body.GetGenVelocity(), pyV);
+	return pyV;
+}
+
+object VpModel::getBodyGenAccLocal(int index)
+{
+	numeric::array O( make_tuple(0., 0., 0., 0.,0.,0.) );
+	object pyV = O.copy();
+	se3_2_pyVec6(_nodes[index]->body.GetGenAccelerationLocal(), pyV);
+	return pyV;
+}
+object VpModel::getBodyGenAccGlobal(int index)
+{
+	numeric::array O( make_tuple(0., 0., 0., 0.,0.,0.) );
+	object pyV = O.copy();
+	se3_2_pyVec6(_nodes[index]->body.GetGenAcceleration(), pyV);
 	return pyV;
 }
 
@@ -1497,6 +1518,59 @@ bp::list VpControlModel::getDOFAxesesLocal()
 										make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
 
 	numeric::array rootAxesTmp = (numeric::array)getJointOrientationGlobal(0);
+	numeric::array rootAxes = transpose_pySO3(rootAxesTmp);
+	rootAxeses[0] = rootAxes[0];
+	rootAxeses[1] = rootAxes[1];
+	rootAxeses[2] = rootAxes[2];
+	rootAxeses[3] = rootAxes[0];
+	rootAxeses[4] = rootAxes[1];
+	rootAxeses[5] = rootAxes[2];
+
+	bp::list ls = getInternalJointOrientationsGlobal();
+//	bp::list ls = getInternalJointOrientationsLocal();
+	for(int i=0; i<len(ls); ++i)
+	{
+		numeric::array lsTmp = (numeric::array)ls[i];
+		ls[i] = transpose_pySO3(lsTmp);
+	}
+
+	ls.insert(0, rootAxeses);
+	return ls;
+}
+
+
+bp::list VpControlModel::getBodyRootDOFVelocitiesLocal()
+{
+	numeric::array rootGenVel(make_tuple(0.,0.,0.,0.,0.,0.));
+
+	rootGenVel.slice(0,3) = getBodyGenVelLocal(0).slice(3,6);
+	rootGenVel.slice(3,6) = getBodyGenVelLocal(0).slice(0,3);
+
+	bp::list ls = getInternalJointAngVelocitiesLocal();
+
+	ls.insert(0, rootGenVel);
+	return ls;
+}
+
+bp::list VpControlModel::getBodyRootDOFAccelerationsLocal()
+{
+	numeric::array rootGenAcc(make_tuple(0.,0.,0.,0.,0.,0.));
+
+	rootGenAcc.slice(0,3) = getBodyGenAccLocal(0).slice(3,6);
+	rootGenAcc.slice(3,6) = getBodyGenAccLocal(0).slice(0,3);
+
+	bp::list ls = getInternalJointAngAccelerationsLocal();
+
+	ls.insert(0, rootGenAcc);
+	return ls;
+}
+
+bp::list VpControlModel::getBodyRootDOFAxeses()
+{
+	numeric::array rootAxeses( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.),
+										make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+
+	numeric::array rootAxesTmp = (numeric::array)getBodyOrientationGlobal(0);
 	numeric::array rootAxes = transpose_pySO3(rootAxesTmp);
 	rootAxeses[0] = rootAxes[0];
 	rootAxeses[1] = rootAxes[1];

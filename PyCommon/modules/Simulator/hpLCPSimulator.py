@@ -24,51 +24,6 @@ import time
 # import cvxpy as cvx
 
 
-def computeContactJacobian(J, jointDOFs, jointPositions, jointAxeses, effectorPositions, effectorJointMasks=None, linearFirst=True):
-    rowNum, colNum = J.shape
-    dof_per_effector = rowNum / len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
-
-    for e in range(len(effectorPositions)):
-        col = 0
-
-        for j in range(len(jointDOFs)):
-            jointDOF_jth_joint = jointDOFs[j]
-            jointPosition_jth_joint = jointPositions[j]
-            jointAxes_jth_joint = jointAxeses[j]
-
-            p = effectorPositions[e] - jointPosition_jth_joint
-
-            if effectorJointMasks[e][j] == 1:
-                if jointDOF_jth_joint == 6:
-                    jointAxes_jth_joint = jointAxeses[j][0:3, :]
-
-                    J[0:3, col+0:col+3] = jointAxes_jth_joint.T
-                    J[3:6, col+3:col+6] = jointAxes_jth_joint.T
-
-                    if linearFirst:
-                        for i in range(3):
-                            wxp = np.cross(jointAxes_jth_joint[i], p)
-                            for k in range(3):
-                                J[k, col+3+i] = wxp[k]
-                    else:
-                        for i in range(3):
-                            wxp = np.cross(jointAxes_jth_joint[i], p)
-                            for k in range(3):
-                                J[k+3, col+i] = wxp[k]
-                    col += 6
-                else:
-
-                    for i in range(3):
-                        wxp = np.cross(jointAxes_jth_joint[i], p)
-                        for k in range(3):
-                            J[k, col+i] = wxp[k]
-                    J[3:6, col:col+3] = jointAxes_jth_joint.T
-                    col += 3
-            else:
-                J[0:6, col:col+jointDOF_jth_joint] = np.zeros((6, jointDOF_jth_joint))
-                col += jointDOF_jth_joint
-
-
 def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
     cVpBodyIds, cPositions, cPositionsLocal, cVelocities = world.getContactPoints(bodyIDsToCheck)
     N = None
@@ -86,26 +41,28 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
     jointPositions = model.getJointPositionsGlobal()
     jointPositions[0] = model.getBodyPositionGlobal(0)
 
-    jointAxeses = model.getDOFAxeses()
-    body0Ori = model.getBodyOrientationGlobal(0)
-    for i in range(3):
-        jointAxeses[0][i] = body0Ori.T[i]
-        jointAxeses[0][i+3] = body0Ori.T[i]
+    # jointAxeses = model.getDOFAxeses()
+    # body0Ori = model.getBodyOrientationGlobal(0)
+    # for i in range(3):
+    #     jointAxeses[0][i] = body0Ori.T[i]
+    #     jointAxeses[0][i+3] = body0Ori.T[i]
+    jointAxeses = model.getBodyRootDOFAxeses()
 
     totalDOF = model.getTotalDOF()
     qdot_0 = ype.makeFlatList(totalDOF)
-    ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
-    bodyGenVelLocal = model.getBodyGenVelLocal(0)
-
-    for i in range(3):
-        qdot_0[i] = bodyGenVelLocal[i+3]
-        qdot_0[i+3] = bodyGenVelLocal[i]
+    # ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
+    # bodyGenVelLocal = model.getBodyGenVelLocal(0)
+    #
+    # for i in range(3):
+    #     qdot_0[i] = bodyGenVelLocal[i+3]
+    #     qdot_0[i+3] = bodyGenVelLocal[i]
+    ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
 
     for vpidx in range(len(cVpBodyIds)):
         bodyidx = model.id2index(cVpBodyIds[vpidx])
         contactJointMasks = [yjc.getLinkJointMask(skeleton, bodyidx)]
         # yjc.computeJacobian2(Jic, DOFs, jointPositions, jointAxeses, [cPositions[vpidx]], contactJointMasks)
-        computeContactJacobian(Jic, DOFs, jointPositions, jointAxeses, [cPositions[vpidx]], contactJointMasks)
+        yjc.computeLocalRootJacobian(Jic, DOFs, jointPositions, jointAxeses, [cPositions[vpidx]], contactJointMasks)
         n = np.array([[0., 1., 0., 0., 0., 0.]]).T
         JTn = Jic.T.dot(n)
         if N is None:
@@ -209,10 +166,11 @@ def getLCPMatrix(world, model, invM, invMc, mu, tau, contactNum, contactPosition
 
     qdot_0 = ype.makeFlatList(totalDOF)
     ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
-    bodyGenVelLocal = model.getBodyGenVelLocal(0)
-    for i in range(3):
-        qdot_0[i] = bodyGenVelLocal[i+3]
-        qdot_0[i+3] = bodyGenVelLocal[i]
+    # bodyGenVelLocal = model.getBodyGenVelLocal(0)
+    # for i in range(3):
+    #     qdot_0[i] = bodyGenVelLocal[i+3]
+    #     qdot_0[i+3] = bodyGenVelLocal[i]
+    ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
 
     qdot_0 = np.asarray(qdot_0)
     if tau is None:
@@ -268,7 +226,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
     # lo = np.zeros(A.shape[0])
     lo = 0.*np.ones(A.shape[0])
     hi = 1000000. * np.ones(A.shape[0])
-    x = 100.*np.ones(A.shape[0])
+    x = 0.*np.ones(A.shape[0])
 
     # normalizeMatrix(A, b)
     # print A[0]
@@ -555,7 +513,7 @@ def calcLCPForcesVert(motion, world, model, bodyIDsToCheck, mu, tau=None, numFri
     temp_NM = JTN.T.dot(invM)
 
     qdot_0 = ype.makeFlatList(totalDOF)
-    ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
+    ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
     qdot_0 = np.asarray(qdot_0)
     if tau is None:
         tau = np.zeros(np.shape(qdot_0))
@@ -714,7 +672,7 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wForce,
     #   [0]
 
     qdot_0 = ype.makeFlatList(totalDOF)
-    ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
+    ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
     qdot_0 = np.asarray(qdot_0)
     if tau0 is None:
         tau0 = np.zeros(np.shape(qdot_0))
@@ -944,7 +902,7 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
     #   [0]
 
     qdot_0 = ype.makeFlatList(totalDOF)
-    ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
+    ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
     qdot_0 = np.asarray(qdot_0)
     if tau0 is None:
         tau0 = np.zeros(np.shape(qdot_0))
@@ -1090,8 +1048,8 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
             cvxSolvers.options['maxiters'] = 100
             cvxSolvers.options['refinement'] = 1
             cvxSolvers.options['kktsolver'] = "robust"
-            # xqp = np.array(cvxSolvers.qp(Qqp, pqp, Gqp, hqp, Aqp, bqp)['x']).flatten()
-            # x = xqp.copy()
+            xqp = np.array(cvxSolvers.qp(Qqp, pqp, Gqp, hqp, Aqp, bqp)['x']).flatten()
+            x = xqp.copy()
 
             # print "x: ", x
             # zqp = np.dot(A, xqp).T + b
@@ -1104,13 +1062,10 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, wF
             lb = [-1000.]*totalDOF
             lb.extend([0.]*(A.shape[0]-totalDOF))
 
-            xqpos = qpos.qp(QQ[6:, 6:], pp[6:], G[:, 6:], lb, None, None, hnp, 200, False, "NONE")
-            # xqpos=np.array(qpos.qp(QQ, pp, G, None, None, None, hnp, 10))
-            xtmp = [0.]*6
-            xtmp.extend(xqpos[:])
-            x = np.array(xtmp)
-            # print xqpos
-            # x = xqpos.copy()
+            # xqpos = qpos.qp(QQ[6:, 6:], pp[6:], G[:, 6:], lb, None, None, hnp, 200, False, "NONE")
+            # xtmp = [0.]*6
+            # xtmp.extend(xqpos[:])
+            # x = np.array(xtmp)
 
             '''
             cons = []
@@ -1251,7 +1206,7 @@ def calcLCPbasicControl2(motion, world, model, bodyIDsToCheck, mu, totalForce, w
     #   [0]
 
     qdot_0 = ype.makeFlatList(totalDOF)
-    ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
+    ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
     qdot_0 = np.asarray(qdot_0)
     if tau0 is None:
         tau0 = np.zeros(np.shape(qdot_0))
@@ -1478,7 +1433,7 @@ def calcIterLCPControl(iterNum, motion, world, model, bodyIDsToCheck, mu, totalF
     #   [0]
 
     qdot_0 = ype.makeFlatList(totalDOF)
-    ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
+    ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
     qdot_0 = np.asarray(qdot_0)
     if tau0 is None:
         tau0 = np.zeros(np.shape(qdot_0))
