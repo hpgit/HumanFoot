@@ -5,7 +5,6 @@ import copy
 
 import sys
 
-
 sys.path.append('../PyCommon/modules')
 sys.path.append('..')
 
@@ -55,6 +54,7 @@ mcfg_motion = None
 vpWorld = None
 controlModel = None
 motionModel = None
+IKModel = None
 solver = None
 
 totalDOF = None
@@ -111,6 +111,8 @@ def init():
     global rd_PositionDes
     global viewer
     global motionModel
+    global solver
+    global IKModel
 
     np.set_printoptions(precision=4, linewidth=200)
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_1()
@@ -127,6 +129,7 @@ def init():
     vpWorld = cvw.VpWorld(wcfg)
     controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
     motionModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)
+    IKModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)
 
     solver = hik.numIkSolver(wcfg, motion[0], mcfg)
 
@@ -169,6 +172,8 @@ def init():
     viewer.doc.addObject('motion', motion)
     # viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(
     #     motionModel, MOTION_COLOR, yr.POLYGON_FILL))
+    viewer.doc.addRenderer('IKModel', cvr.VpModelRenderer(
+         solver.model, MOTION_COLOR, yr.POLYGON_FILL))
     viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(
         controlModel, CHARACTER_COLOR, yr.POLYGON_FILL))
     viewer.doc.addRenderer('rd_contactForcesControl', yr.VectorsRenderer(
@@ -261,11 +266,16 @@ class Callback:
         self.timeIndex = 0
         self.setTimeStamp()
 
-        if False:
-            # IK solver
-            solver.clear()
-            solver.setInitPose(motion[0])
+        # IK solver
+        solver.clear()
+        solver.setInitPose(motion[0])
+        cVpBodyIds, cPositions, cPositionsLocal, cVelocities = vpWorld.getContactPoints(bodyIDsToCheck)
 
+        if len(cVpBodyIds) > 1:
+            solver.addConstraints(cVpBodyIds[1], cPositionsLocal[1], np.array((0., 0., 0.)), None, (False, True, False, False))
+            solver.addConstraints(cVpBodyIds[3], cPositionsLocal[3], np.array((0., 0., 0.)), None, (False, True, False, False))
+            solver.addConstraints(cVpBodyIds[5], cPositionsLocal[5], np.array((0., 0., 0.)), None, (False, True, False, False))
+        solver.solve(controlModel, np.array((0., .15 + .05*math.sin(frame/10.), 0.)))
 
 
         # constant setting
@@ -278,8 +288,8 @@ class Callback:
         wcfg.timeStep = 1 / (30. * simulSpeedInv * stepsPerFrame)
         vpWorld.SetTimeStep(wcfg.timeStep)
 
-        Dt = 2. * (Kt**.5)/20.
-        # Dt = 0
+        # Dt = 2. * (Kt**.5)/20.
+        Dt = 0.
         # controlModel.SetJointsDamping(damp)
         controlModel.SetJointsDamping(1.)
 

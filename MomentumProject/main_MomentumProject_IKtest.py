@@ -551,7 +551,6 @@ def main():
                 linkPositions_IK = IKModel.getBodyPositionsGlobal()
                 linkInertias_IK = IKModel.getBodyInertiasGlobal()
 
-
                 CM_IK = yrp.getCM(linkPositions_IK, linkMasses, totalMass)
                 print CM_IK
                 P_IK = ymt.getPureInertiaMatrix(TO, linkMasses, linkPositions_IK, CM_IK, linkInertias_IK)

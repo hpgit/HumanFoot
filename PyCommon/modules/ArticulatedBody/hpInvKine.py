@@ -34,43 +34,47 @@ class numIkSolver:
     def setInitPose(self, _pose):
         self.pose = _pose.copy()
 
-    def addConstraints(self, _bodyIdx, _localPos, _despos, _desori, _desposMask):
+    def addConstraints(self, _bodyIdx, _localPos, _despos, _desori, _desposMask=(True,True,True,True)):
         self.bodyIdx.append(_bodyIdx)
         self.localPos.append(_localPos)
-        self.desPos.append(_despos.copy())
-        self.desOri.append(_desori.copy())
+        self.desPos.append(copy.deepcopy(_despos))
+        self.desOri.append(copy.deepcopy(_desori))
         self.desPosMask.append(copy.deepcopy(_desposMask))
 
-    def getConstJacobian(self):
+    def getConstJacobian(self, _model):
         Jc_IK = None
-        DOFs = self.model.getDOFs()
-        jointPositions = self.model.getJointPositionsGlobal()
-        jointAxeses = self.model.getDOFAxeses()
+        DOFs = _model.getDOFs()
+        jointPositions = _model.getJointPositionsGlobal()
+        jointAxeses = _model.getDOFAxeses()
 
         for i in range(len(self.bodyIdx)):
             Jc = yjc.makeEmptyJacobian(DOFs, 1)
             contactJointMasks = [yjc.getLinkJointMask(self.pose.skeleton, self.bodyIdx[i])]
-            bodyPos = self.model.getBodyPositionGlobal(self.bodyIdx[i])
-            bodyOri = self.model.getBodyOrientationGlobal(self.bodyIdx[i])
+            bodyPos = _model.getBodyPositionGlobal(self.bodyIdx[i])
+            bodyOri = _model.getBodyOrientationGlobal(self.bodyIdx[i])
             cPos = bodyPos + np.dot(bodyOri, self.localPos[i])
             yjc.computeJacobian2(Jc, DOFs, jointPositions, jointAxeses, [cPos], contactJointMasks)
-            for j in self.desPosMask[i]:
+            for j in range(3):
+                if self.desPosMask[i][j]:
+                    if Jc_IK is None:
+                        Jc_IK = Jc[j, :].copy()
+                    else:
+                        Jc_IK = np.vstack((Jc_IK, Jc[j, :]))
+            if self.desPosMask[i][3]:
                 if Jc_IK is None:
-                    Jc_IK = Jc[j, :].copy()
+                    Jc_IK = Jc[3:6, :].copy()
                 else:
-                    Jc_IK = np.vstack((Jc_IK, Jc[j, :]))
+                    Jc_IK = np.vstack((Jc_IK, Jc[3:6, :]))
 
         return Jc_IK
 
-
-
-    def solve(self, desComPos, cmW = 10., posW = 1., oriW = 1.):
+    def solve(self, _model, desComPos, cmW = 10., posW = 1., oriW = 1.):
         IKModel = self.model
 
-        totalDOF = IKModel.getTotalDOF()
-        DOFs = IKModel.getDOFs()
+        totalDOF = _model.getTotalDOF()
+        DOFs = _model.getDOFs()
 
-        Jsys_IK = yjc.makeEmptyJacobian(DOFs, IKModel.getBodyNum())
+        Jsys_IK = yjc.makeEmptyJacobian(DOFs, _model.getBodyNum())
         allLinkJointMasks = yjc.getAllLinkJointMasks(self.pose.skeleton)
 
         dth_IK = ype.makeNestedList(DOFs)
@@ -83,11 +87,9 @@ class numIkSolver:
 
         numItr = 100
         dt = .5
-        threshold = 0.1
+        threshold = 0.01
 
         for i in range(0, numItr):
-            jPart_IK = []
-            print '----iter num', i
             IKModel.update(self.pose)
 
             th_r_IK = self.pose.getDOFPositions()
@@ -97,7 +99,6 @@ class numIkSolver:
             linkInertias_IK = IKModel.getBodyInertiasGlobal()
 
             CM_IK = yrp.getCM(linkPositions_IK, linkMasses, totalMass)
-            print CM_IK
             P_IK = ymt.getPureInertiaMatrix(TO, linkMasses, linkPositions_IK, CM_IK, linkInertias_IK)
 
             yjc.computeJacobian2(Jsys_IK, DOFs, jointPositions_IK, jointAxeses_IK, linkPositions_IK, allLinkJointMasks)
@@ -105,13 +106,19 @@ class numIkSolver:
             J_IK, JAngCom_IK = np.vsplit(np.dot(P_IK, Jsys_IK), 2)
             dv_IK = cmW*(desComPos - CM_IK)
 
-            J_IK = np.vstack(( J_IK, self.getConstJacobian() ))
+            Jc_IK = self.getConstJacobian(_model)
+            if Jc_IK is not None:
+                J_IK = np.vstack(( J_IK, Jc_IK ))
 
             for j in range(len(self.bodyIdx)):
-                pos_IK = IKModel.getBodyPositionGlobal(self.bodyIdx[j])
-                dv_IK = np.append(dv_IK, posW*(self.desPos[j] - pos_IK))
                 ori_IK = IKModel.getBodyOrientationGlobal(self.bodyIdx[j])
-                dv_IK = np.append(dv_IK, oriW*mm.logSO3(self.desOri[j]*ori_IK.T))
+                pos_IK = IKModel.getBodyPositionGlobal(self.bodyIdx[j]) + np.dot(ori_IK, self.localPos[j])
+                dv_IK_tmp = posW * (self.desPos[j]-pos_IK)
+                for k in range(3):
+                    if self.desPosMask[j][k]:
+                        dv_IK = np.append(dv_IK, dv_IK_tmp[k])
+                if self.desPosMask[j][3]:
+                    dv_IK = np.append(dv_IK, oriW*mm.logSO3(self.desOri[j]*ori_IK.T))
 
             dth_IK_solve = npl.lstsq(J_IK, dv_IK)
             dth_IK_x = dth_IK_solve[0][:totalDOF]
