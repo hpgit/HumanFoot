@@ -140,9 +140,8 @@ def init():
     vpWorld.SetGlobalDamping(0.9999)
     # controlModel.initializeHybridDynamics()
     controlModel.initializeForwardDynamics()
-    ModelOffset = np.array([0., .75, 0.])
+    ModelOffset = np.array([0., .12, 0.])
     controlModel.translateByOffset(ModelOffset)
-    ModelOffset = np.array([1., .75, 0.])
     motionModel.translateByOffset(ModelOffset)
 
     vpWorld.initialize()
@@ -172,8 +171,8 @@ def init():
     viewer.doc.addObject('motion', motion)
     # viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(
     #     motionModel, MOTION_COLOR, yr.POLYGON_FILL))
-    viewer.doc.addRenderer('IKModel', cvr.VpModelRenderer(
-         solver.model, MOTION_COLOR, yr.POLYGON_FILL))
+    # viewer.doc.addRenderer('IKModel', cvr.VpModelRenderer(
+    #      solver.model, MOTION_COLOR, yr.POLYGON_FILL))
     viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(
         controlModel, CHARACTER_COLOR, yr.POLYGON_FILL))
     viewer.doc.addRenderer('rd_contactForcesControl', yr.VectorsRenderer(
@@ -205,7 +204,7 @@ def init():
     viewer.objectInfoWnd.add1DSlider(
         'force weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
     viewer.objectInfoWnd.add1DSlider(
-        'tracking weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
+        'LCP weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
     viewer.objectInfoWnd.add1DSlider(
         'tau weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
     viewer.objectInfoWnd.addBtn('image', viewer.motionViewWnd.dump)
@@ -267,6 +266,7 @@ class Callback:
         self.setTimeStamp()
 
         # IK solver
+        '''
         solver.clear()
         solver.setInitPose(motion[0])
         cVpBodyIds, cPositions, cPositionsLocal, cVelocities = vpWorld.getContactPoints(bodyIDsToCheck)
@@ -275,7 +275,8 @@ class Callback:
             solver.addConstraints(cVpBodyIds[1], cPositionsLocal[1], np.array((0., 0., 0.)), None, (False, True, False, False))
             solver.addConstraints(cVpBodyIds[3], cPositionsLocal[3], np.array((0., 0., 0.)), None, (False, True, False, False))
             solver.addConstraints(cVpBodyIds[5], cPositionsLocal[5], np.array((0., 0., 0.)), None, (False, True, False, False))
-        solver.solve(controlModel, np.array((0., .15 + .05*math.sin(frame/10.), 0.)))
+        # solver.solve(controlModel, np.array((0., .15 + .05*math.sin(frame/10.), 0.)))
+        '''
 
 
         # constant setting
@@ -293,6 +294,7 @@ class Callback:
         # controlModel.SetJointsDamping(damp)
         controlModel.SetJointsDamping(1.)
 
+        wLCP = math.pow(2., getVal('LCP weight'))
         wForce = math.pow(2., getVal('force weight'))
         wTorque = math.pow(2., getVal('tau weight'))
 
@@ -345,7 +347,7 @@ class Callback:
             # totalForceImpulse = stepsPerFrame * totalForce
             cBodyIDsControl, cPositionsControl, cPositionLocalsControl, cForcesControl, torques \
                 = hls.calcLCPbasicControl(
-                motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, wForce, wTorque, ddth_des_flat)
+                motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, [wLCP, wTorque, wForce], ddth_des_flat)
             # if cForces is not None:
             #     print "control: ", sum(cForces)
 
