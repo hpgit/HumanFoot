@@ -893,11 +893,12 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, we
     factor = 1.
     # A, b = getLCPMatrix(world, model, pinvM0, c, mu, tau0, contactNum, contactPositions, JTN, JTD, E, factor)
 
-    A0 = np.concatenate((A00, np.zeros((A00.shape[0], A11.shape[1]+A12.shape[1]+E.shape[1]))), axis=1)
+    # A0 = np.concatenate((A00, np.zeros((A00.shape[0], A11.shape[1]+A12.shape[1]+E.shape[1]))), axis=1)
+    A0 = np.zeros((A00.shape[0], A00.shape[1] + A11.shape[1]+A12.shape[1]+E.shape[1]))
     A1 = np.concatenate((A10, A11, A12,  np.zeros((A11.shape[0], E.shape[1]))),   axis=1)
     A2 = np.concatenate((A20, A21, A22,  E),                                      axis=1)
-    A3 = np.concatenate((np.zeros((mus.shape[0], A00.shape[1])), mus, -E.T, np.zeros((mus.shape[0], E.shape[1]))),  axis=1)
-    A_ori = np.concatenate((wTorque*A0,
+    A3 = np.concatenate((np.zeros((mus.shape[0], A00.shape[1])), 1.*mus, -1.*E.T, np.zeros((mus.shape[0], E.shape[1]))),  axis=1)
+    A_ori = np.concatenate((A0,
                         wLCP*A1,
                         wLCP*A2,
                         wLCP*A3), axis=0) * factor
@@ -957,6 +958,12 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, we
             # Qtauqp = np.hstack((np.dot(pinvM1[:6], np.hstack((JTN, JTD))), np.zeros_like(N[:6])))
             # ptauqp = np.dot(pinvM1[:6], (-np.asarray(c)+np.asarray(tau0))) + np.asarray(tau0[:6])
 
+            Qtauqp = np.hstack((np.eye(totalDOF), np.zeros((A00.shape[0], A11.shape[1]+A12.shape[1]+E.shape[1]))))
+            ptauqp = np.zeros(totalDOF)
+
+            Q2dotqp = np.hstack((np.dot(invM, np.concatenate((wTorque* np.eye(totalDOF), JTN, JTD), axis=1)), np.zeros((A0.shape[0], E.shape[1])) ))
+            p2dotqp = -invMc.copy()
+
             # Qqp = cvxMatrix(2.*A + wTorque * np.dot(Qtauqp.T, Qtauqp))
             # pqp = cvxMatrix(b + wTorque * np.dot(ptauqp.T, Qtauqp))
 
@@ -980,17 +987,38 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, we
             # Qqp = cvxMatrix(2.*A + wForce * np.dot(Qfqp.T, Qfqp) + wTorque * np.dot(QtauNormqp.T, QtauNormqp))
             # pqp = cvxMatrix(b + wForce * np.dot(pfqp.T, Qfqp) + wTorque * np.dot(ptauNormqp.T, QtauNormqp))
 
-            # Qqp = cvxMatrix(2.*A + wForce * np.dot(Qfqp.T, Qfqp) )
-            # pqp = cvxMatrix(b + wForce * np.dot(pfqp.T, Qfqp))
-
-            # QQ = A+A.T + wForce * np.dot(Qfqp.T, Qfqp)
-            # pp = b + wForce * np.dot(pfqp.T, Qfqp)
+            # objective : LCP
+            Qqp = cvxMatrix(A+A.T )
+            pqp = cvxMatrix(b)
 
             QQ = A+A.T
             pp = b.copy()
 
-            Qqp = cvxMatrix(A+A.T )
-            pqp = cvxMatrix(b)
+            # objective : torque
+            if False:
+                Qqp += cvxMatrix(wTorque * np.dot(Qtauqp.T, Qtauqp) )
+                pqp += cvxMatrix(wTorque * np.dot(ptauqp.T, Qtauqp))
+
+                QQ += wTorque * np.dot(Qtauqp.T, Qtauqp)
+                pp += wTorque * np.dot(ptauqp.T, Qtauqp)
+
+            # objective : q2dot
+            if True:
+                Qqp += cvxMatrix(wTorque * np.dot(Q2dotqp.T, Q2dotqp) )
+                pqp += cvxMatrix(wTorque * np.dot(p2dotqp.T, Q2dotqp))
+
+                QQ += wTorque * np.dot(Q2dotqp.T, Q2dotqp)
+                pp += wTorque * np.dot(p2dotqp.T, Q2dotqp)
+
+            # objective : force
+            if False:
+                Qqp += cvxMatrix(wForce * np.dot(Qfqp.T, Qfqp) )
+                pqp += cvxMatrix(wForce * np.dot(pfqp.T, Qfqp))
+
+                QQ += wForce * np.dot(Qfqp.T, Qfqp)
+                pp += wForce * np.dot(pfqp.T, Qfqp)
+
+
 
             equalConstForce = False
             G = np.vstack((-A[totalDOF:], -np.eye(A.shape[0])[totalDOF:]))
@@ -999,6 +1027,7 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, we
             # hnp = np.hstack((b[totalDOF:].T, np.zeros(A_ori.shape[0])[totalDOF:]))
 
             if False and not equalConstForce:
+                # 3direction
             # if not equalConstForce:
                 constMu = .1
                 constFric = totalForce[1]*constMu
@@ -1012,13 +1041,14 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, we
                 hnp[-2] = totalForce[1] * 1.1
                 hnp[-1] = totalForce[2] + constFric
 
-            if not equalConstForce:
+            if True and not equalConstForce:
+                # just normal direction
                 # if not equalConstForce:
                 constMu = .1
                 constFric = totalForce[1]*constMu
                 totalForceMat = np.concatenate((np.zeros((6, totalDOF)), N, D, np.zeros_like(N)), axis=1)
                 G = np.concatenate((G, -totalForceMat[1:2], totalForceMat[1:2]), axis=0)
-                hnp = np.hstack((hnp, np.zeros(6)))
+                hnp = np.hstack((hnp, np.zeros(2)))
                 hnp[-2] = -totalForce[1] * 0.9
                 hnp[-1] = totalForce[1] * 1.1
 
@@ -1081,15 +1111,21 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, we
 
             # bp::list qp(const object &H, const object &g, const object &A, const object &lb, const object &ub, const object &lbA, const object ubA, int nWSR)
             # print qpos.qp
+
+
+            # lb = [-1000.]*(totalDOF-6)
+            # lb.extend([0.]*(A.shape[0]-totalDOF))
+            # xqpos = qpos.qp(QQ[6:, 6:], pp[6:], G[:, 6:], lb, None, None, hnp, 200, False, "NONE")
+            # xtmp = [0.]*6
+            # xtmp.extend(xqpos[:])
+            # x = np.array(xtmp)
+
             lb = [-1000.]*totalDOF
             lb.extend([0.]*(A.shape[0]-totalDOF))
+            xqpos = qpos.qp(QQ, pp, G, lb, None, None, hnp, 200, False, "NONE")
+            x = np.array(xqpos)
 
-            xqpos = qpos.qp(QQ[6:, 6:], pp[6:], G[:, 6:], lb, None, None, hnp, 200, False, "NONE")
-            xtmp = [0.]*6
-            xtmp.extend(xqpos[:])
-            x = np.array(xtmp)
             zqp = np.dot(A, x) + b
-            print x
 
             '''
             cons = []
@@ -1146,10 +1182,13 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, we
 
     lcpValue = np.dot(x[totalDOF:], zqp[totalDOF:])
     tauValue = np.dot(tau, tau)
+    Q2dotqpx = np.dot(Q2dotqp, x)+p2dotqp
+    q2dotValue = np.dot(Q2dotqpx, Q2dotqpx)
     Qfqpx = np.dot(Qfqp, x)+pfqp
     forceValue = np.dot(Qfqpx, Qfqpx)
     print "LCP value: ", wLCP, lcpValue/wLCP, lcpValue
     print "tau value: ", wTorque, tauValue, wTorque*tauValue
+    # print "q2dot value: ", wTorque, q2dotValue, wTorque*q2dotValue
     print "For value: ", wForce, forceValue, wForce*forceValue
     # print "x: ", x[totalDOF:]
     # print "z: ", zqp[totalDOF:]

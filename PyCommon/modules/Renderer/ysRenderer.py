@@ -310,13 +310,14 @@ class LinesRenderer(Renderer):
         self.lineWidth = lineWidth
         self.rc.setLineWidth(lineWidth)
     def render(self, renderType=RENDER_OBJECT):
-        glColor3ubv(self.totalColor)
-        self.rc.beginDraw()
-        for i in range(len(self.points)-1):
-            if self.points[i] is not None:
-                point1 = self.points[i]
-                point2 = self.points[i+1]
-                self.rc.drawLine(point1, point2)
+        if renderType==RENDER_OBJECT:
+            glColor3ubv(self.totalColor)
+            self.rc.beginDraw()
+            for i in range(len(self.points)-1):
+                if self.points[i] is not None:
+                    point1 = self.points[i]
+                    point2 = self.points[i+1]
+                    self.rc.drawLine(point1, point2)
 
 class VectorsRenderer(Renderer):
     def __init__(self, vectors, origins, color = (255,0,0), lineWidth=.02):
@@ -325,13 +326,15 @@ class VectorsRenderer(Renderer):
         self.origins = origins
         self.lineWidth = lineWidth
         self.rc.setLineWidth(lineWidth)
+
     def render(self, renderType=RENDER_OBJECT):
-        glColor3ubv(self.totalColor)
-        self.rc.beginDraw()
-        for i in range(len(self.vectors)):
-            if (self.vectors[i] is not None) and (self.origins[i] is not None):
-                origin = self.origins[i]; vector = self.vectors[i]
-                self.rc.drawLine(origin, (origin[0]+vector[0],origin[1]+vector[1],origin[2]+vector[2]))
+        if renderType==RENDER_OBJECT:
+            glColor3ubv(self.totalColor)
+            self.rc.beginDraw()
+            for i in range(len(self.vectors)):
+                if (self.vectors[i] is not None) and (self.origins[i] is not None):
+                    origin = self.origins[i]; vector = self.vectors[i]
+                    self.rc.drawLine(origin, (origin[0]+vector[0],origin[1]+vector[1],origin[2]+vector[2]))
 
 class PolygonRenderer(Renderer):
     def __init__(self, vertices, color = (0,255,0)):
@@ -341,7 +344,8 @@ class PolygonRenderer(Renderer):
             self.polygonMode = GL_TRIANGLES
         else:
             self.polygonMode = GL_QUADS
-    def render(self):
+
+    def render(self, renderType=RENDER_OBJECT):
         glColor3ubv(self.totalColor)
         glDisable(GL_CULL_FACE)
         glPolygonMode(GL_FRONT, GL_FILL)

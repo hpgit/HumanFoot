@@ -313,7 +313,7 @@ void VpModelRenderer::render(int renderType)
 
 //	glColor3ubv(_color);
 	if(renderType==RENDER_SHADOW)
-		glColor3ub(150, 150, 150);
+		glColor3ub(90, 90, 90);
 	else
 	{
 		glColor3ubv(_color);

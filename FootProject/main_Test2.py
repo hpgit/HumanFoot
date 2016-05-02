@@ -208,6 +208,7 @@ def init():
     viewer.objectInfoWnd.add1DSlider(
         'tau weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
     viewer.objectInfoWnd.addBtn('image', viewer.motionViewWnd.dump)
+    viewer.objectInfoWnd.addBtn('image seq dump', viewer.motionViewWnd.dumpMov)
 
     viewer.cForceWnd.addDataSet('expForce', FL_BLACK)
     viewer.cForceWnd.addDataSet('desForceMin', FL_RED)

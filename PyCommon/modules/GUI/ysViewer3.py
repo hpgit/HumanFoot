@@ -24,7 +24,7 @@ VIEW_TOP = 2
 VIEW_PERSPECTIVE = 3
 
 #Define
-FLAG_SHADOW = 0
+FLAG_SHADOW = 1
 
 #class StateObject:
 #    def getState(self):
@@ -300,7 +300,7 @@ class GlWindow(Fl_Gl_Window):
             for x in range(0,nSquares):
                 for y in range(0,nSquares):
                     if i % 2 == 1:
-                        glColor4f(0.78, 0.78, 0.78, 0.5)
+                        glColor4f(0.58, 0.58, 0.58, 0.5)
                     else:
                         glColor4f(0.9, 0.9, 0.9, 0.5)
                     glVertex3d(xp,      self.planeHeight-h, yp)
@@ -359,7 +359,8 @@ class GlWindow(Fl_Gl_Window):
         # if self.initGLFlag:
             self.initGL()
             self.initGLFlag = False
-            
+
+        glClearColor(.8, .8, .8, .8)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         if self.projectionChanged:
@@ -386,10 +387,10 @@ class GlWindow(Fl_Gl_Window):
         glLineWidth(1.)
         # self.drawGround()
         # self.drawAxis()
-        self.drawCoordinate((0, 0, 0))
+        # self.drawCoordinate((0, 0, 0))
         self.drawGround_color()
-        #self.drawGroundFilled()
-        #self.drawGround_grey()
+        # self.drawGroundFilled()
+        # self.drawGround_grey()
         
         if self.sceneList:
 #            print '[FRAMELOG]calllist', self.parent.frame
