@@ -1045,10 +1045,10 @@ if __name__ == '__main__':
         pointMotion = yf.readTrcFile('../samples/Day7_Session2_Take01_-_walk.trc', .01)
         jointMotion = yf.readBvhFile('../samples/wd2_WalkSameSame00.bvh', .01)
 
-        print 'pointSkeleton'
-        print pointMotion[0].skeleton
-        print 'jointSkeleton'
-        print jointMotion[0].skeleton
+        print('pointSkeleton')
+        print(pointMotion[0].skeleton)
+        print('jointSkeleton')
+        print(jointMotion[0].skeleton)
 
         viewer = ysv.SimpleViewer()
         viewer.record(False)
@@ -1202,8 +1202,8 @@ if __name__ == '__main__':
         bvhFilePath = '../samples/wd2_WalkSameSame00.bvh'
         jointMotion = yf.readBvhFile(bvhFilePath, .01)
 
-        print isinstance(JointDisplacement(jointMotion[0].skeleton), JointPosture)
-        print JointDisplacement(jointMotion[0].skeleton).__class__ == JointPosture
+        print(isinstance(JointDisplacement(jointMotion[0].skeleton), JointPosture))
+        print(JointDisplacement(jointMotion[0].skeleton).__class__ == JointPosture)
 
         m1 = jointMotion[50:51]
         m2 = jointMotion[70:71]
@@ -1280,7 +1280,7 @@ if __name__ == '__main__':
         #        motion = yf.readBvhFile('../samples/wd2_WalkSameSame00.bvh', .01)
         #        motion = yf.readBvhFile('../samples/block_3_rotate.bvh', 1)
         motion = yf.readBvhFile('../samples/block_tree_rotate.bvh', 1)
-        print motion[0].skeleton
+        print(motion[0].skeleton)
 
         p = []
         v = []
@@ -1307,7 +1307,7 @@ if __name__ == '__main__':
         #        bvhFilePath = '../samples/chain_3_rotate.bvh'
         bvhFilePath = '../samples/chain_2_rotate_2axes.bvh'
         motion = yf.readBvhFile(bvhFilePath)
-        print motion[0].skeleton
+        print(motion[0].skeleton)
 
         #        yme.rotateJointLocal(motion, 0, mm.exp(mm.v3(0,1,0), math.pi/2))
 
@@ -1340,10 +1340,10 @@ if __name__ == '__main__':
     def test_translate_rotate_scale():
         pm = yf.readTrcFile('../samples/Day7_Session2_Take01_-_walk.trc', .01)
         jm = yf.readBvhFile('../samples/wd2_WalkSameSame00.bvh', .01)
-        print 'pointSkeleton'
-        print pm[0].skeleton
-        print 'jointSkeleton'
-        print jm[0].skeleton
+        print('pointSkeleton')
+        print(pm[0].skeleton)
+        print('jointSkeleton')
+        print(jm[0].skeleton)
 
         pm_translateByOffset = copy.deepcopy(pm)
         pm_translateByOffset.translateByOffset((0,0,.2))

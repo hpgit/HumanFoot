@@ -2,7 +2,8 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
 from OpenGL.GLE import *
-import ode, numpy
+# import ode, numpy
+import numpy
 
 import sys
 if '..' not in sys.path:
@@ -49,7 +50,7 @@ class Renderer:
         self.selectedElement = None
         self.shadowColor = (150,150,150)
     def render(self, renderType):
-        print "Renderer.render() : Must subclass me"
+        print("Renderer.render() : Must subclass me")
         raise NotImplementedError
 
 
@@ -840,7 +841,8 @@ class RenderContext:
         glPopMatrix()
         
         glPopMatrix()
-    
+
+    '''
     def renderSelectedOdeGeom(self, geom, color):
         if type(geom) == ode.GeomBox:
             lx, ly, lz = geom.getLengths()
@@ -901,7 +903,7 @@ class RenderContext:
             
         elif type(geom) == ode.GeomRay:
             length = geom.getLength()
-
+    '''
 
 if __name__=='__main__':
     from fltk import *

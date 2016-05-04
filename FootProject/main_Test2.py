@@ -364,7 +364,7 @@ class Callback:
             torque_None = True
             torques = ddth_des_flat
         elif np.linalg.norm(sumControlForce - totalForce) > np.linalg.norm(totalForce):
-            print "control failed!"
+            print("control failed!")
             torque_None = True
             torques = ddth_des_flat
         else:

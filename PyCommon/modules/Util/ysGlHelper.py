@@ -101,7 +101,7 @@ class DrawingSet:
             string += name + str(vector) + 'origin -' + str(self.vectorOriginMap.get(name,(0,0,0)))+'\n'
         string += '# SO3Map\n'
         for name, SO3 in self.SO3Map.items():
-            print name, SO3
+            print(name, SO3)
         string += '# coordinate\n'+str(self.coordinate)
         return string
 

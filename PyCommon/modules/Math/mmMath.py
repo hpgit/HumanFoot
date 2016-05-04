@@ -77,7 +77,7 @@ def normalize2(transV):
 #    if length != 0.:
 #        return transV/length
 #    else :
-##        print "normalize error, length == 0", transV
+##        print("normalize error, length == 0", transV)
 #        return transV 
 
 def SE3ToTransV(SE3):
@@ -187,7 +187,7 @@ LIE_EPS = 1E-6
 def logSO3_old(SO3):
     cosTheta = 0.5 * (SO3[0,0] + SO3[1,1] + SO3[2,2] - 1.0)
     if math.fabs(cosTheta) > 1.0 - LIE_EPS:
-#        print 'logSO3 return zero array'
+#        print('logSO3 return zero array')
         return np.array([0., 0., 0.])
     theta = math.acos(cosTheta)
     
@@ -442,7 +442,7 @@ def p2T(p):
 
 def Rp2T(R, p):
     T = _I_SE3.copy()
-    print T[0, 3]
+    # print(T[0, 3])
     T[0,0] = R[0,0];T[0,1] = R[0,1];T[0,2] = R[0,2];T[0,3] = p[0];
     T[1,0] = R[1,0];T[1,1] = R[1,1];T[1,2] = R[1,2];T[1,3] = p[1];
     T[2,0] = R[2,0];T[2,1] = R[2,1];T[2,2] = R[2,2];T[2,3] = p[2];
@@ -571,36 +571,36 @@ if __name__ == '__main__':
     
     def test_array_copy():
         I = np.identity(4, float)
-        print 'I', I
+        print('I', I)
         Icopy = I.copy()
-        print 'Icopy', Icopy
+        print('Icopy', Icopy)
         Iview = I.view()
-        print 'Iview', Iview
+        print('Iview', Iview)
         
         Icopy[0,0] = 0
-        print 'Icopy', Icopy
-        print 'I', I
+        print('Icopy', Icopy)
+        print('I', I)
         
         Iview[0,0] = 0
-        print 'Iview', Iview
-        print 'I', I
+        print('Iview', Iview)
+        print('I', I)
         
         print
          
         I = np.identity(4, float)
-        print 'I', I
+        print('I', I)
         Ipythondeepcopy = copy.deepcopy(I)
-        print 'Ipythondeepcopy', Ipythondeepcopy
+        print('Ipythondeepcopy', Ipythondeepcopy)
         Ipythoncopy = copy.copy(I)
-        print 'Ipythoncopy', Ipythoncopy
+        print('Ipythoncopy', Ipythoncopy)
         
         Ipythondeepcopy[0,0] = 0
-        print 'Ipythondeepcopy', Ipythondeepcopy
-        print 'I', I
+        print('Ipythondeepcopy', Ipythondeepcopy)
+        print('I', I)
         
         Ipythoncopy[0,0] = 0
-        print 'Ipythoncopy', Ipythoncopy
-        print 'I', I
+        print('Ipythoncopy', Ipythoncopy)
+        print('I', I)
     
     def test_tupleSO3_funcs():
 #        A_tuple = (12,3,434,5643,564,213,43,5,13)
@@ -612,17 +612,17 @@ if __name__ == '__main__':
         A_tuple = numpySO3_2_tupleSO3(A_numpy)
         B_tuple = numpySO3_2_tupleSO3(B_numpy)
         
-        print A_tuple 
-        print A_numpy
+        print(A_tuple )
+        print(A_numpy)
         
-        print dot_tupleSO3(A_tuple, B_tuple)
-        print np.dot(A_numpy, B_numpy)
+        print(dot_tupleSO3(A_tuple, B_tuple))
+        print(np.dot(A_numpy, B_numpy))
         
-        print transpose_tupleSO3(A_tuple)
-        print A_np.transpose()
+        print(transpose_tupleSO3(A_tuple))
+        print(A_np.transpose())
         
-        print logSO3(A_numpy)
-        print logSO3_tupleSO3(A_tuple)
+        print(logSO3(A_numpy))
+        print(logSO3_tupleSO3(A_tuple))
         
     def test_getSO3FromVectors():
         vec1 = np.array([0,0,1])
@@ -630,21 +630,21 @@ if __name__ == '__main__':
         vec2 = np.array([0,0,-1])
         
         R = getSO3FromVectors(vec1, vec2)
-        print R
+        print(R)
         
     def test_logSO3():
         A = I_SO3()
         B = exp((0,1,0), math.pi)
-        print logSO3(A)
-        print logSO3(B)
+        print(logSO3(A))
+        print(logSO3(B))
         
     def test_slerp():
         R1 = exp(v3(1.0, 0.0, 0.0), math.pi/2)
         R2 = exp(v3(0.0, 1.0, 0.0), math.pi/2)
-        print logSO3(R1), logSO3(R2)
+        print(logSO3(R1), logSO3(R2))
     
         R = slerp(R1, R2, 0.1)
-        print logSO3(R)
+        print(logSO3(R))
     
     def test_projectRotation():
         orig_pol = [(1,0,0), (0,0,0), (0,0,1)]
@@ -696,11 +696,11 @@ if __name__ == '__main__':
         diffVec2_3 = logSO3(np.dot(Rb, np.transpose(Ra)))
         diffVec2_4 = logSO3(np.dot(np.transpose(Ra), Rb))
         
-        print diffVec1
-        print diffVec2_1
-        print diffVec2_2
-        print diffVec2_3
-        print diffVec2_4
+        print(diffVec1)
+        print(diffVec2_1)
+        print(diffVec2_2)
+        print(diffVec2_3)
+        print(diffVec2_4)
         
         viewer = ysv.SimpleViewer()
         viewer.record(False)
@@ -721,7 +721,7 @@ if __name__ == '__main__':
                    [ 1. ,  0. ,  0. ,  1. ,  0. ,  0. ],
                    [ 0. ,  1. ,  0. ,  0. ,  1. ,  0. ],
                    [ 0. ,  0. ,  1. ,  0. ,  0. ,  1. ]]) 
-        print matrixrank(A)
+        print(matrixrank(A))
         
     pass
 #    test_array_copy()
