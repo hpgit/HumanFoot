@@ -105,6 +105,8 @@ public:
 
 	virtual void draw(void) const {}
 
+	virtual char GetType() const = 0;
+
 protected:
 
 	SE3						 m_sLocalFrame;
@@ -156,6 +158,12 @@ public:
 	virtual bool			 DetectCollision(const vpPlane *, vpCollisionInfoArray &) const;
 	virtual bool			 DetectCollision(const vpCylinder *, vpCollisionInfoArray &) const;
 	virtual bool			 DetectCollision(const vpTorus *, vpCollisionInfoArray &) const;
+
+	/*!
+		get a type information.
+		return type = 'S'
+	*/
+	virtual char GetType() const {return 'S';}
 
 protected:
 
@@ -209,6 +217,12 @@ public:
 	virtual bool			 DetectCollision(const vpPlane *, vpCollisionInfoArray &) const;
 	virtual bool			 DetectCollision(const vpCylinder *, vpCollisionInfoArray &) const;
 	virtual bool			 DetectCollision(const vpTorus *, vpCollisionInfoArray &) const;
+
+	/*!
+		get a type information.
+		return type = 'B'
+	*/
+	virtual char GetType() const {return 'B';}
 
 protected:
 
@@ -268,6 +282,11 @@ public:
 	virtual bool			 DetectCollision(const vpCylinder *, vpCollisionInfoArray &) const;
 	virtual bool			 DetectCollision(const vpTorus *, vpCollisionInfoArray &) const;
 
+	/*!
+		get a type information.
+		return type = 'C'
+	*/
+	virtual char GetType() const {return 'C';}
 protected:
 
 	scalar					 m_rRadius;
@@ -321,6 +340,11 @@ public:
 	virtual bool			 DetectCollision(const vpCylinder *, vpCollisionInfoArray &) const;
 	virtual bool			 DetectCollision(const vpTorus *, vpCollisionInfoArray &) const;
 	
+	/*!
+		get a type information.
+		return type = 'P'
+	*/
+	virtual char GetType() const {return 'P';}
 protected:
 
 	Vec3					 m_sNormal;
@@ -379,6 +403,11 @@ public:
 	virtual bool			 DetectCollision(const vpCylinder *, vpCollisionInfoArray &) const;
 	virtual bool			 DetectCollision(const vpTorus *, vpCollisionInfoArray &) const;
 	
+	/*!
+		get a type information.
+		return type = 'L'
+	*/
+	virtual char GetType() const {return 'L';}
 protected:
 
 	scalar					 m_rRadius;
@@ -438,6 +467,11 @@ public:
 	virtual bool			 DetectCollision(const vpCylinder *, vpCollisionInfoArray &) const;
 	virtual bool			 DetectCollision(const vpTorus *, vpCollisionInfoArray &) const;
 	
+	/*!
+		get a type information.
+		return type = 'T'
+	*/
+	virtual char GetType() const {return 'T';}
 protected:
 
 	scalar					 m_rRingRadius;

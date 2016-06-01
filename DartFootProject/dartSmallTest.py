@@ -15,7 +15,7 @@ print('data_dir = ' + data_dir)
 
 # world = pydart.create_world(1.0 / 2000.0, data_dir + '/skel/fullbody1.skel')
 # world = pydart.create_world(1.0 / 2000.0, '../data/skel/fullbody2.skel')
-world = pydart.create_world(1.0 / 2000.0, 'test.skel')
+world = pydart.create_world(1.0 / 2000.0, 'test.xml')
 # world = pydart.create_world(1.0 / 2000.0,
 #                             data_dir + '/skel/soft_fullbody.skel')
 print('pydart create_world OK')

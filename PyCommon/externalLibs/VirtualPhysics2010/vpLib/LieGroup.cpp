@@ -50,6 +50,15 @@ OF SUCH DAMAGE.
 
 #include <VP/LieGroup.h>
 #include <iomanip>
+#include <string>
+#include <sstream>
+
+static std::string numToStr(scalar num)
+{
+    char numStr[10];
+    sprintf(numStr, "%6.4lf", num);
+    return std::string(numStr);
+}
 
 ostream &operator << (ostream &os, const Vec3 &v)
 {
@@ -65,6 +74,15 @@ ostream &operator << (ostream &os, const Vec3 &v)
 	os.setf(flags);
 	os.precision(sz);
 	return os;
+}
+
+std::string Vec3::__str__()
+{
+    std::stringstream output;
+    output.clear();
+    output << "[" << numToStr(_v[0]) << ", " << numToStr(_v[1]) << ", " << numToStr(_v[2]) << "]";
+    return output.str();
+
 }
 
 ostream &operator << (ostream &os, const Axis &v)
@@ -83,6 +101,14 @@ ostream &operator << (ostream &os, const Axis &v)
 	return os;
 }
 
+std::string Axis::__str__()
+{
+    std::stringstream output;
+    output.clear();
+    output << "[" << numToStr(_v[0]) << ", " << numToStr(_v[1]) << ", " << numToStr(_v[2]) << "]";
+    return output.str();
+}
+
 ostream &operator << (ostream &os, const se3 &s)
 {
 	ios_base::fmtflags flags = os.setf(ios::left | ios::fixed);
@@ -99,6 +125,18 @@ ostream &operator << (ostream &os, const se3 &s)
 	return os;
 }
 
+std::string se3::__str__()
+{
+    std::stringstream output;
+    output.clear();
+    output << "[";
+    for(int i=0; i<5; i++)
+        output << numToStr(_w[i]) << ", ";
+    output << numToStr(_w[5]) << "]";
+
+    return output.str();
+}
+
 ostream &operator << (ostream &os, const dse3 &t)
 {
 	ios_base::fmtflags flags = os.setf(ios::left | ios::fixed);
@@ -113,6 +151,18 @@ ostream &operator << (ostream &os, const dse3 &t)
 	os.setf(flags);
 	os.precision(sz);
 	return os;
+}
+
+std::string dse3::__str__()
+{
+    std::stringstream output;
+    output.clear();
+    output << "[";
+    for(int i=0; i<5; i++)
+        output << numToStr(_m[i]) << ", ";
+    output << numToStr(_m[5]) << "]";
+
+    return output.str();
 }
 
 ostream &operator << (ostream &os, const SE3 &T)
@@ -133,6 +183,55 @@ ostream &operator << (ostream &os, const SE3 &T)
 	os.setf(flags);
 	os.precision(sz);
 	return os;
+}
+
+std::string SE3::__str__()
+{
+    std::stringstream output;
+
+    output.clear();
+    output << "[[";
+
+    for(int j=0; j<3; j++)
+    {
+        for(int i=0; i<3; i++)
+            output << numToStr(_T[3*i+j]) << ", ";
+
+        output << numToStr(_T[9+j]) << "]," << std::endl;
+        output << " [";
+    }
+    output << numToStr(0.) << ", " << numToStr(0.) << ", "
+            << numToStr(0.) << ", " << numToStr(1.) << "]]";
+
+    return output.str();
+}
+
+std::string Inertia::__str__()
+{
+    std::stringstream output;
+
+    output.clear();
+    output << "[";
+
+    {
+        output << "[";
+        for(int i=0; i<5; i++)
+            output << numToStr(_I[i]) << ", ";
+        output << numToStr(_I[5]) << "]," << std::endl;
+    }
+    {
+        output << " [";
+        for(int i=6; i<8; i++)
+            output << numToStr(_I[i]) << ", ";
+        output << numToStr(_I[8]) << "]," << std::endl;
+    }
+    {
+        output << " [" << numToStr(_I[9]) << "]" << std::endl;
+    }
+
+    output << "]";
+
+    return output.str();
 }
 
 Inertia BoxInertia(scalar density, const Vec3 &size)

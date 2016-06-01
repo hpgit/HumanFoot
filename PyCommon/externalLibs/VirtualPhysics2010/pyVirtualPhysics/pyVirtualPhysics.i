@@ -8,10 +8,12 @@ import_array(); // This is essential. We will get a crash in Python without it.
 %}
 
 %apply ( double* ARGOUT_ARRAY1,int DIM1) {(double* Massout,int n)}
+%apply char *OUTPUT {char *type};
 
 %include "typemaps.i"
 %include "std_pair.i"
 %include "std_list.i"
+%include "std_string.i"
 
 %{
 #include <VP/LieGroup.h>

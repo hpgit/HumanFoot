@@ -123,7 +123,8 @@ def init():
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot_2('simpleJump_2.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_capsule('simpleJump_onebody.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
-    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump_long.bvh')
+    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump_long.bvh')
+    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_legs('legs_robust.bvh')
     mcfg_motion = mit.normal_mcfg()
 
     vpWorld = cvw.VpWorld(wcfg)
@@ -140,7 +141,7 @@ def init():
     vpWorld.SetGlobalDamping(0.9999)
     # controlModel.initializeHybridDynamics()
     controlModel.initializeForwardDynamics()
-    ModelOffset = np.array([0., .12, 0.])
+    ModelOffset = np.array([0., 2.5, 0.])
     controlModel.translateByOffset(ModelOffset)
     motionModel.translateByOffset(ModelOffset)
 
@@ -186,7 +187,7 @@ def init():
     # viewer.doc.addRenderer('rd_jointPos', yr.PointsRenderer(rd_jointPos))
 
     viewer.objectInfoWnd.add1DSlider(
-        'PD gain', minVal=0., maxVal=200., initVal=10., valStep=.1)
+        'PD gain', minVal=0., maxVal=500., initVal=10., valStep=.1)
     viewer.objectInfoWnd.add1DSlider(
         'Joint Damping', minVal=1., maxVal=2000., initVal=35., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
@@ -290,10 +291,10 @@ class Callback:
         wcfg.timeStep = 1 / (30. * simulSpeedInv * stepsPerFrame)
         vpWorld.SetTimeStep(wcfg.timeStep)
 
-        # Dt = 2. * (Kt**.5)/20.
-        Dt = 0.
-        # controlModel.SetJointsDamping(damp)
-        controlModel.SetJointsDamping(1.)
+        Dt = 2. * (Kt**.5)/20.
+        # Dt = 0.
+        controlModel.SetJointsDamping(damp)
+        # controlModel.SetJointsDamping(1.)
 
         wLCP = math.pow(2., getVal('LCP weight'))
         wForce = math.pow(2., getVal('force weight'))

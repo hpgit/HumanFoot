@@ -20,11 +20,12 @@ NUMPY_INC_DIR := $(shell python -c "import numpy;print numpy.get_include()")
 
 .PHONY: Release
 Release:
-	ln -s ../usr/include/VP ./
+	[ -e VP ] || ln -s ../usr/include/VP ./
 	swig -python -c++ pyVirtualPhysics.i
 	$(CPP_COMPILER) -I../usr/include -I$(NUMPY_INC_DIR) `python-config --cflags` $(PREPROCESSOR) -c ../vpLib/*.cpp pyVirtualPhysics_wrap.cxx
 	$(CPP_COMPILER) -bundle `python-config --ldflags` -liomp5 *.o -o _pyVirtualPhysics.so
-	rm VP
+	cp pyVirtualPhysics.py ../../../modules/
+	cp _pyVirtualPhysics.so ../../../modules/
 
 
 .PHONY: clean

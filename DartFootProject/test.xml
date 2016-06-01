@@ -1,0 +1,300 @@
+<?xml version="1.0" ?>
+<skel version="1.0">
+    <world name="world 1">
+        <physics>
+            <time_step>0.001</time_step>
+            <gravity>0 -9.81 0</gravity>
+            <collision_detector>fcl_mesh</collision_detector>
+        </physics>
+        <skeleton name="grount skeleton">
+            <mobile>false</mobile>
+            <body name="ground">
+                <transformation>0 -0.92 0 0 0 0</transformation>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <box>
+                            <size>5.0 0.05 5.0</size>
+                        </box>
+                    </geometry>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <box>
+                            <size>10.0 0.05 10.0</size>
+                        </box>
+                    </geometry>
+                </collision_shape>
+            </body>
+            <joint name="joint 1" type="free">
+                <parent>world</parent>
+                <child>ground</child>
+            </joint>
+        </skeleton>
+        <skeleton name="SimpleJump">
+            <body name="root">
+                <transformation>0.0 0.5 0.0 0.0 0.0 0.0 </transformation>
+                <inertia>
+                    <mass>.5</mass>
+                    <offset>0.0 0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.1875 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <ellipsoid>
+                            <size>0.1 0.1 0.1</size>
+                        </ellipsoid>
+                    </geometry>
+                </visualization_shape>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <cylinder>
+                            <radius>0.05</radius>
+                            <height>0.375</height>
+                        </cylinder>
+                    </geometry>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.1875 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <ellipsoid>
+                            <size>0.1 0.1 0.1</size>
+                        </ellipsoid>
+                    </geometry>
+                </collision_shape>
+            </body>
+            <body name="foot_0_0">
+                <transformation>0.09060175 0.0625 0.095521 0.486085116906 0.70464259585 0.0 </transformation>
+                <inertia>
+                    <mass>.5</mass>
+                    <offset>0.0 0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.145736709665 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <ellipsoid>
+                            <size>0.1 0.1 0.1</size>
+                        </ellipsoid>
+                    </geometry>
+                </visualization_shape>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <cylinder>
+                            <radius>0.05</radius>
+                            <height>0.291473419331</height>
+                        </cylinder>
+                    </geometry>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.145736709665 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <ellipsoid>
+                            <size>0.1 0.1 0.1</size>
+                        </ellipsoid>
+                    </geometry>
+                </collision_shape>
+            </body>
+            <body name="foot_0_1">
+                <transformation>0.19262725 0.0 0.3163015 0.0 0.0909490661243 0.0 </transformation>
+                <inertia>
+                    <mass>.5</mass>
+                    <offset>0.0 0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.125779348084 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <ellipsoid>
+                            <size>0.1 0.1 0.1</size>
+                        </ellipsoid>
+                    </geometry>
+                </visualization_shape>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <cylinder>
+                            <radius>0.05</radius>
+                            <height>0.251558696167</height>
+                        </cylinder>
+                    </geometry>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.125779348084 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <ellipsoid>
+                            <size>0.1 0.1 0.1</size>
+                        </ellipsoid>
+                    </geometry>
+                </collision_shape>
+            </body>
+            <body name="foot_1_0">
+                <transformation>-0.09060175 0.0625 0.095521 0.486085116906 -0.70464259585 0.0 </transformation>
+                <inertia>
+                    <mass>.5</mass>
+                    <offset>0.0 0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.145736709665 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <ellipsoid>
+                            <size>0.1 0.1 0.1</size>
+                        </ellipsoid>
+                    </geometry>
+                </visualization_shape>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <cylinder>
+                            <radius>0.05</radius>
+                            <height>0.291473419331</height>
+                        </cylinder>
+                    </geometry>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.145736709665 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <ellipsoid>
+                            <size>0.1 0.1 0.1</size>
+                        </ellipsoid>
+                    </geometry>
+                </collision_shape>
+            </body>
+            <body name="foot_1_1">
+                <transformation>-0.19262725 0.0 0.3163015 0.0 -0.0909490661243 0.0 </transformation>
+                <inertia>
+                    <mass>.5</mass>
+                    <offset>0.0 0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.125779348084 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <ellipsoid>
+                            <size>0.1 0.1 0.1</size>
+                        </ellipsoid>
+                    </geometry>
+                </visualization_shape>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <cylinder>
+                            <radius>0.05</radius>
+                            <height>0.251558696167</height>
+                        </cylinder>
+                    </geometry>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.125779348084 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <ellipsoid>
+                            <size>0.1 0.1 0.1</size>
+                        </ellipsoid>
+                    </geometry>
+                </collision_shape>
+            </body>
+            <body name="foot_2_0">
+                <transformation>0.0 0.0625 -0.0625 2.35619449019 0.0 0.0 </transformation>
+                <inertia>
+                    <mass>.5</mass>
+                    <offset>0.0 0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0883883476483 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <ellipsoid>
+                            <size>0.1 0.1 0.1</size>
+                        </ellipsoid>
+                    </geometry>
+                </visualization_shape>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <cylinder>
+                            <radius>0.05</radius>
+                            <height>0.176776695297</height>
+                        </cylinder>
+                    </geometry>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0883883476483 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <ellipsoid>
+                            <size>0.1 0.1 0.1</size>
+                        </ellipsoid>
+                    </geometry>
+                </collision_shape>
+            </body>
+            <body name="foot_2_1">
+                <transformation>0.0 0.0 -0.1875 0.0 3.14159265359 0.0 </transformation>
+                <inertia>
+                    <mass>.5</mass>
+                    <offset>0.0 0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0625 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <ellipsoid>
+                            <size>0.1 0.1 0.1</size>
+                        </ellipsoid>
+                    </geometry>
+                </visualization_shape>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <cylinder>
+                            <radius>0.05</radius>
+                            <height>0.125</height>
+                        </cylinder>
+                    </geometry>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0625 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <ellipsoid>
+                            <size>0.1 0.1 0.1</size>
+                        </ellipsoid>
+                    </geometry>
+                </collision_shape>
+            </body>
+            <joint name="root" type="free">
+                <parent>world</parent>
+                <child>root</child>
+            </joint>
+            <joint name="j_root" type="free">
+                <parent>world</parent>
+                <child>root</child>
+            </joint>
+            <joint name="j_foot_0_0" type="ball">
+                <transformation>2.1514606127e-17 -1.62301284738e-17 -0.145736709665 -0.486085116906 -0.70464259585 0.0 </transformation>
+                <parent>root</parent>
+                <child>foot_0_0</child>
+            </joint>
+            <joint name="j_foot_0_1" type="ball">
+                <transformation>1.20192678128e-16 0.0 -0.125779348084 0.0 -0.0909490661243 0.0 </transformation>
+                <parent>foot_0_0</parent>
+                <child>foot_0_1</child>
+            </joint>
+            <joint name="j_foot_1_0" type="ball">
+                <transformation>-2.1514606127e-17 -1.62301284738e-17 -0.145736709665 -0.486085116906 0.70464259585 0.0 </transformation>
+                <parent>root</parent>
+                <child>foot_1_0</child>
+            </joint>
+            <joint name="j_foot_1_1" type="ball">
+                <transformation>-1.20192678128e-16 0.0 -0.125779348084 0.0 0.0909490661243 0.0 </transformation>
+                <parent>foot_1_0</parent>
+                <child>foot_1_1</child>
+            </joint>
+            <joint name="j_foot_2_0" type="ball">
+                <transformation>0.0 1.96261557335e-17 -0.0883883476483 -2.35619449019 0.0 0.0 </transformation>
+                <parent>root</parent>
+                <child>foot_2_0</child>
+            </joint>
+            <joint name="j_foot_2_1" type="ball">
+                <transformation>-7.65404249467e-18 0.0 -0.0625 0.0 3.14159265359 0.0 </transformation>
+                <parent>foot_2_0</parent>
+                <child>foot_2_1</child>
+            </joint>
+        </skeleton>
+    </world>
+</skel>

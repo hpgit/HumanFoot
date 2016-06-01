@@ -469,6 +469,7 @@ def create_leg(motionFile='kneeAndFoot.bvh'):
     # node.mass = 5.
 
     node = mcfg.getNode('knee')
+    node.mass = 5.
     # node.geom = 'MyFoot4'
     # node.length = 40.
 

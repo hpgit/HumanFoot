@@ -20,15 +20,9 @@ def prettifyXML(elem):
     return reparsed.toprettyxml(indent="    ")
 
 
-def list2str(ls):
-    strstr = ""
-    for i in range(len(ls)):
-        strstr += str(ls[i]) + " "
-    return strstr
-
-
 def SE32veulerXYZ(T):
-    v = np.append(T[0:3, 3].flatten(), mm.R2XYZ(T[0:3, 0:3]))
+    # v = np.append(T[0:3, 3].flatten(), mm.R2XYZ(T[0:3, 0:3]))
+    v = np.append(T[0:3, 3].flatten(), mm.logSO3(T[0:3, 0:3]))
     return v
 
 
@@ -179,7 +173,7 @@ def AddDartShapeNode(T, size, geom, shapeType='visual'):
     et.SubElement(etShape, "transformation").text = SE32veulerXYZstr(T)
     etGeom = et.SubElement(et.SubElement(etShape, "geometry"), geomtext)
     if (geom == "box") or (geom == "ellipsoid"):
-        et.SubElement(etGeom, "size").text = list2str(size)
+        et.SubElement(etGeom, "size").text = " ".join(map(str, size))
     else:
         et.SubElement(etGeom, "radius").text = str(size[0])
         et.SubElement(etGeom, "height").text = str(size[1])
@@ -207,7 +201,7 @@ def AddBody(name, T, offset, inertia):
 
     etBody.append(AddDartShapeNode(SE3(Vec3(0., 0., cylLen_2)), [.1, .1, .1], "ellipsoid"))
     # etBody.append(AddDartShapeNode(SE3(Vec3(0., 0., -cylLen_2)), [.1, .1, .1], "ellipsoid"))
-    # etBody.append(AddDartShapeNode(SE3(), [.05, 2.*cylLen_2], "cylinder"))
+    etBody.append(AddDartShapeNode(SE3(), [.05, 2.*cylLen_2], "cylinder"))
     etBody.append(AddDartShapeNode(SE3(Vec3(0., 0., cylLen_2)), [.1, .1, .1], "ellipsoid", "collision"))
     # etBody.append(AddDartShapeNode(SE3(Vec3(0., 0., -cylLen_2)), [.1, .1, .1], "ellipsoid", "collision"))
 
@@ -279,7 +273,7 @@ def bvh2dartSkel(filename):
 if __name__ == '__main__':
     fname = "../FootProject/SimpleJump.bvh"
     tree = bvh2dartSkel(fname)
-    output = open("test.skel", "w")
+    output = open("test.xml", "w")
     output.write(prettifyXML(tree.getroot()))
     output.close()
 

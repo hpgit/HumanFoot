@@ -338,6 +338,12 @@ public:
 	*/
 	friend Vec3		 ad(const Vec3 &v, const se3 &S);
 
+
+	/*!
+	    output string for python modules
+	*/
+	std::string      __str__();
+
 private:
 	scalar			_v[3];
 };
@@ -528,6 +534,10 @@ public:
 	*/
 	friend Axis		 InvAd(const SE3 &T, const Axis &w);
 
+	/*!
+	    output string for python modules
+	*/
+	std::string      __str__();
 
 private:
 	scalar			_v[3];
@@ -740,6 +750,10 @@ public:
 	*/
 	friend se3		 InvRotate(const SE3 &T, const se3 &S);
 
+	/*!
+	    output string for python modules
+	*/
+	std::string      __str__();
 private:
 	scalar			_w[6];
 };
@@ -892,6 +906,10 @@ public:
 	*/
 	friend scalar	 SquareSum(const dse3 &);
 	
+	/*!
+	    output string for python modules
+	*/
+	std::string      __str__();
 private:
 	scalar			_m[6];
 };
@@ -1152,6 +1170,10 @@ public:
 	*/
 	friend SE3		 Quaternion2SE3(const scalar q[4]);
 
+	/*!
+	    output string for python modules
+	*/
+	std::string      __str__();
 private:
 	scalar			_T[12];
 };
@@ -1298,6 +1320,10 @@ public:
 	*/
 	friend Inertia	 TorusInertia(scalar d, scalar r1, scalar r2);
 
+	/*!
+	    output string for python modules
+	*/
+	std::string      __str__();
 private:
 	scalar			_I[10];
 };
