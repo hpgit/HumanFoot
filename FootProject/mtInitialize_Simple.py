@@ -544,76 +544,76 @@ def create_legs(motionFile='legs.bvh'):
 
     node = mcfg.getNode('Spine')
     node.geom = 'MyFoot4'
-    node.mass = 10.
+    node.mass = 3.
     node.width = .1
 
     node = mcfg.getNode('RightUpLeg')
     node.geom = 'MyFoot3'
-    node.mass = 10.
+    node.mass = 5.
     # node.length = 40.
 
     node = mcfg.getNode('RightLeg')
     node.geom = 'MyFoot4'
-    node.mass = 10.
+    node.mass = 5.
     # node.length = 40.
 
     node = mcfg.getNode('RightFoot')
     node.geom = 'MyFoot4'
-    node.mass = 3.
+    node.mass = .8
 
     node = mcfg.getNode('RightToe')
     node.geom = 'MyFoot4'
-    node.mass = 1.
+    node.mass = .2
 
     node = mcfg.getNode('RightCal')
     node.geom = 'MyFoot4'
-    node.mass = 1.
+    node.mass = .2
 
     node = mcfg.getNode('RightHeel')
     node.geom = 'MyFoot4'
-    node.mass = 1.
+    node.mass = .2
 
     node = mcfg.getNode('RightCune')
     node.geom = 'MyFoot4'
-    node.mass = 2.
+    node.mass = .4
 
     node = mcfg.getNode('RightMt5')
     node.geom = 'MyFoot4'
-    node.mass = 1.
+    node.mass = .2
 
     node = mcfg.getNode('LeftUpLeg')
     node.geom = 'MyFoot3'
-    node.mass = 10.
+    node.mass = 5.
     # node.length = 40.
 
     node = mcfg.getNode('LeftLeg')
     node.geom = 'MyFoot4'
-    node.mass = 10.
+    node.mass = 5.
     # node.length = 40.
 
     node = mcfg.getNode('LeftFoot')
     node.geom = 'MyFoot4'
-    node.mass = 3.
+    node.mass = .8
 
     node = mcfg.getNode('LeftToe')
     node.geom = 'MyFoot4'
-    node.mass = 1.
+    node.mass = .2
 
     node = mcfg.getNode('LeftCal')
     node.geom = 'MyFoot4'
-    node.mass = 1.
+    node.mass = .2
 
     node = mcfg.getNode('LeftHeel')
     node.geom = 'MyFoot4'
-    node.mass = 1.
+    node.mass = .2
 
     node = mcfg.getNode('LeftCune')
     node.geom = 'MyFoot4'
-    node.mass = 2.
+    node.mass = .4
 
     node = mcfg.getNode('LeftMt5')
     node.geom = 'MyFoot4'
-    node.mass = 1.
+    node.mass = .2
 
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.

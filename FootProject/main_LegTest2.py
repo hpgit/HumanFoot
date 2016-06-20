@@ -123,7 +123,8 @@ def init():
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot_2('simpleJump_2.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_capsule('simpleJump_onebody.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
-    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump_long.bvh')
+    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump_long.bvh')
+    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_legs('legs_robust.bvh')
     mcfg_motion = mit.normal_mcfg()
 
     vpWorld = cvw.VpWorld(wcfg)
@@ -133,18 +134,18 @@ def init():
 
     solver = hik.numIkSolver(wcfg, motion[0], mcfg)
 
+    # vpWorld.SetIntegrator("RK4")
+    # vpWorld.SetIntegrator("IMPLICIT_EULER_FAST")
+    vpWorld.SetIntegrator("EULER")
+
     vpWorld.SetGlobalDamping(0.9999)
     # controlModel.initializeHybridDynamics()
     controlModel.initializeForwardDynamics()
-    ModelOffset = np.array([0., .12, 0.])
+    ModelOffset = np.array([0., 2.5, 0.])
     controlModel.translateByOffset(ModelOffset)
     motionModel.translateByOffset(ModelOffset)
 
     vpWorld.initialize()
-
-    vpWorld.SetIntegrator("RK4")
-    # vpWorld.SetIntegrator("IMPLICIT_EULER_FAST")
-    # vpWorld.SetIntegrator("EULER")
 
     totalDOF = controlModel.getTotalDOF()
     DOFs = controlModel.getDOFs()
@@ -167,7 +168,7 @@ def init():
     rd_PositionDes = [None]
     rd_jointPos = [None]
 
-    viewer = hsv.hpSimpleViewer(title='main_Test')
+    viewer = hsv.hpSimpleViewer(title='main_LegTest2')
     viewer.doc.addObject('motion', motion)
     # viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(
     #     motionModel, MOTION_COLOR, yr.POLYGON_FILL))
@@ -259,7 +260,7 @@ class Callback:
         global vpWorld
 
         # reload(tf)
-        motionModel.update(motion[frame])
+        motionModel.update(motion[0])
         self.frame = frame
         print("main:frame : ", frame)
         # motionModel.update(motion[0])
@@ -293,8 +294,9 @@ class Callback:
         Dt = 2. * (Kt**.5)
         # Dt = 2. * (Kt**.5)/20.
         # Dt = 0.
-        controlModel.SetJointsDamping(damp)
-        # controlModel.SetJointsDamping(1.)
+        # controlModel.SetJointsDamping(damp)
+        controlModel.SetJointsDamping(10.)
+        controlModel.SetJointsElasticity(50.)
 
         wLCP = math.pow(2., getVal('LCP weight'))
         wForce = math.pow(2., getVal('force weight'))
