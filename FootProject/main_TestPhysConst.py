@@ -207,6 +207,8 @@ def init():
         'LCP weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
     viewer.objectInfoWnd.add1DSlider(
         'tau weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
+    viewer.objectInfoWnd.add1DSlider(
+        'ref', minVal=-10., maxVal=10., initVal=0., valStep=.01)
     viewer.objectInfoWnd.addBtn('image', viewer.motionViewWnd.dump)
     viewer.objectInfoWnd.addBtn('image seq dump', viewer.motionViewWnd.dumpMov)
 
@@ -259,7 +261,7 @@ class Callback:
         global vpWorld
 
         # reload(tf)
-        motionModel.update(motion[frame])
+        motionModel.update(motion[0])
         self.frame = frame
         print("main:frame : ", frame)
         # motionModel.update(motion[0])
@@ -290,9 +292,9 @@ class Callback:
         wcfg.timeStep = 1 / (30. * simulSpeedInv * stepsPerFrame)
         vpWorld.SetTimeStep(wcfg.timeStep)
 
-        # Dt = 2. * (Kt**.5)
+        Dt = 2. * (Kt**.5)
         # Dt = 2. * (Kt**.5)/20.
-        Dt = 0.
+        # Dt = 0.
         controlModel.SetJointsDamping(damp)
         # controlModel.SetJointsDamping(1.)
 
@@ -302,6 +304,7 @@ class Callback:
 
         # tracking
         th_r = motion.getDOFPositions(frame)
+        # th_r += float(getVal('ref'))*np.ones_like(th_r)
         th = controlModel.getDOFPositions()
         dth_r = motion.getDOFVelocities(frame)
         dth = controlModel.getDOFVelocities()
