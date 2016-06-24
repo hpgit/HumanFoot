@@ -304,7 +304,6 @@ class Callback:
 
         # tracking
         th_r = motion.getDOFPositions(frame)
-        # th_r += float(getVal('ref'))*np.ones_like(th_r)
         th = controlModel.getDOFPositions()
         dth_r = motion.getDOFVelocities(frame)
         dth = controlModel.getDOFVelocities()
@@ -314,6 +313,7 @@ class Callback:
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMapTuple)
         ddth_c = controlModel.getDOFAccelerations()
         ype.flatten(ddth_des, ddth_des_flat)
+
 
         desForceFrameBegin = getVal('des force begin')
         desForceDuration = getVal('des force dur') * simulSpeedInv

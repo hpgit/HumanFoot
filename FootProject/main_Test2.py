@@ -140,11 +140,11 @@ def init():
     controlModel.translateByOffset(ModelOffset)
     motionModel.translateByOffset(ModelOffset)
 
-    vpWorld.initialize()
-
     vpWorld.SetIntegrator("RK4")
     # vpWorld.SetIntegrator("IMPLICIT_EULER_FAST")
     # vpWorld.SetIntegrator("EULER")
+
+    vpWorld.initialize()
 
     totalDOF = controlModel.getTotalDOF()
     DOFs = controlModel.getDOFs()
@@ -259,10 +259,10 @@ class Callback:
         global vpWorld
 
         # reload(tf)
-        motionModel.update(motion[frame])
+        # motionModel.update(motion[frame])
         self.frame = frame
         print("main:frame : ", frame)
-        # motionModel.update(motion[0])
+        motionModel.update(motion[0])
         self.timeIndex = 0
         self.setTimeStamp()
 
@@ -293,19 +293,19 @@ class Callback:
         # Dt = 2. * (Kt**.5)
         # Dt = 2. * (Kt**.5)/20.
         Dt = 0.
-        controlModel.SetJointsDamping(damp)
-        # controlModel.SetJointsDamping(1.)
+        # controlModel.SetJointsDamping(damp)
+        controlModel.SetJointsDamping(1.)
 
         wLCP = math.pow(2., getVal('LCP weight'))
         wForce = math.pow(2., getVal('force weight'))
         wTorque = math.pow(2., getVal('tau weight'))
 
         # tracking
-        th_r = motion.getDOFPositions(frame)
+        th_r = motion.getDOFPositions(0)
         th = controlModel.getDOFPositions()
-        dth_r = motion.getDOFVelocities(frame)
+        dth_r = motion.getDOFVelocities(0)
         dth = controlModel.getDOFVelocities()
-        ddth_r = motion.getDOFAccelerations(frame)
+        ddth_r = motion.getDOFAccelerations(0)
         weightMapTuple = config['weightMapTuple']
         weightMapTuple = None
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMapTuple)
@@ -325,8 +325,8 @@ class Callback:
             desNormalForce = desNormalForceMin * \
                              (1 - desForceRelFrame) + desNormalForceMax * desForceRelFrame
 
-        totalForce = np.array([0., desNormalForce, 0., 0., 0., 0.])
-        # totalForce = np.array([-desNormalForce, 34.3, 0., 0., 0., 0.])
+        # totalForce = np.array([0., desNormalForce, 0., 0., 0., 0.])
+        totalForce = np.array([-desNormalForce, 34.3, 0., 0., 0., 0.])
         # totalForce = np.array([0., 34.3, desNormalForce, 0., 0., 0.])
         # totalForce = np.array([50., 150.])
 
