@@ -5,6 +5,7 @@ class WorldConfig:
         self.timeStep = 0.001
         
         self.gravity = (0, -9.8, 0)
+        # self.gravity = (0, 0, 0)
         self.planeHeight = 0.0
         self.useDefaultContactModel = True
         self.lockingVel = 0.02

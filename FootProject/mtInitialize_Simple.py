@@ -445,8 +445,8 @@ def create_foot(motionFile='foot3.bvh'):
     config['simulSpeedInv'] = simulSpeedInv
 
     # etc
-    config['weightMap'] = {'root': 2., 'foot_0_0': 1., 'foot_1_0': 1., 'foot_2_0': 1., 'foot_0_1': .2, 'foot_1_1': .2, 'foot_2_1': .2}
-    config['weightMapTuple'] = (1., .5, .2, .5, .2, .5, .2)
+    config['weightMap'] = {'root': 1., 'foot_0_0': 1., 'foot_1_0': 1., 'foot_2_0': 1., 'foot_0_1': .5, 'foot_1_1': .5, 'foot_2_1': .5}
+    config['weightMapTuple'] = (1., 1., .5, 1., .5, 1., .5)
     # config['supLink'] = 'link0'
 
     return motion, mcfg, wcfg, stepsPerFrame, config

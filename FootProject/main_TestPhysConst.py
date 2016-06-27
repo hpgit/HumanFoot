@@ -131,7 +131,7 @@ def init():
     motionModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)
     IKModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)
 
-    solver = hik.numIkSolver(wcfg, motion[0], mcfg)
+    # solver = hik.numIkSolver(wcfg, motion[0], mcfg)
 
     vpWorld.SetGlobalDamping(0.9999)
     # controlModel.initializeHybridDynamics()
@@ -140,11 +140,14 @@ def init():
     controlModel.translateByOffset(ModelOffset)
     motionModel.translateByOffset(ModelOffset)
 
-    vpWorld.initialize()
-
     vpWorld.SetIntegrator("RK4")
     # vpWorld.SetIntegrator("IMPLICIT_EULER_FAST")
     # vpWorld.SetIntegrator("EULER")
+
+    controlModel.SetJointsDamping(0.2)
+    controlModel.SetJointsElasticity(.01)
+
+    vpWorld.initialize()
 
     totalDOF = controlModel.getTotalDOF()
     DOFs = controlModel.getDOFs()
@@ -292,10 +295,11 @@ class Callback:
         wcfg.timeStep = 1 / (30. * simulSpeedInv * stepsPerFrame)
         vpWorld.SetTimeStep(wcfg.timeStep)
 
-        Dt = 2. * (Kt**.5)
+        # Dt = 2. * (Kt**.5)
         # Dt = 2. * (Kt**.5)/20.
-        # Dt = 0.
-        controlModel.SetJointsDamping(damp)
+        Dt = 0.
+        # controlModel.SetJointsDamping(2*math.sqrt(damp))
+        # controlModel.SetJointsElasticity(damp)
         # controlModel.SetJointsDamping(1.)
 
         wLCP = math.pow(2., getVal('LCP weight'))
@@ -309,9 +313,8 @@ class Callback:
         dth = controlModel.getDOFVelocities()
         ddth_r = motion.getDOFAccelerations(frame)
         weightMapTuple = config['weightMapTuple']
-        weightMapTuple = None
+        # weightMapTuple = None
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMapTuple)
-        ddth_c = controlModel.getDOFAccelerations()
         ype.flatten(ddth_des, ddth_des_flat)
 
 
