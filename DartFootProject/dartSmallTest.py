@@ -7,15 +7,17 @@ import pydart.skeleton as dskel
 print('Example: SimpleJump')
 
 
+import os
 pydart.init()
 print('pydart initialization OK')
 
-data_dir = pydart.misc.example_data_dir(__file__)
+# data_dir = pydart.misc.example_data_dir(__file__)
+data_dir = os.path.dirname(__file__)
 print('data_dir = ' + data_dir)
 
 # world = pydart.create_world(1.0 / 2000.0, data_dir + '/skel/fullbody1.skel')
 # world = pydart.create_world(1.0 / 2000.0, '../data/skel/fullbody2.skel')
-world = pydart.create_world(1.0 / 2000.0, 'test.xml')
+world = pydart.create_world(1.0 / 2000.0, data_dir + '/test.xml')
 # world = pydart.create_world(1.0 / 2000.0,
 #                             data_dir + '/skel/soft_fullbody.skel')
 print('pydart create_world OK')

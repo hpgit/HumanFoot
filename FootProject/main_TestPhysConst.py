@@ -295,9 +295,9 @@ class Callback:
         wcfg.timeStep = 1 / (30. * simulSpeedInv * stepsPerFrame)
         vpWorld.SetTimeStep(wcfg.timeStep)
 
-        # Dt = 2. * (Kt**.5)
+        Dt = 2. * (Kt**.5)
         # Dt = 2. * (Kt**.5)/20.
-        Dt = 0.
+        # Dt = 0.
         # controlModel.SetJointsDamping(2*math.sqrt(damp))
         # controlModel.SetJointsElasticity(damp)
         # controlModel.SetJointsDamping(1.)

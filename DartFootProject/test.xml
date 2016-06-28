@@ -261,10 +261,6 @@
                 <parent>world</parent>
                 <child>root</child>
             </joint>
-            <joint name="j_root" type="free">
-                <parent>world</parent>
-                <child>root</child>
-            </joint>
             <joint name="j_foot_0_0" type="ball">
                 <transformation>2.1514606127e-17 -1.62301284738e-17 -0.145736709665 -0.486085116906 -0.70464259585 0.0 </transformation>
                 <parent>root</parent>
