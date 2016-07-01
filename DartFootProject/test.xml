@@ -34,7 +34,7 @@
         </skeleton>
         <skeleton name="SimpleJump">
             <body name="root">
-                <transformation>0.0 0.5 0.0 0.0 0.0 0.0 </transformation>
+                <transformation>0.0 0.5 0.0 -1.57 0.0 0.0 </transformation>
                 <inertia>
                     <mass>.5</mass>
                     <offset>0.0 0 0.0</offset>
