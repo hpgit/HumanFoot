@@ -9,7 +9,7 @@
         <skeleton name="grount skeleton">
             <mobile>false</mobile>
             <body name="ground">
-                <transformation>0 -0.92 0 0 0 0</transformation>
+                <transformation>0 -0.025 0 0 0 0</transformation>
                 <visualization_shape>
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
@@ -34,7 +34,7 @@
         </skeleton>
         <skeleton name="SimpleJump">
             <body name="root">
-                <transformation>0.0 0.5 0.0 -1.57 0.0 0.0 </transformation>
+                <transformation>0.0 0.5 0.0 0.0 0.0 0.0 </transformation>
                 <inertia>
                     <mass>.5</mass>
                     <offset>0.0 0 0.0</offset>
@@ -43,7 +43,7 @@
                     <transformation>0.0 0.0 0.1875 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <ellipsoid>
-                            <size>0.1 0.1 0.1</size>
+                            <size>0.5 0.1 0.1</size>
                         </ellipsoid>
                     </geometry>
                 </visualization_shape>
@@ -60,7 +60,7 @@
                     <transformation>0.0 0.0 0.1875 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <ellipsoid>
-                            <size>0.1 0.1 0.1</size>
+                            <size>0.5 0.1 0.1</size>
                         </ellipsoid>
                     </geometry>
                 </collision_shape>

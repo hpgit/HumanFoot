@@ -226,9 +226,14 @@ class hpContactForceGraphWnd(fltk.Fl_Widget, ybu.Observer):
         self.redraw()
 
     def insertData(self, name, valIdx, val):
-        dataIdx = self.dataSetName.index(name)
-        self.data[dataIdx][valIdx] = val
-        self.redraw()
+        try:
+            dataIdx = self.dataSetName.index(name)
+            self.data[dataIdx][valIdx] = val
+            self.redraw()
+        except ValueError:
+            pass
+
+
 
     def draw(self):
         fltk.fl_draw_box(fltk.FL_FLAT_BOX, 40+self.x(), self.y(), self.w()-40, self.h(), fltk.fl_rgb_color(192, 192, 192))

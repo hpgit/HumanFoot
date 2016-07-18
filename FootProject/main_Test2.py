@@ -136,9 +136,15 @@ def init():
     vpWorld.SetGlobalDamping(0.9999)
     # controlModel.initializeHybridDynamics()
     controlModel.initializeForwardDynamics()
-    ModelOffset = np.array([0., .12, 0.])
+    ModelOffset = np.array([0., 2.42, 0.])
     controlModel.translateByOffset(ModelOffset)
     motionModel.translateByOffset(ModelOffset)
+
+    # ModelRotateOffset = np.array([[0.707, 0., 0.707],[0., 1., 0.],[-0.707, 0., 0.707]])
+    # ModelRotateOffset = np.array([[1., 0., 0.],[0., 0., -1.],[0, 1., 0.]])
+    ModelRotateOffset = np.array([[1., 0., 0.],[0., 0.707, -0.707],[0, 0.707, 0.707]])
+    controlModel.rotate(ModelRotateOffset)
+    motionModel.rotate(ModelRotateOffset)
 
     vpWorld.SetIntegrator("RK4")
     # vpWorld.SetIntegrator("IMPLICIT_EULER_FAST")
@@ -325,8 +331,8 @@ class Callback:
             desNormalForce = desNormalForceMin * \
                              (1 - desForceRelFrame) + desNormalForceMax * desForceRelFrame
 
-        # totalForce = np.array([0., desNormalForce, 0., 0., 0., 0.])
-        totalForce = np.array([-desNormalForce, 34.3, 0., 0., 0., 0.])
+        totalForce = np.array([0., desNormalForce, 0., 0., 0., 0.])
+        # totalForce = np.array([-desNormalForce, 34.3, 0., 0., 0., 0.])
         # totalForce = np.array([0., 34.3, desNormalForce, 0., 0., 0.])
         # totalForce = np.array([50., 150.])
 

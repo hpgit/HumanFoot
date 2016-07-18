@@ -4,9 +4,12 @@ import time
 import copy
 
 import sys
+import os
 
 sys.path.append('../PyCommon/modules')
 sys.path.append('..')
+
+import pydart
 
 import math
 import Math.mmMath as mm
@@ -83,6 +86,15 @@ rd_jointPos = None
 
 viewer = None
 
+pydart.init()
+data_dir = os.path.dirname(__file__)
+print('data_dir = ' + data_dir)
+dartWorld = pydart.create_world(1.0/1800.0, data_dir+'/test.xml')
+q = dartWorld.skels[1].q
+q['root_pos_y'] = .3
+dartWorld.skels[1].set_positions(q)
+dartWorld.skels[1].dof
+# pydart.glutgui.run(title='bipedStand', simulation=dartWorld, trans=[0, 0, -3])
 
 def init():
     global motion
@@ -113,6 +125,8 @@ def init():
     global motionModel
     global solver
     global IKModel
+
+    global dartWorld
 
     np.set_printoptions(precision=4, linewidth=200)
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_1()
@@ -176,8 +190,10 @@ def init():
     #     motionModel, MOTION_COLOR, yr.POLYGON_FILL))
     # viewer.doc.addRenderer('IKModel', cvr.VpModelRenderer(
     #      solver.model, MOTION_COLOR, yr.POLYGON_FILL))
-    viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(
-        controlModel, CHARACTER_COLOR, yr.POLYGON_FILL))
+
+    viewer.doc.addRenderer('dartModel', yr.DartModelRenderer(
+        dartWorld, CHARACTER_COLOR2))
+
     viewer.doc.addRenderer('rd_contactForcesControl', yr.VectorsRenderer(
         rd_cForcesControl, rd_cPositionsControl, (255, 0, 0), .1))
     viewer.doc.addRenderer('rd_contactForces', yr.VectorsRenderer(
@@ -215,10 +231,10 @@ def init():
     viewer.objectInfoWnd.addBtn('image', viewer.motionViewWnd.dump)
     viewer.objectInfoWnd.addBtn('image seq dump', viewer.motionViewWnd.dumpMov)
 
-    viewer.cForceWnd.addDataSet('expForce', FL_BLACK)
-    viewer.cForceWnd.addDataSet('desForceMin', FL_RED)
-    viewer.cForceWnd.addDataSet('desForceMax', FL_RED)
-    viewer.cForceWnd.addDataSet('realForce', FL_GREEN)
+    # viewer.cForceWnd.addDataSet('expForce', FL_BLACK)
+    # viewer.cForceWnd.addDataSet('desForceMin', FL_RED)
+    # viewer.cForceWnd.addDataSet('desForceMax', FL_RED)
+    # viewer.cForceWnd.addDataSet('realForce', FL_GREEN)
 
     for i in range(motion[0].skeleton.getJointNum()):
         print(i, motion[0].skeleton.getJointName(i))
@@ -263,6 +279,8 @@ class Callback:
         global wcfg
         global vpWorld
 
+        global dartWorld
+
         # reload(tf)
         motionModel.update(motion[0])
         self.frame = frame
@@ -270,6 +288,18 @@ class Callback:
         # motionModel.update(motion[0])
         self.timeIndex = 0
         self.setTimeStamp()
+
+
+        skel = dartWorld.skels[1]
+        # print(skel.q)
+        # print(skel.dof('j_foot_1_0_x'))
+        skel.tau = skel.q
+        for i in range(60):
+            dartWorld.step()
+        # for c in dartWorld.contacts():
+        #     print(c.p)
+
+        # print(skel.q)
 
         # IK solver
         '''
@@ -395,7 +425,7 @@ class Callback:
 
             ype.nested(torques, torques_nested)
             controlModel.setDOFTorques(torques_nested[1:])
-            vpWorld.step()
+            # vpWorld.step()
 
         self.setTimeStamp()
 
@@ -467,8 +497,9 @@ class Callback:
         else:
             viewer.cForceWnd.insertData('desForceMin', frame, 0.)
             viewer.cForceWnd.insertData('desForceMax', frame, 0.)
-        self.setTimeStamp()
 
+        viewer.cForceWnd.redraw()
+        self.setTimeStamp()
 
 callback = Callback()
 

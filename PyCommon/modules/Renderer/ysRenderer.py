@@ -49,7 +49,8 @@ class Renderer:
         self.totalColor = color
         self.selectedElement = None
         self.shadowColor = (150,150,150)
-    def render(self, renderType):
+
+    def render(self, renderType=RENDER_OBJECT):
         print("Renderer.render() : Must subclass me")
         raise NotImplementedError
 
@@ -101,6 +102,30 @@ class OdeModelRenderer(Renderer):
 
             if geom == self.selectedElement:
                 glColor3ubv(self.totalColor)
+
+
+class DartModelRenderer(Renderer):
+    def __init__(self, target, color = (255,255,255), polygonStyle = POLYGON_FILL):
+        Renderer.__init__(self, target, color)
+        self.model = target
+        self.rc.setPolygonStyle(polygonStyle)
+
+    def render(self, renderType=RENDER_OBJECT):
+        self.model.render()
+        # glColor3ubv(self.totalColor)
+        # for node in self.model.nodes.values():
+        #     geom = node.geom
+        #     #            if node.name in self.partColors:
+        #     #                glColor3ubv(self.partColors[node.name])
+        #     #            else:
+        #     #                glColor3ubv(self.totalColor)
+        #     if geom == self.selectedElement:
+        #         glColor3ubv(SELECTION_COLOR)
+        #
+        #     self.rc.renderOdeGeom(geom)
+        #
+        #     if geom == self.selectedElement:
+        #         glColor3ubv(self.totalColor)
 
 class JointMotionRenderer(Renderer):
     def __init__(self, target, color = (0,255,255), linkStyle = LINK_LINE, lineWidth=1.):
