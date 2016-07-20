@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup,find_packages
 
 setup(name='pydart',
       version='0.01',
@@ -7,5 +7,6 @@ setup(name='pydart',
       author='Sehoon Ha',
       author_email='sehoon.ha@gmail.com',
       license='BSD',
-      packages=['pydart'],
+      packages=find_packages(),
+      package_data={'': ['*.so']},
       zip_safe=False)

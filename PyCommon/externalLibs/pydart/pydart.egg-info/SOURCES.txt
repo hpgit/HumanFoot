@@ -1,5 +1,6 @@
 setup.py
 pydart/__init__.py
+pydart/_pydart_api.so
 pydart/body.py
 pydart/c3d.py
 pydart/contact.py
@@ -15,3 +16,10 @@ pydart.egg-info/SOURCES.txt
 pydart.egg-info/dependency_links.txt
 pydart.egg-info/not-zip-safe
 pydart.egg-info/top_level.txt
+pydart/glutgui/__init__.py
+pydart/glutgui/glutgui.py
+pydart/glutgui/trackball.py
+pydart/qtgui/__init__.py
+pydart/qtgui/glwidget.py
+pydart/qtgui/qtgui.py
+pydart/qtgui/trackball.py

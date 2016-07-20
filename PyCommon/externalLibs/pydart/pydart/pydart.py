@@ -39,6 +39,9 @@ class World(object):
 
         self.reset()
 
+    def test(self):
+        print("this is for test!")
+
     def destroy(self):
         papi.destroyWorld(self.id)
 

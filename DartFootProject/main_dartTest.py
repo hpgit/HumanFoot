@@ -90,6 +90,7 @@ pydart.init()
 data_dir = os.path.dirname(__file__)
 print('data_dir = ' + data_dir)
 dartWorld = pydart.create_world(1.0/1800.0, data_dir+'/test.xml')
+dartWorld.test()
 q = dartWorld.skels[1].q
 q['j_root_pos_z'] = -2.9
 dartWorld.skels[1].set_positions(q)
