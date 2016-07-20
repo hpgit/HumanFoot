@@ -1,0 +1,17 @@
+setup.py
+pydart/__init__.py
+pydart/body.py
+pydart/c3d.py
+pydart/contact.py
+pydart/dof.py
+pydart/marker.py
+pydart/misc.py
+pydart/pydart.py
+pydart/pydart_api.py
+pydart/skel_vector.py
+pydart/skeleton.py
+pydart.egg-info/PKG-INFO
+pydart.egg-info/SOURCES.txt
+pydart.egg-info/dependency_links.txt
+pydart.egg-info/not-zip-safe
+pydart.egg-info/top_level.txt

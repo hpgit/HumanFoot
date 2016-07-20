@@ -10,14 +10,6 @@
             <mobile>false</mobile>
             <body name="ground">
                 <transformation>0 -0.025 0 0 0 0</transformation>
-                <visualization_shape>
-                    <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
-                    <geometry>
-                        <box>
-                            <size>5.0 0.05 5.0</size>
-                        </box>
-                    </geometry>
-                </visualization_shape>
                 <collision_shape>
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
@@ -32,9 +24,9 @@
                 <child>ground</child>
             </joint>
         </skeleton>
-        <skeleton name="SimpleJump">
+        <skeleton name="SimpleJump_long">
             <body name="root">
-                <transformation>0.0 0.5 0.0 0.0 0.0 0.0 </transformation>
+                <transformation>0.0 0.3125 0.0 1.57079632679 0.0 -0.0 </transformation>
                 <inertia>
                     <mass>.5</mass>
                     <offset>0.0 0 0.0</offset>
@@ -43,7 +35,15 @@
                     <transformation>0.0 0.0 0.1875 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <ellipsoid>
-                            <size>0.5 0.1 0.1</size>
+                            <size>0.1 0.1 0.1</size>
+                        </ellipsoid>
+                    </geometry>
+                </visualization_shape>
+                <visualization_shape>
+                    <transformation>0.0 0.0 -0.1875 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <ellipsoid>
+                            <size>0.1 0.1 0.1</size>
                         </ellipsoid>
                     </geometry>
                 </visualization_shape>
@@ -60,13 +60,21 @@
                     <transformation>0.0 0.0 0.1875 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <ellipsoid>
-                            <size>0.5 0.1 0.1</size>
+                            <size>0.1 0.1 0.1</size>
+                        </ellipsoid>
+                    </geometry>
+                </collision_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 -0.1875 0.0 0.0 0.0 </transformation>
+                    <geometry>
+                        <ellipsoid>
+                            <size>0.1 0.1 0.1</size>
                         </ellipsoid>
                     </geometry>
                 </collision_shape>
             </body>
             <body name="foot_0_0">
-                <transformation>0.09060175 0.0625 0.095521 0.486085116906 0.70464259585 0.0 </transformation>
+                <transformation>0.09060175 0.0625 0.095521 0.579396600201 0.67088706741 -0.207092034436 </transformation>
                 <inertia>
                     <mass>.5</mass>
                     <offset>0.0 0 0.0</offset>
@@ -98,7 +106,7 @@
                 </collision_shape>
             </body>
             <body name="foot_0_1">
-                <transformation>0.19262725 0.0 0.3163015 0.0 0.0909490661243 0.0 </transformation>
+                <transformation>0.19262725 0.0 0.3163015 -0.0 0.0909490661243 -0.0 </transformation>
                 <inertia>
                     <mass>.5</mass>
                     <offset>0.0 0 0.0</offset>
@@ -130,7 +138,7 @@
                 </collision_shape>
             </body>
             <body name="foot_1_0">
-                <transformation>-0.09060175 0.0625 0.095521 0.486085116906 -0.70464259585 0.0 </transformation>
+                <transformation>-0.09060175 0.0625 0.095521 0.579396600201 -0.67088706741 0.207092034436 </transformation>
                 <inertia>
                     <mass>.5</mass>
                     <offset>0.0 0 0.0</offset>
@@ -162,7 +170,7 @@
                 </collision_shape>
             </body>
             <body name="foot_1_1">
-                <transformation>-0.19262725 0.0 0.3163015 0.0 -0.0909490661243 0.0 </transformation>
+                <transformation>-0.19262725 0.0 0.3163015 -0.0 -0.0909490661243 -0.0 </transformation>
                 <inertia>
                     <mass>.5</mass>
                     <offset>0.0 0 0.0</offset>
@@ -194,7 +202,7 @@
                 </collision_shape>
             </body>
             <body name="foot_2_0">
-                <transformation>0.0 0.0625 -0.0625 2.35619449019 0.0 0.0 </transformation>
+                <transformation>0.0 0.0625 -0.0625 2.35619449019 0.0 -0.0 </transformation>
                 <inertia>
                     <mass>.5</mass>
                     <offset>0.0 0 0.0</offset>
@@ -226,7 +234,7 @@
                 </collision_shape>
             </body>
             <body name="foot_2_1">
-                <transformation>0.0 0.0 -0.1875 0.0 3.14159265359 0.0 </transformation>
+                <transformation>0.0 0.0 -0.1875 -3.14159265359 1.22464679915e-16 -3.14159265359 </transformation>
                 <inertia>
                     <mass>.5</mass>
                     <offset>0.0 0 0.0</offset>
@@ -257,7 +265,7 @@
                     </geometry>
                 </collision_shape>
             </body>
-            <joint name="root" type="free">
+            <joint name="j_root" type="free">
                 <parent>world</parent>
                 <child>root</child>
             </joint>

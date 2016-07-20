@@ -20,9 +20,21 @@ def prettifyXML(elem):
     return reparsed.toprettyxml(indent="    ")
 
 
-def SE32veulerXYZ(T):
-    # v = np.append(T[0:3, 3].flatten(), mm.R2XYZ(T[0:3, 0:3]))
+def SE32vlogSO3(T):
     v = np.append(T[0:3, 3].flatten(), mm.logSO3(T[0:3, 0:3]))
+    return v
+
+
+def SE32vlogSO3str(T):
+    text = ""
+    v = SE32vlogSO3(T)
+    for j in range(6):
+        text += str(v[j]) + " "
+    return text
+
+
+def SE32veulerXYZ(T):
+    v = np.append(T[0:3, 3].flatten(), mm.R2XYZ(T[0:3, 0:3]))
     return v
 
 
@@ -69,14 +81,15 @@ def _createBody(joint, parentT, posture):
 
         boneT = SE3(offset * .5)
         # if joint_name == "Hips":
-        if joint.parent is None:
-            boneT = SE3()
+        # if joint.parent is None:
+        #     boneT = SE3()
 
         defaultBoneV = Vec3(0., 0., 1.)
         boneR = SE3(mm.getSO3FromVectors(defaultBoneV, offset))
 
         # if joint_name != "Hips":
-        if joint.parent is not None:
+        # if joint.parent is not None:
+        if True:
             boneT = boneT * boneR
 
         boneTs.append(boneT)
@@ -170,7 +183,8 @@ def AddDartShapeNode(T, size, geom, shapeType='visual'):
         typetext = "collision_shape"
 
     etShape = et.Element(typetext)
-    et.SubElement(etShape, "transformation").text = SE32veulerXYZstr(T)
+    # et.SubElement(etShape, "transformation").text = SE32veulerXYZstr(T)
+    et.SubElement(etShape, "transformation").text = SE32vlogSO3str(T)
     etGeom = et.SubElement(et.SubElement(etShape, "geometry"), geomtext)
     if (geom == "box") or (geom == "ellipsoid"):
         et.SubElement(etGeom, "size").text = " ".join(map(str, size))
@@ -200,10 +214,14 @@ def AddBody(name, T, offset, inertia):
     cylLen_2 = np.linalg.norm(offset)/2.
 
     etBody.append(AddDartShapeNode(SE3(Vec3(0., 0., cylLen_2)), [.1, .1, .1], "ellipsoid"))
-    # etBody.append(AddDartShapeNode(SE3(Vec3(0., 0., -cylLen_2)), [.1, .1, .1], "ellipsoid"))
+    if name == 'root':
+        etBody.append(AddDartShapeNode(SE3(Vec3(0., 0., -cylLen_2)), [.1, .1, .1], "ellipsoid"))
+
     etBody.append(AddDartShapeNode(SE3(), [.05, 2.*cylLen_2], "cylinder"))
+
     etBody.append(AddDartShapeNode(SE3(Vec3(0., 0., cylLen_2)), [.1, .1, .1], "ellipsoid", "collision"))
-    # etBody.append(AddDartShapeNode(SE3(Vec3(0., 0., -cylLen_2)), [.1, .1, .1], "ellipsoid", "collision"))
+    if name=='root':
+        etBody.append(AddDartShapeNode(SE3(Vec3(0., 0., -cylLen_2)), [.1, .1, .1], "ellipsoid", "collision"))
 
     return etBody
 
@@ -230,8 +248,8 @@ def bvh2dartSkel(filename):
     etGroundSkeleton = et.SubElement(etWorld, "skeleton", {"name": "grount skeleton"})
     et.SubElement(etGroundSkeleton, "mobile").text = "false"
     etGroundBody = et.SubElement(etGroundSkeleton, "body", {"name": "ground"})
-    et.SubElement(etGroundBody, "transformation").text = "0 -0.92 0 0 0 0"
-    etGroundBody.append(AddDartShapeNode(SE3(), [5.0, 0.05, 5.0], "box"))
+    et.SubElement(etGroundBody, "transformation").text = "0 -0.025 0 0 0 0"
+    # etGroundBody.append(AddDartShapeNode(SE3(), [5.0, 0.05, 5.0], "box"))
     etGroundBody.append(AddDartShapeNode(SE3(), [10.0, 0.05, 10.0], "box", "collision"))
 
     etGroundJoint = et.SubElement(etGroundSkeleton, "joint", {"type": "free", "name": "joint 1"})
@@ -249,9 +267,9 @@ def bvh2dartSkel(filename):
 
     # TODO:
     # add Joint
-    etJoint = et.SubElement(etSkeleton, "joint", {"type": "free", "name": names[0]})
-    et.SubElement(etJoint, "parent").text = "world"
-    et.SubElement(etJoint, "child").text = names[0]
+    # etJoint = et.SubElement(etSkeleton, "joint", {"type": "free", "name": names[0]})
+    # et.SubElement(etJoint, "parent").text = "world"
+    # et.SubElement(etJoint, "child").text = names[0]
     # et.SubElement(etJoint, "init_pos").text = "0 0 0 0 0 0"
     # et.SubElement(etJoint, "init_vel").text = "0 0 0 0 0 0"
 
@@ -260,9 +278,11 @@ def bvh2dartSkel(filename):
 
         if jointPair[0] == "world":
             etJoint = et.SubElement(etSkeleton, "joint", {"type": "free", "name": "j_"+jointPair[1]})
+            # etJoint = et.SubElement(etSkeleton, "joint", {"type": "free", "name": jointPair[1]})
         else:
             etJoint = et.SubElement(etSkeleton, "joint", {"type": "ball", "name": "j_"+jointPair[1]})
-            et.SubElement(etJoint, "transformation").text = SE32veulerXYZstr(bodyToJointTs[i])
+            # etJoint = et.SubElement(etSkeleton, "joint", {"type": "ball", "name": jointPair[1]})
+            et.SubElement(etJoint, "transformation").text = SE32vlogSO3str(bodyToJointTs[i])
             # et.SubElement(etJoint, "axis_order").text = "xyz"
         et.SubElement(etJoint, "parent").text = jointPair[0]
         et.SubElement(etJoint, "child").text = jointPair[1]
@@ -271,7 +291,7 @@ def bvh2dartSkel(filename):
 
 
 if __name__ == '__main__':
-    fname = "../FootProject/SimpleJump.bvh"
+    fname = "SimpleJump_long.bvh"
     tree = bvh2dartSkel(fname)
     output = open("test.xml", "w")
     output.write(prettifyXML(tree.getroot()))

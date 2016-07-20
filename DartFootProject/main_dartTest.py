@@ -91,7 +91,7 @@ data_dir = os.path.dirname(__file__)
 print('data_dir = ' + data_dir)
 dartWorld = pydart.create_world(1.0/1800.0, data_dir+'/test.xml')
 q = dartWorld.skels[1].q
-q['root_pos_y'] = .3
+q['j_root_pos_z'] = -2.9
 dartWorld.skels[1].set_positions(q)
 dartWorld.skels[1].dof
 # pydart.glutgui.run(title='bipedStand', simulation=dartWorld, trans=[0, 0, -3])
@@ -293,9 +293,11 @@ class Callback:
         skel = dartWorld.skels[1]
         # print(skel.q)
         # print(skel.dof('j_foot_1_0_x'))
-        skel.tau = skel.q
+        # skel.tau = skel.q
         for i in range(60):
             dartWorld.step()
+
+        print(skel.body('root').J)
         # for c in dartWorld.contacts():
         #     print(c.p)
 
