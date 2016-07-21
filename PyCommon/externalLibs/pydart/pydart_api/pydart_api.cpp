@@ -860,6 +860,17 @@ void getBodyNodeWorldCOMVelocity(int wid, int skid, int bid, double outv3[3]) {
     }
 }
 
+void getBodyNodeWorldCOMAngularVelocity(int wid, int skid, int bid, double outv3[3]) {
+    dart::dynamics::SkeletonPtr skel = Manager::skeleton(wid, skid);
+    dart::dynamics::BodyNode* bn = skel->getBodyNode(bid);
+    // const Eigen::Vector3d& x = bn->getWorldCOMVelocity();
+    const Eigen::Vector6d& x = bn->getCOMSpatialVelocity();
+//    const Eigen::Vector3d& x = bn->getCOMAngularVelocity();
+    for (int i = 0; i < 3; i++) {
+        outv3[i] = x(i);
+    }
+}
+
 void getBodyNodeWorldCOMSpatialVelocity(int wid, int skid, int bid, double outv6[6]) {
     dart::dynamics::SkeletonPtr skel = Manager::skeleton(wid, skid);
     dart::dynamics::BodyNode* bn = skel->getBodyNode(bid);

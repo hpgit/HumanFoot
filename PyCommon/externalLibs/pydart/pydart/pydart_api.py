@@ -323,6 +323,10 @@ def getBodyNodeWorldCOMVelocity(wid, skid, bid):
     return _pydart_api.getBodyNodeWorldCOMVelocity(wid, skid, bid)
 getBodyNodeWorldCOMVelocity = _pydart_api.getBodyNodeWorldCOMVelocity
 
+def getBodyNodeWorldCOMAngularVelocity(wid, skid, bid):
+    return _pydart_api.getBodyNodeWorldCOMAngularVelocity(wid, skid, bid)
+getBodyNodeWorldCOMAngularVelocity = _pydart_api.getBodyNodeWorldCOMAngularVelocity
+
 def getBodyNodeWorldCOMSpatialVelocity(wid, skid, bid):
     return _pydart_api.getBodyNodeWorldCOMSpatialVelocity(wid, skid, bid)
 getBodyNodeWorldCOMSpatialVelocity = _pydart_api.getBodyNodeWorldCOMSpatialVelocity

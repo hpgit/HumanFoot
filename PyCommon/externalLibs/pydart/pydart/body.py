@@ -68,6 +68,9 @@ class Body(object):
     def world_com_velocity(self):
         return papi.getBodyNodeWorldCOMVelocity(self.wid, self.sid, self.id)
 
+    def world_com_angular_velocity(self):
+        return papi.getBodyNodeWorldCOMAngularVelocity(self.wid, self.sid, self.id)
+
     def world_com_spatial_velocity(self):
         return papi.getBodyNodeWorldCOMSpatialVelocity(self.wid,
                                                        self.sid,

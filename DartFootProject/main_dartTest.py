@@ -298,7 +298,9 @@ class Callback:
         for i in range(60):
             dartWorld.step()
 
-        print(skel.body('root').J)
+        # print(skel.body('root').J)
+        print(skel.body('root').world_com_angular_velocity())
+
         # for c in dartWorld.contacts():
         #     print(c.p)
 

@@ -6418,6 +6418,58 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_getBodyNodeWorldCOMAngularVelocity(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  int arg1 ;
+  int arg2 ;
+  int arg3 ;
+  double *arg4 ;
+  int val1 ;
+  int ecode1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  PyObject *array4 = NULL ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  
+  {
+    npy_intp dims[1] = {
+      3 
+    };
+    array4 = PyArray_SimpleNew(1, dims, NPY_DOUBLE);
+    if (!array4) SWIG_fail;
+    arg4 = (double *) array_data(array4);
+  }
+  if (!PyArg_ParseTuple(args,(char *)"OOO:getBodyNodeWorldCOMAngularVelocity",&obj0,&obj1,&obj2)) SWIG_fail;
+  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "getBodyNodeWorldCOMAngularVelocity" "', argument " "1"" of type '" "int""'");
+  } 
+  arg1 = static_cast< int >(val1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "getBodyNodeWorldCOMAngularVelocity" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  ecode3 = SWIG_AsVal_int(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "getBodyNodeWorldCOMAngularVelocity" "', argument " "3"" of type '" "int""'");
+  } 
+  arg3 = static_cast< int >(val3);
+  getBodyNodeWorldCOMAngularVelocity(arg1,arg2,arg3,arg4);
+  resultobj = SWIG_Py_Void();
+  {
+    resultobj = SWIG_Python_AppendOutput(resultobj,(PyObject*)array4);
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_getBodyNodeWorldCOMSpatialVelocity(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   int arg1 ;
@@ -7288,6 +7340,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"getBodyNodeLocalCOM", _wrap_getBodyNodeLocalCOM, METH_VARARGS, NULL},
 	 { (char *)"getBodyNodeWorldCOM", _wrap_getBodyNodeWorldCOM, METH_VARARGS, NULL},
 	 { (char *)"getBodyNodeWorldCOMVelocity", _wrap_getBodyNodeWorldCOMVelocity, METH_VARARGS, NULL},
+	 { (char *)"getBodyNodeWorldCOMAngularVelocity", _wrap_getBodyNodeWorldCOMAngularVelocity, METH_VARARGS, NULL},
 	 { (char *)"getBodyNodeWorldCOMSpatialVelocity", _wrap_getBodyNodeWorldCOMSpatialVelocity, METH_VARARGS, NULL},
 	 { (char *)"getBodyNodeWorldCOMSpatialAcceleration", _wrap_getBodyNodeWorldCOMSpatialAcceleration, METH_VARARGS, NULL},
 	 { (char *)"getBodyNodeLocalCOMSpatialVelocity", _wrap_getBodyNodeLocalCOMSpatialVelocity, METH_VARARGS, NULL},

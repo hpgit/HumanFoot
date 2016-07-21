@@ -88,6 +88,7 @@ void getBodyNodeShapeBoundingBoxDim(int wid, int skid, int bid, double outv3[3])
 void getBodyNodeLocalCOM(int wid, int skid, int bid, double outv3[3]);
 void getBodyNodeWorldCOM(int wid, int skid, int bid, double outv3[3]);
 void getBodyNodeWorldCOMVelocity(int wid, int skid, int bid, double outv3[3]);
+void getBodyNodeWorldCOMAngularVelocity(int wid, int skid, int bid, double outv3[3]);
 void getBodyNodeWorldCOMSpatialVelocity(int wid, int skid, int bid, double outv6[6]);
 void getBodyNodeWorldCOMSpatialAcceleration(int wid, int skid, int bid, double outv6[6]);
 void getBodyNodeLocalCOMSpatialVelocity(int wid, int skid, int bid, double outv6[6]);
