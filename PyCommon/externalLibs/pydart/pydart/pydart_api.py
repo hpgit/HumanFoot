@@ -359,6 +359,22 @@ def getBodyNodeWorldLinearJacobian(wid, skid, bid, inv3, array2):
     return _pydart_api.getBodyNodeWorldLinearJacobian(wid, skid, bid, inv3, array2)
 getBodyNodeWorldLinearJacobian = _pydart_api.getBodyNodeWorldLinearJacobian
 
+def getBodyNodeWorldAngularJacobian(wid, skid, bid, inv3, array2):
+    return _pydart_api.getBodyNodeWorldAngularJacobian(wid, skid, bid, inv3, array2)
+getBodyNodeWorldAngularJacobian = _pydart_api.getBodyNodeWorldAngularJacobian
+
+def getBodyNodeWorldJacobian(wid, skid, bid, inv3, array2):
+    return _pydart_api.getBodyNodeWorldJacobian(wid, skid, bid, inv3, array2)
+getBodyNodeWorldJacobian = _pydart_api.getBodyNodeWorldJacobian
+
+def getBodyNodeWorldJacobianClassicDeriv(wid, skid, bid, inv3, array2):
+    return _pydart_api.getBodyNodeWorldJacobianClassicDeriv(wid, skid, bid, inv3, array2)
+getBodyNodeWorldJacobianClassicDeriv = _pydart_api.getBodyNodeWorldJacobianClassicDeriv
+
+def getBodyNodeWorldJacobianSpatialDeriv(wid, skid, bid, inv3, array2):
+    return _pydart_api.getBodyNodeWorldJacobianSpatialDeriv(wid, skid, bid, inv3, array2)
+getBodyNodeWorldJacobianSpatialDeriv = _pydart_api.getBodyNodeWorldJacobianSpatialDeriv
+
 def addBodyNodeExtForce(wid, skid, bid, inv3):
     return _pydart_api.addBodyNodeExtForce(wid, skid, bid, inv3)
 addBodyNodeExtForce = _pydart_api.addBodyNodeExtForce

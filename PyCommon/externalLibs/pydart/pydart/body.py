@@ -110,6 +110,38 @@ class Body(object):
                                             self.id, offset, J)
         return J
 
+    def world_angular_jacobian(self, offset=None):
+        if offset is None:
+            offset = np.zeros(3)
+        J = np.zeros((3, self.skel.ndofs))
+        papi.getBodyNodeWorldAngularJacobian(self.wid, self.sid,
+                                            self.id, offset, J)
+        return J
+
+    def world_jacobian(self, offset=None):
+        if offset is None:
+            offset = np.zeros(3)
+        J = np.zeros((6, self.skel.ndofs))
+        papi.getBodyNodeWorldAngularJacobian(self.wid, self.sid,
+                                             self.id, offset, J)
+        return J
+
+    def world_jacobian_classic_deriv(self, offset=None):
+        if offset is None:
+            offset = np.zeros(3)
+        dJ = np.zeros((6, self.skel.ndofs))
+        papi.getBodyNodeWorldJacobianClassicDeriv(self.wid, self.sid,
+                                             self.id, offset, dJ)
+        return dJ
+
+    def world_jacobian_spatial_deriv(self, offset=None):
+        if offset is None:
+            offset = np.zeros(3)
+        dJ = np.zeros((6, self.skel.ndofs))
+        papi.getBodyNodeWorldJacobianSpatialDeriv(self.wid, self.sid,
+                                             self.id, offset, dJ)
+        return dJ
+
     @property
     def J(self, offset=None):
         return self.world_linear_jacobian(offset)

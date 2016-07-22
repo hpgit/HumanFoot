@@ -299,7 +299,9 @@ class Callback:
             dartWorld.step()
 
         # print(skel.body('root').J)
-        print(skel.body('root').world_com_angular_velocity())
+        # print(skel.body('root').world_com_angular_velocity())
+        # print(skel.M)
+        print(skel.body('root').world_jacobian())
 
         # for c in dartWorld.contacts():
         #     print(c.p)
