@@ -386,7 +386,20 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
                     width = .1;
                 height = width;
             }
-			pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)));
+            string geomType = XS(cfgNode.attr("geom"));
+            if(geomType == "MyBox")
+                pNode->body.AddGeometry(new MyBox(Vec3(width, height, length)));
+            else if(geomType == "MyFoot1")
+                pNode->body.AddGeometry(new MyFoot1(Vec3(width, height, length)));
+            else if(geomType == "MyFoot2")
+                pNode->body.AddGeometry(new MyFoot2(Vec3(width, height, length)));
+    		// else if(geomType == "MyShin")
+    		// 	pNode->body.AddGeometry(new MyShin(Vec3(width, height, length)));
+            else
+                pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)));
+                cout << geomType << " : undefined geom type" << endl;
+
+            // pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)));
 			pNode->body.SetInertia(BoxInertia(density, Vec3(width/2.,height/2.,length/2.)));
 			//*/
 		}

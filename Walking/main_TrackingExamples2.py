@@ -31,6 +31,9 @@ import Util.ysMatplotEx as ymp
 import Resource.ysMotionLoader as yf
 import Simulator.ysPhysConfig as ypc
 
+import Simulator.hpLCPSimulator as hls
+
+
 #MOTION_COLOR = (128,128,128)
 #CHARACTER_COLOR = (102,102,153)
 MOTION_COLOR = (213,111,162)
@@ -708,8 +711,9 @@ def walkings():
                 rd_force_points.append(controlModel.getBodyPositionGlobal(fi.targetBody))
                     
         for i in range(stepsPerFrame):
-            
             bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+            # bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp \
+            #     = hls.calcLCPForces(motion_ori, vpWorld, controlModel, bodyIDsToCheck, 1., torques, solver='qp')
             vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
             
             # apply external force

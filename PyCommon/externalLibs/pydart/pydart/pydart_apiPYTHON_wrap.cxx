@@ -6916,10 +6916,9 @@ SWIGINTERN PyObject *_wrap_getBodyNodeWorldAngularJacobian(PyObject *SWIGUNUSEDP
   int arg1 ;
   int arg2 ;
   int arg3 ;
-  double *arg4 ;
-  double *arg5 = (double *) 0 ;
+  double *arg4 = (double *) 0 ;
+  int arg5 ;
   int arg6 ;
-  int arg7 ;
   int val1 ;
   int ecode1 = 0 ;
   int val2 ;
@@ -6927,15 +6926,12 @@ SWIGINTERN PyObject *_wrap_getBodyNodeWorldAngularJacobian(PyObject *SWIGUNUSEDP
   int val3 ;
   int ecode3 = 0 ;
   PyArrayObject *array4 = NULL ;
-  int is_new_object4 = 0 ;
-  PyArrayObject *array5 = NULL ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
   PyObject * obj3 = 0 ;
-  PyObject * obj4 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOOOO:getBodyNodeWorldAngularJacobian",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OOOO:getBodyNodeWorldAngularJacobian",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
   ecode1 = SWIG_AsVal_int(obj0, &val1);
   if (!SWIG_IsOK(ecode1)) {
     SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "getBodyNodeWorldAngularJacobian" "', argument " "1"" of type '" "int""'");
@@ -6952,40 +6948,17 @@ SWIGINTERN PyObject *_wrap_getBodyNodeWorldAngularJacobian(PyObject *SWIGUNUSEDP
   } 
   arg3 = static_cast< int >(val3);
   {
-    npy_intp size[1] = {
-      3 
-    };
-    array4 = obj_to_array_contiguous_allow_conversion(obj3,
-      NPY_DOUBLE,
-      &is_new_object4);
-    if (!array4 || !require_dimensions(array4, 1) ||
-      !require_size(array4, size, 1)) SWIG_fail;
-    arg4 = (double *) array_data(array4);
+    array4 = obj_to_array_no_conversion(obj3, NPY_DOUBLE);
+    if (!array4 || !require_dimensions(array4,2) || !require_contiguous(array4)
+      || !require_native(array4)) SWIG_fail;
+    arg4 = (double*) array_data(array4);
+    arg5 = (int) array_size(array4,0);
+    arg6 = (int) array_size(array4,1);
   }
-  {
-    array5 = obj_to_array_no_conversion(obj4, NPY_DOUBLE);
-    if (!array5 || !require_dimensions(array5,2) || !require_contiguous(array5)
-      || !require_native(array5)) SWIG_fail;
-    arg5 = (double*) array_data(array5);
-    arg6 = (int) array_size(array5,0);
-    arg7 = (int) array_size(array5,1);
-  }
-  getBodyNodeWorldAngularJacobian(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
+  getBodyNodeWorldAngularJacobian(arg1,arg2,arg3,arg4,arg5,arg6);
   resultobj = SWIG_Py_Void();
-  {
-    if (is_new_object4 && array4)
-    {
-      Py_DECREF(array4); 
-    }
-  }
   return resultobj;
 fail:
-  {
-    if (is_new_object4 && array4)
-    {
-      Py_DECREF(array4); 
-    }
-  }
   return NULL;
 }
 

@@ -359,8 +359,8 @@ def getBodyNodeWorldLinearJacobian(wid, skid, bid, inv3, array2):
     return _pydart_api.getBodyNodeWorldLinearJacobian(wid, skid, bid, inv3, array2)
 getBodyNodeWorldLinearJacobian = _pydart_api.getBodyNodeWorldLinearJacobian
 
-def getBodyNodeWorldAngularJacobian(wid, skid, bid, inv3, array2):
-    return _pydart_api.getBodyNodeWorldAngularJacobian(wid, skid, bid, inv3, array2)
+def getBodyNodeWorldAngularJacobian(wid, skid, bid, array2):
+    return _pydart_api.getBodyNodeWorldAngularJacobian(wid, skid, bid, array2)
 getBodyNodeWorldAngularJacobian = _pydart_api.getBodyNodeWorldAngularJacobian
 
 def getBodyNodeWorldJacobian(wid, skid, bid, inv3, array2):

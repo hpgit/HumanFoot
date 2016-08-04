@@ -115,14 +115,14 @@ class Body(object):
             offset = np.zeros(3)
         J = np.zeros((3, self.skel.ndofs))
         papi.getBodyNodeWorldAngularJacobian(self.wid, self.sid,
-                                            self.id, offset, J)
+                                            self.id, J)
         return J
 
     def world_jacobian(self, offset=None):
         if offset is None:
             offset = np.zeros(3)
         J = np.zeros((6, self.skel.ndofs))
-        papi.getBodyNodeWorldAngularJacobian(self.wid, self.sid,
+        papi.getBodyNodeWorldJacobian(self.wid, self.sid,
                                              self.id, offset, J)
         return J
 

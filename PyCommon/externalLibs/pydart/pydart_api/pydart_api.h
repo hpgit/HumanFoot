@@ -97,7 +97,7 @@ int getBodyNodeNumContacts(int wid, int skid, int bid);
 void getBodyNodeContacts(int wid, int skid, int bid, double* outv, int len);
 void getBodyNodeTransformation(int wid, int skid, int bid, double outv44[4][4]);
 void getBodyNodeWorldLinearJacobian(int wid, int skid, int bid, double inv3[3], double* array2, int nrows, int ncols);
-void getBodyNodeWorldAngularJacobian(int wid, int skid, int bid, double inv3[3], double* array2, int nrows, int ncols);
+void getBodyNodeWorldAngularJacobian(int wid, int skid, int bid, double* array2, int nrows, int ncols);
 void getBodyNodeWorldJacobian(int wid, int skid, int bid, double inv3[3], double* array2, int nrows, int ncols);
 void getBodyNodeWorldJacobianClassicDeriv(int wid, int skid, int bid, double inv3[3], double* array2, int nrows, int ncols);
 void getBodyNodeWorldJacobianSpatialDeriv(int wid, int skid, int bid, double inv3[3], double* array2, int nrows, int ncols);

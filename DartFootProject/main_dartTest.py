@@ -301,7 +301,11 @@ class Callback:
         # print(skel.body('root').J)
         # print(skel.body('root').world_com_angular_velocity())
         # print(skel.M)
+        # print(skel.body('root').world_jacobian())
         print(skel.body('root').world_jacobian())
+        print(skel.body('root').world_linear_jacobian())
+        print(skel.body('root').world_angular_jacobian())
+
 
         # for c in dartWorld.contacts():
         #     print(c.p)

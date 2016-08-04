@@ -1015,18 +1015,17 @@ void getBodyNodeWorldLinearJacobian(int wid, int skid, int bid, double inv3[3], 
     }
 }
 
-void getBodyNodeWorldAngularJacobian(int wid, int skid, int bid, double inv3[3], double* array2, int nrows, int ncols) {
+void getBodyNodeWorldAngularJacobian(int wid, int skid, int bid, double* array2, int nrows, int ncols) {
     using namespace dart::dynamics;
     SkeletonPtr skel = Manager::skeleton(wid, skid);
     BodyNode* body = skel->getBodyNode(bid);
     if (!body) {
         cerr << "cannot find the body : " << bid << endl;
     }
-    Eigen::Vector3d offset(inv3[0], inv3[1], inv3[2]);
 
     int N = skel->getNumDofs();
     // Eigen::MatrixXd J = body->getWorldLinearJacobian(offset);
-    dart::math::LinearJacobian J = body->getLinearJacobian(offset);
+    dart::math::LinearJacobian J = body->getAngularJacobian();
     Eigen::MatrixXd JF = Eigen::MatrixXd::Zero(3, N);
 
     for (int i = 0; i < J.cols(); i++) {
@@ -1053,7 +1052,7 @@ void getBodyNodeWorldJacobian(int wid, int skid, int bid, double inv3[3], double
 
     int N = skel->getNumDofs();
     // Eigen::MatrixXd J = body->getWorldLinearJacobian(offset);
-    dart::math::Jacobian J = body->getJacobian(offset);
+    dart::math::Jacobian J = body->getWorldJacobian(offset);
     Eigen::MatrixXd JF = Eigen::MatrixXd::Zero(6, N);
 
     for (int i = 0; i < J.cols(); i++) {
@@ -1073,7 +1072,8 @@ void getBodyNodeWorldJacobianClassicDeriv(int wid, int skid, int bid, double inv
     using namespace dart::dynamics;
     SkeletonPtr skel = Manager::skeleton(wid, skid);
     BodyNode* body = skel->getBodyNode(bid);
-    if (!body) {
+
+ if (!body) {
         cerr << "cannot find the body : " << bid << endl;
     }
     Eigen::Vector3d offset(inv3[0], inv3[1], inv3[2]);
