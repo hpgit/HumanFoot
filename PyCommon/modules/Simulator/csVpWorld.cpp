@@ -147,42 +147,7 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 			pGeom = pBody->GetGeometry(j);
 			
 			pGeom->GetShape(&type, data);
-			if (type == 'C')
-			{
-				const vector<Vec3>& verticesLocal = pGeom->getVerticesLocal();
-				const vector<Vec3>& verticesGlobal = pGeom->getVerticesGlobal();
-				for (int k = 0; k < verticesLocal.size(); ++k)
-				{
-					
-					positionLocal = verticesLocal[k];
-					position = verticesGlobal[k];
-					velocity = pBody->GetLinVelocity(positionLocal);
-
-					bool penentrated = _calcPenaltyForce(pBody, position, velocity, force, Ks, Ds, XD(mus[i]));
-					if (penentrated)
-					{
-						
-						bodyIDs.append(bodyID);
-
-						object pyPosition = O_Vec3.copy();
-						Vec3_2_pyVec3(position, pyPosition);
-						positions.append(pyPosition);
-
-						object pyForce = O_Vec3.copy();
-						Vec3_2_pyVec3(force, pyForce);
-						forces.append(pyForce);
-
-						object pyVelocity = O_Vec3.copy();
-						Vec3_2_pyVec3(velocity, pyVelocity);
-						velocities.append(pyVelocity);
-
-						object pyPositionLocal = O_Vec3.copy();
-						Vec3_2_pyVec3(positionLocal, pyPositionLocal);
-						positionLocals.append(pyPositionLocal);
-					}
-				}
-			}
-			else if (true)
+			if (type == 'B')
 			{
 				const SE3& geomFrame = pGeom->GetGlobalFrame();
 
@@ -211,6 +176,41 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 						object pyForce = O_Vec3.copy();
 						Vec3_2_pyVec3(force, pyForce);
 						forces.append(pyForce);
+
+						object pyPositionLocal = O_Vec3.copy();
+						Vec3_2_pyVec3(positionLocal, pyPositionLocal);
+						positionLocals.append(pyPositionLocal);
+					}
+				}
+			}
+			else if (type == 'C' || type == 'M')
+			{
+				const vector<Vec3>& verticesLocal = pGeom->getVerticesLocal();
+				const vector<Vec3>& verticesGlobal = pGeom->getVerticesGlobal();
+				for (int k = 0; k < verticesLocal.size(); ++k)
+				{
+
+					positionLocal = verticesLocal[k];
+					position = verticesGlobal[k];
+					velocity = pBody->GetLinVelocity(positionLocal);
+
+					bool penentrated = _calcPenaltyForce(pBody, position, velocity, force, Ks, Ds, XD(mus[i]));
+					if (penentrated)
+					{
+
+						bodyIDs.append(bodyID);
+
+						object pyPosition = O_Vec3.copy();
+						Vec3_2_pyVec3(position, pyPosition);
+						positions.append(pyPosition);
+
+						object pyForce = O_Vec3.copy();
+						Vec3_2_pyVec3(force, pyForce);
+						forces.append(pyForce);
+
+						object pyVelocity = O_Vec3.copy();
+						Vec3_2_pyVec3(velocity, pyVelocity);
+						velocities.append(pyVelocity);
 
 						object pyPositionLocal = O_Vec3.copy();
 						Vec3_2_pyVec3(positionLocal, pyPositionLocal);

@@ -396,8 +396,10 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
     		// else if(geomType == "MyShin")
     		// 	pNode->body.AddGeometry(new MyShin(Vec3(width, height, length)));
             else
+            {
                 pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)));
-                cout << geomType << " : undefined geom type" << endl;
+                cout << geomType << " : undefined geom type!" << endl;
+            }
 
             // pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)));
 			pNode->body.SetInertia(BoxInertia(density, Vec3(width/2.,height/2.,length/2.)));

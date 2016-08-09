@@ -43,7 +43,7 @@ S'<'
 NNNI-1
 I-1
 I0
-tbS'\x10\x999t\xac$\xa6?'
+tbS'\xf8\x989t\xac$\xa6?'
 tRp19
 sS'swingFoots'
 p20
@@ -101,7 +101,7 @@ I13
 sg15
 g16
 (g18
-S'0\x9d\xbc\xad\x1d\x8f\xa5?'
+S'(\x9d\xbc\xad\x1d\x8f\xa5?'
 tRp36
 sg20
 (lp37
@@ -130,7 +130,7 @@ I11
 sg15
 g16
 (g18
-S'h\x9b\xb2+\x9d\xe6\xa6?'
+S'`\x9b\xb2+\x9d\xe6\xa6?'
 tRp44
 sg20
 (lp45
@@ -159,7 +159,7 @@ I12
 sg15
 g16
 (g18
-S'\xc0\xe9_\xe6:\xd7\xa5?'
+S'\xc8\xe9_\xe6:\xd7\xa5?'
 tRp52
 sg20
 (lp53
@@ -188,7 +188,7 @@ I11
 sg15
 g16
 (g18
-S'(\x84\x12"2M\xa8?'
+S'\x10\x84\x12"2M\xa8?'
 tRp60
 sg20
 (lp61
@@ -217,7 +217,7 @@ I12
 sg15
 g16
 (g18
-S'\xb8\x88\x9d6\xa1\xef\xa7?'
+S'\xb0\x88\x9d6\xa1\xef\xa7?'
 tRp68
 sg20
 (lp69
@@ -274,7 +274,7 @@ sg14
 Nsg15
 g16
 (g18
-S'8\x01\xec\x9d\x1a#\xab?'
+S' \x01\xec\x9d\x1a#\xab?'
 tRp84
 sg20
 (lp85

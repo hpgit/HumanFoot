@@ -256,6 +256,7 @@ void renderVpBody(const vpBody* pBody)
 		switch ( type )
 		{
 		case 'B':
+		case 'M':
 			data[0] *= SCALAR_1_2;
 			data[1] *= SCALAR_1_2;
 			data[2] *= SCALAR_1_2;

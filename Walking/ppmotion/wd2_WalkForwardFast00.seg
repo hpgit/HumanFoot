@@ -72,7 +72,7 @@ I0
 sg15
 g16
 (g18
-S'\x00T\xb2*\xd7-\xa5?'
+S'\xf8S\xb2*\xd7-\xa5?'
 tRp28
 sg20
 (lp29
@@ -101,7 +101,7 @@ I4
 sg15
 g16
 (g18
-S' V\xea\x93p\x98\xa4?'
+S'\x18V\xea\x93p\x98\xa4?'
 tRp36
 sg20
 (lp37
@@ -130,7 +130,7 @@ I5
 sg15
 g16
 (g18
-S'\xd0]\xed*z6\xa2?'
+S'\xc8]\xed*z6\xa2?'
 tRp44
 sg20
 (lp45
@@ -188,7 +188,7 @@ I4
 sg15
 g16
 (g18
-S'\x08x\xa2Pl`\xa0?'
+S'\x18x\xa2Pl`\xa0?'
 tRp60
 sg20
 (lp61
@@ -217,7 +217,7 @@ I6
 sg15
 g16
 (g18
-S'`\xa3U{xG\x9e?'
+S'P\xa3U{xG\x9e?'
 tRp68
 sg20
 (lp69

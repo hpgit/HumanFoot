@@ -32,6 +32,7 @@ import Resource.ysMotionLoader as yf
 import Simulator.ysPhysConfig as ypc
 
 import Simulator.hpLCPSimulator as hls
+import GUI.hpSimpleViewer as hsv
 
 
 #MOTION_COLOR = (128,128,128)
@@ -103,12 +104,12 @@ def walkings():
 #    filename = 'wd2_WalkForwardSlow01.bvh'
 ##    filename = 'wd2_WalkForwardSlow01_REPEATED.bvh' # 3 frame diff
 
-#    K_swp_vel_sag = .1; K_swp_vel_cor = .4; K_swp_pos_sag = 1.; K_swp_pos_cor = 0.
-#    K_stp_pos = .6
+    # K_swp_vel_sag = .1; K_swp_vel_cor = .4; K_swp_pos_sag = 1.; K_swp_pos_cor = 0.
+    # K_stp_pos = .6
     K_swp_vel_sag = .0; K_swp_vel_cor = .3; K_swp_pos_sag = 1.2; K_swp_pos_cor = .2
     K_swp_pos_sag_faster = .05
-    filename = 'wd2_WalkForwardNormal00.bvh'
-#    filename = 'wd2_WalkForwardNormal00_REPEATED.bvh'
+    # filename = 'wd2_WalkForwardNormal00.bvh'
+    filename = 'wd2_WalkForwardNormal00_REPEATED.bvh'
 
 ##    K_swp_vel_sag = .1; K_swp_vel_cor = .4; K_swp_pos_sag = .3; K_swp_pos_cor = 0.
 ##    K_stp_pos = 0.
@@ -324,14 +325,15 @@ def walkings():
         viewer.setRenderers1([cvr.VpModelRenderer(motionModel, MOTION_COLOR, yr.POLYGON_FILL)])
         viewer.setRenderers2([cvr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL)])
     else:
-        viewer = ysv.SimpleViewer()
+        # viewer = ysv.SimpleViewer()
+        viewer = hsv.hpSimpleViewer()
     #    viewer.record(False)
     
-#        viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(motionModel, (0,150,255), yr.POLYGON_LINE))
-        viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (200,200,200), yr.POLYGON_LINE))
+        viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(motionModel, (0,150,255), yr.POLYGON_LINE))
+        viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (50,200,200), yr.POLYGON_FILL))
         
-    #    viewer.doc.addObject('motion_ori', motion_ori)
-    #    viewer.doc.addRenderer('motion_ori', yr.JointMotionRenderer(motion_ori, (0,100,255), yr.LINK_BONE))
+        # viewer.doc.addObject('motion_ori', motion_ori)
+        # viewer.doc.addRenderer('motion_ori', yr.JointMotionRenderer(motion_ori, (0,100,255), yr.LINK_BONE))
 #        viewer.doc.addRenderer('motion_seg_orig', yr.JointMotionRenderer(motion_seg_orig, (0,100,255), yr.LINK_BONE))
 #        viewer.doc.addRenderer('motion_seg', yr.JointMotionRenderer(motion_seg, (0,150,255), yr.LINK_BONE))
 #        viewer.doc.addRenderer('motion_stitch', yr.JointMotionRenderer(motion_stitch, (0,255,200), yr.LINK_BONE))

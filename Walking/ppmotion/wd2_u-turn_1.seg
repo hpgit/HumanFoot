@@ -43,7 +43,7 @@ S'<'
 NNNI-1
 I-1
 I0
-tbS'\xc8\x0f\xca\xbe\x1a\x19\xa5?'
+tbS'\xc0\x0f\xca\xbe\x1a\x19\xa5?'
 tRp19
 sS'swingFoots'
 p20
@@ -72,7 +72,7 @@ I6
 sg15
 g16
 (g18
-S'\x90i\xf2\x9f3\xc9\xa4?'
+S'\x80i\xf2\x9f3\xc9\xa4?'
 tRp28
 sg20
 (lp29
@@ -101,7 +101,7 @@ I5
 sg15
 g16
 (g18
-S'\xb0\xfa\x8c\x820j\xa3?'
+S'\xb8\xfa\x8c\x820j\xa3?'
 tRp36
 sg20
 (lp37
@@ -159,7 +159,7 @@ I3
 sg15
 g16
 (g18
-S'x\xc1\xece\xec\xde\xa0?'
+S'\x80\xc1\xece\xec\xde\xa0?'
 tRp52
 sg20
 (lp53
@@ -188,7 +188,7 @@ I4
 sg15
 g16
 (g18
-S'\x10^e78\xae\x9f?'
+S'\xe0]e78\xae\x9f?'
 tRp60
 sg20
 (lp61
@@ -275,7 +275,7 @@ I0
 sg15
 g16
 (g18
-S'HO\x94\xb0\xb2E\xa0?'
+S'XO\x94\xb0\xb2E\xa0?'
 tRp84
 sg20
 (lp85
@@ -304,7 +304,7 @@ I4
 sg15
 g16
 (g18
-S'\xe8\xa0\xb9\xc2\xb0\x85\xa1?'
+S'\xd8\xa0\xb9\xc2\xb0\x85\xa1?'
 tRp92
 sg20
 (lp93
@@ -333,7 +333,7 @@ I4
 sg15
 g16
 (g18
-S'\xb0\x9d\x7f\x00>!\xa2?'
+S'\xb8\x9d\x7f\x00>!\xa2?'
 tRp100
 sg20
 (lp101
@@ -362,7 +362,7 @@ I5
 sg15
 g16
 (g18
-S'(\xaf\xab\xf4/\x0c\xa5?'
+S'0\xaf\xab\xf4/\x0c\xa5?'
 tRp108
 sg20
 (lp109
@@ -391,7 +391,7 @@ I5
 sg15
 g16
 (g18
-S'\x88\x96\x12B\xb0\xf9\xa5?'
+S'\x80\x96\x12B\xb0\xf9\xa5?'
 tRp116
 sg20
 (lp117
@@ -420,7 +420,7 @@ I9
 sg15
 g16
 (g18
-S'\x98\t\x94\x07vR\xa5?'
+S'\xa0\t\x94\x07vR\xa5?'
 tRp124
 sg20
 (lp125
@@ -478,7 +478,7 @@ I5
 sg15
 g16
 (g18
-S'\x00-\xce\xe20\xe8\xa1?'
+S'\xf8,\xce\xe20\xe8\xa1?'
 tRp140
 sg20
 (lp141
@@ -507,7 +507,7 @@ I4
 sg15
 g16
 (g18
-S'@g\xf2\xe9\x9b\xd9\xa1?'
+S'Pg\xf2\xe9\x9b\xd9\xa1?'
 tRp148
 sg20
 (lp149
@@ -536,7 +536,7 @@ I5
 sg15
 g16
 (g18
-S'H\xc8\xc4<\xdf>\xa1?'
+S'P\xc8\xc4<\xdf>\xa1?'
 tRp156
 sg20
 (lp157
@@ -594,7 +594,7 @@ I11
 sg15
 g16
 (g18
-S'0w]j@|\x9f?'
+S'@w]j@|\x9f?'
 tRp172
 sg20
 (lp173
@@ -623,7 +623,7 @@ I0
 sg15
 g16
 (g18
-S'\xd0\xdbC\x1b6\xd9\x9f?'
+S'\xc0\xdbC\x1b6\xd9\x9f?'
 tRp180
 sg20
 (lp181
@@ -681,7 +681,7 @@ I4
 sg15
 g16
 (g18
-S'H\xf5\xa5\x17\xd0\xd1\xa2?'
+S'X\xf5\xa5\x17\xd0\xd1\xa2?'
 tRp196
 sg20
 (lp197
@@ -767,7 +767,7 @@ sg14
 Nsg15
 g16
 (g18
-S'\x08\x9f\xdf\x8e\xd9\xfb\xa5?'
+S'\x10\x9f\xdf\x8e\xd9\xfb\xa5?'
 tRp220
 sg20
 (lp221
@@ -795,7 +795,7 @@ I0
 sg15
 g16
 (g18
-S'X\xd9\xbf\x94\xd6\x9a\xa5?'
+S'P\xd9\xbf\x94\xd6\x9a\xa5?'
 tRp228
 sg20
 (lp229
@@ -824,7 +824,7 @@ I0
 sg15
 g16
 (g18
-S'\xb0\xfb\xe0;"\xa9\xa3?'
+S'\xc0\xfb\xe0;"\xa9\xa3?'
 tRp236
 sg20
 (lp237
@@ -882,7 +882,7 @@ I4
 sg15
 g16
 (g18
-S'\xa0\xf2\xa1\x14\xca\xc0\xa1?'
+S'\xa8\xf2\xa1\x14\xca\xc0\xa1?'
 tRp252
 sg20
 (lp253
@@ -911,7 +911,7 @@ I5
 sg15
 g16
 (g18
-S'\xc0\xa2\x91\xfcF\x97\xa0?'
+S'\xc8\xa2\x91\xfcF\x97\xa0?'
 tRp260
 sg20
 (lp261
@@ -940,7 +940,7 @@ I0
 sg15
 g16
 (g18
-S'\xd8}\x01\x93\x10s\xa0?'
+S'\xe0}\x01\x93\x10s\xa0?'
 tRp268
 sg20
 (lp269
