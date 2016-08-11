@@ -7,6 +7,8 @@ import Math.mmMath as mm
 import Math.csMath as cm
 import Motion.ysMotion as ym
 
+import copy
+
 ROOT_NAME = "root"
 #===============================================================================
 # .mm file
@@ -494,11 +496,16 @@ class Bvh:
         return joint
 
     def replaceJointFromBvh(self, jointName, bvhFilePath):
+        # backup motion
+        tempMotionList = copy.deepcopy(self.motionList)
+        print(tempMotionList)
+
         # read part bvh
         partBvh = readBvhFileAsBvh(bvhFilePath)
 
         # find a partroot joint in original bvh
         rootJoint = self.getJointFromJointName(jointName)
+        rootJointIdx = self.joints.index(rootJoint)
 
         if rootJoint is None:
             print('No Joint named ', jointName)
@@ -511,15 +518,25 @@ class Bvh:
                 del list_[index]
             return list_
 
+        # remove motion of removed joints
         removeJointList = self.findJointDescendentIdxs(rootJoint)
+        print(removeJointList)
+
+        removeMotionList = []
+        removeMotionIdx = 0
+        for jointIdx in range(len(self.joints)):
+            jointChannelNum = len(self.joints[jointIdx].channels)
+            if jointIdx in removeJointList:
+                for j in range(jointChannelNum):
+                    removeMotionList.append(removeMotionIdx+j)
+            removeMotionIdx += jointChannelNum
+
         self.joints = multi_delete(self.joints, removeJointList)
 
-        # remove motion of removed joints
-        removeMotionList = []
-        for i in range(3):
-            removeMotionList.extend([3*j+3+i for j in removeJointList])
+        print(removeMotionList)
+
         for _motion in self.motionList:
-            multi_delete(_motion, removeMotionList)
+            _motion = multi_delete(_motion, removeMotionList)
 
         print(self.motionList[0])
 
@@ -530,33 +547,22 @@ class Bvh:
         # attach part bvh joints in partroot joint and bvh
         rootJoint.children = []
         rootJoint.children.extend(partBvh.joints[0].children)
-        self.joints.extend(partBvh.joints[1:])
+        for jointIdx in range(1, len(partBvh.joints[1:])+1):
+            self.joints.insert(rootJointIdx+jointIdx, partBvh.joints[jointIdx])
 
         # modify total channel count in bvh
         self.totalChannelCount = 0
         for joint in self.joints:
             self.totalChannelCount += len(joint.channels)
 
+        partChannelCount = partBvh.totalChannelCount - len(partBvh.joints[0].channels)
+        for motionFrame in range(len(self.motionList)):
+            for i in range(partChannelCount):
+                self.motionList[motionFrame].insert(3*rootJointIdx+3, .0)
+
         # modify joint index
         for joint in self.joints:
             joint.jointIndex = self.joints.index(joint)
-
-
-
-        #TODO:
-        # modify motion
-        for motionFrame in range(len(self.motionList)):
-            for joint in partBvh.joints[1:]:
-                # print(joint.jointIndex)
-                # print(len(joint.channels))
-                for channel in joint.channels:
-                    self.motionList[motionFrame].insert(3*self.joints.index(joint), 0.0)
-                    # self.motionList[motionFrame].append(0.0)
-
-        tempMotionList = []
-        # for motionFrame in range(len(self.motionList)):
-        #     for
-
 
 
 if __name__ == "__main__":
@@ -656,8 +662,8 @@ if __name__ == "__main__":
 
 
         partBvhFilePath = '../samples/simpleJump_long.bvh'
+        # bvh.replaceJointFromBvh('RightFoot', partBvhFilePath)
         bvh.replaceJointFromBvh('LeftFoot', partBvhFilePath)
-        bvh.replaceJointFromBvh('RightFoot', partBvhFilePath)
 
         motion2 = bvh.toJointMotion(.01, False)
 
@@ -669,9 +675,10 @@ if __name__ == "__main__":
                                         'RightArm', 'RightFoot', 'RightForeArm', 'RightHand', 'RightHand_Effector',
                                         'RightLeg', 'RightShoulder', 'RightUpLeg',
                                         'Spine', 'Spine1',
-                                        'RightFoot_foot_0_0', 'RightFoot_foot_0_1', 'RightFoot_foot_0_1_Effector',
-                                        'RightFoot_foot_1_0', 'RightFoot_foot_1_1', 'RightFoot_foot_1_1_Effector',
-                                        'RightFoot_foot_2_0', 'RightFoot_foot_2_1', 'RightFoot_foot_2_1_Effector',
+                                        'RightToes', 'RightToes_Effector'
+                                        # 'RightFoot_foot_0_0', 'RightFoot_foot_0_1', 'RightFoot_foot_0_1_Effector',
+                                        # 'RightFoot_foot_1_0', 'RightFoot_foot_1_1', 'RightFoot_foot_1_1_Effector',
+                                        # 'RightFoot_foot_2_0', 'RightFoot_foot_2_1', 'RightFoot_foot_2_1_Effector',
                                         'LeftFoot_foot_0_0', 'LeftFoot_foot_0_1', 'LeftFoot_foot_0_1_Effector',
                                         'LeftFoot_foot_1_0', 'LeftFoot_foot_1_1', 'LeftFoot_foot_1_1_Effector',
                                         'LeftFoot_foot_2_0', 'LeftFoot_foot_2_1', 'LeftFoot_foot_2_1_Effector',
@@ -717,12 +724,12 @@ if __name__ == "__main__":
 
             # left foot : 4
             massMap['LeftFoot'] += 2.
-            massMap['RightFoot_foot_0_0'] = .3
-            massMap['RightFoot_foot_0_1'] = .3
-            massMap['RightFoot_foot_1_0'] = .3
-            massMap['RightFoot_foot_1_1'] = .3
-            massMap['RightFoot_foot_2_0'] = .3
-            massMap['RightFoot_foot_2_1'] = .3
+            # massMap['RightFoot_foot_0_0'] = .3
+            # massMap['RightFoot_foot_0_1'] = .3
+            # massMap['RightFoot_foot_1_0'] = .3
+            # massMap['RightFoot_foot_1_1'] = .3
+            # massMap['RightFoot_foot_2_0'] = .3
+            # massMap['RightFoot_foot_2_1'] = .3
             massMap['LeftFoot_foot_0_0'] = .3
             massMap['LeftFoot_foot_0_1'] = .3
             massMap['LeftFoot_foot_1_0'] = .3
@@ -776,12 +783,12 @@ if __name__ == "__main__":
 
             capsulize('RightFoot')
             capsulize('LeftFoot')
-            capsulize('RightFoot_foot_0_0')
-            capsulize('RightFoot_foot_0_1')
-            capsulize('RightFoot_foot_1_0')
-            capsulize('RightFoot_foot_1_1')
-            capsulize('RightFoot_foot_2_0')
-            capsulize('RightFoot_foot_2_1')
+            # capsulize('RightFoot_foot_0_0')
+            # capsulize('RightFoot_foot_0_1')
+            # capsulize('RightFoot_foot_1_0')
+            # capsulize('RightFoot_foot_1_1')
+            # capsulize('RightFoot_foot_2_0')
+            # capsulize('RightFoot_foot_2_1')
             capsulize('LeftFoot_foot_0_0')
             capsulize('LeftFoot_foot_0_1')
             capsulize('LeftFoot_foot_1_0')
