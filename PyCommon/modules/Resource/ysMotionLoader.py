@@ -280,7 +280,7 @@ class Bvh:
     #===========================================================================
     def writeBvhFile(self, filepath_or_fileobject):
         if isinstance(filepath_or_fileobject, str):
-            f = open(filepath_or_fileobject)
+            f = open(filepath_or_fileobject, 'w')
         else:
             f = filepath_or_fileobject
 
@@ -472,6 +472,92 @@ class Bvh:
         for child in bvhJoint.children:
             self._jointValue2channelValues(jointPosture, channelValues, jointSkeleton, child)
 
+    #===========================================================================
+    # replace joint
+    #===========================================================================
+    def findJointDescendentIdxs(self, _joint):
+        idxs = []
+        for joint in _joint.children:
+            jointIdx = self.joints.index(joint)
+            idxs.append(jointIdx)
+            idxs.extend(self.findJointDescendentIdxs(joint))
+
+        return idxs
+
+    def getJointFromJointName(self, jointName):
+        joint = None
+        for _joint in self.joints:
+            if _joint.name == jointName:
+                joint = _joint
+                break
+
+        return joint
+
+    def replaceJointFromBvh(self, jointName, bvhFilePath):
+        # read part bvh
+        partBvh = readBvhFileAsBvh(bvhFilePath)
+
+        # find a partroot joint in original bvh
+        rootJoint = self.getJointFromJointName(jointName)
+
+        if rootJoint is None:
+            print('No Joint named ', jointName)
+            return
+
+        # remove decendant joints of a partroot joint
+        def multi_delete(list_, args):
+            args.sort(reverse=True)
+            for index in args:
+                del list_[index]
+            return list_
+
+        removeJointList = self.findJointDescendentIdxs(rootJoint)
+        self.joints = multi_delete(self.joints, removeJointList)
+
+        # remove motion of removed joints
+        removeMotionList = []
+        for i in range(3):
+            removeMotionList.extend([3*j+3+i for j in removeJointList])
+        for _motion in self.motionList:
+            multi_delete(_motion, removeMotionList)
+
+        print(self.motionList[0])
+
+        # modify joint name
+        for joint in partBvh.joints[1:]:
+            joint.name = rootJoint.name + '_' + joint.name
+
+        # attach part bvh joints in partroot joint and bvh
+        rootJoint.children = []
+        rootJoint.children.extend(partBvh.joints[0].children)
+        self.joints.extend(partBvh.joints[1:])
+
+        # modify total channel count in bvh
+        self.totalChannelCount = 0
+        for joint in self.joints:
+            self.totalChannelCount += len(joint.channels)
+
+        # modify joint index
+        for joint in self.joints:
+            joint.jointIndex = self.joints.index(joint)
+
+
+
+        #TODO:
+        # modify motion
+        for motionFrame in range(len(self.motionList)):
+            for joint in partBvh.joints[1:]:
+                # print(joint.jointIndex)
+                # print(len(joint.channels))
+                for channel in joint.channels:
+                    self.motionList[motionFrame].insert(3*self.joints.index(joint), 0.0)
+                    # self.motionList[motionFrame].append(0.0)
+
+        tempMotionList = []
+        # for motionFrame in range(len(self.motionList)):
+        #     for
+
+
 
 if __name__ == "__main__":
     import time
@@ -480,6 +566,12 @@ if __name__ == "__main__":
     from fltk import *
     import GUI.ysSimpleViewer as ysv
     import Renderer.ysRenderer as yr
+
+    import Simulator.csVpModel as cvm
+    import Simulator.csVpWorld as cvw
+    import cPickle
+    import Simulator.ysPhysConfig as ypc
+    import Renderer.csVpRenderer as cvr
 
     def test_readTrcFile():
         trcMotion = readTrcFile('../samples/Day7_Session2_Take01_-_walk.trc', .01)
@@ -555,13 +647,195 @@ if __name__ == "__main__":
         profileDataFile = '../samples/cProfile_%s.profile'%datetime.today().strftime('%y%m%d_%H%M%S')
         cProfile.runctx('motion = readBvhFile(bvhFilePath)', globals(), locals(), profileDataFile)
         os.system('python ../../Tools/pprofui.py %s'%profileDataFile)
-    
+
+    def test_replaceBvhFile():
+        # motion
+        bvhFilePath = '../samples/wd2_WalkSameSame00.bvh'
+        bvh = readBvhFileAsBvh(bvhFilePath)
+        motion = bvh.toJointMotion(.01, False)
+
+
+        partBvhFilePath = '../samples/simpleJump_long.bvh'
+        bvh.replaceJointFromBvh('LeftFoot', partBvhFilePath)
+        bvh.replaceJointFromBvh('RightFoot', partBvhFilePath)
+
+        motion2 = bvh.toJointMotion(.01, False)
+
+        def buildMassMap():
+            massMap = {}
+            massMap = massMap.fromkeys(['Head', 'Head_Effector', 'Hips',
+                                        'LeftArm', 'LeftFoot', 'LeftForeArm', 'LeftHand', 'LeftHand_Effector',
+                                        'LeftLeg', 'LeftShoulder1', 'LeftUpLeg',
+                                        'RightArm', 'RightFoot', 'RightForeArm', 'RightHand', 'RightHand_Effector',
+                                        'RightLeg', 'RightShoulder', 'RightUpLeg',
+                                        'Spine', 'Spine1',
+                                        'RightFoot_foot_0_0', 'RightFoot_foot_0_1', 'RightFoot_foot_0_1_Effector',
+                                        'RightFoot_foot_1_0', 'RightFoot_foot_1_1', 'RightFoot_foot_1_1_Effector',
+                                        'RightFoot_foot_2_0', 'RightFoot_foot_2_1', 'RightFoot_foot_2_1_Effector',
+                                        'LeftFoot_foot_0_0', 'LeftFoot_foot_0_1', 'LeftFoot_foot_0_1_Effector',
+                                        'LeftFoot_foot_1_0', 'LeftFoot_foot_1_1', 'LeftFoot_foot_1_1_Effector',
+                                        'LeftFoot_foot_2_0', 'LeftFoot_foot_2_1', 'LeftFoot_foot_2_1_Effector',
+                                        ], 0.)
+
+            # torso : 10
+            massMap['Hips'] += 2.
+            massMap['Spine'] += 8.
+
+            # head : 3
+            massMap['Spine1'] += 3.
+
+            # right upper arm : 2
+            massMap['RightArm'] += 2.
+
+            # left upper arm : 2
+            massMap['LeftArm'] += 2.
+
+            # right lower arm : 1
+            massMap['RightForeArm'] = 1.
+            #    massMap['RightForeArm'] = 2.
+
+            # left lower arm : 1
+            massMap['LeftForeArm'] = 1.
+            #    massMap['LeftForeArm'] = 2.
+
+            # right thigh : 7
+            massMap['Hips'] += 2.
+            massMap['RightUpLeg'] += 5.
+
+            # left thigh : 7
+            massMap['Hips'] += 2.
+            massMap['LeftUpLeg'] += 5.
+
+            # right shin : 5
+            massMap['RightLeg'] += 5.
+
+            # left shin : 5
+            massMap['LeftLeg'] += 5.
+
+            # right foot : 4
+            massMap['RightFoot'] += 2.
+
+            # left foot : 4
+            massMap['LeftFoot'] += 2.
+            massMap['RightFoot_foot_0_0'] = .3
+            massMap['RightFoot_foot_0_1'] = .3
+            massMap['RightFoot_foot_1_0'] = .3
+            massMap['RightFoot_foot_1_1'] = .3
+            massMap['RightFoot_foot_2_0'] = .3
+            massMap['RightFoot_foot_2_1'] = .3
+            massMap['LeftFoot_foot_0_0'] = .3
+            massMap['LeftFoot_foot_0_1'] = .3
+            massMap['LeftFoot_foot_1_0'] = .3
+            massMap['LeftFoot_foot_1_1'] = .3
+            massMap['LeftFoot_foot_2_0'] = .3
+            massMap['LeftFoot_foot_2_1'] = .3
+
+            return massMap
+
+        def buildMcfg():
+            massMap = buildMassMap()
+            mcfg = ypc.ModelConfig()
+            mcfg.defaultDensity = 1000.
+            mcfg.defaultBoneRatio = .9
+
+            totalMass = 0.
+            for name in massMap:
+                node = mcfg.addNode(name)
+                node.mass = massMap[name]
+                totalMass += node.mass
+
+            node = mcfg.getNode('Hips')
+            node.length = .2
+            node.width = .25
+
+            node = mcfg.getNode('Spine1')
+            node.length = .2
+            node.offset = (0,0,0.1)
+
+            node = mcfg.getNode('Spine')
+            node.width = .22
+
+            node = mcfg.getNode('RightFoot')
+            node.length = .25
+            #    node.length = .27
+            #    node.offset = (0,0,0.01)
+            node.width = .1
+            node.geom = 'MyFoot1'
+
+            node = mcfg.getNode('LeftFoot')
+            node.length = .25
+            #    node.length = .27
+            #    node.offset = (0,0,0.01)
+            node.width = .1
+            node.geom = 'MyFoot1'
+
+            def capsulize(node_name):
+                node = mcfg.getNode(node_name)
+                node.geom = 'MyFoot4'
+                node.width = 0.02
+
+            capsulize('RightFoot')
+            capsulize('LeftFoot')
+            capsulize('RightFoot_foot_0_0')
+            capsulize('RightFoot_foot_0_1')
+            capsulize('RightFoot_foot_1_0')
+            capsulize('RightFoot_foot_1_1')
+            capsulize('RightFoot_foot_2_0')
+            capsulize('RightFoot_foot_2_1')
+            capsulize('LeftFoot_foot_0_0')
+            capsulize('LeftFoot_foot_0_1')
+            capsulize('LeftFoot_foot_1_0')
+            capsulize('LeftFoot_foot_1_1')
+            capsulize('LeftFoot_foot_2_0')
+            capsulize('LeftFoot_foot_2_1')
+
+            return mcfg
+
+        mcfg = buildMcfg()
+
+        wcfg = ypc.WorldConfig()
+        wcfg.planeHeight = 0.
+        wcfg.useDefaultContactModel = False
+        wcfg.lockingVel = 0.05
+        stepsPerFrame = 30
+        wcfg.timeStep = 0.001
+
+        print(motion2[0].skeleton)
+
+        vpWorld = cvw.VpWorld(wcfg)
+        motionModel = cvm.VpMotionModel(vpWorld, motion2[0], mcfg)
+        # vpWorld.initialize()
+
+        viewer = ysv.SimpleViewer()
+        viewer.record(False)
+        viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,255,0)))
+        viewer.doc.addObject('motion', motion)
+        viewer.doc.addRenderer('motion2', yr.JointMotionRenderer(motion2, (255,0,0)))
+        viewer.doc.addObject('motion2', motion2)
+        viewer.doc.addRenderer('csmotion2', cvr.VpModelRenderer(motionModel, (255,0,0), yr.POLYGON_FILL))
+
+        viewer.startTimer(1/motion.fps)
+
+
+        def callback(frame):
+            motionModel.update(motion2[frame])
+
+        viewer.setSimulateCallback(callback)
+
+        viewer.show()
+
+        Fl.run()
+
+        tempFilePath = '../samples/motion_foot_temp_wd2_WalkSameSame00.bvh.temp'
+        # writeBvhFile(tempFilePath, motion2)
+
                
     pass
 #    test_readTrcFile()
 #    test_parseBvhFile()
 #    test_readBvhFile()
-    test_writeBvhFile()
+#     test_writeBvhFile()
 #    profile_readBvhFile()
+    test_replaceBvhFile()
         
     

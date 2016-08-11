@@ -48,11 +48,12 @@ def import_trc(filename):
     for i in range(0, int(infoData[2])):
         markerPosi.append(strs2vec3(trcFile.readline().split()[2:]))
 
+    trcFile.close()
+
     # for i in range(0, len(infoNames)):
     #     print infoNames[i], ": ", infoData[i]
     # print markerName
     # print markerPosi
     return infoNames, infoData, markerName, markerPosi
 
-    trcFile.close()
 

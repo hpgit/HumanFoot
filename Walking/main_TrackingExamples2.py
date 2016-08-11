@@ -392,26 +392,26 @@ def walkings():
 #        if frame==31: print 'elapsed time for 30 frames:', time.time()-pt[0]
         if CAMERA_TRACKING:
             if MULTI_VIEWER:
-                if cameraTargets1[frame]==None:
+                if cameraTargets1[frame] is None:
                     cameraTargets1[frame] = motionModel.getBodyPositionGlobal(0)
 #                    cameraTargets1[frame] = motion_ori[frame].getJointPositionGlobal(0)
                 viewer.setCameraTarget1(cameraTargets1[frame])
                 
-                if cameraTargets2[frame]==None:
+                if cameraTargets2[frame] is None:
                     cameraTargets2[frame] = controlModel.getJointPositionGlobal(0)
                 viewer.setCameraTarget2(cameraTargets2[frame])
                 
             else:
-                if cameraTargets[frame]==None:
+                if cameraTargets[frame] is None:
                     cameraTargets[frame] = controlModel.getJointPositionGlobal(0)
                 viewer.setCameraTarget(cameraTargets[frame])
-        if plot!=None:
+        if plot is not None:
             plot.updateVline(frame)
     viewer.setPostFrameCallback_Always(postFrameCallback_Always)
 
     plot = None
 #    plot = ymp.InteractivePlot()
-    if plot!=None:
+    if plot is not None:
         plot.setXlimit(0, len(motion_ori))
         plot.setYlimit(-0.05, .05)
         plot.addDataSet('zero')
