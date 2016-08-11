@@ -13,10 +13,10 @@ p5
 (dp6
 S'rotateX'
 p7
-F-0.48869219055841134
+F-0.087266462599715572
 sS'rotateY'
 p8
-F-1.44862327915529
+F-1.1693705988361978
 sS'center'
 p9
 cnumpy.core.multiarray
@@ -43,10 +43,10 @@ NNNI-1
 I-1
 I0
 tbI00
-S'\xe6\xe2ZL\x10\xac\x85?\x00\x00\x00\x00\x00\x00\xe0?\xca_P(\x18=\xe0?'
+S'\x95\x11\xae\xf4\x1c/\xf3?\x00\x00\x00\x00\x00\x00\xe0?\x8ebSW\xd8\xfe\xe6\xbf'
 tbsS'distance'
 p15
-F6.3858335669190955
+F4.7085561934635258
 ssS'viewMode'
 p16
 I3
@@ -58,7 +58,7 @@ I800
 sS'h'
 I600
 sS'y'
-I231
+I59
 sS'x'
-I437
+I191
 sb.

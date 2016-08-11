@@ -532,14 +532,19 @@ class Bvh:
             removeMotionIdx += jointChannelNum
 
         self.joints = multi_delete(self.joints, removeJointList)
-
-        print(removeMotionList)
+        print([joint.name for joint in self.joints])
 
         for _motion in self.motionList:
-            _motion = multi_delete(_motion, removeMotionList)
+            multi_delete(_motion, removeMotionList)
 
-        print(self.motionList[0])
+        # modify joint channel indices
+        for joint in self.joints:
+            for channel in joint.channels:
+                channel.channelIndex -= sum([k < channel.channelIndex for k in removeMotionList])
 
+
+        rootJoint.children = []
+        # print(self.motionList[0])
         # modify joint name
         for joint in partBvh.joints[1:]:
             joint.name = rootJoint.name + '_' + joint.name
@@ -555,10 +560,12 @@ class Bvh:
         for joint in self.joints:
             self.totalChannelCount += len(joint.channels)
 
+        '''
         partChannelCount = partBvh.totalChannelCount - len(partBvh.joints[0].channels)
         for motionFrame in range(len(self.motionList)):
             for i in range(partChannelCount):
                 self.motionList[motionFrame].insert(3*rootJointIdx+3, .0)
+        '''
 
         # modify joint index
         for joint in self.joints:
