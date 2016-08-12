@@ -511,6 +511,9 @@ class Bvh:
             print('No Joint named ', jointName)
             return
 
+        #------------------------------------------
+        # delete
+        #------------------------------------------
         # remove decendant joints of a partroot joint
         def multi_delete(list_, args):
             args.sort(reverse=True)
@@ -532,7 +535,6 @@ class Bvh:
             removeMotionIdx += jointChannelNum
 
         self.joints = multi_delete(self.joints, removeJointList)
-        print([joint.name for joint in self.joints])
 
         for _motion in self.motionList:
             multi_delete(_motion, removeMotionList)
@@ -542,12 +544,24 @@ class Bvh:
             for channel in joint.channels:
                 channel.channelIndex -= sum([k < channel.channelIndex for k in removeMotionList])
 
+        # modify total channel count in bvh
+        self.totalChannelCount = 0
+        for joint in self.joints:
+            self.totalChannelCount += len(joint.channels)
 
-        rootJoint.children = []
-        # print(self.motionList[0])
+        #------------------------------------------
+        # add
+        #------------------------------------------
         # modify joint name
         for joint in partBvh.joints[1:]:
             joint.name = rootJoint.name + '_' + joint.name
+
+        # modify channel idx
+        partChannelCount = partBvh.totalChannelCount - len(partBvh.joints[0].channels)
+        rootJointChannelIdx = rootJoint.channels[-1].channelIndex
+        for joint in self.joints:
+            for channel in joint.channels:
+                channel.channelIndex += partChannelCount if rootJointChannelIdx < channel.channelIndex else 0
 
         # attach part bvh joints in partroot joint and bvh
         rootJoint.children = []
@@ -560,12 +574,20 @@ class Bvh:
         for joint in self.joints:
             self.totalChannelCount += len(joint.channels)
 
-        '''
-        partChannelCount = partBvh.totalChannelCount - len(partBvh.joints[0].channels)
+        # add new motion for part bvh
         for motionFrame in range(len(self.motionList)):
             for i in range(partChannelCount):
-                self.motionList[motionFrame].insert(3*rootJointIdx+3, .0)
-        '''
+                self.motionList[motionFrame].insert(rootJointChannelIdx+1, .0)
+
+        #TODO:
+        # modify channel idx remained
+        partJointChannelIdx = 0
+        for joint in partBvh.joints[1:]:
+            for channel in joint.channels:
+                partJointChannelIdx += 1
+                channel.channelIndex = rootJointChannelIdx + partJointChannelIdx
+
+
 
         # modify joint index
         for joint in self.joints:
@@ -669,7 +691,7 @@ if __name__ == "__main__":
 
 
         partBvhFilePath = '../samples/simpleJump_long.bvh'
-        # bvh.replaceJointFromBvh('RightFoot', partBvhFilePath)
+        bvh.replaceJointFromBvh('RightFoot', partBvhFilePath)
         bvh.replaceJointFromBvh('LeftFoot', partBvhFilePath)
 
         motion2 = bvh.toJointMotion(.01, False)
@@ -682,10 +704,9 @@ if __name__ == "__main__":
                                         'RightArm', 'RightFoot', 'RightForeArm', 'RightHand', 'RightHand_Effector',
                                         'RightLeg', 'RightShoulder', 'RightUpLeg',
                                         'Spine', 'Spine1',
-                                        'RightToes', 'RightToes_Effector'
-                                        # 'RightFoot_foot_0_0', 'RightFoot_foot_0_1', 'RightFoot_foot_0_1_Effector',
-                                        # 'RightFoot_foot_1_0', 'RightFoot_foot_1_1', 'RightFoot_foot_1_1_Effector',
-                                        # 'RightFoot_foot_2_0', 'RightFoot_foot_2_1', 'RightFoot_foot_2_1_Effector',
+                                        'RightFoot_foot_0_0', 'RightFoot_foot_0_1', 'RightFoot_foot_0_1_Effector',
+                                        'RightFoot_foot_1_0', 'RightFoot_foot_1_1', 'RightFoot_foot_1_1_Effector',
+                                        'RightFoot_foot_2_0', 'RightFoot_foot_2_1', 'RightFoot_foot_2_1_Effector',
                                         'LeftFoot_foot_0_0', 'LeftFoot_foot_0_1', 'LeftFoot_foot_0_1_Effector',
                                         'LeftFoot_foot_1_0', 'LeftFoot_foot_1_1', 'LeftFoot_foot_1_1_Effector',
                                         'LeftFoot_foot_2_0', 'LeftFoot_foot_2_1', 'LeftFoot_foot_2_1_Effector',
@@ -731,12 +752,12 @@ if __name__ == "__main__":
 
             # left foot : 4
             massMap['LeftFoot'] += 2.
-            # massMap['RightFoot_foot_0_0'] = .3
-            # massMap['RightFoot_foot_0_1'] = .3
-            # massMap['RightFoot_foot_1_0'] = .3
-            # massMap['RightFoot_foot_1_1'] = .3
-            # massMap['RightFoot_foot_2_0'] = .3
-            # massMap['RightFoot_foot_2_1'] = .3
+            massMap['RightFoot_foot_0_0'] = .3
+            massMap['RightFoot_foot_0_1'] = .3
+            massMap['RightFoot_foot_1_0'] = .3
+            massMap['RightFoot_foot_1_1'] = .3
+            massMap['RightFoot_foot_2_0'] = .3
+            massMap['RightFoot_foot_2_1'] = .3
             massMap['LeftFoot_foot_0_0'] = .3
             massMap['LeftFoot_foot_0_1'] = .3
             massMap['LeftFoot_foot_1_0'] = .3
@@ -790,12 +811,12 @@ if __name__ == "__main__":
 
             capsulize('RightFoot')
             capsulize('LeftFoot')
-            # capsulize('RightFoot_foot_0_0')
-            # capsulize('RightFoot_foot_0_1')
-            # capsulize('RightFoot_foot_1_0')
-            # capsulize('RightFoot_foot_1_1')
-            # capsulize('RightFoot_foot_2_0')
-            # capsulize('RightFoot_foot_2_1')
+            capsulize('RightFoot_foot_0_0')
+            capsulize('RightFoot_foot_0_1')
+            capsulize('RightFoot_foot_1_0')
+            capsulize('RightFoot_foot_1_1')
+            capsulize('RightFoot_foot_2_0')
+            capsulize('RightFoot_foot_2_1')
             capsulize('LeftFoot_foot_0_0')
             capsulize('LeftFoot_foot_0_1')
             capsulize('LeftFoot_foot_1_0')
