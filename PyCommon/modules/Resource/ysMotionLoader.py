@@ -496,10 +496,6 @@ class Bvh:
         return joint
 
     def replaceJointFromBvh(self, jointName, bvhFilePath):
-        # backup motion
-        tempMotionList = copy.deepcopy(self.motionList)
-        print(tempMotionList)
-
         # read part bvh
         partBvh = readBvhFileAsBvh(bvhFilePath)
 
@@ -523,8 +519,6 @@ class Bvh:
 
         # remove motion of removed joints
         removeJointList = self.findJointDescendentIdxs(rootJoint)
-        print(removeJointList)
-
         removeMotionList = []
         removeMotionIdx = 0
         for jointIdx in range(len(self.joints)):
@@ -579,15 +573,12 @@ class Bvh:
             for i in range(partChannelCount):
                 self.motionList[motionFrame].insert(rootJointChannelIdx+1, .0)
 
-        #TODO:
         # modify channel idx remained
         partJointChannelIdx = 0
         for joint in partBvh.joints[1:]:
             for channel in joint.channels:
                 partJointChannelIdx += 1
                 channel.channelIndex = rootJointChannelIdx + partJointChannelIdx
-
-
 
         # modify joint index
         for joint in self.joints:

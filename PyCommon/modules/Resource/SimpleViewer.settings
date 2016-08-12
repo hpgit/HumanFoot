@@ -13,10 +13,10 @@ p5
 (dp6
 S'rotateX'
 p7
-F-0.55850536063818479
+F-0.40142572795869508
 sS'rotateY'
 p8
-F-0.55850536063817979
+F-0.68067840827778314
 sS'center'
 p9
 cnumpy.core.multiarray
@@ -46,7 +46,7 @@ tbI00
 S'\xdc?@)H\r\xe1\xbf\x00\x00\x00\x00\x00\x00\xe0?\x93y\xca\x18\xaf\xe1\xd9?'
 tbsS'distance'
 p15
-F4.188021584855294
+F4.7554652402496949
 ssS'viewMode'
 p16
 I3
