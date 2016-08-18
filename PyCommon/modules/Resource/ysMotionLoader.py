@@ -495,7 +495,7 @@ class Bvh:
 
         return joint
 
-    def replaceJointFromBvh(self, jointName, bvhFilePath):
+    def replaceJointFromBvh(self, jointName, bvhFilePath, scale=1.0):
         # read part bvh
         partBvh = readBvhFileAsBvh(bvhFilePath)
 
@@ -583,6 +583,10 @@ class Bvh:
         # modify joint index
         for joint in self.joints:
             joint.jointIndex = self.joints.index(joint)
+
+        # modify joint offset
+        for joint in partBvh.joints:
+            joint.offset *= scale
 
 
 if __name__ == "__main__":

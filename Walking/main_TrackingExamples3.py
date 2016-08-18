@@ -31,7 +31,7 @@ import Motion.mmAnalyticIK as aik
 import Resource.ysMotionLoader as yf
 import Simulator.ysPhysConfig as ypc
 
-import Simulator.hpLCPSimulator as hls
+# import Simulator.hpLCPSimulator as hls
 import GUI.hpSimpleViewer as hsv
 
 
@@ -284,13 +284,13 @@ def walkings():
     # motion
     #TODO:
     bvh = yf.readBvhFileAsBvh(dir+filename)
-    motion_ori = bvh.toJointMotion(1.0, False)
+    # motion_ori = bvh.toJointMotion(1.0, False)
 
     partBvhFilePath = '../PyCommon/modules/samples/simpleJump_long.bvh'
-    bvh.replaceJointFromBvh('RightFoot', partBvhFilePath)
-    bvh.replaceJointFromBvh('LeftFoot', partBvhFilePath)
+    bvh.replaceJointFromBvh('RightFoot', partBvhFilePath, .02)
+    bvh.replaceJointFromBvh('LeftFoot', partBvhFilePath, .02)
 
-    motion2 = bvh.toJointMotion(.01, False)
+    motion_ori = bvh.toJointMotion(1., False)
 
     # motion_ori = yf.readBvhFile(dir+filename)
     frameTime = 1/motion_ori.fps
@@ -874,7 +874,9 @@ def walkings():
                 rknee_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rKnee))
                 rankle_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rFoot))
 
-            rd_torques[:] = [controlModel.getJointTorqueLocal(j)/100. for j in range(skeleton.getJointNum())]
+            for j in range(skeleton.getJointNum()):
+                print(j, controlModel.getJointTorqueLocal(j))
+            rd_torques[:] = [controlModel.getJointTorqueLocal(j)/100. for j in range(1, skeleton.getJointNum())]
             rd_joint_positions[:] = controlModel.getJointPositionsGlobal()
 
             vpWorld.step()
