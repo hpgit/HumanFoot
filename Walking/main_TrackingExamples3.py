@@ -27,7 +27,7 @@ import Motion.ysMotionBlend as ymb
 import Motion.ysMotionExtend as ymt
 import Motion.ysSkeletonEdit as yhe
 import Motion.mmAnalyticIK as aik
-import Util.ysMatplotEx as ymp
+# import Util.ysMatplotEx as ymp
 import Resource.ysMotionLoader as yf
 import Simulator.ysPhysConfig as ypc
 
@@ -39,6 +39,136 @@ import GUI.hpSimpleViewer as hsv
 #CHARACTER_COLOR = (102,102,153)
 MOTION_COLOR = (213,111,162)
 CHARACTER_COLOR = (20,166,188)
+
+def buildMassMap():
+    massMap = {}
+    massMap = massMap.fromkeys(['Head', 'Head_Effector', 'Hips',
+                                'LeftArm', 'LeftFoot', 'LeftForeArm', 'LeftHand', 'LeftHand_Effector',
+                                'LeftLeg', 'LeftShoulder1', 'LeftUpLeg',
+                                'RightArm', 'RightFoot', 'RightForeArm', 'RightHand', 'RightHand_Effector',
+                                'RightLeg', 'RightShoulder', 'RightUpLeg',
+                                'Spine', 'Spine1',
+                                'RightFoot_foot_0_0', 'RightFoot_foot_0_1', 'RightFoot_foot_0_1_Effector',
+                                'RightFoot_foot_1_0', 'RightFoot_foot_1_1', 'RightFoot_foot_1_1_Effector',
+                                'RightFoot_foot_2_0', 'RightFoot_foot_2_1', 'RightFoot_foot_2_1_Effector',
+                                'LeftFoot_foot_0_0', 'LeftFoot_foot_0_1', 'LeftFoot_foot_0_1_Effector',
+                                'LeftFoot_foot_1_0', 'LeftFoot_foot_1_1', 'LeftFoot_foot_1_1_Effector',
+                                'LeftFoot_foot_2_0', 'LeftFoot_foot_2_1', 'LeftFoot_foot_2_1_Effector',
+                                ], 0.)
+
+    # torso : 10
+    massMap['Hips'] += 2.
+    massMap['Spine'] += 8.
+
+    # head : 3
+    massMap['Spine1'] += 3.
+
+    # right upper arm : 2
+    massMap['RightArm'] += 2.
+
+    # left upper arm : 2
+    massMap['LeftArm'] += 2.
+
+    # right lower arm : 1
+    massMap['RightForeArm'] = 1.
+    #    massMap['RightForeArm'] = 2.
+
+    # left lower arm : 1
+    massMap['LeftForeArm'] = 1.
+    #    massMap['LeftForeArm'] = 2.
+
+    # right thigh : 7
+    massMap['Hips'] += 2.
+    massMap['RightUpLeg'] += 5.
+
+    # left thigh : 7
+    massMap['Hips'] += 2.
+    massMap['LeftUpLeg'] += 5.
+
+    # right shin : 5
+    massMap['RightLeg'] += 5.
+
+    # left shin : 5
+    massMap['LeftLeg'] += 5.
+
+    # right foot : 4
+    massMap['RightFoot'] += 2.
+
+    # left foot : 4
+    massMap['LeftFoot'] += 2.
+    massMap['RightFoot_foot_0_0'] = .3
+    massMap['RightFoot_foot_0_1'] = .3
+    massMap['RightFoot_foot_1_0'] = .3
+    massMap['RightFoot_foot_1_1'] = .3
+    massMap['RightFoot_foot_2_0'] = .3
+    massMap['RightFoot_foot_2_1'] = .3
+    massMap['LeftFoot_foot_0_0'] = .3
+    massMap['LeftFoot_foot_0_1'] = .3
+    massMap['LeftFoot_foot_1_0'] = .3
+    massMap['LeftFoot_foot_1_1'] = .3
+    massMap['LeftFoot_foot_2_0'] = .3
+    massMap['LeftFoot_foot_2_1'] = .3
+
+    return massMap
+
+def buildMcfg():
+    massMap = buildMassMap()
+    mcfg = ypc.ModelConfig()
+    mcfg.defaultDensity = 1000.
+    mcfg.defaultBoneRatio = .9
+
+    totalMass = 0.
+    for name in massMap:
+        node = mcfg.addNode(name)
+        node.mass = massMap[name]
+        totalMass += node.mass
+
+    node = mcfg.getNode('Hips')
+    node.length = .2
+    node.width = .25
+
+    node = mcfg.getNode('Spine1')
+    node.length = .2
+    node.offset = (0,0,0.1)
+
+    node = mcfg.getNode('Spine')
+    node.width = .22
+
+    node = mcfg.getNode('RightFoot')
+    node.length = .25
+    #    node.length = .27
+    #    node.offset = (0,0,0.01)
+    node.width = .1
+    node.geom = 'MyFoot1'
+
+    node = mcfg.getNode('LeftFoot')
+    node.length = .25
+    #    node.length = .27
+    #    node.offset = (0,0,0.01)
+    node.width = .1
+    node.geom = 'MyFoot1'
+
+    def capsulize(node_name):
+        node = mcfg.getNode(node_name)
+        node.geom = 'MyFoot4'
+        node.width = 0.02
+
+    capsulize('RightFoot')
+    capsulize('LeftFoot')
+    capsulize('RightFoot_foot_0_0')
+    capsulize('RightFoot_foot_0_1')
+    capsulize('RightFoot_foot_1_0')
+    capsulize('RightFoot_foot_1_1')
+    capsulize('RightFoot_foot_2_0')
+    capsulize('RightFoot_foot_2_1')
+    capsulize('LeftFoot_foot_0_0')
+    capsulize('LeftFoot_foot_0_1')
+    capsulize('LeftFoot_foot_1_0')
+    capsulize('LeftFoot_foot_1_1')
+    capsulize('LeftFoot_foot_2_0')
+    capsulize('LeftFoot_foot_2_1')
+
+    return mcfg
 
 
 def walkings():
@@ -151,7 +281,18 @@ def walkings():
     #    filename = 'wd2_WalkBackward00_REPEATED.bvh'
 
 
-    motion_ori = yf.readBvhFile(dir+filename)
+    # motion
+    #TODO:
+    bvh = yf.readBvhFileAsBvh(dir+filename)
+    motion_ori = bvh.toJointMotion(1.0, False)
+
+    partBvhFilePath = '../PyCommon/modules/samples/simpleJump_long.bvh'
+    bvh.replaceJointFromBvh('RightFoot', partBvhFilePath)
+    bvh.replaceJointFromBvh('LeftFoot', partBvhFilePath)
+
+    motion2 = bvh.toJointMotion(.01, False)
+
+    # motion_ori = yf.readBvhFile(dir+filename)
     frameTime = 1/motion_ori.fps
 
     if 'REPEATED' in filename:
@@ -189,9 +330,11 @@ def walkings():
     #===============================================================================
     # initialize character
     #===============================================================================
-    mcfgfile = open(dir + 'mcfg', 'r')
-    mcfg = cPickle.load(mcfgfile)
-    mcfgfile.close()
+    # mcfgfile = open(dir + 'mcfg', 'r')
+    # mcfg = cPickle.load(mcfgfile)
+    # mcfgfile.close()
+
+    mcfg = buildMcfg()
 
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.
