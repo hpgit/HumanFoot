@@ -333,7 +333,7 @@ def walkings():
         viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (50,200,200), yr.POLYGON_FILL))
         
         # viewer.doc.addObject('motion_ori', motion_ori)
-        # viewer.doc.addRenderer('motion_ori', yr.JointMotionRenderer(motion_ori, (0,100,255), yr.LINK_BONE))
+        viewer.doc.addRenderer('motion_ori', yr.JointMotionRenderer(motion_ori, (0,100,255), yr.LINK_BONE))
 #        viewer.doc.addRenderer('motion_seg_orig', yr.JointMotionRenderer(motion_seg_orig, (0,100,255), yr.LINK_BONE))
 #        viewer.doc.addRenderer('motion_seg', yr.JointMotionRenderer(motion_seg, (0,150,255), yr.LINK_BONE))
 #        viewer.doc.addRenderer('motion_stitch', yr.JointMotionRenderer(motion_stitch, (0,255,200), yr.LINK_BONE))
@@ -711,7 +711,7 @@ def walkings():
             if fi.startFrame <= frame and frame < fi.startFrame + fi.duration*(1/frameTime):
                 rd_forces.append(fi.force)
                 rd_force_points.append(controlModel.getBodyPositionGlobal(fi.targetBody))
-                    
+
         for i in range(stepsPerFrame):
             bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
             # bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp \
@@ -722,7 +722,7 @@ def walkings():
             for fi in forceInfos:
                 if fi.startFrame <= frame and frame < fi.startFrame + fi.duration*(1/frameTime):
                     controlModel.applyBodyForceGlobal(fi.targetBody, fi.force)
-            
+
             controlModel.setDOFAccelerations(ddth_des)
             controlModel.solveHybridDynamics()
             

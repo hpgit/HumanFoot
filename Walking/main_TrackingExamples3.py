@@ -189,7 +189,7 @@ def walkings():
 
     # global parameters
     Kt = 20.;       Dt = 2*(Kt**.5)
-    Ks = 2000.;    Ds = 2*(Ks**.5)
+    Ks = 20000.;    Ds = 2*(Ks**.5)
     mu = 1.
 
     # constaants
@@ -287,8 +287,8 @@ def walkings():
     # motion_ori = bvh.toJointMotion(1.0, False)
 
     partBvhFilePath = '../PyCommon/modules/samples/simpleJump_long.bvh'
-    bvh.replaceJointFromBvh('RightFoot', partBvhFilePath, .02)
-    bvh.replaceJointFromBvh('LeftFoot', partBvhFilePath, .02)
+    bvh.replaceJointFromBvh('RightFoot', partBvhFilePath, .015)
+    bvh.replaceJointFromBvh('LeftFoot', partBvhFilePath, .015)
 
     motion_ori = bvh.toJointMotion(1., False)
 
@@ -468,8 +468,8 @@ def walkings():
         viewer.setRenderers1([cvr.VpModelRenderer(motionModel, MOTION_COLOR, yr.POLYGON_FILL)])
         viewer.setRenderers2([cvr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL)])
     else:
-        # viewer = ysv.SimpleViewer()
-        viewer = hsv.hpSimpleViewer()
+        viewer = ysv.SimpleViewer()
+        # viewer = hsv.hpSimpleViewer()
         #    viewer.record(False)
 
         viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(motionModel, (0,150,255), yr.POLYGON_LINE))
@@ -874,8 +874,6 @@ def walkings():
                 rknee_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rKnee))
                 rankle_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rFoot))
 
-            for j in range(skeleton.getJointNum()):
-                print(j, controlModel.getJointTorqueLocal(j))
             rd_torques[:] = [controlModel.getJointTorqueLocal(j)/100. for j in range(1, skeleton.getJointNum())]
             rd_joint_positions[:] = controlModel.getJointPositionsGlobal()
 
