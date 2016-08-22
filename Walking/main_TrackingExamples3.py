@@ -31,9 +31,9 @@ import Motion.mmAnalyticIK as aik
 import Resource.ysMotionLoader as yf
 import Simulator.ysPhysConfig as ypc
 
-# import Simulator.hpLCPSimulator as hls
+import Simulator.hpLCPSimulator as hls
 import GUI.hpSimpleViewer as hsv
-
+import Util.ysPythonEx as ype
 
 #MOTION_COLOR = (128,128,128)
 #CHARACTER_COLOR = (102,102,153)
@@ -188,8 +188,8 @@ def walkings():
     NO_FOOT_SLIDING = True
 
     # global parameters
-    Kt = 20.;       Dt = 2*(Kt**.5)
-    Ks = 20000.;    Ds = 2*(Ks**.5)
+    Kt = 20.;       Dt = 0.*2*(Kt**.5)
+    Ks = 2000.;    Ds = 0.*2*(Ks**.5)
     mu = 1.
 
     # constaants
@@ -238,8 +238,8 @@ def walkings():
     # K_stp_pos = .6
     K_swp_vel_sag = .0; K_swp_vel_cor = .3; K_swp_pos_sag = 1.2; K_swp_pos_cor = .2
     K_swp_pos_sag_faster = .05
-    # filename = 'wd2_WalkForwardNormal00.bvh'
-    filename = 'wd2_WalkForwardNormal00_REPEATED.bvh'
+    filename = 'wd2_WalkForwardNormal00.bvh'
+    # filename = 'wd2_WalkForwardNormal00_REPEATED.bvh'
 
     ##    K_swp_vel_sag = .1; K_swp_vel_cor = .4; K_swp_pos_sag = .3; K_swp_pos_cor = 0.
     ##    K_stp_pos = 0.
@@ -286,9 +286,12 @@ def walkings():
     bvh = yf.readBvhFileAsBvh(dir+filename)
     # motion_ori = bvh.toJointMotion(1.0, False)
 
-    partBvhFilePath = '../PyCommon/modules/samples/simpleJump_long.bvh'
-    bvh.replaceJointFromBvh('RightFoot', partBvhFilePath, .015)
-    bvh.replaceJointFromBvh('LeftFoot', partBvhFilePath, .015)
+    partBvhFilePath = '../PyCommon/modules/samples/Foot_v2_Jump_long.bvh'
+    partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
+    bvh.replaceJointFromBvh('RightFoot', partBvh, .015)
+    partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
+    partBvh.mirror('YZ')
+    bvh.replaceJointFromBvh('LeftFoot', partBvh, .015)
 
     motion_ori = bvh.toJointMotion(1., False)
 
@@ -350,7 +353,8 @@ def walkings():
     print controlModel
 
     #   motionModel.recordVelByFiniteDiff()
-    controlModel.initializeHybridDynamics()
+    # controlModel.initializeHybridDynamics()
+    controlModel.initializeForwardDynamics()
 
     #===============================================================================
     # load segment info
@@ -841,6 +845,10 @@ def walkings():
         ddth_r = motion_control.getDOFAccelerations(frame)
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
 
+        totalDOF = controlModel.getTotalDOF()
+        ddth_des_flat = ype.makeFlatList(totalDOF)
+        ype.flatten(ddth_des, ddth_des_flat)
+
         #=======================================================================
         # simulation
         #=======================================================================
@@ -858,7 +866,7 @@ def walkings():
         for i in range(stepsPerFrame):
             bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
             # bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp \
-            #     = hls.calcLCPForces(motion_ori, vpWorld, controlModel, bodyIDsToCheck, 1., torques, solver='qp')
+            #     = hls.calcLCPForces(motion_ori, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, solver='qp')
             vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
 
             # apply external force
@@ -866,8 +874,9 @@ def walkings():
                 if fi.startFrame <= frame and frame < fi.startFrame + fi.duration*(1/frameTime):
                     controlModel.applyBodyForceGlobal(fi.targetBody, fi.force)
 
-            controlModel.setDOFAccelerations(ddth_des)
-            controlModel.solveHybridDynamics()
+            controlModel.setDOFTorques(ddth_des[1:])
+            # controlModel.setDOFAccelerations(ddth_des)
+            # controlModel.solveHybridDynamics()
 
             if TORQUE_PLOT:
                 rhip_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rUpLeg))
@@ -878,6 +887,7 @@ def walkings():
             rd_joint_positions[:] = controlModel.getJointPositionsGlobal()
 
             vpWorld.step()
+            print controlModel.getJointPositionGlobal(0)
             #            yvu.align2D(controlModel)
 
             if len(contactForces) > 0:

@@ -34,6 +34,7 @@ FLAG_SHADOW = 1
 
 class Camera:
     def __init__(self):
+        glutInit()
         self.center = numpy.array([0.,0.5,0.])
         self.rotateY = mmMath.deg2Rad(0.)
         self.rotateX = mmMath.deg2Rad(-15.0)
@@ -400,7 +401,6 @@ class GlWindow(Fl_Gl_Window):
             self.drawScene()
 
         #glPopMatrix()
-
 
         #### SHADOW
         if FLAG_SHADOW:

@@ -477,6 +477,22 @@ class Bvh:
     #===========================================================================
     # replace joint
     #===========================================================================
+    # planeString : 'XY', 'YZ', 'ZX'
+    def mirror(self, planeString):
+        offsetIdx = 3
+        if planeString == 'YZ':
+            offsetIdx = 0
+        elif planeString == 'ZX':
+            offsetIdx = 1
+        elif planeString == 'XY':
+            offsetIdx = 2
+        else:
+            print('Specify valid plane')
+            return
+        for joint in self.joints:
+            joint.offset[offsetIdx] = -joint.offset[offsetIdx]
+
+
     def findJointDescendentIdxs(self, _joint):
         idxs = []
         for joint in _joint.children:
@@ -495,10 +511,7 @@ class Bvh:
 
         return joint
 
-    def replaceJointFromBvh(self, jointName, bvhFilePath, scale=1.0):
-        # read part bvh
-        partBvh = readBvhFileAsBvh(bvhFilePath)
-
+    def replaceJointFromBvh(self, jointName, partBvh, scale=1.0):
         # find a partroot joint in original bvh
         rootJoint = self.getJointFromJointName(jointName)
         rootJointIdx = self.joints.index(rootJoint)
@@ -686,8 +699,12 @@ if __name__ == "__main__":
 
 
         partBvhFilePath = '../samples/simpleJump_long.bvh'
-        bvh.replaceJointFromBvh('RightFoot', partBvhFilePath)
-        bvh.replaceJointFromBvh('LeftFoot', partBvhFilePath)
+        partBvh = readBvhFileAsBvh(partBvhFilePath)
+        bvh.replaceJointFromBvh('RightFoot', partBvh)
+
+        partBvh = readBvhFileAsBvh(partBvhFilePath)
+        partBvh.mirror('YZ')
+        bvh.replaceJointFromBvh('LeftFoot', partBvh)
 
         motion2 = bvh.toJointMotion(.01, False)
 
