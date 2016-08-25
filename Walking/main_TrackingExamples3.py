@@ -353,8 +353,8 @@ def walkings():
     print controlModel
 
     #   motionModel.recordVelByFiniteDiff()
-    # controlModel.initializeHybridDynamics()
-    controlModel.initializeForwardDynamics()
+    controlModel.initializeHybridDynamics()
+    # controlModel.initializeForwardDynamics()
 
     #===============================================================================
     # load segment info
@@ -866,7 +866,7 @@ def walkings():
         for i in range(stepsPerFrame):
             bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
             # bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp \
-            #     = hls.calcLCPForces(motion_ori, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, solver='qp')
+            #     = hls.calcLCPForces(motion_ori, vpWorld, controlModel, bodyIDsToCheck, 1., torques, solver='qp')
             vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
 
             # apply external force
@@ -874,9 +874,9 @@ def walkings():
                 if fi.startFrame <= frame and frame < fi.startFrame + fi.duration*(1/frameTime):
                     controlModel.applyBodyForceGlobal(fi.targetBody, fi.force)
 
-            controlModel.setDOFTorques(ddth_des[1:])
-            # controlModel.setDOFAccelerations(ddth_des)
-            # controlModel.solveHybridDynamics()
+            # controlModel.setDOFTorques(ddth_des[1:])
+            controlModel.setDOFAccelerations(ddth_des)
+            controlModel.solveHybridDynamics()
 
             if TORQUE_PLOT:
                 rhip_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rUpLeg))
