@@ -203,6 +203,7 @@ def getLCPMatrixHD(world, model, invM, invMc, mu, ddth, contactNum, contactPosit
     # temp_DM = JTD.T.dot(invM)
 
     A11 = h*JTN.T.dot(invM[:6, :6])
+    A12 = h*
 
     A11 = h*temp_NM.dot(JTN)
     A12 = h*temp_NM.dot(JTD)
