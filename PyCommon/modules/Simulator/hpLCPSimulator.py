@@ -199,16 +199,17 @@ def getLCPMatrixHD(world, model, invM, invMc, mu, ddth, contactNum, contactPosit
     h = world.GetTimeStep()
     invh = 1./h
     mus = mu * np.eye(contactNum)
-    # temp_NM = JTN.T.dot(invM)
-    # temp_DM = JTD.T.dot(invM)
 
-    A11 = h*JTN.T.dot(invM[:6, :6])
-    A12 = h*
+    M_small = np.dot(invM[:6, 6:], npl.inv(invM[6:, 6:]))
+    M_tilde = invM[:6, :] - np.dot(M_small, invM[6:, :])
 
-    A11 = h*temp_NM.dot(JTN)
-    A12 = h*temp_NM.dot(JTD)
-    A21 = h*temp_DM.dot(JTN)
-    A22 = h*temp_DM.dot(JTD)
+    temp_NMtilde = np.dot(JTN.T, np.concatenate((M_tilde, np.zeros((JTN.shape[0]-M_tilde.shape[0], M_tilde.shape[1]))), axis=0))
+    temp_DMtilde = np.dot(JTD.T, np.concatenate((M_tilde, np.zeros((JTD.shape[0]-M_tilde.shape[0], M_tilde.shape[1]))), axis=0))
+
+    A11 = h*temp_NMtilde.dot(JTN)
+    A12 = h*temp_NMtilde.dot(JTD)
+    A21 = h*temp_DMtilde.dot(JTN)
+    A22 = h*temp_DMtilde.dot(JTD)
 
     A = factor * np.concatenate(
         (
@@ -241,9 +242,20 @@ def getLCPMatrixHD(world, model, invM, invMc, mu, ddth, contactNum, contactPosit
         if abs(contactPositions[i][1]) > penDepth:
             bPenDepth[i] = contactPositions[i][1] + penDepth
 
-    b1 = JTN.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(ddth) + 0.05 * invh * bPenDepth
-    b2 = JTD.T.dot(qdot_0 - h*invMc) + h*temp_DM.dot(ddth)
+
+    M = npl.inv(invM)
+
+    b1 = JTN.T.dot(qdot_0) \
+         - h*np.dot(temp_NMtilde, np.dot(M, invMc)) \
+         + h*np.dot(JTN.T, np.dot(np.concatenate((M_small, np.eye(M_small.shape[1])), axis=0), ddth)) \
+         + 0.05 * invh * bPenDepth
+
+    b2 = JTD.T.dot(qdot_0) \
+         - h*np.dot(temp_DMtilde, np.dot(M, invMc)) \
+         + h*np.dot(JTD.T, np.dot(np.concatenate((M_small, np.eye(M_small.shape[1])), axis=0), ddth))
+
     b3 = np.zeros(mus.shape[0])
+
     b = np.hstack((np.hstack((b1, b2)), b3)) * factor
     return A, b
 
@@ -695,7 +707,7 @@ def calcLCPForcesHD(motion, world, model, bodyIDsToCheck, mu, ddth=None, numFric
     #   [ mus, -E.T, 0]
 
     factor = 1.
-    A, b = getLCPMatrix(world, model, invM, invMc, mu, ddth, contactNum, contactPositions, JTN, JTD, E, factor)
+    A, b = getLCPMatrixHD(world, model, invM, invMc, mu, ddth, contactNum, contactPositions, JTN, JTD, E, factor)
 
     # lo = np.zeros(A.shape[0])
     lo = 0.*np.ones(A.shape[0])
@@ -814,7 +826,6 @@ def calcLCPForcesHD(motion, world, model, bodyIDsToCheck, mu, ddth=None, numFric
     # print forces
     timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
     return bodyIDs, contactPositions, contactPositionsLocal, forces, timeStamp
-def calcLCPForcesHD(motion, )
 
 def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, weights, tau0=None, numFrictionBases=8):
     # tau0 = None
