@@ -7,7 +7,7 @@ sS'interval'
 p5
 (lp6
 I0
-aI36
+aI35
 asS'stanceFoots'
 p7
 (lp8
@@ -43,7 +43,7 @@ S'<'
 NNNI-1
 I-1
 I0
-tbS'\xd8\xd3h+`J\xa6?'
+tbS'\x04Z\xd8l)\n\xb8?'
 tRp19
 sS'swingFoots'
 p20
@@ -54,8 +54,8 @@ g3
 I10
 asg5
 (lp24
-I36
-aI54
+I35
+aI55
 asg7
 (lp25
 I3
@@ -68,11 +68,11 @@ sg12
 (lp27
 I11
 asg14
-I1
+I4
 sg15
 g16
 (g18
-S'\xb8\xe5\xad\xd9\xedW\xa5?'
+S'\xe0!o\xcc\xc3x\xb7?'
 tRp28
 sg20
 (lp29
@@ -83,7 +83,7 @@ g3
 I1
 asg5
 (lp32
-I54
+I55
 aI81
 asg7
 (lp33
@@ -97,11 +97,11 @@ sg12
 (lp35
 I2
 asg14
-I9
+I8
 sg15
 g16
 (g18
-S'\xa0\x19\xb6Z\xfcY\xa5?'
+S'\xf8\x06\x1b\xfb\xcay\xb7?'
 tRp36
 sg20
 (lp37
@@ -130,7 +130,7 @@ I9
 sg15
 g16
 (g18
-S'\xd0\xa9\x9dZ\x08\xa2\xa3?'
+S'\xf8\xb2/\xe0\xd0\x9d\xb6?'
 tRp44
 sg20
 (lp45
@@ -159,7 +159,7 @@ I7
 sg15
 g16
 (g18
-S'x\xcb\x15\xc3\xd0\x13\xa2?'
+S'\xa056.\xb5\xd6\xb5?'
 tRp52
 sg20
 (lp53
@@ -188,7 +188,7 @@ I9
 sg15
 g16
 (g18
-S'\xe8!\x02\xbf\xe6/\xa2?'
+S'\x142G:\xc0\xe4\xb5?'
 tRp60
 sg20
 (lp61
@@ -217,7 +217,7 @@ I7
 sg15
 g16
 (g18
-S"\xf8d\xf3'}\xcb\xa0?"
+S'\x9c\xf2+h\x8b2\xb5?'
 tRp68
 sg20
 (lp69
@@ -242,11 +242,11 @@ sg12
 (lp75
 I11
 asg14
-I8
+I9
 sg15
 g16
 (g18
-S'\x18d\x91xiw\xa0?'
+S'`\xf1\xbd\x92\x81\x08\xb5?'
 tRp76
 sg20
 (lp77
@@ -275,7 +275,7 @@ I9
 sg15
 g16
 (g18
-S'@\xca\x10\xb9_<\x9f?'
+S'\xa8\xcd\xfb\xc6\xe4\x9b\xb4?'
 tRp84
 sg20
 (lp85
@@ -303,7 +303,7 @@ sg14
 Nsg15
 g16
 (g18
-S'\x88\x05\xc6\xad\xda\xb0\xa0?'
+S'\xa02\xdd":%\xb5?'
 tRp92
 sg20
 (lp93
