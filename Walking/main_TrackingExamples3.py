@@ -238,8 +238,8 @@ def walkings():
     # K_stp_pos = .6
     K_swp_vel_sag = .0; K_swp_vel_cor = .3; K_swp_pos_sag = 1.2; K_swp_pos_cor = .2
     K_swp_pos_sag_faster = .05
-    # filename = 'wd2_WalkForwardNormal00.bvh'
-    filename = 'wd2_WalkForwardNormal00_REPEATED.bvh'
+    filename = 'wd2_WalkForwardNormal00.bvh'
+    # filename = 'wd2_WalkForwardNormal00_REPEATED.bvh'
 
     ##    K_swp_vel_sag = .1; K_swp_vel_cor = .4; K_swp_pos_sag = .3; K_swp_pos_cor = 0.
     ##    K_stp_pos = 0.
@@ -286,7 +286,7 @@ def walkings():
     bvh = yf.readBvhFileAsBvh(dir+filename)
     # motion_ori = bvh.toJointMotion(1.0, False)
 
-    partBvhFilePath = '../PyCommon/modules/samples/Foot_v2_Jump_long.bvh'
+    partBvhFilePath = '../PyCommon/modules/samples/SimpleJump_long.bvh'
     partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
     bvh.replaceJointFromBvh('RightFoot', partBvh, .015)
     partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
@@ -365,6 +365,9 @@ def walkings():
     segfile = open(dir+segname, 'r')
     seginfo = cPickle.load(segfile)
     segfile.close()
+
+    for i in seginfo:
+        print i
 
     intervals = [info['interval'] for info in seginfo]
     states = [info['state'] for info in seginfo]
@@ -918,6 +921,9 @@ def walkings():
         #=======================================================================
         lastFrame = False
 
+        print curState
+        print bodyIDs
+
         if SEGMENT_EDITING:
             if curState==yba.GaitState.STOP:
                 if frame == len(motion_seg)-1:
@@ -927,6 +933,7 @@ def walkings():
                 swingID = lID if curState==yba.GaitState.LSWING else rID
 
                 contact = False
+
                 if swingID in bodyIDs:
                     minContactVel = 1000.
                     for i in range(len(bodyIDs)):
