@@ -431,6 +431,13 @@ def walkings():
     bodyMasses = controlModel.getBodyMasses()
     totalMass = controlModel.getTotalMass()
 
+
+    extendedFootName = ['Foot_foot_0_0', 'Foot_foot_0_1', 'Foot_foot_1_0',
+                        'Foot_foot_1_1', 'Foot_foot_2_0', 'Foot_foot_2_1']
+
+    lIDs = [skeleton.getJointIndex('Left'+lName) for lName in extendedFootName]
+    rIDs = [skeleton.getJointIndex('Right'+lName) for lName in extendedFootName]
+
     lID = controlModel.name2id('LeftFoot');      rID = controlModel.name2id('RightFoot')
     lUpLeg = skeleton.getJointIndex('LeftUpLeg');rUpLeg = skeleton.getJointIndex('RightUpLeg')
     lKnee = skeleton.getJointIndex('LeftLeg');   rKnee = skeleton.getJointIndex('RightLeg')
@@ -484,17 +491,18 @@ def walkings():
 
         # viewer.doc.addObject('motion_ori', motion_ori)
         # viewer.doc.addRenderer('motion_ori', yr.JointMotionRenderer(motion_ori, (0,100,255), yr.LINK_BONE))
-        #        viewer.doc.addRenderer('motion_seg_orig', yr.JointMotionRenderer(motion_seg_orig, (0,100,255), yr.LINK_BONE))
-        #        viewer.doc.addRenderer('motion_seg', yr.JointMotionRenderer(motion_seg, (0,150,255), yr.LINK_BONE))
-        #        viewer.doc.addRenderer('motion_stitch', yr.JointMotionRenderer(motion_stitch, (0,255,200), yr.LINK_BONE))
-        #        viewer.doc.addRenderer('motion_stf_stabilize', yr.JointMotionRenderer(motion_stf_stabilize, (255,0,0), yr.LINK_BONE))
-        #        viewer.doc.addRenderer('motion_match_stl', yr.JointMotionRenderer(motion_match_stl, (255,200,0), yr.LINK_BONE))
-        viewer.doc.addRenderer('motion_swf_placement', yr.JointMotionRenderer(motion_swf_placement, (255,100,255), yr.LINK_BONE))
-        viewer.doc.addRenderer('motion_swf_height', yr.JointMotionRenderer(motion_swf_height, (50,255,255), yr.LINK_BONE))
-    #        viewer.doc.addRenderer('motion_swf_orientation', yr.JointMotionRenderer(motion_swf_orientation, (255,100,0), yr.LINK_BONE))
-    #        viewer.doc.addRenderer('motion_stf_push', yr.JointMotionRenderer(motion_stf_push, (50,255,200), yr.LINK_BONE))
-    #    viewer.doc.addRenderer('motion_stf_balancing', yr.JointMotionRenderer(motion_stf_balancing, (255,100,255), yr.LINK_BONE))
-    #        viewer.doc.addRenderer('motion_control', yr.JointMotionRenderer(motion_control, (255,0,0), yr.LINK_BONE))
+        # viewer.doc.addRenderer('motion_seg_orig', yr.JointMotionRenderer(motion_seg_orig, (0,100,255), yr.LINK_BONE))
+        # viewer.doc.addRenderer('motion_seg', yr.JointMotionRenderer(motion_seg, (0,150,255), yr.LINK_BONE))
+        # viewer.doc.addRenderer('motion_stitch', yr.JointMotionRenderer(motion_stitch, (0,255,200), yr.LINK_BONE))
+
+        viewer.doc.addRenderer('motion_stf_stabilize', yr.JointMotionRenderer(motion_stf_stabilize, (255,0,0), yr.LINK_BONE))
+        # viewer.doc.addRenderer('motion_match_stl', yr.JointMotionRenderer(motion_match_stl, (255,200,0), yr.LINK_BONE))
+        # viewer.doc.addRenderer('motion_swf_placement', yr.JointMotionRenderer(motion_swf_placement, (255,100,255), yr.LINK_BONE))
+        # viewer.doc.addRenderer('motion_swf_height', yr.JointMotionRenderer(motion_swf_height, (50,255,255), yr.LINK_BONE))
+        # viewer.doc.addRenderer('motion_swf_orientation', yr.JointMotionRenderer(motion_swf_orientation, (255,100,0), yr.LINK_BONE))
+        # viewer.doc.addRenderer('motion_stf_push', yr.JointMotionRenderer(motion_stf_push, (50,255,200), yr.LINK_BONE))
+        # viewer.doc.addRenderer('motion_stf_balancing', yr.JointMotionRenderer(motion_stf_balancing, (255,100,255), yr.LINK_BONE))
+        # viewer.doc.addRenderer('motion_control', yr.JointMotionRenderer(motion_control, (255,0,0), yr.LINK_BONE))
 
     #        viewer.doc.addRenderer('motion_debug1', yr.JointMotionRenderer(motion_debug1, (0,255,0), yr.LINK_BONE))
     #        viewer.doc.addRenderer('motion_debug2', yr.JointMotionRenderer(motion_debug2, (255,0,255), yr.LINK_BONE))
@@ -835,18 +843,29 @@ def walkings():
                 motion_stf_balancing[frame].mulJointOrientationGlobal(stanceFoot, R_stb)
 
         # control trajectory
+        # motion_control.append(motion_match_stl[frame].copy())
         motion_control.append(motion_stf_balancing[frame].copy())
+        # motion_control.append(motion[frame].copy())
         motion_control.goToFrame(frame)
 
         #=======================================================================
         # tracking with inverse dynamics
         #=======================================================================
+
+        weightMap = [1.] * (3*skeleton.getJointNum()+3)
+
+        for jointIdx in lIDs:
+            weightMap[3+3*jointIdx:6+3*jointIdx] = [0.1, 0.1, 0.1]
+
+        for jointIdx in rIDs:
+            weightMap[3+3*jointIdx:6+3*jointIdx] = [0.1, 0.1, 0.1]
+
         th_r = motion_control.getDOFPositions(frame)
         th = controlModel.getDOFPositions()
         dth_r = motion_control.getDOFVelocities(frame)
         dth = controlModel.getDOFVelocities()
         ddth_r = motion_control.getDOFAccelerations(frame)
-        ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
+        ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMap)
 
         totalDOF = controlModel.getTotalDOF()
         ddth_des_flat = ype.makeFlatList(totalDOF)
@@ -921,8 +940,26 @@ def walkings():
         #=======================================================================
         lastFrame = False
 
-        print curState
-        print bodyIDs
+
+        # print curState
+        # print bodyIDs
+
+        '''
+        print skeleton.getJointIndex('LeftFoot') = 3
+        print skeleton.getJointIndex('LeftFoot_foot_0_0') = 4
+        print skeleton.getJointIndex('LeftFoot_foot_0_1') = 5
+        print skeleton.getJointIndex('LeftFoot_foot_1_0')
+        print skeleton.getJointIndex('LeftFoot_foot_1_1')
+        print skeleton.getJointIndex('LeftFoot_foot_2_0')
+        print skeleton.getJointIndex('LeftFoot_foot_2_1') = 9
+        print skeleton.getJointIndex('RightFoot') = 18
+        print skeleton.getJointIndex('RightFoot_foot_0_0') = 19
+        print skeleton.getJointIndex('RightFoot_foot_0_1')
+        print skeleton.getJointIndex('RightFoot_foot_1_0')
+        print skeleton.getJointIndex('RightFoot_foot_1_1')
+        print skeleton.getJointIndex('RightFoot_foot_2_0')
+        print skeleton.getJointIndex('RightFoot_foot_2_1') = 24
+        '''
 
         if SEGMENT_EDITING:
             if curState==yba.GaitState.STOP:
@@ -930,8 +967,9 @@ def walkings():
                     lastFrame = True
 
             elif (curState==yba.GaitState.LSWING or curState==yba.GaitState.RSWING) and t>c_min_contact_time:
+                # original
+                '''
                 swingID = lID if curState==yba.GaitState.LSWING else rID
-
                 contact = False
 
                 if swingID in bodyIDs:
@@ -943,6 +981,24 @@ def walkings():
                             contactVel = mm.length(vel)
                             if contactVel < minContactVel: minContactVel = contactVel
                     if minContactVel < c_min_contact_vel: contact = True
+
+                extended[0] = False
+                '''
+                # segmented foot
+                swingIDs = copy.deepcopy(lIDs) if curState==yba.GaitState.LSWING else copy.deepcopy(rIDs)
+
+                contact = False
+
+                for swingID in swingIDs:
+                    if swingID in bodyIDs:
+                        minContactVel = 1000.
+                        for i in range(len(bodyIDs)):
+                            if bodyIDs[i]==swingID:
+                                vel = controlModel.getBodyVelocityGlobal(swingID, contactPositionLocals[i])
+                                vel[1] = 0
+                                contactVel = mm.length(vel)
+                                if contactVel < minContactVel: minContactVel = contactVel
+                        if minContactVel < c_min_contact_vel: contact = True
 
                 extended[0] = False
 
