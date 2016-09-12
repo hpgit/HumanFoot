@@ -854,11 +854,13 @@ def walkings():
 
         weightMap = [1.] * (3*skeleton.getJointNum()+3)
 
+        toeWeights = 0.5
+
         for jointIdx in lIDs:
-            weightMap[3+3*jointIdx:6+3*jointIdx] = [0.1, 0.1, 0.1]
+            weightMap[3+3*jointIdx:6+3*jointIdx] = [toeWeights, toeWeights, toeWeights]
 
         for jointIdx in rIDs:
-            weightMap[3+3*jointIdx:6+3*jointIdx] = [0.1, 0.1, 0.1]
+            weightMap[3+3*jointIdx:6+3*jointIdx] = [toeWeights, toeWeights, toeWeights]
 
         th_r = motion_control.getDOFPositions(frame)
         th = controlModel.getDOFPositions()
