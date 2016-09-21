@@ -596,6 +596,18 @@ def walkings():
         groundHeight = seginfo[segIndex]['ground_height']
         maxStfPushFrame = seginfo[segIndex]['max_stf_push_frame']
 
+        # temporary change
+        for legList in (stanceLegs, swingLegs):
+            for i in range(len(legList)):
+                if legList[i] == 10:
+                    legList[i] = skeleton.getJointIndex('RightUpLeg')
+
+        for footList in (stanceFoots, swingFoots):
+            for i in range(len(footList)):
+                if footList[i] == 12:
+                    footList[i] = skeleton.getJointIndex('RightFoot')
+
+
         prev_frame = frame-1 if frame>0 else 0
         #        prev_frame = frame
 
@@ -716,7 +728,7 @@ def walkings():
         motion_swf_placement.append(motion_match_stl[frame].copy())
         motion_swf_placement.goToFrame(frame)
         if SWING_FOOT_PLACEMENT:
-            t_swing_foot_placement = swf_placement_func(t);
+            t_swing_foot_placement = swf_placement_func(t)
 
             if extended[0]:
                 R_swp_sag = prev_R_swp[0][0]
@@ -854,7 +866,7 @@ def walkings():
 
         weightMap = [1.] * (3*skeleton.getJointNum()+3)
 
-        toeWeights = 0.5
+        toeWeights = 0.3
 
         for jointIdx in lIDs:
             weightMap[3+3*jointIdx:6+3*jointIdx] = [toeWeights, toeWeights, toeWeights]
