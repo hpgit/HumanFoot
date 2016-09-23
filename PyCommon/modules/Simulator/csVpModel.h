@@ -193,6 +193,7 @@ public:	// expose to python
 	// hybrid dynamics
 	void initializeHybridDynamics(bool floatingBase=true);
 	void initializeForwardDynamics();
+	void setHybridDynamics(int jointIndex, std::string dynamicsType);
 	void solveHybridDynamics();
 	void solveForwardDynamics();
 	void solveInverseDynamics();

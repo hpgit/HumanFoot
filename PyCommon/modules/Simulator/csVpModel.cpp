@@ -109,6 +109,7 @@ BOOST_PYTHON_MODULE(csVpModel)
 
 		.def("initializeHybridDynamics", &VpControlModel::initializeHybridDynamics, initializeHybridDynamics_overloads())
 		.def("initializeForwardDynamics", &VpControlModel::initializeForwardDynamics)
+		.def("setHybridDynamics", &VpControlModel::setHybridDynamics)
 		.def("solveHybridDynamics", &VpControlModel::solveHybridDynamics)
 		.def("solveForwardDynamics", &VpControlModel::solveForwardDynamics)
 		.def("solveInverseDynamics", &VpControlModel::solveInverseDynamics)
@@ -1374,8 +1375,24 @@ void VpControlModel::initializeHybridDynamics(bool floatingBase)
 
 void VpControlModel::initializeForwardDynamics()
 {
+    int rootIndex = 0;
 	for(int i=0; i<_nodes.size(); ++i)
-		_nodes[i]->body.SetHybridDynamicsType(VP::DYNAMIC);
+	{
+        _nodes[i]->body.SetHybridDynamicsType(VP::DYNAMIC);
+	    if(i != rootIndex)
+            _nodes[i]->joint.SetHybridDynamicsType(VP::DYNAMIC);
+    }
+}
+
+void VpControlModel::setHybridDynamics(int jointIndex, std::string dynamicsType)
+{
+    if(dynamicsType == "DYNAMIC")
+    {
+        _nodes[jointIndex]->body.SetHybridDynamicsType(VP::DYNAMIC);
+        _nodes[jointIndex]->joint.SetHybridDynamicsType(VP::DYNAMIC);
+    }
+    else if(dynamicsType == "KINEMATIC")
+        _nodes[jointIndex]->joint.SetHybridDynamicsType(VP::KINEMATIC);
 }
 
 void VpControlModel::solveHybridDynamics()

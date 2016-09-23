@@ -188,7 +188,7 @@ def walkings():
     NO_FOOT_SLIDING = True
 
     # global parameters
-    Kt = 20.;       Dt = 2.*(Kt**.5)
+    Kt = 0.;       Dt = 2.*(Kt**.5)
     Ks = 2000.;    Ds = 2.*(Ks**.5)
     mu = 1.
 
@@ -286,12 +286,12 @@ def walkings():
     bvh = yf.readBvhFileAsBvh(dir+filename)
     # motion_ori = bvh.toJointMotion(1.0, False)
 
-    partBvhFilePath = '../PyCommon/modules/samples/SimpleJump_long.bvh'
+    partBvhFilePath = '../PyCommon/modules/samples/SimpleJump_long_test.bvh'
     partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
-    bvh.replaceJointFromBvh('RightFoot', partBvh, .015)
+    bvh.replaceJointFromBvh('RightFoot', partBvh, .01)
     partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
     partBvh.mirror('YZ')
-    bvh.replaceJointFromBvh('LeftFoot', partBvh, .015)
+    bvh.replaceJointFromBvh('LeftFoot', partBvh, .01)
 
     motion_ori = bvh.toJointMotion(1., False)
 
@@ -435,8 +435,16 @@ def walkings():
     extendedFootName = ['Foot_foot_0_0', 'Foot_foot_0_1', 'Foot_foot_1_0',
                         'Foot_foot_1_1', 'Foot_foot_2_0', 'Foot_foot_2_1']
 
-    lIDs = [skeleton.getJointIndex('Left'+lName) for lName in extendedFootName]
-    rIDs = [skeleton.getJointIndex('Right'+lName) for lName in extendedFootName]
+    lIDs = [skeleton.getJointIndex('Left'+name) for name in extendedFootName]
+    rIDs = [skeleton.getJointIndex('Right'+name) for name in extendedFootName]
+
+
+    for i in lIDs:
+        controlModel.setHybridDynamics(i, "DYNAMIC")
+    for i in rIDs:
+        controlModel.setHybridDynamics(i, "DYNAMIC")
+
+
 
     lID = controlModel.name2id('LeftFoot');      rID = controlModel.name2id('RightFoot')
     lUpLeg = skeleton.getJointIndex('LeftUpLeg');rUpLeg = skeleton.getJointIndex('RightUpLeg')
@@ -855,24 +863,24 @@ def walkings():
                 motion_stf_balancing[frame].mulJointOrientationGlobal(stanceFoot, R_stb)
 
         # control trajectory
+        # motion_control.append(motion[frame].copy())
         # motion_control.append(motion_match_stl[frame].copy())
         motion_control.append(motion_stf_balancing[frame].copy())
-        # motion_control.append(motion[frame].copy())
         motion_control.goToFrame(frame)
 
         #=======================================================================
         # tracking with inverse dynamics
         #=======================================================================
 
-        weightMap = [1.] * (3*skeleton.getJointNum()+3)
+        weightMap = [1.] * (skeleton.getJointNum())
 
-        toeWeights = 0.3
+        toeWeights = .00001
 
         for jointIdx in lIDs:
-            weightMap[3+3*jointIdx:6+3*jointIdx] = [toeWeights, toeWeights, toeWeights]
+            weightMap[jointIdx] = toeWeights
 
         for jointIdx in rIDs:
-            weightMap[3+3*jointIdx:6+3*jointIdx] = [toeWeights, toeWeights, toeWeights]
+            weightMap[jointIdx] = toeWeights
 
         th_r = motion_control.getDOFPositions(frame)
         th = controlModel.getDOFPositions()
