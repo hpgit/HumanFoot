@@ -20,6 +20,7 @@ import math
 import Optimization.csQPOASES as qpos
 
 import time
+from copy import deepcopy
 
 # import cvxpy as cvx
 
@@ -258,6 +259,116 @@ def getLCPMatrixHD(world, model, invM, invMc, mu, ddth, contactNum, contactPosit
 
     b = np.hstack((np.hstack((b1, b2)), b3)) * factor
     return A, b
+
+def getLCPMatrixGenHD(world, model, invM, invMc, mu, ddth, contactNum, contactPositions, JTN, JTD, E, factor=1., hdAccMask=None):
+
+    if hdAccMask is None:
+        hdAccMask = [True]*invM.shape[0]
+        hdAccMask[:6] = [False]*6
+
+    # for torque term, invM has to be rearranged both column and row
+    # rearranging column first
+    invMtorReArr_temp = np.zeros((invM.shape[0], 0))
+
+    torIdx = 0
+    accIdx = 0
+    for i in range(len(hdAccMask)):
+        if hdAccMask:
+            invMtorReArr_temp = np.insert(invMtorReArr_temp, accIdx, invM[:, i].flatten(), axis=1)
+        else:
+            invMtorReArr_temp = np.insert(invMtorReArr_temp, torIdx, invM[:, i].flatten(), axis=1)
+            torIdx += 1
+        accIdx += 1
+
+    # rearranging row
+    invMtorReArr = np.zeros((0, invM.shape[1]))
+    # invMreArr = np.zeros((0, invM.shape[1]))
+    invMcReArr = np.zeros((0))
+
+    torIdx = 0
+    accIdx = 0
+    for i in range(len(hdAccMask)):
+        if hdAccMask:
+            invMtorReArr= np.insert(invMtorReArr_temp, accIdx, invMtorReArr_temp[i, :].flatten(), axis=0)
+            # invMreArr = np.insert(invMreArr, accIdx, invM[i, :].flatten(), axis=0)
+        else:
+            invMtorReArr= np.insert(invMtorReArr, torIdx, invMtorReArr_temp[i, :].flatten(), axis=0)
+            # invMreArr = np.insert(invMreArr, torIdx, invM[i, :].flatten(), axis=0)
+            torIdx += 1
+        accIdx += 1
+
+    invMcReArr = np.hstack((np.array([invMc[i] for i, x in enumerate(hdAccMask) if not x]),
+                            np.array([invMc[i] for i, x in enumerate(hdAccMask) if x])))
+
+    # TODO:
+
+    totalTorDOF = len(hdAccMask) - sum(hdAccMask)
+
+    totalDOF = model.getTotalDOF()
+
+    h = world.GetTimeStep()
+    invh = 1./h
+    mus = mu * np.eye(contactNum)
+
+    M_small = np.dot(invM[:6, 6:], npl.inv(invM[6:, 6:]))
+    M_tilde = invM[:6, :] - np.dot(M_small, invM[6:, :])
+
+    temp_NMtilde = np.dot(JTN.T, np.concatenate((M_tilde, np.zeros((JTN.shape[0]-M_tilde.shape[0], M_tilde.shape[1]))), axis=0))
+    temp_DMtilde = np.dot(JTD.T, np.concatenate((M_tilde, np.zeros((JTD.shape[0]-M_tilde.shape[0], M_tilde.shape[1]))), axis=0))
+
+    A11 = h*temp_NMtilde.dot(JTN)
+    A12 = h*temp_NMtilde.dot(JTD)
+    A21 = h*temp_DMtilde.dot(JTN)
+    A22 = h*temp_DMtilde.dot(JTD)
+
+    A = factor * np.concatenate(
+        (
+            np.concatenate((A11, A12,  np.zeros((A11.shape[0], E.shape[1]))),  axis=1),
+            np.concatenate((A21, A22,  E),                                     axis=1),
+            h * np.concatenate((mus, -E.T, np.zeros((mus.shape[0], E.shape[1]))),  axis=1),
+        ), axis=0
+    )
+    # A = A + 0.1*np.eye(A.shape[0])
+
+    qdot_0 = ype.makeFlatList(totalDOF)
+    ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
+    # bodyGenVelLocal = model.getBodyGenVelLocal(0)
+    # for i in range(3):
+    #     qdot_0[i] = bodyGenVelLocal[i+3]
+    #     qdot_0[i+3] = bodyGenVelLocal[i]
+    ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
+
+    qdot_0 = np.asarray(qdot_0)
+    if ddth is None:
+        ddth = np.zeros(np.shape(qdot_0))
+
+    # non-penentration condition
+    # b1 = N.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau)
+
+    # improved non-penentration condition : add position condition
+    penDepth = 0.003
+    bPenDepth = np.zeros(A11.shape[0])
+    for i in range(contactNum):
+        if abs(contactPositions[i][1]) > penDepth:
+            bPenDepth[i] = contactPositions[i][1] + penDepth
+
+
+    M = npl.inv(invM)
+
+    b1 = JTN.T.dot(qdot_0) \
+         - h*np.dot(temp_NMtilde, np.dot(M, invMc)) \
+         + h*np.dot(JTN.T, np.dot(np.concatenate((M_small, np.eye(M_small.shape[1])), axis=0), ddth)) \
+         + 0.05 * invh * bPenDepth
+
+    b2 = JTD.T.dot(qdot_0) \
+         - h*np.dot(temp_DMtilde, np.dot(M, invMc)) \
+         + h*np.dot(JTD.T, np.dot(np.concatenate((M_small, np.eye(M_small.shape[1])), axis=0), ddth))
+
+    b3 = np.zeros(mus.shape[0])
+
+    b = np.hstack((np.hstack((b1, b2)), b3)) * factor
+    return A, b
+
 
 
 def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictionBases=8, solver='qp'):
@@ -679,7 +790,7 @@ def calcLCPForcesVert(motion, world, model, bodyIDsToCheck, mu, tau=None, numFri
     return bodyIDs, contactPositions, contactPositionsLocal, forces, timeStamp
 
 
-def calcLCPForcesHD(motion, world, model, bodyIDsToCheck, mu, ddth=None, numFrictionBases=8, solver='qp'):
+def calcLCPForcesHD(motion, world, model, bodyIDsToCheck, mu, ddth=None, numFrictionBases=8, solver='qp', hdAccMask=None):
     timeStamp = []
     timeIndex = 0
     prevTime = time.time()
@@ -707,7 +818,8 @@ def calcLCPForcesHD(motion, world, model, bodyIDsToCheck, mu, ddth=None, numFric
     #   [ mus, -E.T, 0]
 
     factor = 1.
-    A, b = getLCPMatrixHD(world, model, invM, invMc, mu, ddth, contactNum, contactPositions, JTN, JTD, E, factor)
+    # A, b = getLCPMatrixHD(world, model, invM, invMc, mu, ddth, contactNum, contactPositions, JTN, JTD, E, factor)
+    A, b = getLCPMatrixGenHD(world, model, invM, invMc, mu, ddth, contactNum, contactPositions, JTN, JTD, E, factor, hdAccMask)
 
     # lo = np.zeros(A.shape[0])
     lo = 0.*np.ones(A.shape[0])

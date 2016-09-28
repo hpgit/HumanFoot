@@ -288,10 +288,10 @@ def walkings():
 
     partBvhFilePath = '../PyCommon/modules/samples/SimpleJump_long_test.bvh'
     partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
-    bvh.replaceJointFromBvh('RightFoot', partBvh, .01)
+    bvh.replaceJointFromBvh('RightFoot', partBvh, .013)
     partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
     partBvh.mirror('YZ')
-    bvh.replaceJointFromBvh('LeftFoot', partBvh, .01)
+    bvh.replaceJointFromBvh('LeftFoot', partBvh, .013)
 
     motion_ori = bvh.toJointMotion(1., False)
 
@@ -439,11 +439,14 @@ def walkings():
     rIDs = [skeleton.getJointIndex('Right'+name) for name in extendedFootName]
 
 
-    for i in lIDs:
-        controlModel.setHybridDynamics(i, "DYNAMIC")
-    for i in rIDs:
+    for i in lIDs+rIDs:
         controlModel.setHybridDynamics(i, "DYNAMIC")
 
+    # each dof is whether KINEMATIC or not
+    hdAccMask = [True]*controlModel.getTotalDOF()
+    hdAccMask[:6] = [False]*6
+    for i in lIDs+rIDs:
+        hdAccMask[3+3*i : 6+3*i] = [False]*3
 
 
     lID = controlModel.name2id('LeftFoot');      rID = controlModel.name2id('RightFoot')
@@ -912,7 +915,7 @@ def walkings():
         for i in range(stepsPerFrame):
             # bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
             bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp \
-                = hls.calcLCPForcesHD(motion_ori, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat_dof, solver='qp')
+                = hls.calcLCPForcesHD(motion_ori, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat_dof, solver='qp', hdAccMask=hdAccMask)
             if contactForces is not None:
                 vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
 
