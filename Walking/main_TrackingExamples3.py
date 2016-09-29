@@ -188,9 +188,10 @@ def walkings():
     NO_FOOT_SLIDING = True
 
     # global parameters
-    Kt = 0.;       Dt = 2.*(Kt**.5)
+    Kt = 10.;       Dt = 2.*(Kt**.5)
     Ks = 2000.;    Ds = 2.*(Ks**.5)
     mu = 1.
+    Dt = 0.
 
     # constaants
     c_min_contact_vel = 100.
@@ -286,7 +287,7 @@ def walkings():
     bvh = yf.readBvhFileAsBvh(dir+filename)
     # motion_ori = bvh.toJointMotion(1.0, False)
 
-    partBvhFilePath = '../PyCommon/modules/samples/SimpleJump_long_test.bvh'
+    partBvhFilePath = '../PyCommon/modules/samples/SimpleJump_long.bvh'
     partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
     bvh.replaceJointFromBvh('RightFoot', partBvh, .013)
     partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
@@ -432,8 +433,10 @@ def walkings():
     totalMass = controlModel.getTotalMass()
 
 
-    extendedFootName = ['Foot_foot_0_0', 'Foot_foot_0_1', 'Foot_foot_1_0',
-                        'Foot_foot_1_1', 'Foot_foot_2_0', 'Foot_foot_2_1']
+    # extendedFootName = ['Foot_foot_0_0', 'Foot_foot_0_1', 'Foot_foot_1_0',
+    #                     'Foot_foot_1_1', 'Foot_foot_2_0', 'Foot_foot_2_1']
+
+    extendedFootName = ['Foot_foot_0_1', 'Foot_foot_1_1', 'Foot_foot_2_1']
 
     lIDs = [skeleton.getJointIndex('Left'+name) for name in extendedFootName]
     rIDs = [skeleton.getJointIndex('Right'+name) for name in extendedFootName]
@@ -877,7 +880,7 @@ def walkings():
 
         weightMap = [1.] * (skeleton.getJointNum())
 
-        toeWeights = .00001
+        toeWeights = 0.1
 
         for jointIdx in lIDs:
             weightMap[jointIdx] = toeWeights
@@ -896,8 +899,6 @@ def walkings():
         ddth_des_flat = ype.makeFlatList(totalDOF)
         ype.flatten(ddth_des, ddth_des_flat)
 
-        ddth_des_flat_dof = ddth_des_flat[6:]
-
         #=======================================================================
         # simulation
         #=======================================================================
@@ -915,16 +916,19 @@ def walkings():
         for i in range(stepsPerFrame):
             # bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
             bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp \
-                = hls.calcLCPForcesHD(motion_ori, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat_dof, solver='qp', hdAccMask=hdAccMask)
+                = hls.calcLCPForcesHD(motion_ori, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, ddth_des_flat, solver='qp', hdAccMask=hdAccMask)
             if contactForces is not None:
                 vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
+
+            # print contactForces
 
             # apply external force
             for fi in forceInfos:
                 if fi.startFrame <= frame and frame < fi.startFrame + fi.duration*(1/frameTime):
                     controlModel.applyBodyForceGlobal(fi.targetBody, fi.force)
 
-            # controlModel.setDOFTorques(ddth_des[1:])
+            for i in rIDs+lIDs:
+                controlModel.setJointTorqueLocal(i, ddth_des[i])
             controlModel.setDOFAccelerations(ddth_des)
             controlModel.solveHybridDynamics()
 
