@@ -2,12 +2,17 @@ from fltk import *
 import copy, os.path, cPickle, time
 import numpy as np
 
+# if os.getcwd() != os.path.dirname(__file__):
+#     os.chdir(os.path.dirname(__file__))
+
 import sys
 if '../PyCommon/modules' not in sys.path:
     sys.path.append('../PyCommon/modules')
 
-#if '../../PyCommon/modules' not in sys.path:
-#    sys.path.append('../../PyCommon/modules')
+# current_path = os.path.dirname(os.path.abspath(__file__))
+# if current_path+'/../PyCommon/modules' not in sys.path:
+    # sys.path.append(current_path+'/../PyCommon/modules')
+
 import Math.mmMath as mm
 import Math.csMath as cm
 import Math.ysFunctionGraph as yfg
@@ -287,7 +292,7 @@ def walkings():
     bvh = yf.readBvhFileAsBvh(dir+filename)
     # motion_ori = bvh.toJointMotion(1.0, False)
 
-    partBvhFilePath = '../PyCommon/modules/samples/SimpleJump_long.bvh'
+    partBvhFilePath = '../PyCommon/modules/samples/simpleJump_long.bvh'
     partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
     bvh.replaceJointFromBvh('RightFoot', partBvh, .013)
     partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
@@ -377,7 +382,7 @@ def walkings():
     print len(intervals), 'segments'
     for i in range(len(intervals)):
         print '%dth'%i, yba.GaitState.text[states[i]], intervals[i], ',',
-    print
+    print ""
 
     motion_seg_orig = ym.JointMotion()
     motion_seg_orig += segments[0]
@@ -433,10 +438,10 @@ def walkings():
     totalMass = controlModel.getTotalMass()
 
 
-    # extendedFootName = ['Foot_foot_0_0', 'Foot_foot_0_1', 'Foot_foot_1_0',
-    #                     'Foot_foot_1_1', 'Foot_foot_2_0', 'Foot_foot_2_1']
+    extendedFootName = ['Foot_foot_0_0', 'Foot_foot_0_1', 'Foot_foot_1_0',
+                        'Foot_foot_1_1', 'Foot_foot_2_0', 'Foot_foot_2_1']
 
-    extendedFootName = ['Foot_foot_0_1', 'Foot_foot_1_1', 'Foot_foot_2_1']
+    # extendedFootName = ['Foot_foot_0_1', 'Foot_foot_1_1', 'Foot_foot_2_1']
 
     lIDs = [skeleton.getJointIndex('Left'+name) for name in extendedFootName]
     rIDs = [skeleton.getJointIndex('Right'+name) for name in extendedFootName]
