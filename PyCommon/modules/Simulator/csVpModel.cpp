@@ -279,132 +279,135 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 		_nodes[joint_index] = pNode;
 
 		object cfgNode = _config.attr("getNode")(joint_name);
-		/*
+		///*
 		int numGeom = len(cfgNode.attr("geoms"));
-		string geomType = XS(cfgNode.attr("geoms")[0]);
-		if (geomType == "MyFoot3" || geomType == "MyFoot4")
+		if (numGeom != 0)
 		{
-		    scalar radius = .05;
-		    if( cfgNode.attr("width") != object() )
-		        radius = XD(cfgNode.attr("width"));
+			for (int i=0; i<numGeom; i++)
+			{
+				string geomType = XS(cfgNode.attr("geoms")[i]);
+				if (geomType == "MyFoot3" || geomType == "MyFoot4")
+				{
+					scalar density = XD(cfgNode.attr("geomMaterial")[i].attr("density"));
+					scalar radius = XD(cfgNode.attr("geomMaterial")[i].attr("radius"));
+					scalar height = XD(cfgNode.attr("geomMaterial")[i].attr("height"));
 
-		    scalar length = Norm(offset) + 2*radius;
-		    scalar density = XD(cfgNode.attr("density"));
-		    scalar mass = 1.;
-		    if( cfgNode.attr("mass") != object() )
-		    {
-		        mass = XD(cfgNode.attr("mass"));
-		        density = mass/ (radius * radius * M_PI * length);
-		    }
-		    else
-		        mass = density * radius * radius * M_PI * length;
+					vpMaterial *pMaterial = new vpMaterial();
+					pMaterial->SetDensity(density);
+					pNode->body.SetMaterial(pMaterial);
 
-		    // density = mass/ (width*width*M_PI*(length+width));
-		    if (geomType == "MyFoot3")
-		        pNode->body.AddGeometry(new MyFoot3(radius, length));
-		    else
-		        pNode->body.AddGeometry(new MyFoot4(radius, length));
-		    pNode->body.SetInertia(CylinderInertia(density, radius,length));
+					SE3 geomT;
+					geomT.SetEye();
+					if(cfgNode.attr("geomTs")[i])
+					{
+						geomT = pySO3_2_SE3(cfgNode.attr("geomTs")[i][1]);
+						geomT.SetPosition(pyVec3_2_Vec3(cfgNode.attr("geomTs")[i][0]));
+					}
+					else
+						std::cout << "there is no geom Ts!" << std::endl;
+
+					if (geomType == "MyFoot3")
+						pNode->body.AddGeometry(new MyFoot3(radius, height), geomT);
+					else
+						pNode->body.AddGeometry(new MyFoot4(radius, height), geomT);
+				}
+				else
+				{
+					scalar density = XD(cfgNode.attr("geomMaterial")[i].attr("density"));
+					scalar width = XD(cfgNode.attr("geomMaterial")[i].attr("width"));
+					scalar length = XD(cfgNode.attr("geomMaterial")[i].attr("length"));
+					scalar height = XD(cfgNode.attr("geomMaterial")[i].attr("height"));
+
+					vpMaterial *pMaterial = new vpMaterial();
+					pMaterial->SetDensity(density);
+					pNode->body.SetMaterial(pMaterial);
+
+					SE3 geomT;
+					geomT.SetEye();
+					if(cfgNode.attr("geomTs")[i])
+					{
+						SE3 geomT = pySO3_2_SE3(cfgNode.attr("geomTs")[i][0]);
+						geomT.SetPosition(pyVec3_2_Vec3(cfgNode.attr("geomTs")[i][1]));
+					}
+
+					pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)), geomT);
+				}
+			}
 		}
 		else
 		{
-            scalar length;
-            if( cfgNode.attr("length") != object() )
-                length = XD(cfgNode.attr("length")) * XD(cfgNode.attr("boneRatio"));
-            else
-                length = Norm(offset) * XD(cfgNode.attr("boneRatio"));
-
-            scalar density = XD(cfgNode.attr("density"));
-            scalar width, height;
-            if( cfgNode.attr("width") != object() )
-            {
-                width = XD(cfgNode.attr("width"));
-                if( cfgNode.attr("mass") != object() )
-                    height = (XD(cfgNode.attr("mass")) / (density * length)) / width;
-                else
-                    height = .1;
-            }
-            else
-            {
-                if( cfgNode.attr("mass") != object() )
-                    width = sqrt( (XD(cfgNode.attr("mass")) / (density * length)) );
-                else
-                    width = .1;
-                height = width;
-            }
-			pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)));
-			pNode->body.SetInertia(BoxInertia(density, Vec3(width/2.,height/2.,length/2.)));
 		//*/	
 		///*
-		string geomType = XS(cfgNode.attr("geom"));
-		if (geomType == "MyFoot3" || geomType == "MyFoot4")
-		{
-		    scalar radius = .05;
-		    if( cfgNode.attr("width") != object() )
-		        radius = XD(cfgNode.attr("width"));
+			string geomType = XS(cfgNode.attr("geom"));
+			if (geomType == "MyFoot3" || geomType == "MyFoot4")
+			{
+				scalar radius = .05;
+				if( cfgNode.attr("width") != object() )
+					radius = XD(cfgNode.attr("width"));
 
-		    scalar length = Norm(offset) + 2*radius;
-		    scalar density = XD(cfgNode.attr("density"));
-		    scalar mass = 1.;
-		    if( cfgNode.attr("mass") != object() )
-		    {
-		        mass = XD(cfgNode.attr("mass"));
-		        density = mass/ (radius * radius * M_PI * length);
-		    }
-		    else
-		        mass = density * radius * radius * M_PI * length;
+				scalar length = Norm(offset) + 2*radius;
+				scalar density = XD(cfgNode.attr("density"));
+				scalar mass = 1.;
+				if( cfgNode.attr("mass") != object() )
+				{
+					mass = XD(cfgNode.attr("mass"));
+					density = mass/ (radius * radius * M_PI * length);
+				}
+				else
+					mass = density * radius * radius * M_PI * length;
 
 		    // density = mass/ (width*width*M_PI*(length+width));
-            if (geomType == "MyFoot3")
-                pNode->body.AddGeometry(new MyFoot3(radius, length));
-            else
-                pNode->body.AddGeometry(new MyFoot4(radius, length));
-            pNode->body.SetInertia(CylinderInertia(density, radius, length));
-		}
-		else
-		{
-            scalar length;
-            if( cfgNode.attr("length") != object() )
-                length = XD(cfgNode.attr("length")) * XD(cfgNode.attr("boneRatio"));
-            else
-                length = Norm(offset) * XD(cfgNode.attr("boneRatio"));
+				if (geomType == "MyFoot3")
+					pNode->body.AddGeometry(new MyFoot3(radius, length));
+				else
+					pNode->body.AddGeometry(new MyFoot4(radius, length));
+				pNode->body.SetInertia(CylinderInertia(density, radius, length));
+			}
+			else
+			{
+				scalar length;
+				if( cfgNode.attr("length") != object() )
+					length = XD(cfgNode.attr("length")) * XD(cfgNode.attr("boneRatio"));
+				else
+					length = Norm(offset) * XD(cfgNode.attr("boneRatio"));
 
-            scalar density = XD(cfgNode.attr("density"));
-            scalar width, height;
-            if( cfgNode.attr("width") != object() )
-            {
-                width = XD(cfgNode.attr("width"));
-                if( cfgNode.attr("mass") != object() )
-                    height = (XD(cfgNode.attr("mass")) / (density * length)) / width;
-                else
-                    height = .1;
-            }
-            else
-            {
-                if( cfgNode.attr("mass") != object() )
-                    width = sqrt( (XD(cfgNode.attr("mass")) / (density * length)) );
-                else
-                    width = .1;
-                height = width;
-            }
-            string geomType = XS(cfgNode.attr("geom"));
-            if(geomType == "MyBox")
-                pNode->body.AddGeometry(new MyBox(Vec3(width, height, length)));
-            else if(geomType == "MyFoot1")
-                pNode->body.AddGeometry(new MyFoot1(Vec3(width, height, length)));
-            else if(geomType == "MyFoot2")
-                pNode->body.AddGeometry(new MyFoot2(Vec3(width, height, length)));
+				scalar density = XD(cfgNode.attr("density"));
+				scalar width, height;
+				if( cfgNode.attr("width") != object() )
+				{
+					width = XD(cfgNode.attr("width"));
+					if( cfgNode.attr("mass") != object() )
+						height = (XD(cfgNode.attr("mass")) / (density * length)) / width;
+					else
+						height = .1;
+				}
+				else
+				{
+					if( cfgNode.attr("mass") != object() )
+						width = sqrt( (XD(cfgNode.attr("mass")) / (density * length)) );
+					else
+						width = .1;
+					height = width;
+				}
+				string geomType = XS(cfgNode.attr("geom"));
+				if(geomType == "MyBox")
+					pNode->body.AddGeometry(new MyBox(Vec3(width, height, length)));
+				else if(geomType == "MyFoot1")
+					pNode->body.AddGeometry(new MyFoot1(Vec3(width, height, length)));
+				else if(geomType == "MyFoot2")
+					pNode->body.AddGeometry(new MyFoot2(Vec3(width, height, length)));
     		// else if(geomType == "MyShin")
     		// 	pNode->body.AddGeometry(new MyShin(Vec3(width, height, length)));
-            else
-            {
-                pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)));
-                cout << geomType << " : undefined geom type!" << endl;
-            }
+				else
+				{
+					pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)));
+					cout << geomType << " : undefined geom type!" << endl;
+				}
 
             // pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)));
-			pNode->body.SetInertia(BoxInertia(density, Vec3(width/2.,height/2.,length/2.)));
+				pNode->body.SetInertia(BoxInertia(density, Vec3(width/2.,height/2.,length/2.)));
 			//*/
+			}
 		}
 
 //		pNode->body.SetInertia(BoxInertia(density, Vec3(width,height,length)));

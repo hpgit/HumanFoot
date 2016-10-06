@@ -21,6 +21,32 @@ class WorldConfig:
         self.CFM = 1E-5
         ##########################################33
 
+
+class Material:
+    def getMass(self):
+        print("Please Specify Material Type")
+        return -1
+
+class BoxMaterial(Material):
+    def __init__(self, density=1000., length=1., width=1., height=1.):
+        self.density = density
+        self.length = length
+        self.width = width
+        self.height = height
+
+    def getMass(self):
+        return self.density * self.length * self.width * self.height
+
+class CapsuleMaterial(Material):
+    def __init__(self, density=1000., radius=1., height=1.):
+        self.density = density
+        self.radius = radius
+        self.height = height
+
+    def getMass(self):
+        return self.density * self.radius * self.radius * math.pi * self.height
+
+
 class Node:
     def __init__(self, name):
         self.name = name
@@ -51,12 +77,12 @@ class Node:
 
         self.geoms = []
         self.geomTs = []
-        self.geomMass = []
+        self.geomMaterial = []
 
-    def addGeom(self, geom, geomT, mass):
+    def addGeom(self, geom, geomT, material):
         self.geoms.append(geom)
         self.geomTs.append(geomT)
-        self.geomMass.append(mass)
+        self.geomMaterial.append(material)
 
 
 class ModelConfig:

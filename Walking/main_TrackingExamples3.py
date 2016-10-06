@@ -40,6 +40,8 @@ import Simulator.hpLCPSimulator as hls
 import GUI.hpSimpleViewer as hsv
 import Util.ysPythonEx as ype
 
+import math
+
 #MOTION_COLOR = (128,128,128)
 #CHARACTER_COLOR = (102,102,153)
 MOTION_COLOR = (213,111,162)
@@ -157,6 +159,9 @@ def buildMcfg():
         node = mcfg.getNode(node_name)
         node.geom = 'MyFoot4'
         node.width = 0.02
+        # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0., math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .2))
+        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0., math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+        # node.addGeom('MyFoot4', None, ypc.CapsuleMaterial(1000., .02, .1))
 
     capsulize('RightFoot')
     capsulize('LeftFoot')
@@ -172,6 +177,9 @@ def buildMcfg():
     capsulize('LeftFoot_foot_1_1')
     capsulize('LeftFoot_foot_2_0')
     capsulize('LeftFoot_foot_2_1')
+
+    node = mcfg.getNode('RightFoot')
+    node.addGeom('MyFoot4', [np.array([0., 0., 0.], mm.exp([0., math.pi/4., 0.]))], ypc.CapsuleMaterial(1000., .02, .1))
 
     return mcfg
 
@@ -193,10 +201,13 @@ def walkings():
     NO_FOOT_SLIDING = True
 
     # global parameters
-    Kt = 10.;       Dt = 2.*(Kt**.5)
-    Ks = 2000.;    Ds = 2.*(Ks**.5)
+    Kt = 20.
+    # Dt = 2.*(Kt**.5)
+    Dt = Kt/900.
+    Ks = 2000.
+    Ds = 2.*(Ks**.5)
     mu = 1.
-    Dt = 0.
+    # Dt = 0.
 
     # constaants
     c_min_contact_vel = 100.
@@ -885,7 +896,7 @@ def walkings():
 
         weightMap = [1.] * (skeleton.getJointNum())
 
-        toeWeights = 0.1
+        toeWeights = 0.001
 
         for jointIdx in lIDs:
             weightMap[jointIdx] = toeWeights
@@ -919,11 +930,12 @@ def walkings():
                 rd_force_points.append(controlModel.getBodyPositionGlobal(fi.targetBody))
 
         for i in range(stepsPerFrame):
-            # bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
-            bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp \
-                = hls.calcLCPForcesHD(motion_ori, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, ddth_des_flat, solver='qp', hdAccMask=hdAccMask)
-            if contactForces is not None:
-                vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
+            if i % 5 == 0:
+                # bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+                bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp \
+                    = hls.calcLCPForcesHD(motion_ori, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, ddth_des_flat, solver='qp', hdAccMask=hdAccMask)
+                if contactForces is not None:
+                    vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
 
             # print contactForces
 
