@@ -143,8 +143,8 @@ def init():
     # ModelRotateOffset = np.array([[0.707, 0., 0.707],[0., 1., 0.],[-0.707, 0., 0.707]])
     # ModelRotateOffset = np.array([[1., 0., 0.],[0., 0., -1.],[0, 1., 0.]])
     ModelRotateOffset = np.array([[1., 0., 0.],[0., 0.707, -0.707],[0, 0.707, 0.707]])
-    controlModel.rotate(ModelRotateOffset)
-    motionModel.rotate(ModelRotateOffset)
+    # controlModel.rotate(ModelRotateOffset)
+    # motionModel.rotate(ModelRotateOffset)
 
     vpWorld.SetIntegrator("RK4")
     # vpWorld.SetIntegrator("IMPLICIT_EULER_FAST")

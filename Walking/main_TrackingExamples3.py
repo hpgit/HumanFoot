@@ -160,7 +160,8 @@ def buildMcfg():
         node.geom = 'MyFoot4'
         node.width = 0.02
         # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0., math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .2))
-        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0., math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+        # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0., math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0., 0., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
         # node.addGeom('MyFoot4', None, ypc.CapsuleMaterial(1000., .02, .1))
 
     capsulize('RightFoot')
@@ -178,8 +179,33 @@ def buildMcfg():
     capsulize('LeftFoot_foot_2_0')
     capsulize('LeftFoot_foot_2_1')
 
-    node = mcfg.getNode('RightFoot')
-    node.addGeom('MyFoot4', [np.array([0., 0., 0.], mm.exp([0., math.pi/4., 0.]))], ypc.CapsuleMaterial(1000., .02, .1))
+    #'''
+    node = mcfg.getNode('RightFoot_foot_0_0')
+    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+    node = mcfg.getNode('RightFoot_foot_0_1')
+    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+    node = mcfg.getNode('RightFoot_foot_1_0')
+    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+    node = mcfg.getNode('RightFoot_foot_1_1')
+    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+    node = mcfg.getNode('RightFoot_foot_2_0')
+    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+    node = mcfg.getNode('RightFoot_foot_2_1')
+    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+
+    node = mcfg.getNode('LeftFoot_foot_0_0')
+    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+    node = mcfg.getNode('LeftFoot_foot_0_1')
+    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+    node = mcfg.getNode('LeftFoot_foot_1_0')
+    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+    node = mcfg.getNode('LeftFoot_foot_1_1')
+    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+    node = mcfg.getNode('LeftFoot_foot_2_0')
+    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+    node = mcfg.getNode('LeftFoot_foot_2_1')
+    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+    #'''
 
     return mcfg
 
@@ -303,7 +329,7 @@ def walkings():
     bvh = yf.readBvhFileAsBvh(dir+filename)
     # motion_ori = bvh.toJointMotion(1.0, False)
 
-    partBvhFilePath = '../PyCommon/modules/samples/simpleJump_long.bvh'
+    partBvhFilePath = '../PyCommon/modules/samples/simpleJump_long_test.bvh'
     partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
     bvh.replaceJointFromBvh('RightFoot', partBvh, .013)
     partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
@@ -365,6 +391,8 @@ def walkings():
 
     vpWorld = cvw.VpWorld(wcfg)
     motionModel = cvm.VpMotionModel(vpWorld, motion_ori[0], mcfg)
+    ModelOffset = np.array([0., 0., 1.])
+    motionModel.translateByOffset(ModelOffset)
     controlModel = cvm.VpControlModel(vpWorld, motion_ori[0], mcfg)
     vpWorld.initialize()
     print controlModel
@@ -458,14 +486,14 @@ def walkings():
     rIDs = [skeleton.getJointIndex('Right'+name) for name in extendedFootName]
 
 
-    for i in lIDs+rIDs:
-        controlModel.setHybridDynamics(i, "DYNAMIC")
+    # for i in lIDs+rIDs:
+    #     controlModel.setHybridDynamics(i, "DYNAMIC")
 
     # each dof is whether KINEMATIC or not
     hdAccMask = [True]*controlModel.getTotalDOF()
     hdAccMask[:6] = [False]*6
-    for i in lIDs+rIDs:
-        hdAccMask[3+3*i : 6+3*i] = [False]*3
+    # for i in lIDs+rIDs:
+    #     hdAccMask[3+3*i : 6+3*i] = [False]*3
 
 
     lID = controlModel.name2id('LeftFoot');      rID = controlModel.name2id('RightFoot')
