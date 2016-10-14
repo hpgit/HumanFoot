@@ -292,6 +292,9 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 					scalar radius = XD(cfgNode.attr("geomMaterial")[i].attr("radius"));
 					scalar height = XD(cfgNode.attr("geomMaterial")[i].attr("height"));
 
+					if (height <= 0.)
+					    height = Norm(offset) + 2*radius;
+
 					vpMaterial *pMaterial = new vpMaterial();
 					pMaterial->SetDensity(density);
 					pNode->body.SetMaterial(pMaterial);
@@ -301,7 +304,7 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 					if(cfgNode.attr("geomTs")[i])
 					{
 						geomT = pySO3_2_SE3(cfgNode.attr("geomTs")[i][1]);
-						geomT.SetPosition(pyVec3_2_Vec3(cfgNode.attr("geomTs")[i][0]));
+						geomT.SetPosition(geomT*pyVec3_2_Vec3(cfgNode.attr("geomTs")[i][0]));
 					}
 					else
 						std::cout << "there is no geom Ts!" << std::endl;

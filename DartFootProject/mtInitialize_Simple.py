@@ -422,7 +422,7 @@ def create_foot(motionFile='foot3.bvh'):
                 v.geomMass.append(v.mass)
                 v.geomTs.append(None)
 
-    mcfgFix(mcfg)
+    # mcfgFix(mcfg)
 
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.

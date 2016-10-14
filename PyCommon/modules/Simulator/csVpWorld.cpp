@@ -361,6 +361,9 @@ boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
 		bodyID = XI(bodyIDsToCheck[i]);
 		pBody = _world.GetBody(bodyID);
 
+		int numContactGeom = 0;
+        bp::list _bodyIDs, _positions, _forces, _positionLocals, _velocities;
+
 		for (int j = 0; j<pBody->GetNumGeometry(); ++j)
 		{
 			pGeom = pBody->GetGeometry(j);
@@ -376,21 +379,22 @@ boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
 					bool penentrated = position[1] <= planeHeight;
 					if (penentrated)
 					{
+					    ++numContactGeom;
 						velocity = pBody->GetLinVelocity(positionLocal);
 
-						bodyIDs.append(bodyID);
+						_bodyIDs.append(bodyID);
 
 						object pyPosition = O_Vec3.copy();
 						Vec3_2_pyVec3(position, pyPosition);
-						positions.append(pyPosition);
+						_positions.append(pyPosition);
 
 						object pyVelocity = O_Vec3.copy();
 						Vec3_2_pyVec3(velocity, pyVelocity);
-						velocities.append(pyVelocity);
+						_velocities.append(pyVelocity);
 
 						object pyPositionLocal = O_Vec3.copy();
 						Vec3_2_pyVec3(positionLocal, pyPositionLocal);
-						positionLocals.append(pyPositionLocal);
+						_positionLocals.append(pyPositionLocal);
 					}
 				}
 			}
@@ -426,6 +430,14 @@ boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
 					}
 				}
 			}
+		}
+
+		if(numContactGeom > 2)
+		{
+		    bodyIDs.extend(_bodyIDs);
+		    positions.extend(_positions);
+		    positionLocals.extend(_positionLocals);
+		    velocities.extend(_velocities);
 		}
 	}
 

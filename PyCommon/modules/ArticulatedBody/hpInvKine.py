@@ -130,3 +130,8 @@ class numIkSolver:
                 break
 
         self.model.update(self.pose)
+
+
+
+class numPartIkSolver:
+    pass

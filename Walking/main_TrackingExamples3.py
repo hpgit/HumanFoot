@@ -103,6 +103,7 @@ def buildMassMap():
 
     # left foot : 4
     massMap['LeftFoot'] += 2.
+    '''
     massMap['RightFoot_foot_0_0'] = .3
     massMap['RightFoot_foot_0_1'] = .3
     massMap['RightFoot_foot_1_0'] = .3
@@ -115,6 +116,22 @@ def buildMassMap():
     massMap['LeftFoot_foot_1_1'] = .3
     massMap['LeftFoot_foot_2_0'] = .3
     massMap['LeftFoot_foot_2_1'] = .3
+    #'''
+
+    massMap['RightFoot_foot_0_0'] = .3
+    massMap['RightFoot_foot_0_1'] = .3
+    massMap['RightFoot_foot_0_0_0'] = .3
+    massMap['RightFoot_foot_0_1_0'] = .3
+    massMap['RightFoot_foot_1_0'] = .3
+    massMap['RightFoot_foot_1_1'] = .3
+    massMap['RightFoot_foot_1_2'] = .3
+    massMap['LeftFoot_foot_0_0'] = .3
+    massMap['LeftFoot_foot_0_1'] = .3
+    massMap['LeftFoot_foot_0_0_0'] = .3
+    massMap['LeftFoot_foot_0_1_0'] = .3
+    massMap['LeftFoot_foot_1_0'] = .3
+    massMap['LeftFoot_foot_1_1'] = .3
+    massMap['LeftFoot_foot_1_2'] = .3
 
     return massMap
 
@@ -158,54 +175,100 @@ def buildMcfg():
     def capsulize(node_name):
         node = mcfg.getNode(node_name)
         node.geom = 'MyFoot4'
-        node.width = 0.02
+        node.width = 0.01
         # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0., math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .2))
         # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0., math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
-        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0., 0., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+        # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0., 0., 0.])], ypc.CapsuleMaterial(1000., .01, -1))
         # node.addGeom('MyFoot4', None, ypc.CapsuleMaterial(1000., .02, .1))
 
     capsulize('RightFoot')
     capsulize('LeftFoot')
+
+    # bird foot
+    # capsulize('RightFoot_foot_0_0')
+    # capsulize('RightFoot_foot_0_1')
+    # capsulize('RightFoot_foot_1_0')
+    # capsulize('RightFoot_foot_1_1')
+    # capsulize('RightFoot_foot_2_0')
+    # capsulize('RightFoot_foot_2_1')
+    # capsulize('LeftFoot_foot_0_0')
+    # capsulize('LeftFoot_foot_0_1')
+    # capsulize('LeftFoot_foot_1_0')
+    # capsulize('LeftFoot_foot_1_1')
+    # capsulize('LeftFoot_foot_2_0')
+    # capsulize('LeftFoot_foot_2_1')
+
+
+    # human foot
     capsulize('RightFoot_foot_0_0')
-    capsulize('RightFoot_foot_0_1')
-    capsulize('RightFoot_foot_1_0')
-    capsulize('RightFoot_foot_1_1')
-    capsulize('RightFoot_foot_2_0')
-    capsulize('RightFoot_foot_2_1')
-    capsulize('LeftFoot_foot_0_0')
-    capsulize('LeftFoot_foot_0_1')
-    capsulize('LeftFoot_foot_1_0')
-    capsulize('LeftFoot_foot_1_1')
-    capsulize('LeftFoot_foot_2_0')
-    capsulize('LeftFoot_foot_2_1')
-
-    #'''
     node = mcfg.getNode('RightFoot_foot_0_0')
-    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
-    node = mcfg.getNode('RightFoot_foot_0_1')
-    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
-    node = mcfg.getNode('RightFoot_foot_1_0')
-    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
-    node = mcfg.getNode('RightFoot_foot_1_1')
-    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
-    node = mcfg.getNode('RightFoot_foot_2_0')
-    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
-    node = mcfg.getNode('RightFoot_foot_2_1')
-    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+    node.addGeom('MyFoot3', [0.02*np.array([-0.3, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(1000., .01, 0.02*2.5+0.02))
+    node.addGeom('MyFoot3', [0.02*np.array([-0.3-1.2, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(1000., .01, 0.02*2.5+0.02))
+    # node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0., 0., 0.])], ypc.CapsuleMaterial(1000., .01, -1))
 
+    capsulize('RightFoot_foot_0_0_0')
+    node = mcfg.getNode('RightFoot_foot_0_0_0')
+    node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+    node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+
+    capsulize('RightFoot_foot_0_1')
+    node = mcfg.getNode('RightFoot_foot_0_1')
+    node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+    node.addGeom('MyFoot3', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000.,.01, -1))
+
+    capsulize('RightFoot_foot_0_1_0')
+    node = mcfg.getNode('RightFoot_foot_0_1_0')
+    node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+    node.addGeom('MyFoot4', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+
+    capsulize('RightFoot_foot_1_0')
+    node = mcfg.getNode('RightFoot_foot_1_0')
+    node.addGeom('MyFoot3', [0.02*np.array([0., 0., .7]), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, 0.02*2.0+0.02))
+    # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+
+    capsulize('RightFoot_foot_1_1')
+    node = mcfg.getNode('RightFoot_foot_1_1')
+    node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+
+    capsulize('RightFoot_foot_1_2')
+    node = mcfg.getNode('RightFoot_foot_1_2')
+    node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+
+
+    capsulize('LeftFoot_foot_0_0')
     node = mcfg.getNode('LeftFoot_foot_0_0')
-    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+    node.addGeom('MyFoot3', [0.02*np.array([0.3, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(1000., .01, 0.02*2.5+0.02))
+    node.addGeom('MyFoot3', [0.02*np.array([0.3+1.2, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(1000., .01, 0.02*2.5+0.02))
+    # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+
+    capsulize('LeftFoot_foot_0_0_0')
+    node = mcfg.getNode('LeftFoot_foot_0_0_0')
+    node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+    node.addGeom('MyFoot4', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+
+    capsulize('LeftFoot_foot_0_1')
     node = mcfg.getNode('LeftFoot_foot_0_1')
-    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+    node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+    node.addGeom('MyFoot3', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+
+    capsulize('LeftFoot_foot_0_1_0')
+    node = mcfg.getNode('LeftFoot_foot_0_1_0')
+    node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+    node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+
+    capsulize('LeftFoot_foot_1_0')
     node = mcfg.getNode('LeftFoot_foot_1_0')
-    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
+    node.addGeom('MyFoot3', [0.02*np.array([0., 0., .7]), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, 0.02*2.0+0.02))
+    # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+
+    capsulize('LeftFoot_foot_1_1')
     node = mcfg.getNode('LeftFoot_foot_1_1')
-    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
-    node = mcfg.getNode('LeftFoot_foot_2_0')
-    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
-    node = mcfg.getNode('LeftFoot_foot_2_1')
-    node.addGeom('MyFoot4', [np.array([0., 0., 0.]), mm.exp([0., -math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
-    #'''
+    node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+
+    capsulize('LeftFoot_foot_1_2')
+    node = mcfg.getNode('LeftFoot_foot_1_2')
+    node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+
 
     return mcfg
 
@@ -228,8 +291,8 @@ def walkings():
 
     # global parameters
     Kt = 20.
-    # Dt = 2.*(Kt**.5)
-    Dt = Kt/900.
+    Dt = 2.*(Kt**.5)
+    # Dt = Kt/900.
     Ks = 2000.
     Ds = 2.*(Ks**.5)
     mu = 1.
@@ -329,12 +392,12 @@ def walkings():
     bvh = yf.readBvhFileAsBvh(dir+filename)
     # motion_ori = bvh.toJointMotion(1.0, False)
 
-    partBvhFilePath = '../PyCommon/modules/samples/simpleJump_long_test.bvh'
+    partBvhFilePath = '../PyCommon/modules/samples/simpleJump_long_test2.bvh'
     partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
-    bvh.replaceJointFromBvh('RightFoot', partBvh, .013)
+    bvh.replaceJointFromBvh('RightFoot', partBvh, .02)
     partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
     partBvh.mirror('YZ')
-    bvh.replaceJointFromBvh('LeftFoot', partBvh, .013)
+    bvh.replaceJointFromBvh('LeftFoot', partBvh, .02)
 
     motion_ori = bvh.toJointMotion(1., False)
 
@@ -391,8 +454,8 @@ def walkings():
 
     vpWorld = cvw.VpWorld(wcfg)
     motionModel = cvm.VpMotionModel(vpWorld, motion_ori[0], mcfg)
-    ModelOffset = np.array([0., 0., 1.])
-    motionModel.translateByOffset(ModelOffset)
+    # ModelOffset = np.array([0., 0., 0.])
+    # motionModel.translateByOffset(ModelOffset)
     controlModel = cvm.VpControlModel(vpWorld, motion_ori[0], mcfg)
     vpWorld.initialize()
     print controlModel
@@ -477,8 +540,11 @@ def walkings():
     totalMass = controlModel.getTotalMass()
 
 
-    extendedFootName = ['Foot_foot_0_0', 'Foot_foot_0_1', 'Foot_foot_1_0',
-                        'Foot_foot_1_1', 'Foot_foot_2_0', 'Foot_foot_2_1']
+    #extendedFootName = ['Foot_foot_0_0', 'Foot_foot_0_1', 'Foot_foot_1_0',
+    #                    'Foot_foot_1_1', 'Foot_foot_2_0', 'Foot_foot_2_1']
+
+    extendedFootName = ['Foot_foot_0_0', 'Foot_foot_0_1', 'Foot_foot_0_0_0', 'Foot_foot_0_1_0', 'Foot_foot_1_0',
+                        'Foot_foot_1_1', 'Foot_foot_1_2']
 
     # extendedFootName = ['Foot_foot_0_1', 'Foot_foot_1_1', 'Foot_foot_2_1']
 
@@ -746,6 +812,7 @@ def walkings():
         P.append(p_temp)
         P.goToFrame(frame)
 
+
         # stance foot stabilize
         motion_stf_stabilize.append(motion_stitch[frame].copy())
         motion_stf_stabilize.goToFrame(frame)
@@ -806,19 +873,24 @@ def walkings():
                 swingFoot = swingFoots[i]
 
                 # save swing foot global orientation
-                #                R_swf = motion_swf_placement[frame].getJointOrientationGlobal(swingFoot)
+                # R_swf = motion_swf_placement[frame].getJointOrientationGlobal(swingFoot)
 
                 # rotate swing leg
                 motion_swf_placement[frame].mulJointOrientationGlobal(swingLeg, R_swp_sag)
                 motion_swf_placement[frame].mulJointOrientationGlobal(swingLeg, R_swp_cor)
 
                 # restore swing foot global orientation
-                #                motion_swf_placement[frame].setJointOrientationGlobal(swingFoot, R_swf)
+                # motion_swf_placement[frame].setJointOrientationGlobal(swingFoot, R_swf)
+
+                #TODO:
+                motion_swf_placement[frame].mulJointOrientationGlobal(swingFoot, mm.exp([0., 0., -0.17*t_swing_foot_placement]))
+                motion_swf_placement[frame].mulJointOrientationGlobal(swingFoot, mm.exp([0.2*t_swing_foot_placement, 0., 0.]))
 
                 prev_R_swp[0] = (R_swp_sag, R_swp_cor)
 
         # swing foot height
         motion_swf_height.append(motion_swf_placement[frame].copy())
+        # motion_swf_height.append(motion_stitch[frame].copy())
         motion_swf_height.goToFrame(frame)
         if SWING_FOOT_HEIGHT:
             for swingFoot in swingFoots:
@@ -884,6 +956,7 @@ def walkings():
 
         # stance foot push
         motion_stf_push.append(motion_swf_height[frame].copy())
+        # motion_stf_push.append(motion_swf_placement[frame].copy())
         motion_stf_push.goToFrame(frame)
         if STANCE_FOOT_PUSH:
             for swingFoot in swingFoots:
@@ -909,11 +982,13 @@ def walkings():
             R_stb = mm.exp(diff_dCM_axis * K_stb_vel * stf_balancing_func(t))
             R_stb = np.dot(R_stb, mm.exp(diff_CMr_axis * K_stb_pos * stf_balancing_func(t)))
             for stanceFoot in stanceFoots:
-                if frame < 5: continue
+                if frame < 5: break
                 motion_stf_balancing[frame].mulJointOrientationGlobal(stanceFoot, R_stb)
 
+
         # control trajectory
-        # motion_control.append(motion[frame].copy())
+        # motion_control.append(motion_stitch[frame].copy())
+        # motion_control.append(motion_swf_height[frame].copy())
         # motion_control.append(motion_match_stl[frame].copy())
         motion_control.append(motion_stf_balancing[frame].copy())
         motion_control.goToFrame(frame)
