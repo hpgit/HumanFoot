@@ -539,7 +539,7 @@ def walkings():
     bodyMasses = controlModel.getBodyMasses()
     totalMass = controlModel.getTotalMass()
 
-
+    # hwangpil
     #extendedFootName = ['Foot_foot_0_0', 'Foot_foot_0_1', 'Foot_foot_1_0',
     #                    'Foot_foot_1_1', 'Foot_foot_2_0', 'Foot_foot_2_1']
 
@@ -548,9 +548,18 @@ def walkings():
 
     # extendedFootName = ['Foot_foot_0_1', 'Foot_foot_1_1', 'Foot_foot_2_1']
 
+
+    ToeName = ['Foot_foot_0_0_0', 'Foot_foot_0_1_0']
+    HeelName = ['Foot_foot_1_0', 'Foot_foot_1_1', 'Foot_foot_1_2']
+
     lIDs = [skeleton.getJointIndex('Left'+name) for name in extendedFootName]
     rIDs = [skeleton.getJointIndex('Right'+name) for name in extendedFootName]
 
+    lToes = [skeleton.getJointIndex('Left'+name) for name in ToeName]
+    rToes = [skeleton.getJointIndex('Right'+name) for name in ToeName]
+
+    lHeels = [skeleton.getJointIndex('Left'+name) for name in HeelName]
+    rHeels = [skeleton.getJointIndex('Right'+name) for name in HeelName]
 
     # for i in lIDs+rIDs:
     #     controlModel.setHybridDynamics(i, "DYNAMIC")
@@ -720,6 +729,7 @@ def walkings():
         groundHeight = seginfo[segIndex]['ground_height']
         maxStfPushFrame = seginfo[segIndex]['max_stf_push_frame']
 
+        # hwangpil
         # temporary change
         for legList in (stanceLegs, swingLegs):
             for i in range(len(legList)):
@@ -730,6 +740,20 @@ def walkings():
             for i in range(len(footList)):
                 if footList[i] == 12:
                     footList[i] = skeleton.getJointIndex('RightFoot')
+
+        stanceToes = []
+        if 'LeftFoot' in stanceFoots:
+            stanceToes.extend(lToes)
+        if 'RightFoot' in stanceFoots:
+            stanceToes.extend(rToes)
+
+        swingHeels = []
+        if 'LeftFoot' in swingFoots:
+            swingHeels.extend(lHeels)
+        if 'RightFoot' in swingFoots:
+            swingHeels.extend(rHeels)
+
+
 
 
         prev_frame = frame-1 if frame>0 else 0
@@ -752,6 +776,7 @@ def walkings():
         stf_tar = motion_seg.getJointPositionGlobal(stanceFoots[0], prev_frame)
         CMr_tar = CM_tar - stf_tar
 
+        # dCM : average velocity of root of controlModel over 1 frame
         dCM = avg_dCM[0]
         CM = controlModel.getJointPositionGlobal(0)
         #        CM = yrp.getCM(controlModel.getJointPositionsGlobal(), bodyMasses, upperMass, uppers)
@@ -882,7 +907,8 @@ def walkings():
                 # restore swing foot global orientation
                 # motion_swf_placement[frame].setJointOrientationGlobal(swingFoot, R_swf)
 
-                #TODO:
+                # hwangpil
+                # temporal code.... for heel strike and ankle pushup
                 motion_swf_placement[frame].mulJointOrientationGlobal(swingFoot, mm.exp([0., 0., -0.17*t_swing_foot_placement]))
                 motion_swf_placement[frame].mulJointOrientationGlobal(swingFoot, mm.exp([0.2*t_swing_foot_placement, 0., 0.]))
 
@@ -959,6 +985,8 @@ def walkings():
         # motion_stf_push.append(motion_swf_placement[frame].copy())
         motion_stf_push.goToFrame(frame)
         if STANCE_FOOT_PUSH:
+            # TODO:
+            # swingFoots?????????????????????????
             for swingFoot in swingFoots:
                 #                max_t = (maxStfPushFrame)/float(curInterval[1]-curInterval[0])
                 #                stf_push_func = yfg.concatenate([yfg.sine, yfg.zero], [max_t*2])
@@ -985,6 +1013,11 @@ def walkings():
                 if frame < 5: break
                 motion_stf_balancing[frame].mulJointOrientationGlobal(stanceFoot, R_stb)
 
+        #TODO:
+        # hwangpil
+        # swing foot heel strike adjustment
+
+        # stance foot ankle pushup adjustment
 
         # control trajectory
         # motion_control.append(motion_stitch[frame].copy())

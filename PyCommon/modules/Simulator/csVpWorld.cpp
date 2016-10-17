@@ -432,7 +432,8 @@ boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
 			}
 		}
 
-		if(numContactGeom > 2)
+//		if(numContactGeom > 2)
+		if(true)
 		{
 		    bodyIDs.extend(_bodyIDs);
 		    positions.extend(_positions);
