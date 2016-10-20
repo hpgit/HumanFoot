@@ -5,7 +5,7 @@ Simulation system for humanoid walking with segmented foot
 ## How to build and run
 ### In linux,
 
-1. just make!
+1. just make! Next lines are deprecated.
 
 1. download and setup boost
 	
