@@ -211,6 +211,15 @@ void MyFoot4::getContactVerticesGlobal(vector<Vec3>& verticesGlobal)
 
 }
 
+void MyFoot5::getContactVertices(vector<Vec3>& verticesLocal, vector<Vec3>& verticesGlobal)
+{
+	verticesLocal.clear();
+}
+
+void MyFoot5::getContactVerticesGlobal(vector<Vec3>& verticesGlobal)
+{
+	verticesGlobal.clear();
+}
 
 //MyShin::MyShin( const Vec3 &size ):vpBox(size)
 //{

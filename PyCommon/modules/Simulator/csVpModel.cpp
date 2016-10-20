@@ -286,7 +286,7 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 			for (int i=0; i<numGeom; i++)
 			{
 				string geomType = XS(cfgNode.attr("geoms")[i]);
-				if (geomType == "MyFoot3" || geomType == "MyFoot4")
+				if (geomType == "MyFoot3" || geomType == "MyFoot4" || geomType == "MyFoot5")
 				{
 					scalar density = XD(cfgNode.attr("geomMaterial")[i].attr("density"));
 					scalar radius = XD(cfgNode.attr("geomMaterial")[i].attr("radius"));
@@ -311,8 +311,10 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 
 					if (geomType == "MyFoot3")
 						pNode->body.AddGeometry(new MyFoot3(radius, height), geomT);
-					else
+					else if(geomType == "MyFoot4")
 						pNode->body.AddGeometry(new MyFoot4(radius, height), geomT);
+					else
+						pNode->body.AddGeometry(new MyFoot5(radius, height), geomT);
 				}
 				else
 				{
@@ -342,7 +344,7 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 		//*/	
 		///*
 			string geomType = XS(cfgNode.attr("geom"));
-			if (geomType == "MyFoot3" || geomType == "MyFoot4")
+			if (geomType == "MyFoot3" || geomType == "MyFoot4" || geomType == "MyFoot5")
 			{
 				scalar radius = .05;
 				if( cfgNode.attr("width") != object() )
@@ -359,11 +361,13 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 				else
 					mass = density * radius * radius * M_PI * length;
 
-		    // density = mass/ (width*width*M_PI*(length+width));
+				// density = mass/ (width*width*M_PI*(length+width));
 				if (geomType == "MyFoot3")
 					pNode->body.AddGeometry(new MyFoot3(radius, length));
-				else
+				else if(geomType == "MyFoot4")
 					pNode->body.AddGeometry(new MyFoot4(radius, length));
+				else
+					pNode->body.AddGeometry(new MyFoot5(radius, length));
 				pNode->body.SetInertia(CylinderInertia(density, radius, length));
 			}
 			else
