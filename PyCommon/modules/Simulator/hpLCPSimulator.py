@@ -775,8 +775,8 @@ def calcLCPForcesHD(motion, world, model, bodyIDsToCheck, mu, ddth, tau, numFric
     contactNum, bodyIDs, contactPositions, contactPositionsLocal, JTN, JTD, E, N, D \
         = makeFrictionCone(motion[0].skeleton, world, model, bodyIDsToCheck, numFrictionBases)
 
-    # if contactNum == 0:
-    if contactNum <= 2:
+    if contactNum == 0:
+    # if contactNum <= 2:
         return [], [], [], None, None
     timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
 

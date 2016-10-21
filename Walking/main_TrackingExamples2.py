@@ -33,6 +33,7 @@ import Simulator.ysPhysConfig as ypc
 
 import Simulator.hpLCPSimulator as hls
 import GUI.hpSimpleViewer as hsv
+import Util.ysPythonEx as ype
 
 
 #MOTION_COLOR = (128,128,128)
@@ -698,6 +699,10 @@ def walkings():
         ddth_r = motion_control.getDOFAccelerations(frame)
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
 
+        totalDOF = controlModel.getTotalDOF()
+        ddth_des_flat = ype.makeFlatList(totalDOF)
+        ype.flatten(ddth_des, ddth_des_flat)
+
         #=======================================================================
         # simulation
         #=======================================================================
@@ -712,11 +717,16 @@ def walkings():
                 rd_forces.append(fi.force)
                 rd_force_points.append(controlModel.getBodyPositionGlobal(fi.targetBody))
 
+        hdAccMask = [True]*controlModel.getTotalDOF()
+        hdAccMask[:6] = [False]*6
+
         for i in range(stepsPerFrame):
-            bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
-            # bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp \
-            #     = hls.calcLCPForces(motion_ori, vpWorld, controlModel, bodyIDsToCheck, 1., torques, solver='qp')
-            vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
+            # bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+            bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp \
+                = hls.calcLCPForcesHD(motion_ori, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, ddth_des_flat, solver='qp', hdAccMask=hdAccMask)
+            if contactForces is not None:
+                vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
+            # vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
             
             # apply external force
             for fi in forceInfos:
@@ -737,7 +747,8 @@ def walkings():
             vpWorld.step()
 #            yvu.align2D(controlModel)
 
-            if len(contactForces) > 0:
+            if contactForces is not None:
+            # if len(contactForces) > 0:
                 CP += yrp.getCP(contactPositions, contactForces)
                 F += sum(contactForces)
             avg_dCM[0] += controlModel.getJointVelocityGlobal(0)

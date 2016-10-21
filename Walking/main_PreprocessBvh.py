@@ -99,9 +99,9 @@ def preprocess():
 
     dir = '../Data/woody2/Motion/Physics2/'
     # box foot
-    # config = {'repeat':True, 'footRot': mm.rotX(-.4), 'yOffset':0., 'halfFootHeight': 0.0444444444444, 'scale':.01, 'type':'woody2'}
+    config = {'repeat':True, 'footRot': mm.rotX(-.4), 'yOffset':0., 'halfFootHeight': 0.0444444444444, 'scale':.01, 'type':'woody2'}
     # segmented foot
-    config = {'repeat':True, 'footRot': mm.rotX(.07), 'yOffset':0., 'halfFootHeight': 0.0944444444444, 'scale':.01, 'type':'woody2'}
+    # config = {'repeat':True, 'footRot': mm.rotX(.07), 'yOffset':0., 'halfFootHeight': 0.0944444444444, 'scale':.01, 'type':'woody2'}
     paths = []
     # paths.append(dir+'wd2_WalkSameSame01.bvh')
     # paths.append(dir+'wd2_WalkForwardSlow01.bvh')

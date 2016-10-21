@@ -12,6 +12,7 @@ import Math.mmMath as mm
 import Motion.ysHierarchyEdit as yme
 import Motion.ysMotion as ym
 import math
+import numpy as np
 
 # Constant
 HIP = 'Hips'
@@ -450,6 +451,8 @@ def create_foot(motionFile='foot3.bvh'):
     # config['supLink'] = 'link0'
 
     return motion, mcfg, wcfg, stepsPerFrame, config
+
+
 
 
 def create_leg(motionFile='kneeAndFoot.bvh'):
