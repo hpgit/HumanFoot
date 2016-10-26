@@ -133,13 +133,13 @@ def buildMassMap():
 def buildMcfg():
     massMap = buildMassMap()
     mcfg = ypc.ModelConfig()
-    mcfg.defaultDensity = 2000.
+    mcfg.defaultDensity = 1000.
     mcfg.defaultBoneRatio = .9
 
     totalMass = 0.
     for name in massMap:
         node = mcfg.addNode(name)
-        # node.mass = massMap[name]
+        node.mass = massMap[name]
         # totalMass += node.mass
 
     node = mcfg.getNode('Hips')
@@ -1040,15 +1040,14 @@ def walkings():
             joint_vec_tar[1] = 0.
             R_target_heel = mm.exp(swf_heel_func(t)*mm.logSO3(mm.getSO3FromVectors(joint_vec_cur, joint_vec_tar)))
             motion_stf_balancing[frame].mulJointOrientationGlobal(swingHeel, R_target_heel)
-        '''
+
         # stance foot ankle pushup adjustment
         # stf_ankle_func = yfg.hermite2nd
         stf_ankle_func = lambda x: -2*(x**2)+3*(x**3)
         if len(stanceFoots) == 1:
             for stanceFoot in stanceFoots:
-                R_target_ankle = mm.exp(stf_ankle_func(t)*mm.deg2Rad(30.)*np.array([1., 0., 0.]))
+                R_target_ankle = mm.exp(stf_ankle_func(t)*mm.deg2Rad(20.)*np.array([1., 0., 0.]))
                 motion_stf_balancing[frame].mulJointOrientationLocal(stanceFoot, R_target_ankle)
-        #'''
         #'''
         # stance foot toe adjustment
         # stf_toe_func = yfg.hermite2nd

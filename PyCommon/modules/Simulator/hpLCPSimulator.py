@@ -160,7 +160,7 @@ def getLCPMatrix(world, model, invM, invMc, mu, tau, contactNum, contactPosition
             (
                 np.concatenate((A11, A12,  np.zeros((A11.shape[0], E.shape[1]))),  axis=1),
                 np.concatenate((A21, A22,  E),                                     axis=1),
-                0.01*h * np.concatenate((mus, -E.T, np.zeros((mus.shape[0], E.shape[1]))),  axis=1),
+                0.001*h * np.concatenate((mus, -E.T, np.zeros((mus.shape[0], E.shape[1]))),  axis=1),
             ), axis=0
     )
     # A = A + 0.1*np.eye(A.shape[0])
@@ -219,7 +219,7 @@ def getLCPMatrixHD(world, model, invM, invMc, mu, ddth, contactNum, contactPosit
         (
             np.concatenate((A11, A12,  np.zeros((A11.shape[0], E.shape[1]))),  axis=1),
             np.concatenate((A21, A22,  E),                                     axis=1),
-            h * np.concatenate((mus, -E.T, np.zeros((mus.shape[0], E.shape[1]))),  axis=1),
+            0.001*h * np.concatenate((mus, -E.T, np.zeros((mus.shape[0], E.shape[1]))),  axis=1),
         ), axis=0
     )
     # A = A + 0.1*np.eye(A.shape[0])
@@ -325,8 +325,8 @@ def getLCPMatrixGenHD(world, model, invM, invMc, mu, ddth, tau, contactNum, cont
     # b1 = N.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau)
 
     # improved non-penentration condition : add position condition
-    # penDepth = 0.003
-    penDepth = 0.005
+    penDepth = 0.003
+    # penDepth = 0.005
     bPenDepth = np.zeros(A11.shape[0])
     for i in range(contactNum):
         if abs(contactPositions[i][1]) > penDepth:
@@ -347,7 +347,7 @@ def getLCPMatrixGenHD(world, model, invM, invMc, mu, ddth, tau, contactNum, cont
     b1 = JTN.T.dot(qdot_0) \
          + h*np.dot(JTNreArr.T, np.hstack((np.dot(M_small, ddthReArr[totalTorDOF:]), ddthReArr[totalTorDOF:]))) \
          + h*np.dot(JTN[:totalTorDOF].T, np.dot(M_schur, tauReArr[:totalTorDOF]) - invMcReArr[:totalTorDOF] + np.dot(M_small, invMcReArr[totalTorDOF:])) \
-         + 0.0* invh * bPenDepth
+         + 0.05* invh * bPenDepth
 
     b2 = JTD.T.dot(qdot_0) \
          + h*np.dot(JTDreArr.T, np.hstack((np.dot(M_small, ddthReArr[totalTorDOF:]), ddthReArr[totalTorDOF:]))) \
