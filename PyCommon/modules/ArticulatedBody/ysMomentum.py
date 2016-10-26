@@ -1,9 +1,6 @@
 import numpy as np
 
-import sys
-if '..' not in sys.path:
-    sys.path.append('..')
-import Math.mmMath as mm
+from ..Math import mmMath as mm
 
 #===============================================================================
 # Reference : Appendix A of Momentum Control for Balance, SIGGRAPH 2009

@@ -2,13 +2,18 @@ import copy, math
 import numpy as np 
 
 import sys
-if '..' not in sys.path:
-    sys.path.append('..')
-import Motion.ysMotion as ym
-import Motion.ysMotionAnalysis as yma
-import Motion.ysBipedAnalysis as yba
-import Math.ysFunctionGraph as yfg
-import Math.mmMath as mm
+# if '..' not in sys.path:
+#     sys.path.append('..')
+# import Motion.ysMotion as ym
+# import Motion.ysMotionAnalysis as yma
+# import Motion.ysBipedAnalysis as yba
+# import Math.ysFunctionGraph as yfg
+# import Math.mmMath as mm
+from PyCommon.modules.Motion import ysMotion as ym
+from PyCommon.modules.Motion import ysMotionAnalysis as yma
+from PyCommon.modules.Motion import ysBipedAnalysis as yba
+from PyCommon.modules.Math import ysFunctionGraph as yfg
+from PyCommon.modules.Math import mmMath as mm
 
 
 def align(motionToAlign, alignRefPosture_or_d, alignPosition=True, alignOrientation=True, pos_y_preserve=True, ori_xz_preserve=True, alignFrame=0):

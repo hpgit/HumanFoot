@@ -1,11 +1,8 @@
 import numpy as np
 
-import sys
-if '..' not in sys.path:
-    sys.path.append('..')
-import Math.mmMath as mm
-import Motion.ysMotionUtil as ymu
-import Util.ysPythonEx as ype
+from ..Math import mmMath as mm
+from ..Motion import ysMotionUtil as ymu
+from ..Util import ysPythonEx as ype
 
 #===============================================================================
 # Notice : 

@@ -1,9 +1,6 @@
 import numpy as np
 
-import sys
-if '..' not in sys.path:
-    sys.path.append('..')
-import Math.mmMath as mm
+from ..Math import mmMath as mm
 
 # th_r[0], th[0] : (Vec3, SO3), th_r[1:], th[1:] : SO3
 # dth_r, dth : Vec3

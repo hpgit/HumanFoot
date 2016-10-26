@@ -2,7 +2,7 @@
 
 #include "stdafx.h"
 
-#include "../../common_sources/bputil.h"
+#include "../../externalLibs/common/boostPythonUtil.h"
 #include "cBaseLibUtil.h"
 #include "csMetric.h"
 

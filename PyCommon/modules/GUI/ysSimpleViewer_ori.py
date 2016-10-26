@@ -1,13 +1,10 @@
 from fltk import *
 
-import sys
-if '..' not in sys.path:
-    sys.path.append('..')
-import Motion.ysMotion as ym
-import GUI.ysBaseUI as ybu
-import GUI.ysViewer3 as yv3
-import GUI.tree as tree
-import Mesh.ysMesh as yms
+from PyCommon.modules.Motion import ysMotion as ym
+from PyCommon.modules.GUI import ysBaseUI as ybu
+from PyCommon.modules.GUI import ysViewer3 as yv3
+from PyCommon.modules.GUI import tree
+from PyCommon.modules.Mesh import ysMesh as yms
 
 # EVENTS
 EV_addRenderer           = 0

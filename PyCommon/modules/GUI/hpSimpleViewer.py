@@ -1,5 +1,5 @@
-import ysSimpleViewer_ori as ysvOri
-import GUI.ysBaseUI as ybu
+from . import ysSimpleViewer_ori as ysvOri
+from ..GUI import ysBaseUI as ybu
 import fltk
 import cPickle
 import OpenGL.GL as gl

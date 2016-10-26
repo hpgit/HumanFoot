@@ -2,45 +2,38 @@ from fltk import *
 import copy, os.path, cPickle, time
 import numpy as np
 
-# if os.getcwd() != os.path.dirname(__file__):
-#     os.chdir(os.path.dirname(__file__))
+from PyCommon.modules.Math import mmMath as mm
+from PyCommon.modules.Math import csMath as cm
+from PyCommon.modules.Math import ysFunctionGraph as yfg
+from PyCommon.modules.Renderer import ysRenderer as yr
+from PyCommon.modules.Renderer import csVpRenderer as cvr
+from PyCommon.modules.Simulator import csVpWorld as cvw
+from PyCommon.modules.Simulator import csVpModel as cvm
+from PyCommon.modules.Simulator import ysVpUtil as yvu
+from PyCommon.modules.GUI import ysSimpleViewer as ysv
+from PyCommon.modules.GUI import ysMultiViewer as ymv
+from PyCommon.modules.ArticulatedBody import ysControl as yct
+from PyCommon.modules.ArticulatedBody import ysReferencePoints as yrp
+from PyCommon.modules.Motion import ysMotionAnalysis as yma
+from PyCommon.modules.Motion import ysBipedAnalysis as yba
+from PyCommon.modules.Motion import ysMotion as ym
+from PyCommon.modules.Motion import ysMotionBlend as ymb
+from PyCommon.modules.Motion import ysMotionExtend as ymt
+from PyCommon.modules.Motion import ysSkeletonEdit as yhe
+from PyCommon.modules.Motion import mmAnalyticIK as aik
+from PyCommon.modules.Util import ysMatplotEx as ymp
+from PyCommon.modules.Resource import ysMotionLoader as yf
+from PyCommon.modules.Simulator import ysPhysConfig as ypc
 
-import sys
-if '../PyCommon/modules' not in sys.path:
-    sys.path.append('../PyCommon/modules')
-
-current_path = os.path.dirname(os.path.abspath(__file__))
-if current_path+'/../PyCommon/modules' not in sys.path:
-    sys.path.append(current_path+'/../PyCommon/modules')
-
-import Math.mmMath as mm
-import Math.csMath as cm
-import Math.ysFunctionGraph as yfg
-import Renderer.ysRenderer as yr
-import Renderer.csVpRenderer as cvr
-import Simulator.csVpWorld as cvw
-import Simulator.csVpModel as cvm
-import Simulator.ysVpUtil as yvu
-import GUI.ysSimpleViewer as ysv
-import GUI.ysMultiViewer as ymv
-import ArticulatedBody.ysControl as yct
-import ArticulatedBody.ysReferencePoints as yrp
-import Motion.ysMotionAnalysis as yma
-import Motion.ysBipedAnalysis as yba
-import Motion.ysMotion as ym
-import Motion.ysMotionBlend as ymb
-import Motion.ysMotionExtend as ymt
-import Motion.ysSkeletonEdit as yhe
-import Motion.mmAnalyticIK as aik
-# import Util.ysMatplotEx as ymp
-import Resource.ysMotionLoader as yf
-import Simulator.ysPhysConfig as ypc
-
-import Simulator.hpLCPSimulator as hls
-import GUI.hpSimpleViewer as hsv
-import Util.ysPythonEx as ype
+from PyCommon.modules.Simulator import hpLCPSimulator as hls
+from PyCommon.modules.GUI import hpSimpleViewer as hsv
+from PyCommon.modules.Util import ysPythonEx as ype
 
 import math
+from matplotlib import pyplot as plt
+from matplotlib import collections
+
+current_path = os.path.dirname(os.path.abspath(__file__))
 
 #MOTION_COLOR = (128,128,128)
 #CHARACTER_COLOR = (102,102,153)
@@ -140,14 +133,14 @@ def buildMassMap():
 def buildMcfg():
     massMap = buildMassMap()
     mcfg = ypc.ModelConfig()
-    mcfg.defaultDensity = 1000.
+    mcfg.defaultDensity = 2000.
     mcfg.defaultBoneRatio = .9
 
     totalMass = 0.
     for name in massMap:
         node = mcfg.addNode(name)
-        node.mass = massMap[name]
-        totalMass += node.mass
+        # node.mass = massMap[name]
+        # totalMass += node.mass
 
     node = mcfg.getNode('Hips')
     node.length = .2
@@ -399,7 +392,6 @@ def walkings():
     ##    filename = 'wd2_WalkBackward00.bvh'
     #    filename = 'wd2_WalkBackward00_REPEATED.bvh'
 
-
     # motion
     #TODO:
     bvh = yf.readBvhFileAsBvh(dir+filename)
@@ -617,6 +609,7 @@ def walkings():
     rhip_torques = []
     rknee_torques = []
     rankle_torques = []
+    rankle_torques = []
 
     #===============================================================================
     # rendering
@@ -724,7 +717,7 @@ def walkings():
     viewer.setPostFrameCallback_Always(postFrameCallback_Always)
 
     plot = None
-    #    plot = ymp.InteractivePlot()
+    # plot = ymp.InteractivePlot()
     if plot is not None:
         plot.setXlimit(0, len(motion_ori))
         plot.setYlimit(-0.05, .05)
@@ -732,6 +725,7 @@ def walkings():
         plot.addDataSet('diff')
         plot.addDataSet('debug1')
         plot.addDataSet('debug2')
+
 
     def viewer_onClose(data):
         if plot!=None:
@@ -1035,7 +1029,6 @@ def walkings():
             for stanceFoot in stanceFoots:
                 if frame < 5: break
                 motion_stf_balancing[frame].mulJointOrientationGlobal(stanceFoot, R_stb)
-
         #TODO:
         # hwangpil
         # swing foot heel strike adjustment
@@ -1047,31 +1040,31 @@ def walkings():
             joint_vec_tar[1] = 0.
             R_target_heel = mm.exp(swf_heel_func(t)*mm.logSO3(mm.getSO3FromVectors(joint_vec_cur, joint_vec_tar)))
             motion_stf_balancing[frame].mulJointOrientationGlobal(swingHeel, R_target_heel)
-
+        '''
         # stance foot ankle pushup adjustment
         # stf_ankle_func = yfg.hermite2nd
-        stf_ankle_func = lambda x: -2*(x**8)+3*(x**9)
+        stf_ankle_func = lambda x: -2*(x**2)+3*(x**3)
         if len(stanceFoots) == 1:
             for stanceFoot in stanceFoots:
-                R_target_ankle = mm.exp(stf_ankle_func(t)*mm.deg2Rad(20.)*np.array([1., 0., 0.]))
+                R_target_ankle = mm.exp(stf_ankle_func(t)*mm.deg2Rad(30.)*np.array([1., 0., 0.]))
                 motion_stf_balancing[frame].mulJointOrientationLocal(stanceFoot, R_target_ankle)
-
+        #'''
+        #'''
         # stance foot toe adjustment
         # stf_toe_func = yfg.hermite2nd
         stf_toe_func = lambda x: -2*(x**8)+3*(x**9)
         if len(stanceFoots) == 1:
             for stanceToe in stanceToes:
-                '''
-                joint_vec_cur = np.dot(controlModel.getJointOrientationGlobal(stanceToe), np.array((0., 0., 1.)))
-                # joint_vec_cur = np.dot(motion_stf_balancing[frame].getJointOrientationGlobal(stanceToe), np.array((0., 0., 1.)))
-                joint_vec_tar = copy.deepcopy(joint_vec_cur)
-                joint_vec_tar[1] = 0.
-                # R_target_toe = mm.exp(stf_toe_func(t)*mm.logSO3(mm.getSO3FromVectors(joint_vec_cur, joint_vec_tar)))
-                R_target_toe = mm.getSO3FromVectors(joint_vec_cur, joint_vec_tar)
-                motion_stf_balancing[frame].mulJointOrientationGlobal(stanceToe, R_target_toe)
-                '''
+                # joint_vec_cur = np.dot(controlModel.getJointOrientationGlobal(stanceToe), np.array((0., 0., 1.)))
+                ## joint_vec_cur = np.dot(motion_stf_balancing[frame].getJointOrientationGlobal(stanceToe), np.array((0., 0., 1.)))
+                # joint_vec_tar = copy.deepcopy(joint_vec_cur)
+                # joint_vec_tar[1] = 0.
+                ## R_target_toe = mm.exp(stf_toe_func(t)*mm.logSO3(mm.getSO3FromVectors(joint_vec_cur, joint_vec_tar)))
+                # R_target_toe = mm.getSO3FromVectors(joint_vec_cur, joint_vec_tar)
+                # motion_stf_balancing[frame].mulJointOrientationGlobal(stanceToe, R_target_toe)
                 R_target_toe = mm.exp(stf_toe_func(t)*mm.deg2Rad(-30.)*np.array([1., 0., 0.]))
                 motion_stf_balancing[frame].mulJointOrientationLocal(stanceToe, R_target_toe)
+        #'''
 
             
 

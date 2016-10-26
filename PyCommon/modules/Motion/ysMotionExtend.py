@@ -1,16 +1,13 @@
 import copy
 import numpy as np
 
-import sys
-if '..' not in sys.path:
-    sys.path.append('..')
-import Math.mmMath as mm
-import Math.ysFunctionGraph as yfg
-import Motion.ysMotion as ym
-import Motion.ysMotionBlend as ymb
-import Motion.ysMotionAnalysis as yma
-import Motion.ysBipedAnalysis as yba
-import Motion.mmAnalyticIK as aik
+from PyCommon.modules.Math import mmMath as mm
+from PyCommon.modules.Math import ysFunctionGraph as yfg
+from PyCommon.modules.Motion import ysMotion as ym
+from PyCommon.modules.Motion import ysMotionBlend as ymb
+from PyCommon.modules.Motion import ysMotionAnalysis as yma
+from PyCommon.modules.Motion import ysBipedAnalysis as yba
+from PyCommon.modules.Motion import mmAnalyticIK as aik
 
 
 def repeatCycle(motion, cycleInterval, repeatNum, transitionLength, transitionFunc=yfg.identity):

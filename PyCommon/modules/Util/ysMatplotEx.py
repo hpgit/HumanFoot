@@ -21,16 +21,15 @@ import matplotlib
 #matplotlib.interactive(True)
 #matplotlib.use('FltkAgg')
 matplotlib.use('agg')
+# matplotlib.use('CocoaAgg')
+# matplotlib.use('Qt4Agg')
 
 from pylab import *
 from matplotlib.widgets import*
 from matplotlib import collections
 from matplotlib.colors import colorConverter
 
-import sys
-if '..' not in sys.path:
-    sys.path.append('..')
-import GUI.ysBaseUI as ybu
+from ..GUI import ysBaseUI as ybu
 
 class BasePlot:
     def __init__(self, title):
@@ -44,7 +43,7 @@ class BasePlot:
     def registerCallbacks(self, figure, window):
         self.window = window
         figure.canvas.mpl_connect('key_press_event', self.onKeyPress)
-        window.callback(self.onClose)        
+        window.callback(self.onClose)
     # key event handling
     def onKeyPress(self, event):
         INC = 10
@@ -316,7 +315,7 @@ class SmartPlot(BasePlot):
     
 
 if __name__ == "__main__":
-    import psyco; psyco.full()
+    # import psyco; psyco.full()
     from fltk import *
     import time
     import Math.mmMath as mmMath

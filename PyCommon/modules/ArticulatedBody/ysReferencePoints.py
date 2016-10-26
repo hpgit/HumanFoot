@@ -1,8 +1,4 @@
-
-import sys
-if '..' not in sys.path:
-    sys.path.append('..')
-import Math.mmMath as mm
+from ..Math import mmMath as mm
 
 def getCM(pos_or_vels, masses, totalMass=None, validIndexes=None):
     if validIndexes==None:

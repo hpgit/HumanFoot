@@ -3,23 +3,18 @@ import numpy as np
 import time
 import copy
 
-import sys
-
-sys.path.append('../PyCommon/modules')
-sys.path.append('..')
-
 import math
-import Math.mmMath as mm
-import Renderer.ysRenderer as yr
-import Renderer.csVpRenderer as cvr
-import Simulator.csVpWorld as cvw
-import Simulator.csVpModel as cvm
-import Simulator.hpLCPSimulator as hls
-import GUI.hpSimpleViewer as hsv
-import Util.ysPythonEx as ype
-import ArticulatedBody.ysControl as yct
-import GUI.hpSplineEditor as hse
-import ArticulatedBody.hpInvKine as hik
+import PyCommon.modules.Math.mmMath as mm
+import PyCommon.modules.Renderer.ysRenderer as yr
+import PyCommon.modules.Renderer.csVpRenderer as cvr
+import PyCommon.modules.Simulator.csVpWorld as cvw
+import PyCommon.modules.Simulator.csVpModel as cvm
+import PyCommon.modules.Simulator.hpLCPSimulator as hls
+import PyCommon.modules.GUI.hpSimpleViewer as hsv
+import PyCommon.modules.Util.ysPythonEx as ype
+import PyCommon.modules.ArticulatedBody.ysControl as yct
+import PyCommon.modules.GUI.hpSplineEditor as hse
+import PyCommon.modules.ArticulatedBody.hpInvKine as hik
 
 # import VirtualPhysics.vpBody as vpB
 # import VirtualPhysics.LieGroup as vpL

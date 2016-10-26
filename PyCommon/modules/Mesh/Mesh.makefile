@@ -4,7 +4,7 @@ ifeq ($(UNAME), Darwin)
 	FOLDER := lib.macosx-$(MACVER)-x86_64-2.7
 	MAC_OMP := $(shell clang-omp++ --version 2>/dev/null)
 ifdef MAC_OMP
-	SETUPFILE := setup_mac_omp.py
+	SETUPFILE := setup_mac.py
 	SETUPARG := --with-mac-omp
 else
 	SETUPFILE := setup_mac.py

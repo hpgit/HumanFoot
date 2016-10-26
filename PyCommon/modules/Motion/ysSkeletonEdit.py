@@ -1,10 +1,7 @@
 import numpy as np
 import math
 
-import sys
-if '..' not in sys.path:
-    sys.path.append('..')
-import Math.mmMath as mm
+from PyCommon.modules.Math import mmMath as mm
 
 def removeJoint(motion, joint_name_or_index, update=True):
     if isinstance(joint_name_or_index, int):

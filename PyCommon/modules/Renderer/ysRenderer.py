@@ -8,14 +8,14 @@ import numpy
 import sys
 if '..' not in sys.path:
     sys.path.append('..')
-# from PyCommon.modules.Math import mmMath as mm
-# from PyCommon.modules.Util import ysGlHelper as ygh
-# from PyCommon.modules.Motion import ysMotion as ym
-# from PyCommon.modules.Mesh import ysMesh as yms
-import Math.mmMath as mm
-import Util.ysGlHelper as ygh
-import Motion.ysMotion as ym
-import Mesh.ysMesh as yms
+from PyCommon.modules.Math import mmMath as mm
+from PyCommon.modules.Util import ysGlHelper as ygh
+from PyCommon.modules.Motion import ysMotion as ym
+from PyCommon.modules.Mesh import ysMesh as yms
+# import Math.mmMath as mm
+# import Util.ysGlHelper as ygh
+# import Motion.ysMotion as ym
+# import Mesh.ysMesh as yms
 
 # RendererContext
 NORMAL_FLAT = 0

@@ -1,5 +1,5 @@
 #pragma once
-#include "../../external_libraries/BaseLib/baselib.h"
+#include "../../externalLibs/BaseLib/baselib.h"
 
 #define PYSEQ_2_VECTOR3(seq)	(vector3(XD(seq[0]), XD(seq[1]), XD(seq[2])))
 

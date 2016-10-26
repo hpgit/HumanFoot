@@ -1,14 +1,6 @@
 import copy, math
 import numpy as np 
 
-import sys
-if '..' not in sys.path:
-    sys.path.append('..')
-import Motion.ysMotion as ym
-import Motion.ysMotionAnalysis as yma
-import Math.ysFunctionGraph as yfg
-import Math.mmMath as mmMath
-
 #===============================================================================
 # # skeleton
 #===============================================================================
@@ -48,7 +40,7 @@ if __name__=='__main__':
     import numpy
     import operator as op
     import Motion.ysMotion as ym
-    import Resource.ysMotionLoader as yf
+    from PyCommon.modules.Resource import ysMotionLoader as yf
     import Motion.ysMotionConverter as ymc
     import Util.ysMatplotEx as ymp
     import Util.ysPythonEx as ype

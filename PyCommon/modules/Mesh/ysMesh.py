@@ -2,10 +2,12 @@ import numpy
 import copy
 
 import sys
-if '..' not in sys.path:
-    sys.path.append('..')
-import Math.mmMath as mmMath
-import Motion.ysMotion as ym
+# if '..' not in sys.path:
+#     sys.path.append('..')
+# import Math.mmMath as mmMath
+# import Motion.ysMotion as ym
+from PyCommon.modules.Math import mmMath as mmMath
+from PyCommon.modules.Motion import ysMotion as ym
 
 class Vertex:
     def __init__(self):

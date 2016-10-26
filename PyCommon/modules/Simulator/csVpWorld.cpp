@@ -376,7 +376,7 @@ boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
 				{
 					position = verticesGlobal[k];
 					positionLocal = verticesLocal[k];
-					bool penentrated = position[1] <= planeHeight;
+					bool penentrated = position[1] <= planeHeight + LIE_EPS;
 					if (penentrated)
 					{
 					    ++numContactGeom;

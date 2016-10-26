@@ -2,18 +2,15 @@ from fltk import *
 import numpy as np
 import time
 
-import sys
-sys.path.append("../PyCommon/modules")
-
 import math
-import Renderer.ysRenderer as yr
-import Renderer.csVpRenderer as cvr
-import Simulator.csVpWorld as cvw
-import Simulator.csVpModel as cvm
-import Simulator.hpLCPSimulator as hls
-import GUI.hpSimpleViewer as hsv
-import Util.ysPythonEx as ype
-import ArticulatedBody.ysControl as yct
+import PyCommon.modules.Renderer.ysRenderer as yr
+import PyCommon.modules.Renderer.csVpRenderer as cvr
+import PyCommon.modules.Simulator.csVpWorld as cvw
+import PyCommon.modules.Simulator.csVpModel as cvm
+import PyCommon.modules.Simulator.hpLCPSimulator as hls
+import PyCommon.modules.GUI.hpSimpleViewer as hsv
+import PyCommon.modules.Util.ysPythonEx as ype
+import PyCommon.modules.ArticulatedBody.ysControl as yct
 
 import mtInitialize_Simple as mit
 

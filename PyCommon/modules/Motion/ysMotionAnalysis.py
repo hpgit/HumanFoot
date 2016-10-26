@@ -1,10 +1,12 @@
 import math
 
 import sys
-if '..' not in sys.path:
-    sys.path.append('..')
-import Math.mmMath as mmMath
-import Util.ysPythonEx as ype
+# if '..' not in sys.path:
+#     sys.path.append('..')
+# import Math.mmMath as mmMath
+# import Util.ysPythonEx as ype
+from PyCommon.modules.Math import mmMath
+from PyCommon.modules.Util import ysPythonEx as ype
 
 class FootState:
     STANCE = 0

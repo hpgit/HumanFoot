@@ -1,15 +1,15 @@
 import copy
 import numpy as np
 import numpy.linalg as npl
-import ysJacobian as yjc
-import Util.ysPythonEx as ype
-import ArticulatedBody.ysReferencePoints as yrp
-import ArticulatedBody.ysMomentum as ymt
-import ArticulatedBody.ysControl as yct
-import Math.mmMath as mm
+from . import ysJacobian as yjc
+from ..Util import ysPythonEx as ype
+from . import ysReferencePoints as yrp
+from . import ysMomentum as ymt
+from . import ysControl as yct
+from ..Math import mmMath as mm
 
-import Simulator.csVpModel as cvm
-import Simulator.csVpWorld as cvw
+from ..Simulator import csVpModel as cvm
+from ..Simulator import csVpWorld as cvw
 
 class numIkSolver:
     def __init__(self, _wcfg, _pose, _mcfg):

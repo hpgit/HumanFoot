@@ -19,7 +19,10 @@ import PyCommon.modules.ArticulatedBody.hpInvKine as hik
 # import VirtualPhysics.vpBody as vpB
 # import VirtualPhysics.LieGroup as vpL
 
-import mtInitialize_Simple as mit
+# import mtInitialize_Simple as mit
+
+import PyCommon.modules.Resource.ysMotionLoader as yf
+import PyCommon.modules.Simulator.ysPhysConfig as ypc
 
 
 MOTION_COLOR = (213, 111, 162)
@@ -44,7 +47,6 @@ mcfg = None
 wcfg = None
 stepsPerFrame = None
 config = None
-mcfg_motion = None
 
 vpWorld = None
 controlModel = None
@@ -85,7 +87,6 @@ def init():
     global wcfg
     global stepsPerFrame
     global config
-    global mcfg_motion
     global vpWorld
     global controlModel
     global totalDOF
@@ -109,37 +110,86 @@ def init():
     global solver
     global IKModel
 
+    def create_foot(motionFile='foot3.bvh'):
+        # motion
+        motion = yf.readBvhFile(motionFile, .05)
+
+        # world, model
+        mcfg = ypc.ModelConfig()
+        mcfg.defaultDensity = 1000.
+        mcfg.defaultBoneRatio = 1.
+        for i in range(motion[0].skeleton.getElementNum()):
+            mcfg.addNode(motion[0].skeleton.getElementName(i))
+        node = mcfg.getNode('root')
+        node.geom = 'MyFoot3'
+        # node.length = 1.
+        node.mass = 1.
+
+        node = mcfg.getNode('foot00')
+        node.geom = 'MyFoot4'
+        node.mass = 1.
+
+        node = mcfg.getNode('foot01')
+        node.geom = 'MyFoot4'
+        node.mass = 1.
+
+        def mcfgFix(_mcfg):
+            for v in _mcfg.nodes.itervalues():
+                if len(v.geoms) == 0:
+                    v.geoms.append(v.geom)
+                    v.geomMass.append(v.mass)
+                    v.geomTs.append(None)
+
+        # mcfgFix(mcfg)
+
+        wcfg = ypc.WorldConfig()
+        wcfg.planeHeight = 0.
+        wcfg.useDefaultContactModel = False
+        stepsPerFrame = 40
+        simulSpeedInv = 1.
+
+        wcfg.timeStep = (1/30.*simulSpeedInv)/stepsPerFrame
+
+        # parameter
+        config = dict([])
+        config['Kt'] = 20; config['Dt'] = 2*(config['Kt']**.5)  # tracking gain
+        config['Kl'] = 1; config['Dl'] = 2*(config['Kl']**.5)  # linear balance gain
+        config['Kh'] = 1; config['Dh'] = 2*(config['Kh']**.5)  # angular balance gain
+        config['Ks'] = 5000; config['Ds'] = 2*(config['Ks']**.5)  # penalty force spring gain
+        config['Bt'] = 1.
+        config['Bl'] = 1.
+        config['Bh'] = 1.
+        config['stepsPerFrame'] = stepsPerFrame
+        config['simulSpeedInv'] = simulSpeedInv
+
+        # etc
+        config['weightMap'] = {'root': 1., 'foot00': 1.}
+        config['weightMapTuple'] = (1., 1.)
+        # config['supLink'] = 'link0'
+
+        return motion, mcfg, wcfg, stepsPerFrame, config
+
     np.set_printoptions(precision=4, linewidth=200)
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_1()
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_5()
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_chiken_foot()
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('fastswim.bvh')
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot_2('simpleJump_2.bvh')
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_capsule('simpleJump_onebody.bvh')
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump_long.bvh')
-    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('../PyCommon/modules/samples/simpleJump_long_test2.bvh')
-    mcfg_motion = mit.normal_mcfg()
+    motion, mcfg, wcfg, stepsPerFrame, config = create_foot('test2.bvh')
 
     vpWorld = cvw.VpWorld(wcfg)
     controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
     motionModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)
     IKModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)
 
-    solver = hik.numIkSolver(wcfg, motion[0], mcfg)
+    # solver = hik.numIkSolver(wcfg, motion[0], mcfg)
 
     vpWorld.SetGlobalDamping(0.9999)
     # controlModel.initializeHybridDynamics()
     controlModel.initializeForwardDynamics()
-    ModelOffset = np.array([0., 2.42, 0.])
+    ModelOffset = np.array([0., 1.42, 0.])
     controlModel.translateByOffset(ModelOffset)
     motionModel.translateByOffset(ModelOffset)
 
     # ModelRotateOffset = np.array([[0.707, 0., 0.707],[0., 1., 0.],[-0.707, 0., 0.707]])
     # ModelRotateOffset = np.array([[1., 0., 0.],[0., 0., -1.],[0, 1., 0.]])
     ModelRotateOffset = np.array([[1., 0., 0.],[0., 0.707, -0.707],[0, 0.707, 0.707]])
-    # controlModel.rotate(ModelRotateOffset)
+    controlModel.rotate(ModelRotateOffset)
     # motionModel.rotate(ModelRotateOffset)
 
     vpWorld.SetIntegrator("RK4")
@@ -183,8 +233,7 @@ def init():
         rd_cForces, rd_cPositions, (0, 255, 0), .1))
     viewer.doc.addRenderer('rd_contactForceControl', yr.VectorsRenderer(
         rd_ForceControl, rd_Position, (0, 0, 255), .1))
-    viewer.doc.addRenderer('rd_contactForceDes', yr.VectorsRenderer(
-        rd_ForceDes, rd_PositionDes, (255, 0, 255), .1))
+    # viewer.doc.addRenderer('rd_contactForceDes', yr.VectorsRenderer(rd_ForceDes, rd_PositionDes, (255, 0, 255), .1))
     # viewer.doc.addRenderer('rd_jointPos', yr.PointsRenderer(rd_jointPos))
 
     viewer.objectInfoWnd.add1DSlider(
@@ -196,7 +245,7 @@ def init():
     viewer.objectInfoWnd.add1DSlider(
         '1/simul speed', minVal=1., maxVal=100., initVal=config['simulSpeedInv'], valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
-        'normal des force min', minVal=0., maxVal=1000., initVal=80., valStep=1.)
+        'normal des force min', minVal=0., maxVal=1000., initVal=0., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
         'normal des force max', minVal=0., maxVal=1000., initVal=80., valStep=1.)
     viewer.objectInfoWnd.add1DSlider(
@@ -314,6 +363,10 @@ class Callback:
         ddth_c = controlModel.getDOFAccelerations()
         ype.flatten(ddth_des, ddth_des_flat)
 
+        ddth_des_flat = np.zeros(len(ddth_des_flat))
+
+        ddth_des_flat[10] += getVal('normal des force min')/100.
+
         desForceFrameBegin = getVal('des force begin')
         desForceDuration = getVal('des force dur') * simulSpeedInv
         desForceFrame = [
@@ -348,7 +401,7 @@ class Callback:
         cForcesControl = None
 
         # if desForceFrame[0] <= frame <= desForceFrame[1]:
-        if True:
+        if False:
             # totalForceImpulse = stepsPerFrame * totalForce
             cBodyIDsControl, cPositionsControl, cPositionLocalsControl, cForcesControl, torques \
                 = hls.calcLCPbasicControl(
@@ -374,12 +427,14 @@ class Callback:
         else:
             torques *= 1.
 
+        contactStep = 0
         for i in range(int(stepsPerFrame)):
             if i % 5 == 0:
                 cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
-                    = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques, solver='qp')
+                    = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 10., torques, solver='qp')
 
             if i % 5 == 0 and len(cBodyIDs) > 0:
+                contactStep += 1
                 # apply contact forces
                 if False and not torque_None:
                     vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForcesControl)
@@ -392,6 +447,7 @@ class Callback:
             ype.nested(torques, torques_nested)
             controlModel.setDOFTorques(torques_nested[1:])
             vpWorld.step()
+        print('totalContactStep:', contactStep)
 
         self.setTimeStamp()
 

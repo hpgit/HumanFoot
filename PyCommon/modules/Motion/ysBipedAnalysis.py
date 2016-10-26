@@ -1,10 +1,14 @@
 import math
 
 import sys
-if '..' not in sys.path:
-    sys.path.append('..')
-import Util.ysPythonEx as ype
-import Motion.ysMotionAnalysis as yma
+
+# if '..' not in sys.path:
+#     sys.path.append('..')
+# import Util.ysPythonEx as ype
+# import Motion.ysMotionAnalysis as yma
+
+from PyCommon.modules.Util import ysPythonEx as ype
+from PyCommon.modules.Motion import ysMotionAnalysis as yma
 
 class GaitState:
     STOP = 0

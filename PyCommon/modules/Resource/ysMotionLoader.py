@@ -1,11 +1,8 @@
 import numpy, math
 
-import sys
-if '..' not in sys.path:
-    sys.path.append('..')
-import Math.mmMath as mm
-import Math.csMath as cm
-import Motion.ysMotion as ym
+from PyCommon.modules.Math import mmMath as mm
+from PyCommon.modules.Math import csMath as cm
+from PyCommon.modules.Motion import ysMotion as ym
 
 import copy
 

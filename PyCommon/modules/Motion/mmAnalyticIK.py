@@ -2,10 +2,7 @@
 
 import numpy as np
 
-import sys
-if '..' not in sys.path:
-    sys.path.append('..')
-import Math.mmMath as mm
+from PyCommon.modules.Math import mmMath as mm
 
 def ik_analytic(posture, joint_name_or_index, new_position):
     if isinstance(joint_name_or_index, int):

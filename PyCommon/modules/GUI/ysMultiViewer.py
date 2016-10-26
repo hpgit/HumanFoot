@@ -19,14 +19,20 @@ from fltk import *
 import copy
 
 import sys
-if '..' not in sys.path:
-    sys.path.append('..')
-import Motion.ysMotion as ym
-import GUI.ysBaseUI as ybu
-#import GUI.ysViewer3 as yv3
-import GUI.seViewer3_ys as yv3
-import GUI.tree as tree
-from GUI.ysViewer3 import *
+# if '..' not in sys.path:
+#     sys.path.append('..')
+# import Motion.ysMotion as ym
+# import GUI.ysBaseUI as ybu
+# #import GUI.ysViewer3 as yv3
+# import GUI.seViewer3_ys as yv3
+# import GUI.tree as tree
+# from GUI.ysViewer3 import *
+from PyCommon.modules.Motion import ysMotion as ym
+from PyCommon.modules.GUI import ysBaseUI as ybu
+# from PyCommon.modules.GUI import ysViewer3 as yv3
+from PyCommon.modules.GUI import seViewer3_ys as yv3
+from PyCommon.modules.GUI import tree as tree
+from PyCommon.modules.GUI.ysViewer3 import *
 
 Fl.scheme('default')
 

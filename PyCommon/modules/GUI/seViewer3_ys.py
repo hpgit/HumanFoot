@@ -26,12 +26,17 @@ from OpenGL.GLU import *
 from OpenGL.GLUT import *
 
 import sys
-if '..' not in sys.path:
-    sys.path.append('..')
-import Math.mmMath as mmMath
-import Util.ysGlHelper as ygh
-import GUI.tree as tree
-import Renderer.ysRenderer as yr
+# if '..' not in sys.path:
+#     sys.path.append('..')
+# import Math.mmMath as mmMath
+# import Util.ysGlHelper as ygh
+# import GUI.tree as tree
+# import Renderer.ysRenderer as yr
+
+from PyCommon.modules.Math import mmMath as mmMath
+from PyCommon.modules.Util import ysGlHelper as ygh
+from PyCommon.modules.GUI import tree as tree
+from PyCommon.modules.Renderer import ysRenderer as yr
 
 #import Util.ysEnums as yse
 

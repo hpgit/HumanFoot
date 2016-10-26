@@ -5,19 +5,19 @@ from cvxopt import solvers as cvxSolvers
 
 # from openopt import LCP as openLCP
 
-import ArticulatedBody.ysJacobian as yjc
+from PyCommon.modules.ArticulatedBody import ysJacobian as yjc
 
-import Util.ysPythonEx as ype
-import Math.mmMath as mm
+from PyCommon.modules.Util import ysPythonEx as ype
+from PyCommon.modules.Math import mmMath as mm
 
-import VirtualPhysics.LieGroup as VPL
+from PyCommon.modules.VirtualPhysics import LieGroup as VPL
 
 import numpy as np
 import numpy.linalg as npl
 import math
 
 # import scipy.optimize as spopt
-import Optimization.csQPOASES as qpos
+from PyCommon.modules.Optimization import csQPOASES as qpos
 
 import time
 from copy import deepcopy
@@ -33,7 +33,7 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
 
     cNum = len(cVpBodyIds)
     if cNum == 0:
-        return len(cVpBodyIds), cVpBodyIds, cPositions, cPositionsLocal, None, None, None, None, None
+        return len(cVpBodyIds), cVpBodyIds, cPositions, cPositionsLocal, cVelocities, None, None, None, None, None
     d = [None]*numFrictionBases
 
     DOFs = model.getDOFs()
@@ -96,7 +96,7 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
         for fcIdx in range(numFrictionBases):
             E[cIdx*numFrictionBases + fcIdx][cIdx] = 1.
 
-    return len(cVpBodyIds), cVpBodyIds, cPositions, cPositionsLocal, JTN, JTD, E, N, D
+    return len(cVpBodyIds), cVpBodyIds, cPositions, cPositionsLocal, cVelocities, JTN, JTD, E, N, D
 
 
 def repairForces(forces, contactPositions):
@@ -160,7 +160,7 @@ def getLCPMatrix(world, model, invM, invMc, mu, tau, contactNum, contactPosition
             (
                 np.concatenate((A11, A12,  np.zeros((A11.shape[0], E.shape[1]))),  axis=1),
                 np.concatenate((A21, A22,  E),                                     axis=1),
-                h * np.concatenate((mus, -E.T, np.zeros((mus.shape[0], E.shape[1]))),  axis=1),
+                0.01*h * np.concatenate((mus, -E.T, np.zeros((mus.shape[0], E.shape[1]))),  axis=1),
             ), axis=0
     )
     # A = A + 0.1*np.eye(A.shape[0])
@@ -264,7 +264,7 @@ def getLCPMatrixHD(world, model, invM, invMc, mu, ddth, contactNum, contactPosit
     return A, b
 
 
-def getLCPMatrixGenHD(world, model, invM, invMc, mu, ddth, tau, contactNum, contactPositions, JTN, JTD, E, factor=1., hdAccMask=None):
+def getLCPMatrixGenHD(world, model, invM, invMc, mu, ddth, tau, contactNum, contactPositions, contactVelocities, JTN, JTD, E, factor=1., hdAccMask=None):
 
     if hdAccMask is None:
         hdAccMask = [True]*invM.shape[0]
@@ -325,20 +325,34 @@ def getLCPMatrixGenHD(world, model, invM, invMc, mu, ddth, tau, contactNum, cont
     # b1 = N.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau)
 
     # improved non-penentration condition : add position condition
-    penDepth = 0.003
+    # penDepth = 0.003
+    penDepth = 0.005
     bPenDepth = np.zeros(A11.shape[0])
     for i in range(contactNum):
         if abs(contactPositions[i][1]) > penDepth:
             bPenDepth[i] = contactPositions[i][1] + penDepth
 
+    # additional friction
+    fricVel = 0.01
+    bFricVel = np.zeros(A21.shape[0])
+    for i in range(contactNum):
+        vel = fricVel * mm.normalize2(np.array([contactVelocities[i][0], 0, contactVelocities[i][2]]))
+        if abs(contactVelocities[i][0]*contactVelocities[i][0]+contactVelocities[i][2]*contactVelocities[i][2]) > fricVel*fricVel:
+            for j in range(8):
+                dBasis = np.array([[math.cos(2.*math.pi*j/8.), 0., math.sin(2.*math.pi*j/8.)]])
+                bFricVel[8*i + j] = np.dot(dBasis, vel)
+
+
+
     b1 = JTN.T.dot(qdot_0) \
          + h*np.dot(JTNreArr.T, np.hstack((np.dot(M_small, ddthReArr[totalTorDOF:]), ddthReArr[totalTorDOF:]))) \
          + h*np.dot(JTN[:totalTorDOF].T, np.dot(M_schur, tauReArr[:totalTorDOF]) - invMcReArr[:totalTorDOF] + np.dot(M_small, invMcReArr[totalTorDOF:])) \
-         + 0.05 * invh * bPenDepth
+         + 0.0* invh * bPenDepth
 
     b2 = JTD.T.dot(qdot_0) \
          + h*np.dot(JTDreArr.T, np.hstack((np.dot(M_small, ddthReArr[totalTorDOF:]), ddthReArr[totalTorDOF:]))) \
-         + h*np.dot(JTD[:totalTorDOF].T, np.dot(M_schur, tauReArr[:totalTorDOF]) - invMcReArr[:totalTorDOF] + np.dot(M_small, invMcReArr[totalTorDOF:]))
+         + h*np.dot(JTD[:totalTorDOF].T, np.dot(M_schur, tauReArr[:totalTorDOF]) - invMcReArr[:totalTorDOF] + np.dot(M_small, invMcReArr[totalTorDOF:])) \
+         + 0.0 * invh * bFricVel
 
     b3 = np.zeros(mus.shape[0])
 
@@ -353,7 +367,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
     prevTime = time.time()
 
     # model = VpControlModel
-    contactNum, bodyIDs, contactPositions, contactPositionsLocal, JTN, JTD, E, N, D\
+    contactNum, bodyIDs, contactPositions, contactPositionsLocal, contactVelocities, JTN, JTD, E, N, D\
         = makeFrictionCone(motion[0].skeleton, world, model, bodyIDsToCheck, numFrictionBases)
 
     if contactNum == 0:
@@ -477,6 +491,8 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
     tangenForce = x[contactNum:contactNum + numFrictionBases*contactNum]
     # tangenForce = np.zeros_like(x[contactNum:contactNum + numFrictionBases*contactNum])
     minTangenVel = x[contactNum + numFrictionBases*contactNum:]
+    # print minTangenVel
+    print (np.dot(A,x)+b)[contactNum:contactNum+numFrictionBases*contactNum]
 
 
 
@@ -502,7 +518,7 @@ def calcLCPForcesIter(motion, world, model, bodyIDsToCheck, mu, tau=None, numFri
     prevTime = time.time()
 
     # model = VpControlModel
-    contactNum, bodyIDs, contactPositions, contactPositionsLocal, JTN, JTD, E, N, D \
+    contactNum, bodyIDs, contactPositions, contactPositionsLocal, contactVelocities, JTN, JTD, E, N, D \
         = makeFrictionCone(motion[0].skeleton, world, model, bodyIDsToCheck, numFrictionBases)
 
     if contactNum == 0:
@@ -641,7 +657,7 @@ def calcLCPForcesVert(motion, world, model, bodyIDsToCheck, mu, tau=None, numFri
     prevTime = time.time()
 
     # model = VpControlModel
-    contactNum, bodyIDs, contactPositions, contactPositionsLocal, JTN, JTD, E, N, D \
+    contactNum, bodyIDs, contactPositions, contactPositionsLocal, contactVelocities, JTN, JTD, E, N, D \
         = makeFrictionCone(motion[0].skeleton, world, model, bodyIDsToCheck, numFrictionBases)
 
     if contactNum == 0:
@@ -772,7 +788,7 @@ def calcLCPForcesHD(motion, world, model, bodyIDsToCheck, mu, ddth, tau, numFric
     prevTime = time.time()
 
     # model = VpControlModel
-    contactNum, bodyIDs, contactPositions, contactPositionsLocal, JTN, JTD, E, N, D \
+    contactNum, bodyIDs, contactPositions, contactPositionsLocal, contactVelocities, JTN, JTD, E, N, D \
         = makeFrictionCone(motion[0].skeleton, world, model, bodyIDsToCheck, numFrictionBases)
 
     if contactNum == 0:
@@ -796,7 +812,7 @@ def calcLCPForcesHD(motion, world, model, bodyIDsToCheck, mu, ddth, tau, numFric
 
     factor = 1.
     # A, b = getLCPMatrixHD(world, model, invM, invMc, mu, ddth[6:], contactNum, contactPositions, JTN, JTD, E, factor)
-    A, b = getLCPMatrixGenHD(world, model, invM, invMc, mu, ddth, tau, contactNum, contactPositions, JTN, JTD, E, factor, hdAccMask)
+    A, b = getLCPMatrixGenHD(world, model, invM, invMc, mu, ddth, tau, contactNum, contactPositions, contactVelocities, JTN, JTD, E, factor, hdAccMask)
 
     # lo = np.zeros(A.shape[0])
     lo = 0.*np.ones(A.shape[0])
@@ -905,9 +921,20 @@ def calcLCPForcesHD(motion, world, model, bodyIDsToCheck, mu, ddth, tau, numFric
     for cIdx in range(contactNum):
         force = np.zeros(3)
         force[1] = normalForce[cIdx]
+
+        # if(tangentialRelVel < _lockingVel)
+        #     frictionForce *= tangentialRelVel/_lockingVel;
+        tangenVel = deepcopy(contactVelocities[cIdx])
+        tangenVel[1] = 0.
+        tangenRatio = npl.norm(tangenVel)/0.02
+
+
         for fcIdx in range(numFrictionBases):
             d = np.array((math.cos(2.*math.pi*fcIdx/numFrictionBases), 0., math.sin(2.*math.pi*fcIdx/numFrictionBases)))
-            force += tangenForce[cIdx*numFrictionBases + fcIdx] * d
+            if tangenRatio > 1.:
+                force += tangenForce[cIdx*numFrictionBases + fcIdx] * d
+            else:
+                force += tangenForce[cIdx*numFrictionBases + fcIdx] * d * tangenRatio
         # print force
         forces.append(force)
 
@@ -920,7 +947,7 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, weights
     # tau0 = None
     # model = VpControlModel
     # numFrictionBases = 8
-    contactNum, bodyIDs, contactPositions, contactPositionsLocal, JTN, JTD, E, N, D \
+    contactNum, bodyIDs, contactPositions, contactPositionsLocal, contactVelocities, JTN, JTD, E, N, D \
         = makeFrictionCone(motion[0].skeleton, world, model, bodyIDsToCheck, numFrictionBases)
     if contactNum == 0:
         return bodyIDs, contactPositions, contactPositionsLocal, None, None
@@ -1157,7 +1184,7 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, we
     # tau0 = None
     # model = VpControlModel
     # numFrictionBases = 8
-    contactNum, bodyIDs, contactPositions, contactPositionsLocal, JTN, JTD, E, N, D \
+    contactNum, bodyIDs, contactPositions, contactPositionsLocal, contactVelocities, JTN, JTD, E, N, D \
         = makeFrictionCone(motion[0].skeleton, world, model, bodyIDsToCheck, numFrictionBases)
     if contactNum == 0:
         return bodyIDs, contactPositions, contactPositionsLocal, None, None
@@ -1520,7 +1547,7 @@ def calcLCPbasicControl2(motion, world, model, bodyIDsToCheck, mu, totalForce, w
     # tau0 = None
     # model = VpControlModel
     # numFrictionBases = 8
-    contactNum, bodyIDs, contactPositions, contactPositionsLocal, JTN, JTD, E, N, D \
+    contactNum, bodyIDs, contactPositions, contactPositionsLocal, contactVelocities, JTN, JTD, E, N, D \
         = makeFrictionCone(motion[0].skeleton, world, model, bodyIDsToCheck, numFrictionBases)
     if contactNum == 0:
         return bodyIDs, contactPositions, contactPositionsLocal, None, None
@@ -1747,7 +1774,7 @@ def calcIterLCPControl(iterNum, motion, world, model, bodyIDsToCheck, mu, totalF
     # tau0 = None
     # model = VpControlModel
     # numFrictionBases = 8
-    contactNum, bodyIDs, contactPositions, contactPositionsLocal, JTN, JTD, E, N, D \
+    contactNum, bodyIDs, contactPositions, contactPositionsLocal, contactVelocities, JTN, JTD, E, N, D \
         = makeFrictionCone(motion[0].skeleton, world, model, bodyIDsToCheck, numFrictionBases)
     if contactNum == 0:
         return bodyIDs, contactPositions, contactPositionsLocal, None, None

@@ -4,11 +4,14 @@ import numpy as np
 import operator as op
 
 import sys
-if '..' not in sys.path:
-    sys.path.append('..')
-import Math.mmMath as mm
-import Math.csMath as cm
-import Util.ysPythonEx as ype
+# if '..' not in sys.path:
+#     sys.path.append('..')
+# import Math.mmMath as mm
+# import Math.csMath as cm
+# import Util.ysPythonEx as ype
+from PyCommon.modules.Math import mmMath as mm
+from PyCommon.modules.Math import csMath as cm
+from PyCommon.modules.Util import ysPythonEx as ype
 
 #===============================================================================
 # motion classes
