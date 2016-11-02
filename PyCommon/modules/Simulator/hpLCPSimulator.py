@@ -25,6 +25,7 @@ from copy import deepcopy
 # import cvxpy as cvx
 
 
+
 def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
     cVpBodyIds, cPositions, cPositionsLocal, cVelocities = world.getContactPoints(bodyIDsToCheck)
     N = None
@@ -76,9 +77,7 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
         offsetAngle = np.arctan2(cVel[2], cVel[0])
         offsetAngle = 0.
         for i in range(numFrictionBases):
-            d[i] = np.array([[math.cos(offsetAngle + 2.*math.pi*i/numFrictionBases),
-                              0.,
-                              math.sin(offsetAngle + 2.*math.pi*i/numFrictionBases)
+            d[i] = np.array([[math.cos((2.*math.pi*i)/numFrictionBases), 0., math.sin((2.*math.pi*i)/numFrictionBases)
                               , 0., 0., 0.
                               ]]).T
 
@@ -160,7 +159,7 @@ def getLCPMatrix(world, model, invM, invMc, mu, tau, contactNum, contactPosition
             (
                 np.concatenate((A11, A12,  np.zeros((A11.shape[0], E.shape[1]))),  axis=1),
                 np.concatenate((A21, A22,  E),                                     axis=1),
-                0.001*h * np.concatenate((mus, -E.T, np.zeros((mus.shape[0], E.shape[1]))),  axis=1),
+                h * np.concatenate((mus, -E.T, np.zeros((mus.shape[0], E.shape[1]))),  axis=1),
             ), axis=0
     )
     # A = A + 0.1*np.eye(A.shape[0])
@@ -492,23 +491,64 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
     # tangenForce = np.zeros_like(x[contactNum:contactNum + numFrictionBases*contactNum])
     minTangenVel = x[contactNum + numFrictionBases*contactNum:]
     # print minTangenVel
-    print (np.dot(A,x)+b)[contactNum:contactNum+numFrictionBases*contactNum]
 
-
+    tangenForceDual = (np.dot(A,x)+b)[contactNum:contactNum+numFrictionBases*contactNum]
+    # print "hehe:", (np.dot(A,x)+b)[contactNum:contactNum+numFrictionBases*contactNum]
+    # print "hihi:", tangenForce
+    # print np.dot(tangenForce, tangenForceDual)
 
     forces = []
     for cIdx in range(contactNum):
         force = np.zeros(3)
         force[1] = normalForce[cIdx]
+        # contactTangenForce = tangenForce[8*cIdx:8*(cIdx+1)]
+        contactTangenForceDual = tangenForceDual[8*cIdx:8*(cIdx+1)]
         for fcIdx in range(numFrictionBases):
             d = np.array((math.cos(2.*math.pi*fcIdx/numFrictionBases), 0., math.sin(2.*math.pi*fcIdx/numFrictionBases)))
             force += tangenForce[cIdx*numFrictionBases + fcIdx] * d
-        # print force
+
+        # minBasisIdx = np.argmin(contactTangenForceDual)
+        # d = np.array((math.cos((2.*math.pi*minBasisIdx)/numFrictionBases), 0., math.sin((2.*math.pi*minBasisIdx)/numFrictionBases)))
+        # force += tangenForce[cIdx*numFrictionBases + minBasisIdx] * d
+
         forces.append(force)
 
     # repairForces(forces, contactPositions)
     # print forces
     timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
+
+
+
+    # debug
+    __HP__DEBUG__= True
+    if __HP__DEBUG__ and len(bodyIDs) ==4:
+        vpidx = 3
+        DOFs = model.getDOFs()
+        Jic = yjc.makeEmptyJacobian(DOFs, 1)
+
+        qdot_0 = ype.makeFlatList(totalDOF)
+        ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
+
+        jointAxeses = model.getBodyRootDOFAxeses()
+        bodyidx = model.id2index(bodyIDs[vpidx])
+        contactJointMasks = [yjc.getLinkJointMask(motion[0].skeleton, bodyidx)]
+
+        jointPositions = model.getJointPositionsGlobal()
+        jointPositions[0] = model.getBodyPositionGlobal(0)
+        yjc.computeLocalRootJacobian(Jic, DOFs, jointPositions, jointAxeses, [contactPositions[vpidx]], contactJointMasks)
+
+        h = world.GetTimeStep()
+        vv = np.dot(Jic, qdot_0) - h * np.dot(Jic, invMc) + h * np.dot(Jic, np.dot(invM, tau))
+        for vpidxx in range(len(bodyIDs)):
+            bodyidx = model.id2index(bodyIDs[vpidxx])
+            contactJointMasks = [yjc.getLinkJointMask(motion[0].skeleton, bodyidx)]
+            yjc.computeLocalRootJacobian(Jic, DOFs, jointPositions, jointAxeses, [contactPositions[vpidxx]], contactJointMasks)
+            vv += h * np.dot(Jic, np.dot(invM, np.dot(Jic[:3].T, forces[vpidxx])))
+
+        print "vv:", vv[:3]
+
+
+
     return bodyIDs, contactPositions, contactPositionsLocal, forces, timeStamp
 
 
@@ -915,6 +955,7 @@ def calcLCPForcesHD(motion, world, model, bodyIDsToCheck, mu, ddth, tau, numFric
     # tangenForce = np.zeros_like(x[contactNum:contactNum + numFrictionBases*contactNum])
     minTangenVel = x[contactNum + numFrictionBases*contactNum:]
 
+    tangenForceDual = (np.dot(A,x)+b)[contactNum:contactNum+numFrictionBases*contactNum]
 
 
     forces = []
@@ -929,13 +970,23 @@ def calcLCPForcesHD(motion, world, model, bodyIDsToCheck, mu, ddth, tau, numFric
         tangenRatio = npl.norm(tangenVel)/0.02
 
 
-        for fcIdx in range(numFrictionBases):
-            d = np.array((math.cos(2.*math.pi*fcIdx/numFrictionBases), 0., math.sin(2.*math.pi*fcIdx/numFrictionBases)))
-            if tangenRatio > 1.:
-                force += tangenForce[cIdx*numFrictionBases + fcIdx] * d
-            else:
-                force += tangenForce[cIdx*numFrictionBases + fcIdx] * d * tangenRatio
-        # print force
+        # for fcIdx in range(numFrictionBases):
+        #     d = np.array((math.cos(2.*math.pi*fcIdx/numFrictionBases), 0., math.sin(2.*math.pi*fcIdx/numFrictionBases)))
+        #     force += tangenForce[cIdx*numFrictionBases + fcIdx] * d
+        #     # if tangenRatio > 1.:
+        #     #     force += tangenForce[cIdx*numFrictionBases + fcIdx] * d
+        #     # else:
+        #     #     force += tangenForce[cIdx*numFrictionBases + fcIdx] * d * tangenRatio
+
+        contactTangenForceDual = tangenForceDual[8*cIdx:8*(cIdx+1)]
+        # for fcIdx in range(numFrictionBases):
+        #     d = np.array((math.cos(2.*math.pi*fcIdx/numFrictionBases), 0., math.sin(2.*math.pi*fcIdx/numFrictionBases)))
+        #     force += tangenForce[cIdx*numFrictionBases + fcIdx] * d
+
+        minBasisIdx = np.argmin(contactTangenForceDual)
+        d = np.array((math.cos((2.*math.pi*minBasisIdx)/numFrictionBases), 0., math.sin((2.*math.pi*minBasisIdx)/numFrictionBases)))
+        force += tangenForce[cIdx*numFrictionBases + minBasisIdx] * d
+
         forces.append(force)
 
     # repairForces(forces, contactPositions)

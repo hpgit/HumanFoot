@@ -7,15 +7,15 @@ ROOT root
 	{
 		OFFSET	 -10.0	 -10.00	 0.00
 		CHANNELS 3 Zrotation Xrotation Yrotation
-	JOINT foot01
-	{
-		OFFSET	 10.0	 -10.00	 0.00
-		CHANNELS 3 Zrotation Xrotation Yrotation
-			End Site
-			{
-				OFFSET	 00.00	 -10.00	 0.00
-			}
-	}
+        JOINT foot01
+        {
+            OFFSET	 10.0	 -10.00	 0.00
+            CHANNELS 3 Zrotation Xrotation Yrotation
+            End Site
+            {
+                OFFSET	 00.00	 -10.00	 0.00
+            }
+        }
 	}
 }
 MOTION

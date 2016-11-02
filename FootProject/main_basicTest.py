@@ -65,6 +65,7 @@ ddth_des_flat = None
 dth_flat = None
 ddth_sol = None
 
+rd_point2 = None
 rd_cForces = None
 rd_cPositions = None
 
@@ -105,6 +106,7 @@ def init():
     global rd_ForceDes
     global rd_Position
     global rd_PositionDes
+    global rd_point2
     global viewer
     global motionModel
     global solver
@@ -121,16 +123,19 @@ def init():
         for i in range(motion[0].skeleton.getElementNum()):
             mcfg.addNode(motion[0].skeleton.getElementName(i))
         node = mcfg.getNode('root')
-        node.geom = 'MyFoot3'
+        # node.geom = 'MyFoot3'
+        node.geom = 'MyBox'
         # node.length = 1.
         node.mass = 1.
 
         node = mcfg.getNode('foot00')
         node.geom = 'MyFoot4'
+        node.geom = 'MyBox'
         node.mass = 1.
 
         node = mcfg.getNode('foot01')
         node.geom = 'MyFoot4'
+        node.geom = 'MyBox'
         node.mass = 1.
 
         def mcfgFix(_mcfg):
@@ -219,6 +224,8 @@ def init():
     rd_PositionDes = [None]
     rd_jointPos = [None]
 
+    rd_point2 = [None]
+
     viewer = hsv.hpSimpleViewer(title='main_Test')
     viewer.doc.addObject('motion', motion)
     # viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(
@@ -235,6 +242,7 @@ def init():
         rd_ForceControl, rd_Position, (0, 0, 255), .1))
     # viewer.doc.addRenderer('rd_contactForceDes', yr.VectorsRenderer(rd_ForceDes, rd_PositionDes, (255, 0, 255), .1))
     # viewer.doc.addRenderer('rd_jointPos', yr.PointsRenderer(rd_jointPos))
+    viewer.doc.addRenderer('rd_point2', yr.PointsRenderer(rd_point2, (255,0,0)))
 
     viewer.objectInfoWnd.add1DSlider(
         'PD gain', minVal=0., maxVal=200., initVal=10., valStep=.1)
@@ -365,7 +373,7 @@ class Callback:
 
         ddth_des_flat = np.zeros(len(ddth_des_flat))
 
-        ddth_des_flat[10] += getVal('normal des force min')/100.
+        ddth_des_flat[10] += getVal('normal des force min')/50.
 
         desForceFrameBegin = getVal('des force begin')
         desForceDuration = getVal('des force dur') * simulSpeedInv
@@ -428,12 +436,13 @@ class Callback:
             torques *= 1.
 
         contactStep = 0
+        cPositions = None
         for i in range(int(stepsPerFrame)):
-            if i % 5 == 0:
+            if i % 5 == 4:
                 cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
                     = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 10., torques, solver='qp')
 
-            if i % 5 == 0 and len(cBodyIDs) > 0:
+            if i % 5 == 4 and len(cBodyIDs) > 0:
                 contactStep += 1
                 # apply contact forces
                 if False and not torque_None:
@@ -443,6 +452,8 @@ class Callback:
                     vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForces)
                     simulContactForces += sum(cForces)
                     # simulContactForces += sum(cForces)
+                    print "angVel:", controlModel.getBodyAngVelocityGlobal(2)
+                    print cBodyIDs[-1], cPositions[-1], cForces[-1]
 
             ype.nested(torques, torques_nested)
             controlModel.setDOFTorques(torques_nested[1:])
@@ -450,6 +461,10 @@ class Callback:
         print('totalContactStep:', contactStep)
 
         self.setTimeStamp()
+
+        del rd_point2[:]
+        if cPositions is not None:
+            rd_point2.extend(cPositions)
 
         # rendering expected force
         del rd_cForcesControl[:]

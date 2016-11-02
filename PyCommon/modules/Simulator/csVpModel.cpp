@@ -295,9 +295,11 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 					if (height <= 0.)
 					    height = Norm(offset) + 2*radius;
 
-					vpMaterial *pMaterial = new vpMaterial();
-					pMaterial->SetDensity(density);
-					pNode->body.SetMaterial(pMaterial);
+					// vpMaterial *pMaterial = new vpMaterial();
+					// pMaterial->SetDensity(density);
+					// pNode->body.SetMaterial(pMaterial);
+					pNode->material.SetDensity(density);
+					pNode->body.SetMaterial(&(pNode->material));
 
 					SE3 geomT;
 					geomT.SetEye();
@@ -323,9 +325,11 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 					scalar length = XD(cfgNode.attr("geomMaterial")[i].attr("length"));
 					scalar height = XD(cfgNode.attr("geomMaterial")[i].attr("height"));
 
-					vpMaterial *pMaterial = new vpMaterial();
-					pMaterial->SetDensity(density);
-					pNode->body.SetMaterial(pMaterial);
+					// vpMaterial *pMaterial = new vpMaterial();
+					// pMaterial->SetDensity(density);
+					// pNode->body.SetMaterial(pMaterial);
+					pNode->material.SetDensity(density);
+					pNode->body.SetMaterial(&(pNode->material));
 
 					SE3 geomT;
 					geomT.SetEye();
