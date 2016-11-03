@@ -22,6 +22,7 @@ public:
 		vpBody body;
 		vpMaterial material;
 		vpBJoint joint;
+		vpJoint *pJoint;
 		int dof;
 		bool use_joint;
 		unsigned char color[4];
@@ -162,7 +163,7 @@ public:	// expose to python
 
 class VpControlModel : public VpModel
 {
-private:
+public:
 //	vector<int> _jointElementIndexes;
 
 	void ignoreCollisionBtwnBodies();
@@ -326,4 +327,13 @@ public:	// expose to python
 	bp::list getEquationOfMotion(object& M, object& b);// buggy
 	//void stepKinematics( double dt, const object& acc);
 	void stepKinematics( double dt, const bp::list& accs);
+};
+
+class VpGenControlModel : private VpControlModel
+{
+	VpGenControlModel(VpWorld* pWorld, const object& createPosture, const object& config);
+
+	void _createJoint(const object& joint, const object& posture);
+	void _updateJoint(const object& joint, const object& posture);
+
 };

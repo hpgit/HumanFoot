@@ -55,6 +55,7 @@ class Node:
         self.length = None
         self.width = None
         self.geom = 'MyBox'
+        self.jointType = 'B'
 
         self.jointAxes = []
         self.jointLoStop = -ode.Infinity

@@ -1120,7 +1120,8 @@ int VpControlModel::getTotalInternalJointDOF()
 {
 	int dof = 0;
 	for(int i=1; i<_nodes.size(); ++i)
-		dof += 3;
+		dof += _nodes[i]->dof;
+		// dof += 3;
 	return dof;
 }
 
@@ -1137,7 +1138,8 @@ int VpControlModel::getTotalDOF()
 	int dof = 0;
 	dof += 6;
 	for(int i=1; i<_nodes.size(); ++i)
-		dof += 3;
+		dof += _nodes[i]->dof;
+		// dof += 3;
 	return dof;
 }
 
@@ -2659,3 +2661,212 @@ void VpControlModel::stepKinematics(double dt, const bp::list& accs)
 	//}
 }
 
+VpGenControlModel::VpGenControlModel(VpWorld* pWorld, const object& createPosture, const object& config)
+	:VpModel(pWorld, createPosture, config)
+{
+	addBodiesToWorld(createPosture);
+	ignoreCollisionBtwnBodies();
+
+	object tpose = createPosture.attr("getTPose")();
+	createJoints(tpose);
+
+	update(createPosture);
+
+	addBody(true);
+
+}
+
+void VpGenControlModel::_createJoint(const object& joint, const object& posture)
+{
+	int len_joint_children = len(joint.attr("children")); 
+	if (len_joint_children == 0 )
+		return;
+
+	SE3 invLocalT;
+
+	object offset = joint.attr("offset");
+	SE3 P = SE3(pyVec3_2_Vec3(joint.attr("offset")));
+
+	string joint_name = XS(joint.attr("name"));
+//	int joint_index = XI(posture.attr("skeleton").attr("getElementIndex")(joint_name));
+//	SE3 R = pySO3_2_SE3(posture.attr("getLocalR")(joint_index));
+	int joint_index = XI(posture.attr("skeleton").attr("getJointIndex")(joint_name));
+	SE3 R = pySO3_2_SE3(posture.attr("getJointOrientationLocal")(joint_index));
+
+	// parent      <--------->        child
+	// link     L1      L2      L3      L4
+	// L4_M =  P1*R1 * P2*R2 * P3*R3 * P4*R4  (forward kinematics matrix of L4)
+	// ���� ��Ÿ�������� ���⿡�� while loop�� ��� ������ back tracking�� �����
+	// L4_M = Inv( Inv(R4)*Inv(P4) * Inv(R3)*Inv(P3) * ...)
+	// ���� �ڵ�����.
+
+	invLocalT = invLocalT * Inv(R);
+	invLocalT = invLocalT * Inv(P);
+
+	object temp_joint = joint;
+	object nodeExistParentJoint = object();
+	string temp_parent_name;
+	int temp_parent_index;
+	while(true)
+	{
+		if(temp_joint.attr("parent") == object())
+		{
+			nodeExistParentJoint = object();
+			break;
+		}
+		else
+		{
+			temp_parent_name = XS(temp_joint.attr("parent").attr("name"));
+//			temp_parent_index = XI(posture.attr("skeleton").attr("getElementIndex")(temp_parent_name));
+			temp_parent_index = XI(posture.attr("skeleton").attr("getJointIndex")(temp_parent_name));
+
+			if(_nodes[temp_parent_index] != NULL) 
+			{
+				nodeExistParentJoint = temp_joint.attr("parent");
+				break;
+			}
+			else
+			{
+				temp_joint = temp_joint.attr("parent");
+
+				object offset = temp_joint.attr("offset");
+				SE3 P = SE3(pyVec3_2_Vec3(offset));
+
+				string joint_name = XS(temp_joint.attr("name"));
+				object localSO3 = posture.attr("localRs")[joint_index];
+				SE3 R = pySO3_2_SE3(localSO3);
+
+				invLocalT = invLocalT * Inv(R);
+				invLocalT = invLocalT * Inv(P);
+			}
+		}
+	}
+
+//	int len_joint_children = len(joint.attr("children")); 
+
+//	if ( nodeExistParentJoint!=object() && len_joint_children > 0  &&
+//		_config.attr("hasNode")(joint_name))
+	if ( nodeExistParentJoint!=object() && _config.attr("hasNode")(joint_name))
+	{
+		Node* pNode = _nodes[joint_index];
+		object cfgNode = _config.attr("getNode")(joint_name);
+
+		string parent_name = XS(nodeExistParentJoint.attr("name"));
+//		int parent_index = XI(posture.attr("skeleton").attr("getElementIndex")(parent_name));
+		int parent_index = XI(posture.attr("skeleton").attr("getJointIndex")(parent_name));
+		Node* pParentNode = _nodes[parent_index];
+		object parentCfgNode = _config.attr("getNode")(parent_name);
+
+		//object offset = cfgNode.attr("offset");
+		//SE3 offsetT = SE3(pyVec3_2_Vec3(offset));
+
+		//object parentOffset = parentCfgNode.attr("offset");
+		//SE3 parentOffsetT = SE3(pyVec3_2_Vec3(parentOffset));
+
+		if (XS(cfgNode.attr("jointType")) == "B")
+			pNode->pJoint = new vpBJoint();
+		else if (XS(cfgNode.attr("jointType")) == "U")
+			pNode->pJoint = new vpUJoint();
+		else if (XS(cfgNode.attr("jointType")) == "R")
+			pNode->pJoint = new vpRJoint();
+
+		pParentNode->body.SetJoint(pNode->pJoint, Inv(_boneTs[parent_index])*Inv(invLocalT));
+		pNode->body.SetJoint(pNode->pJoint, Inv(_boneTs[joint_index]));
+
+		scalar kt = 16.;
+		scalar dt = 8.;
+		SpatialSpring el(kt);
+		SpatialDamper dam(dt);
+		//std::cout << el <<std::endl;
+		// pNode->joint.SetElasticity(el);
+		// pNode->joint.SetDamping(dam);
+		pNode->use_joint = true;
+	}
+
+	for( int i=0 ; i<len_joint_children; ++i)
+		_createJoint(joint.attr("children")[i], posture)	
+}
+
+
+void VpGenControlModel::_updateJoint( const object& joint, const object& posture )
+{
+	int len_joint_children = len(joint.attr("children")); 
+	if (len_joint_children == 0 )
+		return;
+
+	SE3 invLocalT;
+
+	SE3 P = SE3(pyVec3_2_Vec3(joint.attr("offset")));
+
+	string joint_name = XS(joint.attr("name"));
+//	int joint_index = XI(posture.attr("skeleton").attr("getElementIndex")(joint_name));
+//	SE3 R = pySO3_2_SE3(posture.attr("getLocalR")(joint_index));
+	int joint_index = XI(posture.attr("skeleton").attr("getJointIndex")(joint_name));
+	SE3 R = pySO3_2_SE3(posture.attr("getJointOrientationLocal")(joint_index));
+
+	// parent      <--------->        child
+	// link     L1      L2      L3      L4
+	// L4_M =  P1*R1 * P2*R2 * P3*R3 * P4*R4  (forward kinematics matrix of L4)
+	// ���� ��Ÿ�������� ���⿡�� while loop�� ��� ������ back tracking�� �����
+	// L4_M = Inv( Inv(R4)*Inv(P4) * Inv(R3)*Inv(P3) * ...)
+	// ���� �ڵ�����.
+
+	invLocalT = invLocalT * Inv(R);
+	invLocalT = invLocalT * Inv(P);
+
+	object temp_joint = joint;
+	object nodeExistParentJoint = object();
+	string temp_parent_name;
+	int temp_parent_index;
+	while(true)
+	{
+		if(temp_joint.attr("parent") == object())
+		{
+			nodeExistParentJoint = object();
+			break;
+		}
+		else
+		{
+			temp_parent_name = XS(temp_joint.attr("parent").attr("name"));
+//			temp_parent_index = XI(posture.attr("skeleton").attr("getElementIndex")(temp_parent_name));
+			temp_parent_index = XI(posture.attr("skeleton").attr("getJointIndex")(temp_parent_name));
+
+			if(_nodes[temp_parent_index] != NULL) 
+			{
+				nodeExistParentJoint = temp_joint.attr("parent");
+				break;
+			}
+			else
+			{
+				temp_joint = temp_joint.attr("parent");
+
+				object offset = temp_joint.attr("offset");
+				SE3 P = SE3(pyVec3_2_Vec3(offset));
+
+				string joint_name = XS(temp_joint.attr("name"));
+				object localSO3 = posture.attr("localRs")[joint_index];
+				SE3 R = pySO3_2_SE3(localSO3);
+
+				invLocalT = invLocalT * Inv(R);
+				invLocalT = invLocalT * Inv(P);
+			}
+		}
+	}
+
+//	int len_joint_children = len(joint.attr("children")); 
+
+//	if(len_joint_children > 0 && _config.attr("hasNode")(joint_name))
+	if(_config.attr("hasNode")(joint_name))
+	{
+		Node* pNode = _nodes[joint_index];
+
+		if(nodeExistParentJoint!=object())
+			pNode->joint.SetOrientation(R);
+		else
+			// root�� ���� body�� ���� SetFrame() ���ش�.
+			pNode->body.SetFrame(SE3(pyVec3_2_Vec3(posture.attr("rootPos")))*P*R*_boneTs[joint_index]);
+	}
+
+	for( int i=0 ; i<len_joint_children; ++i)
+		_updateJoint(joint.attr("children")[i], posture);
+}

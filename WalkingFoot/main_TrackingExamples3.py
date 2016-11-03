@@ -182,11 +182,13 @@ def buildMcfg():
     node.density = 200.
     node.geom = 'MyFoot5'
     node.width = 0.01
+    node.jointType = 'U'
 
     node = mcfg.getNode('LeftFoot')
     node.density = 200.
     node.geom = 'MyFoot5'
     node.width = 0.01
+    node.jointType = 'U'
 
 
     # bird foot
