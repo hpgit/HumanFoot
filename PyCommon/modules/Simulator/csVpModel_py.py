@@ -376,6 +376,16 @@ class VpModel:
         _type = 'C'
         data = [0., 0., 0.]
         self._nodes[index].body.GetGeometry(0).GetShape(_type, data)
+
+        # class			 vpSphere;		// S
+        # class			 vpBox;			// B
+        # class			 vpCapsule;		// C
+        # class			 vpPlane;		// P
+        # class			 vpCylinder;	// L
+        # class			 vpTorus;		// T
+
+        
+
         return data
 
     def getBodyVerticesPositionGlobal(self, index):

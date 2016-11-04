@@ -2752,11 +2752,20 @@ void VpGenControlModel::_createJoint(const object& joint, const object& posture)
 		//SE3 parentOffsetT = SE3(pyVec3_2_Vec3(parentOffset));
 		std::string jointType = XS(cfgNode.attr("jointType"));
 		if (jointType == std::string("B"))
+		{
 			pNode->pJoint = new vpBJoint();
+			pNode->dof = 3;
+		}
 		else if (jointType == std::string("U"))
+		{
 			pNode->pJoint = new vpUJoint();
+			pNode->dof = 2;
+		}
 		else if (jointType == std::string("R"))
+		{
 			pNode->pJoint = new vpRJoint();
+			pNode->dof = 1;
+		}
 
 		pParentNode->body.SetJoint(pNode->pJoint, Inv(_boneTs[parent_index])*Inv(invLocalT));
 		pNode->body.SetJoint(pNode->pJoint, Inv(_boneTs[joint_index]));
@@ -2849,7 +2858,8 @@ void VpGenControlModel::_updateJoint( const object& joint, const object& posture
 		Node* pNode = _nodes[joint_index];
 
 		if(nodeExistParentJoint!=object())
-			pNode->joint.SetOrientation(R);
+			// pNode->joint.SetOrientation(R);
+			pNode->SetJointNearestOrientation(R);
 		else
 			// root�� ���� body�� ���� SetFrame() ���ش�.
 			pNode->body.SetFrame(SE3(pyVec3_2_Vec3(posture.attr("rootPos")))*P*R*_boneTs[joint_index]);

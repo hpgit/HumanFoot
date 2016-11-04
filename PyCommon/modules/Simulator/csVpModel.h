@@ -36,6 +36,22 @@ public:
 			color[2] = 0;
 			color[3] = 255;
 		}
+		// set orientation as near as possible according to joint type
+		void SetJointNearestOrientation(const SE3& R)
+		{
+			if(dof == 3)
+				pJoint->SetOrientation(R);
+			else if (dof == 2)
+			{
+				// theta should be depend on current configuration to prevent discontinuity
+				theta1 = std::atan
+				theta2 = std::asin(R[6]);
+			}
+			else if (dof == 1)
+			{
+
+			}
+		}
 	};
 
 	~VpModel();
