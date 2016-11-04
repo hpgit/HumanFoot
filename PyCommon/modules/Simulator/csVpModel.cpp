@@ -2166,8 +2166,6 @@ object VpControlModel::getBodyGravityForceLocal( int index )
 // Additional
 void VpModel::addBody(bool flagControl)
 {
-	return;
-
 	int n = _nodes.size();
 	_nodes.resize(n + 1);
 	_boneTs.resize(n + 1);
@@ -2662,18 +2660,8 @@ void VpControlModel::stepKinematics(double dt, const bp::list& accs)
 }
 
 VpGenControlModel::VpGenControlModel(VpWorld* pWorld, const object& createPosture, const object& config)
-	:VpModel(pWorld, createPosture, config)
+	:VpControlModel(pWorld, createPosture, config)
 {
-	addBodiesToWorld(createPosture);
-	ignoreCollisionBtwnBodies();
-
-	object tpose = createPosture.attr("getTPose")();
-	createJoints(tpose);
-
-	update(createPosture);
-
-	addBody(true);
-
 }
 
 void VpGenControlModel::_createJoint(const object& joint, const object& posture)
@@ -2762,12 +2750,12 @@ void VpGenControlModel::_createJoint(const object& joint, const object& posture)
 
 		//object parentOffset = parentCfgNode.attr("offset");
 		//SE3 parentOffsetT = SE3(pyVec3_2_Vec3(parentOffset));
-
-		if (XS(cfgNode.attr("jointType")) == "B")
+		std::string jointType = XS(cfgNode.attr("jointType"));
+		if (jointType == std::string("B"))
 			pNode->pJoint = new vpBJoint();
-		else if (XS(cfgNode.attr("jointType")) == "U")
+		else if (jointType == std::string("U"))
 			pNode->pJoint = new vpUJoint();
-		else if (XS(cfgNode.attr("jointType")) == "R")
+		else if (jointType == std::string("R"))
 			pNode->pJoint = new vpRJoint();
 
 		pParentNode->body.SetJoint(pNode->pJoint, Inv(_boneTs[parent_index])*Inv(invLocalT));
@@ -2784,7 +2772,7 @@ void VpGenControlModel::_createJoint(const object& joint, const object& posture)
 	}
 
 	for( int i=0 ; i<len_joint_children; ++i)
-		_createJoint(joint.attr("children")[i], posture)	
+		_createJoint(joint.attr("children")[i], posture);
 }
 
 

@@ -5,6 +5,7 @@ ifdef MAC_OMP
 	CPP_COMPILER = clang-omp++
 	C_COMPILER = clang-omp++
 	PREPROCESSOR = -D __APPLE_OMP__ -fopenmp
+	CPP_LIB_OMP_FLAG = -liomp5
 else
 	CPP_COMPILER = clang++
 	C_COMPILER = clang++
@@ -23,7 +24,7 @@ Release:
 	[ -e VP ] || ln -s ../usr/include/VP ./
 	swig -python -c++ pyVirtualPhysics.i
 	$(CPP_COMPILER) -I../usr/include -I$(NUMPY_INC_DIR) `python-config --cflags` $(PREPROCESSOR) -c ../vpLib/*.cpp pyVirtualPhysics_wrap.cxx
-	$(CPP_COMPILER) -bundle `python-config --ldflags` -liomp5 *.o -o _pyVirtualPhysics.so
+	$(CPP_COMPILER) -bundle `python-config --ldflags` $(CPP_LIB_OMP_FLAG) *.o -o _pyVirtualPhysics.so
 	cp pyVirtualPhysics.py ../../../modules/
 	cp _pyVirtualPhysics.so ../../../modules/
 
