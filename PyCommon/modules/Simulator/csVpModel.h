@@ -40,15 +40,24 @@ public:
 		void SetJointNearestOrientation(const SE3& R)
 		{
 			if(dof == 3)
-				pJoint->SetOrientation(R);
+			{
+				((vpBJoint*)pJoint)->SetOrientation(R);
+			}
 			else if (dof == 2)
 			{
+				const vpUJoint* _pjoint = (vpUJoint*)pJoint;
 				// theta should be depend on current configuration to prevent discontinuity
-				theta1 = std::atan
-				theta2 = std::asin(R[6]);
+				theta0 = std::atan2(-R[7], R[8]);
+				theta1 = std::asin(R[6]);
+				_pJoint->SetAngle(0, theta0);
+				_pJoint->SetAngle(1, theta1);
 			}
 			else if (dof == 1)
 			{
+				const vpRJoint* _pJoint = (vpRJoint*)pJoint;
+				Vec3 jointAxis = _pJoint->GetAxis();
+				double angle = Dot(Log(R), jointAxis);
+				_pJoint->SetAngle(angle);
 
 			}
 		}
