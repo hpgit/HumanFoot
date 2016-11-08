@@ -3,6 +3,7 @@
 #include <VP/vphysics.h>
 #include "../VirtualPhysics/pyVpBody.h"
 #include "../VirtualPhysics/pyVpJoint.h"
+#include "hpBJoint.h"
 
 class VpWorld;
 
@@ -21,7 +22,7 @@ public:
 		string name;
 		vpBody body;
 		vpMaterial material;
-		vpBJoint joint;
+		hpBJoint joint;
 		vpJoint *pJoint;
 		int dof;
 		bool use_joint;
@@ -41,22 +42,22 @@ public:
 		{
 			if(dof == 3)
 			{
-				((vpBJoint*)pJoint)->SetOrientation(R);
+				((hpBJoint*)pJoint)->SetOrientation(R);
 			}
 			else if (dof == 2)
 			{
-				const vpUJoint* _pjoint = (vpUJoint*)pJoint;
+				vpUJoint* _pJoint = (vpUJoint*)pJoint;
 				// theta should be depend on current configuration to prevent discontinuity
-				theta0 = std::atan2(-R[7], R[8]);
-				theta1 = std::asin(R[6]);
+				double theta0 = std::atan2(-R[7], R[8]);
+				double theta1 = std::asin(R[6]);
 				_pJoint->SetAngle(0, theta0);
 				_pJoint->SetAngle(1, theta1);
 			}
 			else if (dof == 1)
 			{
-				const vpRJoint* _pJoint = (vpRJoint*)pJoint;
+				vpRJoint* _pJoint = (vpRJoint*)pJoint;
 				Vec3 jointAxis = _pJoint->GetAxis();
-				double angle = Dot(Log(R), jointAxis);
+				double angle = Inner(LogR(R), jointAxis);
 				_pJoint->SetAngle(angle);
 
 			}
@@ -281,6 +282,8 @@ public:	// expose to python
 
 	object getJointFrame(int index);
 
+	object getJointBodyJacobianLocal(int index);
+
 	object getJointVelocityLocal(int index);
 	object getJointAccelerationLocal(int index);
 
@@ -360,5 +363,7 @@ class VpGenControlModel : private VpControlModel
 
 	void _createJoint(const object& joint, const object& posture);
 	void _updateJoint(const object& joint, const object& posture);
+
+	boost::python::object getJointBodyJacobianLocal(int index);
 
 };
