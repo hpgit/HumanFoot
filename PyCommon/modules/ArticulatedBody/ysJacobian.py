@@ -574,7 +574,55 @@ def computePartialJacobianDerivative2(dJ, jointDOFs, jointPositions, jointAxeses
                     else:
                         dJ[e*dof_per_effector + i, col] = instanteneousAcceleration_colth_dof[i]
                         
-                col += 1    
+                col += 1
+
+
+
+def computeControlModelJacobian(J, model, jointDOFs, jointPositions, jointAxeses, linkAngVels, effectorPositions, effectorJointMasks, internalJointsOnly=False, partialDOFIndex = [0,0], linearFirst=True):
+    rowNum, colNum = J.shape
+    dof_per_effector = rowNum / len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
+    index = 0
+    model.getJointOrientationGlobal(index)
+    model.getJointBodyJacobianLocal(index)
+
+    jointNum = model.getInternalJointNum()
+
+    for e in range(len(effectorPositions)):
+        col = 0
+
+        for j in range(len(jointDOFs)):
+            jointDOF_jth_joint = jointDOFs[j]
+            jointPosition_jth_joint = jointPositions[j]
+            jointAxes_jth_joint = jointAxeses[j]
+
+            for d in range(jointDOF_jth_joint):
+                if (effectorJointMasks==None or effectorJointMasks[e][j]) and (j < partialDOFIndex[0] or j >= partialDOFIndex[1] or (j >= partialDOFIndex[0] and j < partialDOFIndex[1] and d == 0) ):
+                    axis_colth_dof = jointAxes_jth_joint[d]
+                    rotationalDOF = False if jointDOF_jth_joint==6 and d<3 else True
+
+                    if rotationalDOF:
+                        instanteneousAngVelocity_colth_dof = axis_colth_dof
+                        instanteneousVelocity_colth_dof = np.cross(axis_colth_dof, effectorPositions[e] - jointPosition_jth_joint)
+                    else:   # translationalDOF
+                        instanteneousAngVelocity_colth_dof = [0.,0.,0.]
+                        instanteneousVelocity_colth_dof = axis_colth_dof
+                else:
+                    instanteneousAngVelocity_colth_dof = [0.,0.,0.]
+                    instanteneousVelocity_colth_dof = [0.,0.,0.]
+
+                for i in range(3):
+                    if dof_per_effector == 6:
+                        if linearFirst:
+                            J[e*dof_per_effector + i, col] = instanteneousVelocity_colth_dof[i]
+                            J[e*dof_per_effector + 3 + i, col] = instanteneousAngVelocity_colth_dof[i]
+                        else:
+                            J[e*dof_per_effector + i, col] = instanteneousAngVelocity_colth_dof[i]
+                            J[e*dof_per_effector + 3 + i, col] = instanteneousVelocity_colth_dof[i]
+                    else:
+                        J[e*dof_per_effector + i, col] = instanteneousVelocity_colth_dof[i]
+
+                col += 1
+
 
 if __name__=='__main__':
     import copy, math

@@ -365,5 +365,6 @@ class VpGenControlModel : private VpControlModel
 	void _updateJoint(const object& joint, const object& posture);
 
 	boost::python::object getJointBodyJacobianLocal(int index);
+	boost::python::list VpGenControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
 
 };

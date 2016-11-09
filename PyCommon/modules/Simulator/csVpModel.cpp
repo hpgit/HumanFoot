@@ -2698,8 +2698,24 @@ void VpControlModel::stepKinematics(double dt, const bp::list& accs)
 }
 
 VpGenControlModel::VpGenControlModel(VpWorld* pWorld, const object& createPosture, const object& config)
-	:VpControlModel(pWorld, createPosture, config)
+:_pWorld(&pWorld->_world), _config(config), _skeleton(createPosture.attr("skeleton"))
 {
+	int num = XI(createPosture.attr("skeleton").attr("getJointNum")());
+	_nodes.resize(num, NULL);
+	_boneTs.resize(num, SE3());
+
+	createBodies(createPosture);
+	build_name2index();
+
+	addBodiesToWorld(createPosture);
+	ignoreCollisionBtwnBodies();
+
+	object tpose = createPosture.attr("getTPose")();
+	createJoints(tpose);
+
+	update(createPosture);
+
+	addBody(true);
 }
 
 void VpGenControlModel::_createJoint(const object& joint, const object& posture)
@@ -2963,4 +2979,210 @@ boost::python::object VpGenControlModel::getJointBodyJacobianLocal(int index)
 
 	return jacobian;
 
+}
+
+bp::list VpGenControlModel::getInternalJointDOFs()
+{
+	bp::list ls;
+	for(int i=1; i<_nodes.size(); ++i)
+		ls.append(_nodes[i]->pJoint->GetDOF());
+	return ls;
+}
+
+// must be called at first:clear all torques and accelerations
+bp::list VpGenControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
+{
+	bp::list ls;
+	ls.append(_nodes.size());
+
+	// M^-1 * tau - M^-1 * b = ddq
+	// ddq^T = [rootjointLin^T rootjointAng^T joints^T]^T
+	
+	int n = _nodes.size()-1;
+	int N = 6;
+
+	for(int i=1; i<_nodes.size(); i++)
+	{
+		N += _nodes[i]->pJoint->GetDOF();
+	}
+
+	dse3 zero_dse3(0.0);
+	Vec3 zero_Vec3(0.0);
+
+	vpBody *Hip = &(_nodes.at(0)->body);
+
+	//save current ddq and tau
+	std::vector<Vec3> accBackup;
+	std::vector<Vec3> torBackup;
+	for(int i=0; i<n; i++)
+	{
+		hpBJoint *joint = &(_nodes.at(i+1)->joint);
+		accBackup.push_back(joint->GetAcceleration());
+		torBackup.push_back(joint->GetTorque());
+	}
+	se3 hipAccBackup = Hip->GetGenAcceleration();
+	dse3 hipTorBackup = Hip->GetForce();
+
+	Hip->ResetForce();
+	for(int i=0; i<_nodes.size(); i++)
+	{
+		_nodes.at(i)->body.ResetForce();
+		_nodes.at(i)->joint.SetTorque(Vec3(0,0,0));
+	}
+
+	//get invMb
+	Hip->ApplyLocalForce(zero_dse3, zero_Vec3);
+	for(int i=0; i<n; i++)
+	{
+		hpBJoint *joint = &(_nodes.at(i+1)->joint);
+		joint->SetTorque(zero_Vec3);
+	}
+	Hip->GetSystem()->ForwardDynamics();
+	se3 hipAcc_tmp = Hip->GetGenAccelerationLocal(); // represented in body frame
+//	se3 hipAcc_tmp = InvAd((_boneTs[0]), Hip->GetGenAccelerationLocal()); // represented in body frame
+
+//	se3 hipAcc_tmp = InvAd(_boneTs[0], Hip->GetGenAccelerationLocal());
+//	se3 hipVelLocal_joint = InvAd(_boneTs[0], Hip->GetGenVelocityLocal());
+//	Vec3 hipAngVelLocal_joint(hipVelLocal_joint[0], hipVelLocal_joint[1], hipVelLocal_joint[2]);
+//	Vec3 hipLinVelLocal_joint(hipVelLocal_joint[3], hipVelLocal_joint[4], hipVelLocal_joint[5]);
+//
+//	hipAcc_tmp += Cross(hipAngVelLocal_joint, hipLinVelLocal_joint);
+
+//	Vec3 hipJointPosLocal = Inv(_boneTs[0]).GetPosition();
+//	SE3 hipFrame_joint = Hip->GetFrame() * Inv(_boneTs[0]);
+//	SE3 hipFrame_body = Hip->GetFrame();
+//
+//	Vec3 hipAngVelGlobal = Hip->GetAngVelocity();
+//
+//	se3 hipGenAccLocal_body = Hip->GetGenAccelerationLocal();
+//	Vec3 hipAngAccLocal_body(hipGenAccLocal_body[0], hipGenAccLocal_body[1], hipGenAccLocal_body[2]);
+//	Vec3 hipLinAccLocal_body(hipGenAccLocal_body[3], hipGenAccLocal_body[4], hipGenAccLocal_body[5]);
+//
+//	Vec3 hipAngAccGlobal_body = Rotate(hipFrame_body, hipAngAccLocal_body);
+//	Vec3 hipLinAccGlobal_body = Rotate(hipFrame_body, hipLinAccLocal_body);
+//
+//	Vec3 hipAngAccGlobal_joint = hipAngAccGlobal_body;
+//	Vec3 hipLinAccGlobal_joint = hipLinAccGlobal_body + Cross(hipAngAccGlobal_body, hipJointPosLocal)
+//							+ Cross(hipAngVelGlobal, Cross(hipAngVelGlobal, hipJointPosLocal));
+//
+//	Vec3 hipAngAccLocal_joint = InvRotate(hipFrame_joint, hipAngAccGlobal_joint);
+//	Vec3 hipLinAccLocal_joint = InvRotate(hipFrame_joint, hipLinAccGlobal_joint);
+//
+////	se3 hipAcc_tmp(hipAngAccGlobal_joint[0], hipAngAccGlobal_joint[1], hipAngAccGlobal_joint[2],
+////				   hipLinAccGlobal_joint[0], hipLinAccGlobal_joint[1], hipLinAccGlobal_joint[2]);
+//	se3 hipAcc_tmp(hipAngAccLocal_joint[0], hipAngAccLocal_joint[1], hipAngAccLocal_joint[2],
+//				   hipLinAccLocal_joint[0], hipLinAccLocal_joint[1], hipLinAccLocal_joint[2]);
+	{
+		invMb[0] = -hipAcc_tmp[3];
+		invMb[1] = -hipAcc_tmp[4];
+		invMb[2] = -hipAcc_tmp[5];
+		invMb[3] = -hipAcc_tmp[0];
+		invMb[4] = -hipAcc_tmp[1];
+		invMb[5] = -hipAcc_tmp[2];
+	}
+	//std::cout << "Hip velocity: " << Hip->GetGenVelocity();
+	for(int i=0; i<n; i++)
+	{
+		Vec3 acc(0,0,0);
+		hpBJoint *joint = &(_nodes.at(i+1)->joint);
+		acc = joint->GetAcceleration();
+		for(int j=0; j<3; j++)
+		{
+			invMb[6+3*i+j] = -acc[j];
+		}
+	}
+
+	//get M
+	for(int i=0; i<N; i++)
+	{
+		Hip->ResetForce();
+		for(size_t i=0; i<_nodes.size(); i++)
+		{
+			_nodes.at(i)->body.ResetForce();
+			_nodes.at(i)->joint.SetTorque(Vec3(0,0,0));
+		}
+
+		dse3 genForceLocal(0.0);
+		if (i < 3) genForceLocal[i+3] = 1.0;
+		else if(i<6) genForceLocal[i-3] = 1.0;
+		for(int j=0; j<n; j++)
+		{
+			Vec3 torque(0., 0., 0.);
+			if ( i >= 6 && (i-6)/3 == j )
+				torque[ (i-6)%3 ] = 1.;
+			hpBJoint *joint = &(_nodes.at(j+1)->joint);
+			joint->SetTorque(torque);
+		}
+		Hip->ApplyLocalForce(genForceLocal, zero_Vec3);
+
+		Hip->GetSystem()->ForwardDynamics();
+		 se3 hipAcc_tmp = Hip->GetGenAccelerationLocal();
+////		 se3 hipAcc_tmp_1 = Ad((_boneTs[0]), Hip->GetGenAccelerationLocal());
+////		se3 hipAcc_tmp_1 = InvAd(_boneTs[0], Hip->GetGenAccelerationLocal());
+////		se3 hipVelLocal_joint_1 = InvAd(_boneTs[0], Hip->GetGenVelocityLocal());
+////		Vec3 hipAngVelLocal_joint_1(hipVelLocal_joint_1[0], hipVelLocal_joint_1[1], hipVelLocal_joint_1[2]);
+////		Vec3 hipLinVelLocal_joint_1(hipVelLocal_joint_1[3], hipVelLocal_joint_1[4], hipVelLocal_joint_1[5]);
+////
+////		hipAcc_tmp_1 += Cross(hipAngVelLocal_joint_1, hipLinVelLocal_joint_1);
+//
+//		Vec3 hipJointPosLocal = Inv(_boneTs[0]).GetPosition();
+//		SE3 hipFrame_joint = Hip->GetFrame() * Inv(_boneTs[0]);
+//		SE3 hipFrame_body = Hip->GetFrame();
+//
+//		Vec3 hipAngVelGlobal = Hip->GetAngVelocity();
+//
+//		se3 hipGenAccLocal_body = Hip->GetGenAccelerationLocal();
+//		Vec3 hipAngAccLocal_body(hipGenAccLocal_body[0], hipGenAccLocal_body[1], hipGenAccLocal_body[2]);
+//		Vec3 hipLinAccLocal_body(hipGenAccLocal_body[3], hipGenAccLocal_body[4], hipGenAccLocal_body[5]);
+//
+//		Vec3 hipAngAccGlobal_body = Rotate(hipFrame_body, hipAngAccLocal_body);
+//		Vec3 hipLinAccGlobal_body = Rotate(hipFrame_body, hipLinAccLocal_body);
+//
+//		Vec3 hipAngAccGlobal_joint = hipAngAccGlobal_body;
+//		Vec3 hipLinAccGlobal_joint = hipLinAccGlobal_body + Cross(hipAngAccGlobal_body, hipJointPosLocal)
+//									 + Cross(hipAngVelGlobal, Cross(hipAngVelGlobal, hipJointPosLocal));
+//
+//		Vec3 hipAngAccLocal_joint = InvRotate(hipFrame_joint, hipAngAccGlobal_joint);
+//		Vec3 hipLinAccLocal_joint = InvRotate(hipFrame_joint, hipLinAccGlobal_joint);
+//
+////	se3 hipAcc_tmp(hipAngAccGlobal_joint[0], hipAngAccGlobal_joint[1], hipAngAccGlobal_joint[2],
+////				   hipLinAccGlobal_joint[0], hipLinAccGlobal_joint[1], hipLinAccGlobal_joint[2]);
+//		se3 hipAcc_tmp(hipAngAccLocal_joint[0], hipAngAccLocal_joint[1], hipAngAccLocal_joint[2],
+//					   hipLinAccLocal_joint[0], hipLinAccLocal_joint[1], hipLinAccLocal_joint[2]);
+
+
+		for (int j = 0; j < 3; j++)
+		{
+			invM[j][i] = hipAcc_tmp[j+3] + invMb[j];
+		}
+		for (int j = 3; j < 6; j++)
+		{
+			invM[j][i] = hipAcc_tmp[j-3] + invMb[j];
+		}
+		for(int j=0; j<n; j++)
+		{
+			Vec3 acc(0,0,0);
+			hpBJoint *joint = &(_nodes.at(j+1)->joint);
+			acc = joint->GetAcceleration();
+			for(int k=0; k<3; k++)
+			{
+				invM[6+3*j+k][i] = acc[k] + invMb[6+3*j+k];
+			}
+		}
+	}
+
+	// restore ddq and tau
+	for(int i=0; i<n; i++)
+	{
+		hpBJoint *joint = &(_nodes.at(i+1)->joint);
+		joint->SetAcceleration(accBackup.at(i));
+		joint->SetTorque(torBackup.at(i));
+		joint->SetAcceleration(Vec3(0., 0., 0.));
+		joint->SetTorque(Vec3(0., 0., 0.));
+	}
+	//Hip->SetGenAcceleration(hipAccBackup);
+
+	Hip->ResetForce();
+//	Hip->ApplyGlobalForce(hipTorBackup, zero_Vec3);
+	return ls;
 }

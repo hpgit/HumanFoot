@@ -7,6 +7,7 @@
 class hpBJoint : public vpBJoint
 {
 public:
+    hpBJoint():vpBJoint(){backup = false;}
 	scalar                   GetDisplacement(int i){return m_rQ[i];}
 	scalar                   GetFirstDeriv(int i){return m_rDq[i];}
 	scalar                   GetSecondDeriv(int i){return m_rDdq[i];}
@@ -15,7 +16,28 @@ public:
 	void                     SetGenTorque(int i, const scalar &a){m_rActuationTau[i] = a;}
     SE3                      GetTransform(){return Transform();}
 
+    void                     BackupAccTau();
+    void                     RestoreAccTau();
+
+    boolean                  backup;
+    Vec3                      backupAcc;
+    Vec3                     backupTau;
 };
+
+
+void hpBJoint::BackupAccTau()
+{
+    backup = true;
+    backupAcc = GetGenAcceleration();
+    backupTau = GetTorque();
+}
+
+void hpBJoint::RestoreAccTau()
+{
+    backup = false;
+    SetGenAcceleration(backupAcc);
+    SetTorque(backupTau);
+}
 
 
 #endif
