@@ -4,6 +4,7 @@ from OpenGL.GLUT import *
 from OpenGL.GLE import *
 # import ode, numpy
 import numpy
+import math
 
 import sys
 if '..' not in sys.path:
@@ -16,6 +17,9 @@ from PyCommon.modules.Mesh import ysMesh as yms
 # import Util.ysGlHelper as ygh
 # import Motion.ysMotion as ym
 # import Mesh.ysMesh as yms
+
+from PyCommon.modules.pyVirtualPhysics import *
+from PyCommon.modules.Simulator import csVpUtil as cvu
 
 # RendererContext
 NORMAL_FLAT = 0
@@ -60,7 +64,7 @@ class SelectedGeomRenderer(Renderer):
         Renderer.__init__(self, None, color = (255,0,0))
         self.geom = None
         self.rc.setPolygonStyle(POLYGON_LINE)
-    def render(self):
+    def render(self, renderType=RENDER_OBJECT):
         if self.geom:
             glColor3ubv(self.totalColor)
             self.rc.renderSelectedOdeGeom(self.geom, self.totalColor)
@@ -69,7 +73,7 @@ class OdeRenderer(Renderer):
     def __init__(self, target, color = (255,255,255)):
         Renderer.__init__(self, target, color)
         self.space = target
-    def render(self):
+    def render(self, renderType=RENDER_OBJECT):
         glColor3ubv(self.totalColor)
         for i in range(self.space.getNumGeoms()):
             geom = self.space.getGeom(i)
@@ -87,7 +91,7 @@ class OdeModelRenderer(Renderer):
         Renderer.__init__(self, target, color)
         self.model = target
         self.rc.setPolygonStyle(polygonStyle)
-    def render(self):
+    def render(self, renderType=RENDER_OBJECT):
         glColor3ubv(self.totalColor)
         for node in self.model.nodes.values():
             geom = node.geom
@@ -102,6 +106,87 @@ class OdeModelRenderer(Renderer):
 
             if geom == self.selectedElement:
                 glColor3ubv(self.totalColor)
+
+class VpModelRenderer(Renderer):
+    def __init__(self, target, color=(255,255,255), polygonStyle=POLYGON_FILL, lineWidth=1.):
+        Renderer.__init__(self, target, color)
+        self.model = target
+        self.rc.setPolygonStyle(polygonStyle)
+        self._lineWidth = lineWidth
+
+    def render(self, renderType=RENDER_OBJECT):
+        glLineWidth(self._lineWidth)
+
+        if renderType == RENDER_SHADOW:
+            glColor3ub(90, 90, 90)
+        else:
+            glColor3ubv(self.totalColor)
+
+        for node in self.model._nodes:
+            if node is not None:
+                if (renderType != RENDER_SHADOW):
+                    if node.color[0] != 0 or node.color[1] != 0 or node.color[2] != 0:
+                        c = [ node.color[0], node.color[1], node.color[2], node.color[3] ]
+                        glColor4ubv(c)
+                    else:
+                        glColor3ubv(self.totalColor)
+                self.renderVpNode(node)
+
+        if renderType!=RENDER_SHADOW:
+            glDisable(GL_BLEND)
+
+    def renderVpNode(self, pNode):
+        glPushMatrix()
+        _T = pNode.body.GetFrame()
+
+        _t = _T.GetPosition()
+        _r_Vec3 = LogR(_T)
+        _r = cvu.Vec3_2_pyVec3(_r_Vec3)
+        _r_norm = Norm(_r_Vec3)
+
+        glTranslatef(_t[0], _t[1], _t[2])
+        if _r_norm > LIE_EPS:
+            glRotatef(_r_norm*180./math.pi, _r[0]/_r_norm, _r[1]/_r_norm, _r[2]/_r_norm)
+        # glMultMatrixd(_T)
+
+
+        for j in range(len(pNode.geoms)):
+            pGeom = pNode.geoms[j]
+            glPushMatrix()
+            # _T = SE3_2_pySE3(pGeom.GetLocalFrame())
+            _T = pGeom.GetLocalFrame()
+
+            _t = _T.GetPosition()
+            _r_Vec3 = LogR(_T)
+            _r = cvu.Vec3_2_pyVec3(_r_Vec3)
+            _r_norm = Norm(_r_Vec3)
+
+            glTranslatef(_t[0], _t[1], _t[2])
+            if _r_norm > LIE_EPS:
+                glRotatef(_r_norm*180./math.pi, _r[0]/_r_norm, _r[1]/_r_norm, _r[2]/_r_norm)
+
+            # glMultMatrixd(_T)
+
+            geomType = pGeom.GetType()
+            data = []
+            if geomType ==  'B' or geomType == 'M':
+                data = pGeom.GetSize()
+                glPushMatrix()
+                glTranslatef(-data[0]/2., -data[1]/2., -data[2]/2.)
+                self.rc.drawBox(data[0], data[1], data[2])
+                glPopMatrix()
+            elif geomType == 'C':
+                data.append(pGeom.GetRadius())
+                data.append(pGeom.GetHeight())
+                data[1] -= 2. * data[0]
+                self.rc.drawCylinder(data[0], data[1])
+            elif geomType == 'S':
+                data.append(pGeom.GetRadius())
+                self.rc.drawSphere(data[0])
+            glPopMatrix()
+        glPopMatrix()
+
+
 
 
 class DartModelRenderer(Renderer):
@@ -223,7 +308,7 @@ class PointMotionRenderer(Renderer):
     def __init__(self, target, color = (0,0,255)):
         Renderer.__init__(self, target, color)
         self.motion = target
-    def render(self):
+    def render(self, renderType=RENDER_OBJECT):
         glColor3ubv(self.totalColor)
         posture = self.motion[self.motion.frame]
         self.renderPointPosture(posture)
@@ -249,7 +334,7 @@ class MMMotionRenderer(Renderer):
     def __init__(self, target, color = (0,0,255)):
         Renderer.__init__(self, target, color)
         self.motion = target
-    def render(self):
+    def render(self, renderType=RENDER_OBJECT):
         glColor3ubv(self.totalColor)
         posture = self.motion[self.motion.frame]
         self.renderPointPosture(posture)
@@ -279,7 +364,7 @@ class MeshRenderer(Renderer):
         Renderer.__init__(self, mesh, color)
         self.mesh = mesh
         self.rc.setPolygonStyle(drawStyle)
-    def render(self):
+    def render(self, renderType=RENDER_OBJECT):
         if isinstance(self.selectedElement, yms.Vertex):
             glColor3ubv(SELECTION_COLOR)
             self.rc.drawPoint(self.selectedElement.pos)
@@ -472,7 +557,7 @@ class TorquesRenderer(Renderer):
         self.lineWidth = lineWidth
         self.fromPoint = fromPoint
         self.rc.setNormalStyle(NORMAL_SMOOTH)
-    def render(self):
+    def render(self, renderType=RENDER_OBJECT):
         self.rc.beginDraw()
         glColor3ubv(self.totalColor)
         for i in range(len(self.torques)):
@@ -660,30 +745,36 @@ class SpheresRenderer(Renderer):
 class RenderContext:
     def __init__(self):
         self.quad = gluNewQuadric()
+        self.quad2 = gluNewQuadric()
 #        gleSetNumSides(12)
         
         self.setPolygonStyle(POLYGON_FILL)
-        self.setNormalStyle(NORMAL_FLAT)
+        self.setNormalStyle(NORMAL_SMOOTH)
         self.setLineWidth(1.)
         self.crossLength = .1
         
     def __del__(self):
         gluDeleteQuadric(self.quad)
+        gluDeleteQuadric(self.quad2)
         
     def setPolygonStyle(self, polygonStyle):
         self.polygonStyle = polygonStyle
         if polygonStyle == POLYGON_LINE:
             gluQuadricDrawStyle(self.quad, GLU_LINE)
+            gluQuadricDrawStyle(self.quad2, GLU_LINE)
         elif polygonStyle == POLYGON_FILL:
             gluQuadricDrawStyle(self.quad, GLU_FILL)
-            
+            gluQuadricDrawStyle(self.quad2, GLU_FILL)
+
     def setNormalStyle(self, normalStyle):
         self.normalStyle = normalStyle
         if normalStyle == NORMAL_FLAT:
             gluQuadricDrawStyle(self.quad, GLU_FLAT)
+            gluQuadricDrawStyle(self.quad2, GLU_FLAT)
         elif normalStyle == NORMAL_SMOOTH:
             gluQuadricDrawStyle(self.quad, GLU_SMOOTH)
-            
+            gluQuadricDrawStyle(self.quad2, GLU_SMOOTH)
+
     def setLineWidth(self, lineWidth):
         self.lineWidth = lineWidth
             
@@ -708,15 +799,129 @@ class RenderContext:
         glTranslated(lx/2.,ly/2.,lz/2.)
         glScale(lx, ly, lz)
         if self.polygonStyle == POLYGON_LINE:
-            glutWireCube(1)
+            # glutWireCube(1)
+            glBegin(GL_LINES)
+            glVertex3f(-.5, -.5, -.5)
+            glVertex3f(-.5, -.5, +.5)
+            glVertex3f(+.5, -.5, -.5)
+            glVertex3f(+.5, -.5, +.5)
+            glVertex3f(-.5, +.5, -.5)
+            glVertex3f(-.5, +.5, +.5)
+            glVertex3f(+.5, +.5, -.5)
+            glVertex3f(+.5, +.5, +.5)
+
+            glVertex3f(+.5, -.5, -.5)
+            glVertex3f(-.5, -.5, -.5)
+            glVertex3f(+.5, +.5, -.5)
+            glVertex3f(-.5, +.5, -.5)
+            glVertex3f(+.5, -.5, +.5)
+            glVertex3f(-.5, -.5, +.5)
+            glVertex3f(+.5, +.5, +.5)
+            glVertex3f(-.5, +.5, +.5)
+
+            glVertex3f(-.5, -.5, -.5)
+            glVertex3f(-.5, +.5, -.5)
+            glVertex3f(-.5, -.5, +.5)
+            glVertex3f(-.5, +.5, +.5)
+            glVertex3f(+.5, -.5, +.5)
+            glVertex3f(+.5, +.5, +.5)
+            glVertex3f(+.5, -.5, -.5)
+            glVertex3f(+.5, +.5, -.5)
+
+            glEnd()
         else:
-            glutSolidCube(1)
+            # glutSolidCube(1)
+            glBegin(GL_QUADS)
+            glNormal3f(0., 0., -1.)
+            glVertex3f(-.5, -.5, -.5)
+            glNormal3f(0., 0., -1.)
+            glVertex3f(-.5, +.5, -.5)
+            glNormal3f(0., 0., -1.)
+            glVertex3f(+.5, +.5, -.5)
+            glNormal3f(0., 0., -1.)
+            glVertex3f(+.5, -.5, -.5)
+
+            glNormal3f(0., 0., +1.)
+            glVertex3f(-.5, -.5, +.5)
+            glNormal3f(0., 0., +1.)
+            glVertex3f(+.5, -.5, +.5)
+            glNormal3f(0., 0., +1.)
+            glVertex3f(+.5, +.5, +.5)
+            glNormal3f(0., 0., +1.)
+            glVertex3f(-.5, +.5, +.5)
+
+            glNormal3f(-1., 0., 0.)
+            glVertex3f(-.5, -.5, -.5)
+            glNormal3f(-1., 0., 0.)
+            glVertex3f(-.5, -.5, +.5)
+            glNormal3f(-1., 0., 0.)
+            glVertex3f(-.5, +.5, +.5)
+            glNormal3f(-1., 0., 0.)
+            glVertex3f(-.5, +.5, -.5)
+
+            glNormal3f(+1., 0., 0.)
+            glVertex3f(+.5, -.5, -.5)
+            glNormal3f(+1., 0., 0.)
+            glVertex3f(+.5, +.5, -.5)
+            glNormal3f(+1., 0., 0.)
+            glVertex3f(+.5, +.5, +.5)
+            glNormal3f(+1., 0., 0.)
+            glVertex3f(+.5, -.5, +.5)
+
+            glNormal3f(0., -1., 0.)
+            glVertex3f(-.5, -.5, -.5)
+            glNormal3f(0., -1., 0.)
+            glVertex3f(+.5, -.5, -.5)
+            glNormal3f(0., -1., 0.)
+            glVertex3f(+.5, -.5, +.5)
+            glNormal3f(0., -1., 0.)
+            glVertex3f(-.5, -.5, +.5)
+
+            glNormal3f(0., +1., 0.)
+            glVertex3f(-.5, +.5, -.5)
+            glNormal3f(0., +1., 0.)
+            glVertex3f(-.5, +.5, +.5)
+            glNormal3f(0., +1., 0.)
+            glVertex3f(+.5, +.5, +.5)
+            glNormal3f(0., +1., 0.)
+            glVertex3f(+.5, +.5, -.5)
+            glEnd()
         glPopMatrix()
     def drawCylinder(self, radius, length_z):
         gluCylinder(self.quad, radius, radius, length_z, 16, 1)
         # gleSetNumSides(20)
         # glePolyCylinder(((0,0,-length_z/2.), (0,0,-length_z/2.), (0,0,length_z/2.), (0,0,length_z/2.)), None, radius)
         # gleSetNumSides(12)
+
+    def drawCapsule(self, radius, length_z):
+        _SLICE_SIZE = 24
+        glPushMatrix()
+        # glTranslatef(0., 0., -length_z/2.)
+        # gluSphere(self.quad2, radius, 16, 16)
+        # glTranslatef(0., 0., +length_z/2.)
+        # gluCylinder(self.quad, radius, radius, length_z, 16, 1)
+        # glTranslatef(0., 0., +length_z/2.)
+        # gluSphere(self.quad2, radius, 16, 16)
+
+        ct_im1 = 1.
+        st_im1 = 0.
+        glDisable(GL_CULL_FACE)
+        glBegin(GL_QUADS)
+        for i in range(1, _SLICE_SIZE):
+            ct_i = math.cos(2.*math.pi*float(i)/_SLICE_SIZE)
+            st_i = math.sin(2.*math.pi*float(i)/_SLICE_SIZE)
+
+            glTexCoord2d(float(i-1)/_SLICE_SIZE, 0.)
+            #TODO:
+            glNormal3d()
+
+            cp_im1 = 1.
+            sp_im1 = 0.
+
+
+
+        glPopMatrix()
+
 
     def drawSphere(self, radius):
         SLICE = 20; STACK = 20

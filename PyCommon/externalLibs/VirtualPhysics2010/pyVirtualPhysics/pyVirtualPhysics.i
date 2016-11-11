@@ -8,12 +8,14 @@ import_array(); // This is essential. We will get a crash in Python without it.
 %}
 
 %apply ( double* ARGOUT_ARRAY1,int DIM1) {(double* Massout,int n)}
-%apply char *OUTPUT {char *type};
+%apply char *OUTPUT { char *type};
+%apply double *OUTPUT { double *data};
 
 %include "typemaps.i"
 %include "std_pair.i"
 %include "std_list.i"
 %include "std_string.i"
+
 
 %{
 #include <VP/LieGroup.h>
@@ -53,6 +55,8 @@ import_array(); // This is essential. We will get a crash in Python without it.
 %include <VP/vpWorld.h>
 %include <VP/vpTimer.h>
 %include <VP/vpDataType.h>
+
+
 %extend Axis{
 	scalar __getitem__(int idx)
 	{

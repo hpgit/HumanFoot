@@ -390,7 +390,7 @@ class GlWindow(Fl_Gl_Window):
                 
         glLineWidth(1.)
         # self.drawGround()
-        # self.drawAxis()
+        self.drawAxis()
         # self.drawCoordinate((0, 0, 0))
         self.drawGround_color()
         # self.drawGroundFilled()
@@ -406,7 +406,7 @@ class GlWindow(Fl_Gl_Window):
         #glPopMatrix()
 
         #### SHADOW
-        if FLAG_SHADOW:
+        if False and FLAG_SHADOW:
             glDisable(GL_LIGHTING)
             glDepthMask(GL_FALSE)
     

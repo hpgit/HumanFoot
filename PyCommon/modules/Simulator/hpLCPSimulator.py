@@ -841,7 +841,8 @@ def calcLCPForcesHD(motion, world, model, bodyIDsToCheck, mu, ddth, tau, numFric
     invM = np.zeros((totalDOF, totalDOF))
     invMc = np.zeros(totalDOF)
 
-    model.getInverseEquationOfMotion(invM, invMc)
+    # model.getInverseEquationOfMotion(invM, invMc)
+    invM, invMc = model.getInverseEquationOfMotion()
 
     timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
 

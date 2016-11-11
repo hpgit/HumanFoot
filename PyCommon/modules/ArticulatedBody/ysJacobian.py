@@ -577,7 +577,16 @@ def computePartialJacobianDerivative2(dJ, jointDOFs, jointPositions, jointAxeses
                 col += 1
 
 
-
+# compute J that dx = J*dq
+# Treat each DOF of 3DOF joint as one 1DOF joint
+#
+# All parameters are given w.r.t. the global coordinate system
+# linearFirst=True : generalized velocity = [ v^t w^t ]^t, False : [ w^t v^t ]^t
+# effectorJointMasks :
+# ex. len(jointPositions) == 3
+#     len(effectorPositions) == 2
+#     effectorJointMasks == [[1,1,1], [1,1,1]] : every effector affected by every joint
+#     effectorJointMasks == [[1,0,0], [1,1,0]] : 1st effector affected by only 1st joint, 2nd effector affected by 1st & 2nd joints
 def computeControlModelJacobian(J, model, jointDOFs, jointPositions, jointAxeses, linkAngVels, effectorPositions, effectorJointMasks, internalJointsOnly=False, partialDOFIndex = [0,0], linearFirst=True):
     rowNum, colNum = J.shape
     dof_per_effector = rowNum / len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6

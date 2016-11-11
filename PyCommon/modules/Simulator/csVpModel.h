@@ -283,6 +283,7 @@ public:	// expose to python
 	object getJointFrame(int index);
 
 	object getJointBodyJacobianLocal(int index);
+	object getJointBodyJacobianGlobal(int index);
 
 	object getJointVelocityLocal(int index);
 	object getJointAccelerationLocal(int index);
@@ -365,6 +366,7 @@ class VpGenControlModel : private VpControlModel
 	void _updateJoint(const object& joint, const object& posture);
 
 	boost::python::object getJointBodyJacobianLocal(int index);
-	boost::python::list VpGenControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
+	boost::python::list getInverseEquationOfMotion(object &invM, object &invMb)
+	bp::list getInternalJointDOFs();
 
 };

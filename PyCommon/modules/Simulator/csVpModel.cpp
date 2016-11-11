@@ -201,6 +201,16 @@ BOOST_PYTHON_MODULE(csVpModel)
 		;
 }
 
+
+static SE3 skewVec3(const Vec3 &v)
+{
+	return SE3(0., v[2], -v[1], -v[2], 0., v[0], v[1], -v[0], 0.);
+}
+
+static SE3 skewVec3(const Axis &v)
+{
+	return SE3(0., v[2], -v[1], -v[2], 0., v[0], v[1], -v[0], 0.);
+}
  
 VpModel::VpModel( VpWorld* pWorld, const object& createPosture, const object& config ) 
 :_pWorld(&pWorld->_world), _config(config), _skeleton(createPosture.attr("skeleton"))
@@ -338,7 +348,7 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 					geomT.SetEye();
 					if(cfgNode.attr("geomTs")[i])
 					{
-						SE3 geomT = pySO3_2_SE3(cfgNode.attr("geomTs")[i][0]);
+						geomT = pySO3_2_SE3(cfgNode.attr("geomTs")[i][0]);
 						geomT.SetPosition(pyVec3_2_Vec3(cfgNode.attr("geomTs")[i][1]));
 					}
 
@@ -1821,8 +1831,8 @@ boost::python::object VpControlModel::getJointBodyJacobianLocal(int index)
 	// axis-angle dfferentiate
 	// return angular velocity jacobian represented in local frame
 	hpBJoint * _joint = &(_nodes[index]->joint);
-	Axis m_rQ(_joint->GetDisplacement(0), _joint->GetDisplacement(1), _joint->GetDisplacement(2));
-	Axis m_sS[3];
+	Vec3 m_rQ(_joint->GetDisplacement(0), _joint->GetDisplacement(1), _joint->GetDisplacement(2));
+	Vec3 m_sS[3];
 
 	scalar t = Norm(m_rQ), alpha, beta, gamma, t2 = t * t;
 	
@@ -1839,16 +1849,54 @@ boost::python::object VpControlModel::getJointBodyJacobianLocal(int index)
 		gamma = (SCALAR_1 - cos(t)) / t2;
 	}
 
-	m_sS[0] = (alpha * m_rQ[0]) * m_rQ + Axis(beta, -gamma * m_rQ[2], gamma * m_rQ[1]);	// (alpha * Inner(m_rQ, e0)) * m_rQ + beta * e0 + gamma * Cross(e0, m_rQ);
-	m_sS[1] = (alpha * m_rQ[1]) * m_rQ + Axis(gamma * m_rQ[2], beta, -gamma * m_rQ[0]);	// (alpha * Inner(m_rQ, e1)) * m_rQ + beta * e1 + gamma * Cross(e1, m_rQ);
-	m_sS[2] = (alpha * m_rQ[2]) * m_rQ + Axis(-gamma * m_rQ[1], gamma * m_rQ[0], beta);	// (alpha * Inner(m_rQ, e2)) * m_rQ + beta * e2 + gamma * Cross(e2, m_rQ);
+	m_sS[0] = (alpha * m_rQ[0]) * m_rQ + Vec3(beta, -gamma * m_rQ[2], gamma * m_rQ[1]);	// (alpha * Inner(m_rQ, e0)) * m_rQ + beta * e0 + gamma * Cross(e0, m_rQ);
+	m_sS[1] = (alpha * m_rQ[1]) * m_rQ + Vec3(gamma * m_rQ[2], beta, -gamma * m_rQ[0]);	// (alpha * Inner(m_rQ, e1)) * m_rQ + beta * e1 + gamma * Cross(e1, m_rQ);
+	m_sS[2] = (alpha * m_rQ[2]) * m_rQ + Vec3(-gamma * m_rQ[1], gamma * m_rQ[0], beta);	// (alpha * Inner(m_rQ, e2)) * m_rQ + beta * e2 + gamma * Cross(e2, m_rQ);
 
+	SE3 _jacobian(m_sS[0], m_sS[1], m_sS[2], Vec3(0., 0., 0.));
+
+
+	
 	numeric::array jacobian( make_tuple(make_tuple(m_sS[0][0],m_sS[1][0],m_sS[2][0]), 
 										make_tuple(m_sS[0][1],m_sS[1][1],m_sS[2][1]), 
 										make_tuple(m_sS[0][2],m_sS[1][2],m_sS[2][2])));
 
 
-	return jacobian;
+	return SE3_2_pySE3(_jacobian);
+}
+
+boost::python::object VpControlModel::getJointBodyJacobianGlobal(int index)
+{
+	// axis-angle dfferentiate
+	// return angular velocity jacobian represented in local frame
+	hpBJoint * _joint = &(_nodes[index]->joint);
+	Vec3 m_rQ(_joint->GetDisplacement(0), _joint->GetDisplacement(1), _joint->GetDisplacement(2));
+	Vec3 m_sS[3];
+
+	scalar t = Norm(m_rQ), alpha, beta, gamma, t2 = t * t;
+	
+    if ( t < BJOINT_EPS )
+	{
+		alpha = SCALAR_1_6 - SCALAR_1_120 * t2;
+		beta = SCALAR_1 - SCALAR_1_6 * t2;
+		gamma = SCALAR_1_2 - SCALAR_1_24 * t2;
+	} 
+	else
+	{
+		beta = sin(t) / t;
+		alpha = (SCALAR_1 - beta) / t2;
+		gamma = (SCALAR_1 - cos(t)) / t2;
+	}
+
+	m_sS[0] = (alpha * m_rQ[0]) * m_rQ + Vec3(beta, -gamma * m_rQ[2], gamma * m_rQ[1]);	// (alpha * Inner(m_rQ, e0)) * m_rQ + beta * e0 + gamma * Cross(e0, m_rQ);
+	m_sS[1] = (alpha * m_rQ[1]) * m_rQ + Vec3(gamma * m_rQ[2], beta, -gamma * m_rQ[0]);	// (alpha * Inner(m_rQ, e1)) * m_rQ + beta * e1 + gamma * Cross(e1, m_rQ);
+	m_sS[2] = (alpha * m_rQ[2]) * m_rQ + Vec3(-gamma * m_rQ[1], gamma * m_rQ[0], beta);	// (alpha * Inner(m_rQ, e2)) * m_rQ + beta * e2 + gamma * Cross(e2, m_rQ);
+
+	SE3 _jacobian(m_sS[0], m_sS[1], m_sS[2], Vec3(0., 0., 0.));
+	SE3 global_jacobian = getJointOrientationLocal(index) * _jacobian;
+
+	return SE3_2_pySO3(global_jacobian);
+
 }
 
 object VpControlModel::getJointVelocityLocal( int index )
@@ -2924,6 +2972,64 @@ void VpGenControlModel::_updateJoint( const object& joint, const object& posture
 }
 
 boost::python::object VpGenControlModel::getJointBodyJacobianLocal(int index)
+{
+	// axis-angle dfferentiate
+	// return angular velocity jacobian represented in local frame
+	if (_nodes[index]->dof == 3)
+	{
+	    hpBJoint *_joint = (hpBJoint*)(_nodes[index]->pJoint);
+	    Axis m_rQ(_joint->GetDisplacement(0), _joint->GetDisplacement(1), _joint->GetDisplacement(2));
+	    Axis m_sS[3];
+
+	    scalar t = Norm(m_rQ), alpha, beta, gamma, t2 = t * t;
+
+	    if (t < BJOINT_EPS)
+	    {
+			alpha = SCALAR_1_6 - SCALAR_1_120 * t2;
+			beta = SCALAR_1 - SCALAR_1_6 * t2;
+			gamma = SCALAR_1_2 - SCALAR_1_24 * t2;
+	    }
+	    else
+	    {
+			beta = sin(t) / t;
+			alpha = (SCALAR_1 - beta) / t2;
+			gamma = (SCALAR_1 - cos(t)) / t2;
+	    }
+
+	    m_sS[0] = (alpha * m_rQ[0]) * m_rQ + Axis(beta, -gamma * m_rQ[2], gamma * m_rQ[1]); // (alpha * Inner(m_rQ, e0)) * m_rQ + beta * e0 + gamma * Cross(e0, m_rQ);
+	    m_sS[1] = (alpha * m_rQ[1]) * m_rQ + Axis(gamma * m_rQ[2], beta, -gamma * m_rQ[0]); // (alpha * Inner(m_rQ, e1)) * m_rQ + beta * e1 + gamma * Cross(e1, m_rQ);
+	    m_sS[2] = (alpha * m_rQ[2]) * m_rQ + Axis(-gamma * m_rQ[1], gamma * m_rQ[0], beta); // (alpha * Inner(m_rQ, e2)) * m_rQ + beta * e2 + gamma * Cross(e2, m_rQ);
+
+	    numeric::array jacobian(make_tuple(make_tuple(m_sS[0][0], m_sS[1][0], m_sS[2][0]),
+					       make_tuple(m_sS[0][1], m_sS[1][1], m_sS[2][1]),
+					       make_tuple(m_sS[0][2], m_sS[1][2], m_sS[2][2])));
+		return jacobian;
+	}
+	else if(_nodes[index]->dof == 2)
+	{
+	    hpUJoint *_joint = (hpUJoint*)(_nodes[index]->pJoint);
+
+		Vec3 axis0 = _joint->GetAxis(0);
+		Vec3 axis1 = _joint->GetAxis(1);
+
+	    numeric::array jacobian(make_tuple(make_tuple(axis0[0], axis1[0]),
+										   make_tuple(axis0[1], axis1[1]),
+										   make_tuple(axis0[2], axis1[2])));
+		return jacobian;
+	}
+
+	hpRJoint *_joint = (hpRJoint*)(_nodes[index]->pJoint);
+	Vec3 axis = _joint->GetAxis();
+
+	numeric::array jacobian(make_tuple(make_tuple(axis[0]),
+										make_tuple(axis[1]),
+										make_tuple(axis[2])));
+
+	return jacobian;
+
+}
+
+boost::python::object VpGenControlModel::getJointBodyJacobianGlobal(int index)
 {
 	// axis-angle dfferentiate
 	// return angular velocity jacobian represented in local frame

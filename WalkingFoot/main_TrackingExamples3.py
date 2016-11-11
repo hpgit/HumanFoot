@@ -6,9 +6,9 @@ from PyCommon.modules.Math import mmMath as mm
 from PyCommon.modules.Math import csMath as cm
 from PyCommon.modules.Math import ysFunctionGraph as yfg
 from PyCommon.modules.Renderer import ysRenderer as yr
-from PyCommon.modules.Renderer import csVpRenderer as cvr
-from PyCommon.modules.Simulator import csVpWorld as cvw
-from PyCommon.modules.Simulator import csVpModel as cvm
+# from PyCommon.modules.Renderer import csVpRenderer as cvr
+# from PyCommon.modules.Simulator import csVpWorld as cvw
+# from PyCommon.modules.Simulator import csVpModel as cvm
 from PyCommon.modules.Simulator import ysVpUtil as yvu
 from PyCommon.modules.GUI import ysSimpleViewer as ysv
 from PyCommon.modules.GUI import ysMultiViewer as ymv
@@ -28,6 +28,10 @@ from PyCommon.modules.Simulator import ysPhysConfig as ypc
 from PyCommon.modules.Simulator import hpLCPSimulator as hls
 from PyCommon.modules.GUI import hpSimpleViewer as hsv
 from PyCommon.modules.Util import ysPythonEx as ype
+
+from PyCommon.modules.Simulator import csVpModel_py as pcvm
+from PyCommon.modules.Simulator import csVpWorld_py as pcvw
+
 
 import math
 from matplotlib import pyplot as plt
@@ -178,6 +182,7 @@ def buildMcfg():
 
     # capsulize('RightFoot')
     # capsulize('LeftFoot')
+
     node = mcfg.getNode('RightFoot')
     node.density = 200.
     node.geom = 'MyFoot5'
@@ -189,7 +194,6 @@ def buildMcfg():
     node.geom = 'MyFoot5'
     node.width = 0.01
     node.jointType = 'U'
-
 
     # bird foot
     # capsulize('RightFoot_foot_0_0')
@@ -460,13 +464,17 @@ def walkings():
     stepsPerFrame = 30
     wcfg.timeStep = (frameTime)/stepsPerFrame
 
-    vpWorld = cvw.VpWorld(wcfg)
-    motionModel = cvm.VpMotionModel(vpWorld, motion_ori[0], mcfg)
+    # vpWorld = cvw.VpWorld(wcfg)
+    vpWorld = pcvw.VpWorld(wcfg)
+    # motionModel = cvm.VpMotionModel(vpWorld, motion_ori[0], mcfg)
+    motionModel = pcvm.VpMotionModel(vpWorld, motion_ori[0], mcfg)
     # ModelOffset = np.array([0., 0., 0.])
     # motionModel.translateByOffset(ModelOffset)
-    controlModel = cvm.VpControlModel(vpWorld, motion_ori[0], mcfg)
+    # controlModel = cvm.VpControlModel(vpWorld, motion_ori[0], mcfg)
+    controlModel = pcvm.VpControlModel(vpWorld, motion_ori[0], mcfg)
     vpWorld.initialize()
-    print controlModel
+    # print controlModel
+    # controlModel = None
 
     #   motionModel.recordVelByFiniteDiff()
     controlModel.initializeHybridDynamics()
@@ -601,6 +609,7 @@ def walkings():
     print('ToeMass: ', ToeMass)
 
     halfFootHeight = controlModel.getBodyShape(lFoot)[1] / 2.
+    # halfFootHeight = 0.05
 
     for fi in forceInfos:
         fi.targetBody = spine
@@ -630,15 +639,15 @@ def walkings():
     if MULTI_VIEWER:
         viewer = ymv.MultiViewer(800, 655)
         #        viewer = ymv.MultiViewer(800, 655, True)
-        viewer.setRenderers1([cvr.VpModelRenderer(motionModel, MOTION_COLOR, yr.POLYGON_FILL)])
-        viewer.setRenderers2([cvr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL)])
+        viewer.setRenderers1([yr.VpModelRenderer(motionModel, MOTION_COLOR, yr.POLYGON_FILL)])
+        viewer.setRenderers2([yr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL)])
     else:
         viewer = ysv.SimpleViewer()
         # viewer = hsv.hpSimpleViewer()
         #    viewer.record(False)
 
-        viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(motionModel, (0,150,255), yr.POLYGON_LINE))
-        viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (50,200,200), yr.POLYGON_FILL))
+        viewer.doc.addRenderer('motionModel', yr.VpModelRenderer(motionModel, (0,150,255), yr.POLYGON_LINE))
+        viewer.doc.addRenderer('controlModel', yr.VpModelRenderer(controlModel, (50,200,200), yr.POLYGON_FILL))
 
         # viewer.doc.addObject('motion_ori', motion_ori)
         # viewer.doc.addRenderer('motion_ori', yr.JointMotionRenderer(motion_ori, (0,100,255), yr.LINK_BONE))

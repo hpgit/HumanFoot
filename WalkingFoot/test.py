@@ -12,6 +12,7 @@ body2 = vpBody()
 
 joint = vpUJoint()
 
+
 joint.SetAxis(0, Vec3(1., 0., 0.))
 joint.SetAxis(1, Vec3(0., 1., 0.))
 
@@ -25,6 +26,13 @@ joint.SetAngle(0, M_RADIAN * 90.)
 joint.SetAngle(1, M_RADIAN * 90.)
 
 world.AddBody(body1)
+
+
+geom1 = vpBox()
+
+print ord(geom1.GetShape()[0])
+print vpBox().GetType()
+print ord(vpPlane().GetShape()[0])
 
 
 world.Initialize()
@@ -43,3 +51,5 @@ w0 = InvRotate(Exp(Axis(axis1[0], axis1[1], axis1[2]), theta1), Vec3(1., 0., 0.)
 print w0
 
 print axis0
+
+print SE3(Vec3(0., 0., 0.))

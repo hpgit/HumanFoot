@@ -22,6 +22,8 @@ class VpWorld:
         self._lockingVel = config.lockingVel
 
         self._ground = vpBody()
+        # self.models = [VpControlModel(None, None, None)]
+        self.models = []
 
         if config.useDefaultContactModel:
             vpMaterial.GetDefaultMaterial().SetRestitution(0.01)
@@ -44,6 +46,15 @@ class VpWorld:
         numTh = self._world.GetNumThreads()-1
         self._world.SetNumThreads(numTh)
 
+    def getBodyNum(self):
+        return self._world.GetNumBody()
+
+    def addVpModel(self, model):
+        self.models.append(model)
+
+    def GetTimeStep(self):
+        return self._world.GetTimeStep()
+
     def calcPenaltyForce(self, bodyIDsToCheck, mus, Ks, Ds, notForce=False):
         bodyIDs = []
         positions = []
@@ -51,55 +62,104 @@ class VpWorld:
         positionLocals = []
         velocities = []
 
-        for bodyIdx in bodyIDsToCheck:
-            bodyID = bodyIDsToCheck(bodyIdx)
-            pBody = self._world.GetBody(bodyIDsToCheck(bodyIdx))
+        if True:
+            for model in self.models:
+                for node in model._nodes:
+                    bodyID = node.body.GetID()
+                    if bodyID in bodyIDsToCheck:
+                        for pGeom in node.geoms:
+                            geomType = pGeom.GetType()
+                            if geomType == 'C':
+                                verticesLocal = pGeom.getVerticesLocal()
+                                verticesGlobal = pGeom.getVerticesGlobal()
 
-            for geomIdx in range(len(pBody.GetNumGeometry())):
-                pGeom = pBody.GetGeometry(geomIdx)
-                geomType = 'C'
-                # TODO:
-                data = [0., 0., 0.]
-                pGeom.GetShape(geomType, data)
+                                for vertIdx in range(len(verticesLocal)):
+                                    positionLocal = Vec3_2_pyVec3(verticesLocal[vertIdx])
+                                    position = Vec3_2_pyVec3(verticesGlobal[vertIdx])
+                                    velocity = Vec3_2_pyVec3(node.body.GetLinVelocity(pyVec3_2_Vec3(positionLocal)))
+                                    if notForce:
+                                        penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, 0., True)
+                                    else:
+                                        penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, mus[0])
 
-                if geomType == ord('C'):
-                    verticesLocal = pGeom.getVerticesLocal()
-                    verticesGlobal = pGeom.getVerticesGlobal()
+                                    if penentrated:
+                                        bodyIDs.append(bodyID)
+                                        positions.append(position)
+                                        positionLocals.append(positionLocal)
+                                        forces.append(force)
+                                        velocities.append(velocity)
 
-                    for vertIdx in range(len(verticesLocal)):
-                        positionLocal = Vec3_2_pyVec3(verticesLocal[vertIdx])
-                        position = Vec3_2_pyVec3(verticesGlobal[vertIdx])
-                        velocity = Vec3_2_pyVec3(pBody.GetLinVelocity(pyVec3_2_Vec3(positionLocal)))
-                        if notForce:
-                            penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, 0., True)
-                        else:
-                            penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, mus[bodyIdx])
+                            elif False:
+                                # TODO:
+                                # how to deal with SE3?
+                                geomFrame = pGeom.GetGlobalFrame()
+                                data = pGeom.GetSize()
+                                for perm in itertools.product([1, -1], repeat=3):
+                                    positionLocal = np.multiply(np.array((data[0], data[1], data[2])), np.array(perm))
+                                    position = Vec3_2_pyVec3(geomFrame * pyVec3_2_Vec3(positionLocal))
+                                    velocity = Vec3_2_pyVec3(node.body.GetLinVelocity(pyVec3_2_Vec3(positionLocal)))
+                                    if notForce:
+                                        penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, 0., True)
+                                    else:
+                                        penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, mus[0])
 
-                        if penentrated:
-                            bodyIDs.append(bodyID)
-                            positions.append(position)
-                            positionLocals.append(positionLocal)
-                            forces.append(force)
-                            velocities.append(velocity)
-                elif True:
-                    # TODO:
-                    # how to deal with SE3?
-                    geomFrame = pGeom.GetGlobalFrame()
-                    for perm in itertools.product([1, -1], repeat=2):
-                        positionLocal = np.multiply(np.array(data), np.array(perm))
-                        position = Vec3_2_pyVec3(geomFrame * pyVec3_2_Vec3(positionLocal))
-                        velocity = Vec3_2_pyVec3(pBody.GetLinVelocity(pyVec3_2_Vec3(positionLocal)))
-                        if notForce:
-                            penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, 0., True)
-                        else:
-                            penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, mus[bodyIdx])
+                                    if penentrated:
+                                        print node.name
+                                        bodyIDs.append(bodyID)
+                                        positions.append(position)
+                                        positionLocals.append(positionLocal)
+                                        forces.append(force)
+                                        velocities.append(velocity)
 
-                        if penentrated:
-                            bodyIDs.append(bodyID)
-                            positions.append(position)
-                            positionLocals.append(positionLocal)
-                            forces.append(force)
-                            velocities.append(velocity)
+
+        if False:
+            for bodyIdx in range(len(bodyIDsToCheck)):
+                bodyID = bodyIDsToCheck[bodyIdx]
+                pBody = self._world.GetBody(bodyIDsToCheck[bodyIdx])
+
+                for geomIdx in range(pBody.GetNumGeometry()):
+                    pGeom = pBody.GetGeometry(geomIdx)
+                    geomType = pGeom.GetType()
+
+                    if geomType == 'C':
+                        verticesLocal = pGeom.getVerticesLocal()
+                        verticesGlobal = pGeom.getVerticesGlobal()
+
+                        for vertIdx in range(len(verticesLocal)):
+                            positionLocal = Vec3_2_pyVec3(verticesLocal[vertIdx])
+                            position = Vec3_2_pyVec3(verticesGlobal[vertIdx])
+                            velocity = Vec3_2_pyVec3(pBody.GetLinVelocity(pyVec3_2_Vec3(positionLocal)))
+                            if notForce:
+                                penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, 0., True)
+                            else:
+                                penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, mus[bodyIdx])
+
+                            if penentrated:
+                                bodyIDs.append(bodyID)
+                                positions.append(position)
+                                positionLocals.append(positionLocal)
+                                forces.append(force)
+                                velocities.append(velocity)
+                    elif False:
+                        # TODO:
+                        # how to deal with SE3?
+                        geomFrame = pGeom.GetGlobalFrame()
+                        data = pGeom.GetSize()
+                        for perm in itertools.product([1, -1], repeat=2):
+                            positionLocal = np.multiply(np.array(data), np.array(perm))
+                            position = Vec3_2_pyVec3(geomFrame * pyVec3_2_Vec3(positionLocal))
+                            velocity = Vec3_2_pyVec3(pBody.GetLinVelocity(pyVec3_2_Vec3(positionLocal)))
+                            if notForce:
+                                penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, 0., True)
+                            else:
+                                penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, mus[bodyIdx])
+
+                            if penentrated:
+                                bodyIDs.append(bodyID)
+                                positions.append(position)
+                                positionLocals.append(positionLocal)
+                                forces.append(force)
+                                velocities.append(velocity)
 
         if notForce:
             return bodyIDs, positions, positionLocals, velocities

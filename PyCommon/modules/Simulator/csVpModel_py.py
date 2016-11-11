@@ -9,98 +9,10 @@ import numpy as np
 sys.path.append('../../..')
 
 from PyCommon.modules.pyVirtualPhysics import *
+from PyCommon.modules.Simulator.csVpUtil import *
+from PyCommon.modules.Simulator.myGeom import *
 
 QP = True
-
-
-def pyVec3_2_Vec3(pyV):
-    return Vec3(pyV[0], pyV[1], pyV[2])
-
-
-def Vec3_2_pyVec3(vpVec3):
-    return np.array((vpVec3[0], vpVec3[1], vpVec3[2]))
-
-
-def SE3_2_pySO3(T):
-    pyR = np.zeros((3, 3))
-    for i in range(3):
-        for j in range(3):
-            pyR[j, i] = T[3*i + j]
-
-    return pyR
-
-
-def SE3_2_pySE3(T):
-    pyV = np.zeros((3, 1))
-    pyV[0, 0] = T[9]
-    pyV[1, 0] = T[10]
-    pyV[2, 0] = T[11]
-
-    pyVV = np.zeros(4)
-    pyVV[3] = 1.
-
-    return np.vstack((np.hstack((SE3_2_pySO3(T), pyV)), pyVV))
-
-
-def pySO3_2_SE3(pyR):
-    T = SE3()
-    T[0] = pyR[0, 0]
-    T[3] = pyR[0, 1]
-    T[6] = pyR[0, 2]
-    T[1] = pyR[1, 0]
-    T[4] = pyR[1, 1]
-    T[7] = pyR[1, 2]
-    T[2] = pyR[2, 0]
-    T[5] = pyR[2, 1]
-    T[8] = pyR[2, 2]
-
-    return T
-
-
-def pySE3_2_SE3(pyT):
-    T = SE3
-    T[0] = pyT[0, 0]
-    T[1] = pyT[1, 0]
-    T[2] = pyT[2, 0]
-    T[3] = pyT[0, 1]
-    T[4] = pyT[1, 1]
-    T[5] = pyT[2, 1]
-    T[6] = pyT[0, 2]
-    T[7] = pyT[1, 2]
-    T[8] = pyT[2, 2]
-    T[9] = pyT[0, 3]
-    T[10] = pyT[1, 3]
-    T[11] = pyT[2, 3]
-
-    return T
-
-
-def getSE3FromVectors(vec1, vec2):
-    v1 = Normalize(vec1)
-    v2 = Normalize(vec2)
-
-    rot_axis = Normalize(Cross(v1, v2))
-    inner = Inner(v1, v2)
-    theta = math.acos(inner)
-
-    if (rot_axis[0] == 0.) and (rot_axis[1] == 0.) and (rot_axis[2] == 0.):
-        rot_axis = Vec3(0., 1., 0.)
-    elif inner < -1.0 + LIE_EPS:
-        rand = np.random.uniform(0., 1., 3)
-        rand_vec = Vec3(rand[0], rand[1], rand[2])
-        rot_axis = Normalize(Cross(v1, Normalize(rand_vec)))
-
-    x = rot_axis[0]
-    y = rot_axis[1]
-    z = rot_axis[2]
-
-    c = inner
-    s = math.sin(theta)
-    R = SE3(c + (1.0-c)*x*x,    (1.0-c)*x*y - s*z,    (1-c)*x*z + s*y,\
-            (1.0-c)*x*y + s*z,    c + (1.0-c)*y*y,    (1.0-c)*y*z - s*x,\
-          (1.0-c)*z*x - s*y,    (1.0-c)*z*y + s*x,    c + (1.0-c)*z*z)
-
-    return Inv(R)
 
 
 class VpModel:
@@ -114,6 +26,7 @@ class VpModel:
             self.color = [0., 0., 0., 255.]
             self.use_joint = False
             self.body.SetMaterial(self.material)
+            self.geoms = []
 
     def __init__(self, pWorld, createPosture, config):
         self._pWorld = pWorld._world
@@ -123,14 +36,14 @@ class VpModel:
         num = createPosture.skeleton.getJointNum()
 
         self._nodes = [None] * num
-        # self._nodes = [self.Node()]*num
+        # self._nodes = [self.Node(None)]*num
         self._boneTs = [SE3()] * num
-
-        self.createBodies(createPosture)
-        self.build_name2index()
 
         self._name2index = dict()
         self._id2index = dict()
+
+        self.createBodies(createPosture)
+        self.build_name2index()
 
     def build_name2index(self):
         for i in range(len(self._nodes)):
@@ -160,7 +73,7 @@ class VpModel:
     def createBodies(self, posture):
         joint = posture.skeleton.root
         rootPos = posture.rootPos
-        T = SE3(rootPos)
+        T = SE3(Vec3(rootPos[0], rootPos[1], rootPos[2]))
         tpose = posture.getTPose()
         self._createBody(joint, T, tpose)
 
@@ -170,7 +83,7 @@ class VpModel:
             return
 
         T = parentT
-        P = SE3(joint.offset)
+        P = SE3(Vec3(joint.offset[0], joint.offset[1], joint.offset[2]))
         T = T * P
 
         joint_name = joint.name
@@ -178,138 +91,138 @@ class VpModel:
         # R = posture.getLocalR(joint_index)
         joint_index = posture.skeleton.getJointIndex(joint_name)
         R = posture.getJointOrientationLocal(joint_index)
-        T = T * R
+        T = T * pySO3_2_SE3(R)
 
         if self._config.hasNode(joint_name):
             offset = Vec3(0.)
             for i in range(len_joint_children):
-                offset += Vec3(joint.children[i].offset)
+                offset += pyVec3_2_Vec3(joint.children[i].offset)
 
             # if joint.parent is None:
-            if True:
-                offset *= 1./len_joint_children
+            offset *= 1./len_joint_children
 
             boneT = SE3(offset*.5)
-            if QP:
-                if not joint_name.compare("Hips"):
-                    boneT = SE3()
 
             defaultBoneV = Vec3(0, 0, 1)
             boneR = getSE3FromVectors(defaultBoneV, offset)
 
-            if QP:
-                if not joint_name.compare("Hips"):
-                    boneT = boneT * boneR
+            boneT = boneT * boneR
 
             pNode = self.Node(joint_name)
             self._nodes[joint_index] = pNode
+            # pNode = self._nodes[joint_index]
+            # pNode.name = joint_name
             cfgNode = self._config.getNode(joint_name)
 
-            '''
-            int numGeom = len(cfgNode.attr("geoms"));
-		string geomType = XS(cfgNode.attr("geoms")[0]);
-		if (geomType == "MyFoot3" || geomType == "MyFoot4")
-		{
-		    scalar radius = .05;
-		    if( cfgNode.attr("width") != object() )
-		        radius = XD(cfgNode.attr("width"));
+            numGeom = len(cfgNode.geoms)
+            if numGeom > 0:
+                for i in range(numGeom):
+                    geomType = cfgNode.geoms[i]
+                    if geomType == "MyFoot3" or geomType == "MyFoot4" or geomType == "MyFoot5":
+                        density = cfgNode.geomMaterial[i].density
+                        radius = cfgNode.geomMaterial[i].radius
+                        height = cfgNode.geomMaterial[i].height
 
-		    scalar length = Norm(offset) + 2*radius;
-		    scalar density = XD(cfgNode.attr("density"));
-		    scalar mass = 1.;
-		    if( cfgNode.attr("mass") != object() )
-		    {
-		        mass = XD(cfgNode.attr("mass"));
-		        density = mass/ (radius * radius * M_PI * length);
-		    }
-		    else
-		        mass = density * radius * radius * M_PI * length;
+                        if height <= 0.:
+                            height = Norm(offset) + 2.*radius
+                        
+                        pNode.material.SetDensity(density)
+                        pNode.body.SetMaterial(pNode.material)
 
-		    // density = mass/ (width*width*M_PI*(length+width));
-		    if (geomType == "MyFoot3")
-		        pNode->body.AddGeometry(new MyFoot3(radius, length));
-		    else
-		        pNode->body.AddGeometry(new MyFoot4(radius, length));
-		    pNode->body.SetInertia(CylinderInertia(density, radius,length));
-		}
-		else
-		{
-            scalar length;
-            if( cfgNode.attr("length") != object() )
-                length = XD(cfgNode.attr("length")) * XD(cfgNode.attr("boneRatio"));
-            else
-                length = Norm(offset) * XD(cfgNode.attr("boneRatio"));
+                        geomT = SE3()
+                        geomT.SetEye()
+                        if cfgNode.geomTs[i] is not None:
+                            geomT = pySO3_2_SE3(cfgNode.geomTs[i][1])
+                            geomT.SetPosition(geomT*pyVec3_2_Vec3(cfgNode.geomTs[i][0]))
+                        else:
+                            print("there is no geom Ts!")
 
-            scalar density = XD(cfgNode.attr("density"));
-            scalar width, height;
-            if( cfgNode.attr("width") != object() )
-            {
-                width = XD(cfgNode.attr("width"));
-                if( cfgNode.attr("mass") != object() )
-                    height = (XD(cfgNode.attr("mass")) / (density * length)) / width;
-                else
-                    height = .1;
-            }
-            else
-            {
-                if( cfgNode.attr("mass") != object() )
-                    width = sqrt( (XD(cfgNode.attr("mass")) / (density * length)) );
-                else
-                    width = .1;
-                height = width;
-            }
-			pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)));
-			pNode->body.SetInertia(BoxInertia(density, Vec3(width/2.,height/2.,length/2.)));
-            '''
+                        geom = None
+                        #TODO:
+                        if geomType == "MyFoot3":
+                            geom = MyFoot3(radius, height)
+                        elif geomType == "MyFoot4":
+                            geom = MyFoot4(radius, height)
+                        else:
+                            geom = MyFoot5(radius, height)
 
-            geomType = cfgNode.geom
-            if (geomType == "MyFoot3") or (geomType == "MyFoot4"):
-                radius = .05
-                if cfgNode.width is not None:
-                    radius = cfgNode.width
-                length = Norm(offset) + 2*radius
-                density = cfgNode.density
-                mass = 1.
-                if cfgNode.mass is not None:
-                    mass = cfgNode.mass
-                    density = mass/(radius*radius*M_PI*length)
-                else:
-                    mass = density * radius * radius * M_PI * length
+                        pNode.geoms.append(geom)
+                        pNode.body.AddGeometry(geom, geomT)
+                    else:
+                        width = cfgNode.geomMaterial[i].width
+                        length = cfgNode.geomMaterial[i].length
+                        height = cfgNode.geomMaterial[i].height
 
-                if geomType == "MyFoot3":
-                    pNode.body.AddGeometry(MyFoot3(radius, length))
-                else:
-                    pNode.body.AddGeometry(MyFoot4(radius, length))
-                pNode.body.SetInertia(CylinderInertia(density, radius, length))
+                        pNode.material.SetDensity(cfgNode.geomMaterial[i].density)
+                        pNode.body.SetMaterial(pNode.material)
+
+                        geomT = SE3()
+                        geomT.SetEye()
+                        if cfgNode.geomTs[i] is not None:
+                            geomT = pySO3_2_SE3(cfgNode.geomTs[i][1])
+                            geomT.SetPosition(geomT*pyVec3_2_Vec3(cfgNode.geomTs[i][0]))
+                        geom = vpBox(Vec3(width, height, length))
+                        pNode.geoms.append(geom)
+                        pNode.body.AddGeometry(geom, geomT)
 
             else:
-                length = 1.
-                if cfgNode.length is not None:
-                    length = cfgNode.length * cfgNode.boneRatio
-                else:
-                    length = Norm(offset) * cfgNode.boneRatio
-
-                density = cfgNode.density
-                width = .1
-                height = .1
-
-                if cfgNode.width is not None:
-                    width = cfgNode.width
+                geomType = cfgNode.geom
+                if (geomType == "MyFoot3") or (geomType == "MyFoot4") or geomType == "MyFoot5":
+                    radius = .05
+                    if cfgNode.width is not None:
+                        radius = cfgNode.width
+                    length = Norm(offset) + 2*radius
+                    density = cfgNode.density
+                    mass = 1.
                     if cfgNode.mass is not None:
-                        height = cfgNode.mass / (density*length*width)
+                        mass = cfgNode.mass
+                        density = mass/(radius*radius*M_PI*length)
                     else:
-                        height = .1
+                        mass = density * radius * radius * M_PI * length
+
+                    # TODO:
+                    geom = None
+                    #TODO:
+                    if geomType == "MyFoot3":
+                        geom = MyFoot3(radius, length)
+                    elif geomType == "MyFoot4":
+                        geom = MyFoot4(radius, length)
+                    else:
+                        geom = MyFoot5(radius, length)
+
+                    pNode.geoms.append(geom)
+                    pNode.body.SetInertia(CylinderInertia(density, radius, length))
+
                 else:
-                    if cfgNode.mass is not None:
-                        width = math.sqrt(cfgNode.mass/(density*length))
+                    length = 1.
+                    if cfgNode.length is not None:
+                        length = cfgNode.length * cfgNode.boneRatio
                     else:
-                        width = .1
-                    height = width
+                        length = Norm(offset) * cfgNode.boneRatio
 
-                pNode.body.AddGeometry(vpBox(Vec3(width, height, length)))
-                pNode.body.SetInertia(BoxInertia(density, Vec3(width/2., height/2., length/2.)))
+                    density = cfgNode.density
+                    width = .1
+                    height = .1
 
-            boneT = boneT * SE3(cfgNode.offset)
+                    if cfgNode.width is not None:
+                        width = cfgNode.width
+                        if cfgNode.mass is not None:
+                            height = cfgNode.mass / (density*length*width)
+                        else:
+                            height = .1
+                    else:
+                        if cfgNode.mass is not None:
+                            width = math.sqrt(cfgNode.mass/(density*length))
+                        else:
+                            width = .1
+                        height = width
+
+                    box = vpBox(Vec3(width, height, length))
+                    pNode.geoms.append(box)
+                    pNode.body.AddGeometry(box)
+                    pNode.body.SetInertia(BoxInertia(density, Vec3(width/2., height/2., length/2.)))
+
+            boneT = boneT * SE3(pyVec3_2_Vec3(cfgNode.offset))
             self._boneTs[joint_index] = boneT
             newT = T * boneT
 
@@ -371,32 +284,43 @@ class VpModel:
         mass = 0.
         for i in range(len(self._nodes)):
             mass += self._nodes[i].body.GetInertia().GetMass()
+        return mass
 
     def getBodyShape(self, index):
-        _type = 'C'
-        data = [0., 0., 0.]
-        self._nodes[index].body.GetGeometry(0).GetShape(_type, data)
+        # pGeom = self._nodes[index].body.GetGeometry(0)
+        geom = self._nodes[index].geoms[0]
+        _type = geom.GetType()
+        data = []
 
+        #TODO:
         # class			 vpSphere;		// S
+        if _type == 'B':
+            _data = geom.GetSize()
+            data.append(_data[0])
+            data.append(_data[1])
+            data.append(_data[2])
+
         # class			 vpBox;			// B
         # class			 vpCapsule;		// C
+        if _type == 'C':
+            data.append(geom.GetRadius())
+            data.append(geom.GetHeight())
         # class			 vpPlane;		// P
         # class			 vpCylinder;	// L
         # class			 vpTorus;		// T
 
-        
-
         return data
 
     def getBodyVerticesPositionGlobal(self, index):
-        _type = 'C'
+        # pGeom = self._nodes[index].body.GetGeometry(0)
+        pGeom = self._nodes[index].geoms[0]
+        _type = pGeom.GetType()
         ls_point = []
         data = [0., 0., 0.]
-        pGeom = self._nodes[index].body.GetGeometry(0)
         # TODO:
         # check if GetShape work well
         # there is a problem!!! data : scalar * .....
-        pGeom.GetShape(_type, data)
+        # pGeom.GetShape(_type, data)
         geomFrame = pGeom.GetGlobalFrame()
 
         for i in range(8):
@@ -455,22 +379,40 @@ class VpModel:
         com *= 1./self.getTotalMass()
 
         return com
+    
+    def getBoneT(self, index):
+        return [SE3_2_pySO3(self._boneTs[index]), Vec3_2_pyVec3(self._boneTs[index].GetPosition())]
 
+    def getInvBoneT(self, index):
+        return [SE3_2_pySO3(Inv(self._boneTs[index])), Vec3_2_pyVec3(Inv(self._boneTs[index]).GetPosition())]
+
+    def getBodyGenVelLocal(self, index):
+        return se3_2_pyVec6(self._nodes[index].body.GetGenVelocityLocal())
+    
+    def getBodyGenVelGlobal(self, index):
+        return se3_2_pyVec6(self._nodes[index].body.GetGenVelocity())
+
+    def getBodyGenAccLocal(self, index):
+        return se3_2_pyVec6(self._nodex[index].body.GetGenAccelerationLocal())
+
+    def getBodyGenAccGlobal(self, index):
+        return se3_2_pyVec6(self._nodes[index].body.GetGenAccleration())
+    
     def getBodyPositionGlobal(self, index, pPositionLocal=None):
         bodyFrame = self._nodes[index].body.GetFrame()
         if pPositionLocal is None:
-            return bodyFrame.GetPosition()
-        return bodyFrame * pPositionLocal
+            return Vec3_2_pyVec3(bodyFrame.GetPosition())
+        return Vec3_2_pyVec3(bodyFrame * pPositionLocal)
 
     def getBodyOrientationGlobal(self, index):
         bodyFrame = self._nodes[index].body.GetFrame()
 
-        return bodyFrame
+        return SE3_2_pySO3(bodyFrame)
 
     def getBodyVelocityGlobal(self, index, positionLocal=None):
         if positionLocal is None:
             return self._nodes[index].body.GetLinVelocity(Vec3(0., 0., 0.))
-        return self._nodes[index].body.GetLinVelocity(positionLocal)
+        return Vec3_2_pyVec3(self._nodes[index].body.GetLinVelocity(pyVec3_2_Vec3(positionLocal)))
 
         '''
         //	static se3 genAccLocal, genAccGlobal;
@@ -524,29 +466,32 @@ class VpModel:
         self._nodes[index].body.SetFrame(bodyFrame)
 
     def setBodyAccelerationGlobal(self, index, acc, pPositionLocal=None):
-        if pPositionLocal is not None:
-            print "setBodyAccelerationGloba: not implemented pPositionLocal yet."
+        # if pPositionLocal is not None:
+        #     print "setBodyAccelerationGlobal: not implemented pPositionLocal yet."
 
         # se3 genAcc;
         genAcc = self._nodes[index].body.GetGenAcceleration()
-        genAcc[3] = acc[0]
-        genAcc[4] = acc[1]
-        genAcc[5] = acc[2]
+        # genAcc[3] = acc[0]
+        # genAcc[4] = acc[1]
+        # genAcc[5] = acc[2]
+        _genAcc = se3(genAcc[0], genAcc[1], genAcc[2], acc[0], acc[1], acc[2])
 
-        self._nodes[index].body.SetGenAcceleration(genAcc)
+        self._nodes[index].body.SetGenAcceleration(_genAcc)
 
     def setBodyAngVelocityGlobal(self, index, angvel):
         genVel = self._nodes[index].body.GetGenVelocity()
-        genVel[0] = angvel[0]
-        genVel[1] = angvel[1]
-        genVel[2] = angvel[2]
-        self._nodes[index].body.SetGenVelocity(genVel)
+        # genVel[0] = angvel[0]
+        # genVel[1] = angvel[1]
+        # genVel[2] = angvel[2]
+        _genVel = se3(angvel[0], angvel[1], angvel[2], genVel[3], genVel[4], genVel[5])
+        self._nodes[index].body.SetGenVelocity(_genVel)
 
     def setBodyAngAccelerationGlobal(self, index, angacc):
         genAcc = self._nodes[index].body.GetGenAcceleration()
-        genAcc[0] = angacc[0]
-        genAcc[1] = angacc[1]
-        genAcc[2] = angacc[2]
+        # genAcc[0] = angacc[0]
+        # genAcc[1] = angacc[1]
+        # genAcc[2] = angacc[2]
+        _genAcc = se3(angacc[0], angacc[1], angacc[2], genAcc[3], genAcc[4], genAcc[5])
         self._nodes[index].body.SetGenAcceleration(genAcc)
 
     def getBodyPositionsGlobal(self):
@@ -691,6 +636,7 @@ class VpControlModel(VpModel):
         VpModel.__init__(self, pWorld, createPosture, config)
         self.addBodiesToWorld(createPosture)
         self.ignoreCollisionBtwnBodies()
+        pWorld.addVpModel(self)
 
         tpose = createPosture.getTPose()
         self.createJoints(tpose)
@@ -720,7 +666,8 @@ class VpControlModel(VpModel):
 
     def getDOFs(self):
         ls = [6]
-        return ls.extend(self.getInternalJointDOFs())
+        ls.extend(self.getInternalJointDOFs())
+        return ls
 
     def getTotalDOF(self):
         return 6 + self.getTotalInternalJointDOF()
@@ -865,7 +812,7 @@ class VpControlModel(VpModel):
             if nodeExistParentJoint is not None:
                 pNode.joint.SetOrientation(R)
             else:
-                pNode.body.SEtFrame(SE3(pyVec3_2_Vec3(posture.rootPos)) * P * R * self._boneTs[joint_index])
+                pNode.body.SetFrame(SE3(pyVec3_2_Vec3(posture.rootPos)) * P * R * self._boneTs[joint_index])
 
         for i in range(len_joint_children):
             self._updateJoint(joint.children[i], posture)
@@ -873,7 +820,7 @@ class VpControlModel(VpModel):
     def fixBody(self, index):
         self._nodes[index].body.SetGround()
 
-    def initializeHybridDynamics(self, flotingBase):
+    def initializeHybridDynamics(self, flotingBase=True):
         rootIndex = 0
         for i in range(len(self._nodes)):
             if i == rootIndex:
@@ -1061,8 +1008,8 @@ class VpControlModel(VpModel):
         return ls
 
     def getDOFAxeses(self):
-        rootAxeses = np.vstack(np.eye(3), np.eye(3))
-        rootAxesTmp = self.getJointOrientationGlobal(0)
+        rootAxeses = np.vstack((np.eye(3), np.eye(3)))
+        rootAxesTmp = self.getBodyOrientationGlobal(0)
         rootAxes = rootAxesTmp.T
         rootAxeses[3] = rootAxes[0]
         rootAxeses[4] = rootAxes[1]
@@ -1110,8 +1057,8 @@ class VpControlModel(VpModel):
         return ls
 
     def getDOFAxesesLocal(self):
-        rootAxeses = np.vstack(np.eye(3), np.eye(3))
-        rootAxesTmp = self.getJointOrientationGlobal(0)
+        rootAxeses = np.vstack((np.eye(3), np.eye(3)))
+        rootAxesTmp = self.getBodyOrientationGlobal(0)
         rootAxes = rootAxesTmp.T
         rootAxeses[0] = rootAxes[0]
         rootAxeses[1] = rootAxes[1]
@@ -1125,16 +1072,46 @@ class VpControlModel(VpModel):
         ls.insert(0, rootAxeses)
         return ls
 
+    def getBodyRootDOFVelocitiesLocal(self):
+        rootGenVel = self.getBodyGenVelLocal(0)
+        rootGenVel_swaped = np.hstack((rootGenVel[3:], rootGenVel[:3]))
+        return [rootGenVel_swaped] + self.getInternalJointAngVelocitiesLocal()
+    
+    def getBodyRootDOFAccelerationsLocal(self):
+        rootGenAcc = self.getBodyGenAccLocal(0)
+        rootGenAcc_swaped = np.hstack((rootGenAcc[3:], rootGenAcc[:3]))
+        return [rootGenAcc_swaped] + self.getInternalJointAngAccelerationsLocal()
+
+    def getBodyRootDOFAxeses(self):
+        rootAxeses = np.vstack((np.eye(3), np.eye(3)))
+        rootAxesTmp = self.getBodyOrientationGlobal(0)
+        rootAxes = rootAxesTmp.T
+        rootAxeses[0] = rootAxes[0]
+        rootAxeses[1] = rootAxes[1]
+        rootAxeses[2] = rootAxes[2]
+        rootAxeses[3] = rootAxes[0]
+        rootAxeses[4] = rootAxes[1]
+        rootAxeses[5] = rootAxes[2]
+
+        internalJointOrientations = self.getInternalJointOrientationsGlobal()
+        ls = [rootAxeses]
+        for jointOrientation in internalJointOrientations:
+            ls.append(jointOrientation.T)
+
+        return ls
+
     # set Joints
     def setJointAngVelocityLocal(self, index, angvel):
         if index == 0:
             genVelBodyLocal = self._nodes[index].body.GetGenVelocityLocal()
             genVelJointLocal = InvAd(Inv(self._boneTs[index]), genVelBodyLocal)
-            genVelJointLocal[0] = angvel[0]
-            genVelJointLocal[1] = angvel[1]
-            genVelJointLocal[2] = angvel[2]
+            # genVelJointLocal[0] = angvel[0]
+            # genVelJointLocal[1] = angvel[1]
+            # genVelJointLocal[2] = angvel[2]
 
-            genVelBodyLocal = Ad(Inv(self._boneTs[index]), genVelJointLocal)
+            _genVelJointLocal = se3(angvel[0], angvel[1], angvel[2], genVelJointLocal[3], genVelJointLocal[4], genVelJointLocal[5])
+
+            genVelBodyLocal = Ad(Inv(self._boneTs[index]), _genVelJointLocal)
             self._nodes[index].body.SetGenVelocityLocal(genVelBodyLocal)
         else:
             self._nodes[index].joint.SetVelocity(pyVec3_2_Vec3(angvel))
@@ -1143,9 +1120,11 @@ class VpControlModel(VpModel):
         if index == 0:
             genAccBodyLocal = self._nodes[index].body.GetGenAccelerationLocal()
             genAccJointLocal = InvAd(Inv(self._boneTs[index]), genAccBodyLocal)
-            genAccJointLocal[0] = angacc[0]
-            genAccJointLocal[1] = angacc[1]
-            genAccJointLocal[2] = angacc[2]
+            # genAccJointLocal[0] = angacc[0]
+            # genAccJointLocal[1] = angacc[1]
+            # genAccJointLocal[2] = angacc[2]
+
+            _genAccJointLocal = se3(angacc[0], angacc[1], angacc[2], genAccJointLocal[3], genAccJointLocal[4], genAccJointLocal[5])
 
             genVelBodyLocal = Ad(Inv(self._boneTs[index]), genAccJointLocal)
             self._nodes[index].body.SetGenAccelerationLocal(genAccBodyLocal)
@@ -1339,18 +1318,19 @@ class VpControlModel(VpModel):
                 self._nodes[j].body.ResetForce()
                 self._nodes[j].joint.SetTorque(zero_Vec3)
 
-            genForceLocal = dse3(0.)
-            if i < 3:
-                genForceLocal[i+3] = 1.0
-            elif i < 6:
-                genForceLocal[i-3] = 1.0
+            _torque = np.zeros(N)
+            if i<3:
+                _torque[i+3] = 1.
+            elif i<6:
+                _torque[i-3] = 1.
+            else:
+                _torque[i] = 1.
+
+            genForceLocal = pyVec6_2_dse3(_torque[:6])
 
             for j in range(n):
-                torque = Vec3(0.)
-                if (i >= 6) and ((i-6)/3 == j):
-                    torque[(i-6) % 3] = 1.
-                joint = self._nodes[j+1].joint
-                joint.SetTorque(torque)
+                torque = pyVec3_2_Vec3(_torque[6+3*j:9+3*j])
+                self._nodes[j+1].joint.SetTorque(torque)
 
             Hip.ApplyLocalForce(genForceLocal, zero_Vec3)
 
