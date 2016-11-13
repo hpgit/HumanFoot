@@ -36,6 +36,9 @@ import_array(); // This is essential. We will get a crash in Python without it.
 #include <VP/vpWorld.h>
 #include <VP/vpTimer.h>
 #include <VP/vpDataType.h>
+#include "hpBJoint.h"
+#include "hpRJoint.h"
+#include "hpUJoint.h"
 %}
 
 %include <VP/LieGroup.h>
@@ -55,6 +58,9 @@ import_array(); // This is essential. We will get a crash in Python without it.
 %include <VP/vpWorld.h>
 %include <VP/vpTimer.h>
 %include <VP/vpDataType.h>
+%include "hpBJoint.h"
+%include "hpRJoint.h"
+%include "hpUJoint.h"
 
 
 %extend Axis{

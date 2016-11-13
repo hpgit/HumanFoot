@@ -21,7 +21,7 @@ class VpModel:
             self.name = _name
             self.body = vpBody()
             self.material = vpMaterial()
-            self.joint = vpBJoint()
+            self.joint = hpBJoint()
             self.dof = 3
             self.color = [0., 0., 0., 255.]
             self.use_joint = False
