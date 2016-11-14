@@ -179,7 +179,8 @@ class VpModelRenderer(Renderer):
                 data.append(pGeom.GetRadius())
                 data.append(pGeom.GetHeight())
                 data[1] -= 2. * data[0]
-                self.rc.drawCylinder(data[0], data[1])
+                # self.rc.drawCylinder(data[0], data[1])
+                self.rc.drawCapsule(data[0], data[1])
             elif geomType == 'S':
                 data.append(pGeom.GetRadius())
                 self.rc.drawSphere(data[0])
@@ -894,32 +895,13 @@ class RenderContext:
         # gleSetNumSides(12)
 
     def drawCapsule(self, radius, length_z):
-        _SLICE_SIZE = 24
+        _SLICE_SIZE = 8
         glPushMatrix()
-        # glTranslatef(0., 0., -length_z/2.)
-        # gluSphere(self.quad2, radius, 16, 16)
-        # glTranslatef(0., 0., +length_z/2.)
-        # gluCylinder(self.quad, radius, radius, length_z, 16, 1)
-        # glTranslatef(0., 0., +length_z/2.)
-        # gluSphere(self.quad2, radius, 16, 16)
-
-        ct_im1 = 1.
-        st_im1 = 0.
-        glDisable(GL_CULL_FACE)
-        glBegin(GL_QUADS)
-        for i in range(1, _SLICE_SIZE):
-            ct_i = math.cos(2.*math.pi*float(i)/_SLICE_SIZE)
-            st_i = math.sin(2.*math.pi*float(i)/_SLICE_SIZE)
-
-            glTexCoord2d(float(i-1)/_SLICE_SIZE, 0.)
-            #TODO:
-            glNormal3d()
-
-            cp_im1 = 1.
-            sp_im1 = 0.
-
-
-
+        glTranslatef(0., 0., -length_z/2.)
+        gluSphere(self.quad2, radius, _SLICE_SIZE, _SLICE_SIZE)
+        gluCylinder(self.quad, radius, radius, length_z, _SLICE_SIZE, 1)
+        glTranslatef(0., 0., +length_z)
+        gluSphere(self.quad2, radius, _SLICE_SIZE, _SLICE_SIZE)
         glPopMatrix()
 
 
