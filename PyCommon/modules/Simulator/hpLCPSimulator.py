@@ -48,23 +48,25 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
     # for i in range(3):
     #     jointAxeses[0][i] = body0Ori.T[i]
     #     jointAxeses[0][i+3] = body0Ori.T[i]
-    jointAxeses = model.getBodyRootDOFAxeses()
 
-    totalDOF = model.getTotalDOF()
-    qdot_0 = ype.makeFlatList(totalDOF)
-    # ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
-    # bodyGenVelLocal = model.getBodyGenVelLocal(0)
-    #
-    # for i in range(3):
-    #     qdot_0[i] = bodyGenVelLocal[i+3]
-    #     qdot_0[i+3] = bodyGenVelLocal[i]
-    ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
+    # jointAxeses = model.getBodyRootDOFAxeses()
+    jointAxeses = model.getBodyRootJointAngJacobiansGlobal()
+
+    # totalDOF = model.getTotalDOF()
+    # qdot_0 = ype.makeFlatList(totalDOF)
+    # # ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
+    # # bodyGenVelLocal = model.getBodyGenVelLocal(0)
+    # #
+    # # for i in range(3):
+    # #     qdot_0[i] = bodyGenVelLocal[i+3]
+    # #     qdot_0[i+3] = bodyGenVelLocal[i]
+    # ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
 
     for vpidx in range(len(cVpBodyIds)):
         bodyidx = model.id2index(cVpBodyIds[vpidx])
         contactJointMasks = [yjc.getLinkJointMask(skeleton, bodyidx)]
-        # yjc.computeJacobian2(Jic, DOFs, jointPositions, jointAxeses, [cPositions[vpidx]], contactJointMasks)
-        yjc.computeLocalRootJacobian(Jic, DOFs, jointPositions, jointAxeses, [cPositions[vpidx]], contactJointMasks)
+        # yjc.computeLocalRootJacobian(Jic, DOFs, jointPositions, jointAxeses, [cPositions[vpidx]], contactJointMasks)
+        yjc.computeControlModelJacobian(Jic, DOFs, jointPositions, jointAxeses, [cPositions[vpidx]], contactJointMasks)
         n = np.array([[0., 1., 0., 0., 0., 0.]]).T
         JTn = Jic.T.dot(n)
         if N is None:

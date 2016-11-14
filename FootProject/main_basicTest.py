@@ -123,19 +123,19 @@ def init():
         for i in range(motion[0].skeleton.getElementNum()):
             mcfg.addNode(motion[0].skeleton.getElementName(i))
         node = mcfg.getNode('root')
-        # node.geom = 'MyFoot3'
-        node.geom = 'MyBox'
+        node.geom = 'MyFoot3'
+        # node.geom = 'MyBox'
         # node.length = 1.
         node.mass = 1.
 
         node = mcfg.getNode('foot00')
         node.geom = 'MyFoot4'
-        node.geom = 'MyBox'
+        # node.geom = 'MyBox'
         node.mass = 1.
 
         node = mcfg.getNode('foot01')
         node.geom = 'MyFoot4'
-        node.geom = 'MyBox'
+        # node.geom = 'MyBox'
         node.mass = 1.
 
         def mcfgFix(_mcfg):

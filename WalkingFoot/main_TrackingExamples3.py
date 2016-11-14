@@ -187,13 +187,13 @@ def buildMcfg():
     node.density = 200.
     node.geom = 'MyFoot5'
     node.width = 0.01
-    node.jointType = 'U'
+    # node.jointType = 'U'
 
     node = mcfg.getNode('LeftFoot')
     node.density = 200.
     node.geom = 'MyFoot5'
     node.width = 0.01
-    node.jointType = 'U'
+    # node.jointType = 'U'
 
     # bird foot
     # capsulize('RightFoot_foot_0_0')
@@ -216,34 +216,41 @@ def buildMcfg():
     node.addGeom('MyFoot3', [0.02*np.array([-0.3, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
     node.addGeom('MyFoot3', [0.02*np.array([-0.3-1.2, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
     # node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0., 0., 0.])], ypc.CapsuleMaterial(1000., .01, -1))
+    node.jointType = 'U'
 
     capsulize('RightFoot_foot_0_0_0')
     node = mcfg.getNode('RightFoot_foot_0_0_0')
     node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
     node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+    node.jointType = 'U'
 
     capsulize('RightFoot_foot_0_1')
     node = mcfg.getNode('RightFoot_foot_0_1')
     node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
     node.addGeom('MyFoot3', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400.,.01, -1))
+    node.jointType = 'U'
 
     capsulize('RightFoot_foot_0_1_0')
     node = mcfg.getNode('RightFoot_foot_0_1_0')
     node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
     node.addGeom('MyFoot4', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+    node.jointType = 'U'
 
     capsulize('RightFoot_foot_1_0')
     node = mcfg.getNode('RightFoot_foot_1_0')
     node.addGeom('MyFoot3', [0.02*np.array([0., 0., .7]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, 0.02*2.0+0.02))
     # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+    node.jointType = 'U'
 
     capsulize('RightFoot_foot_1_1')
     node = mcfg.getNode('RightFoot_foot_1_1')
     node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+    node.jointType = 'U'
 
     capsulize('RightFoot_foot_1_2')
     node = mcfg.getNode('RightFoot_foot_1_2')
     node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+    node.jointType = 'U'
 
 
     capsulize('LeftFoot_foot_0_0')
@@ -251,34 +258,41 @@ def buildMcfg():
     node.addGeom('MyFoot3', [0.02*np.array([0.3, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
     node.addGeom('MyFoot3', [0.02*np.array([0.3+1.2, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
     # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+    node.jointType = 'U'
 
     capsulize('LeftFoot_foot_0_0_0')
     node = mcfg.getNode('LeftFoot_foot_0_0_0')
     node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
     node.addGeom('MyFoot4', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+    node.jointType = 'U'
 
     capsulize('LeftFoot_foot_0_1')
     node = mcfg.getNode('LeftFoot_foot_0_1')
     node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
     node.addGeom('MyFoot3', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+    node.jointType = 'U'
 
     capsulize('LeftFoot_foot_0_1_0')
     node = mcfg.getNode('LeftFoot_foot_0_1_0')
     node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
     node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+    node.jointType = 'U'
 
     capsulize('LeftFoot_foot_1_0')
     node = mcfg.getNode('LeftFoot_foot_1_0')
     node.addGeom('MyFoot3', [0.02*np.array([0., 0., .7]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, 0.02*2.0+0.02))
     # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+    node.jointType = 'U'
 
     capsulize('LeftFoot_foot_1_1')
     node = mcfg.getNode('LeftFoot_foot_1_1')
     node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+    node.jointType = 'U'
 
     capsulize('LeftFoot_foot_1_2')
     node = mcfg.getNode('LeftFoot_foot_1_2')
     node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+    node.jointType = 'U'
 
 
     return mcfg
@@ -473,7 +487,7 @@ def walkings():
     # controlModel = cvm.VpControlModel(vpWorld, motion_ori[0], mcfg)
     controlModel = pcvm.VpControlModel(vpWorld, motion_ori[0], mcfg)
     vpWorld.initialize()
-    # print controlModel
+    print controlModel
     # controlModel = None
 
     #   motionModel.recordVelByFiniteDiff()
@@ -1108,7 +1122,8 @@ def walkings():
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMap)
 
         totalDOF = controlModel.getTotalDOF()
-        ddth_des_flat = ype.makeFlatList(totalDOF)
+        # ddth_des_flat = ype.makeFlatList(totalDOF)
+        ddth_des_flat = ype.makeFlatList(controlModel.get3dExtendDOF())
         ype.flatten(ddth_des, ddth_des_flat)
 
         #=======================================================================
@@ -1173,7 +1188,7 @@ def walkings():
                 rknee_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rKnee))
                 rankle_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rFoot))
 
-            rd_torques[:] = [controlModel.getJointTorqueLocal(j)/100. for j in range(1, skeleton.getJointNum())]
+            # rd_torques[:] = [controlModel.getJointTorqueLocal(j)/100. for j in range(1, skeleton.getJointNum())]
             rd_joint_positions[:] = controlModel.getJointPositionsGlobal()
 
             vpWorld.step()

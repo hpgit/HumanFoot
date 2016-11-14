@@ -12,6 +12,8 @@ from PyCommon.modules.pyVirtualPhysics import *
 from PyCommon.modules.Simulator.csVpUtil import *
 from PyCommon.modules.Simulator.myGeom import *
 
+from PyCommon.modules.Math import mmMath as mm
+
 QP = True
 
 
@@ -21,12 +23,26 @@ class VpModel:
             self.name = _name
             self.body = vpBody()
             self.material = vpMaterial()
-            self.joint = hpBJoint()
+            # self.joint = hpBJoint()
+            self.joint = None
             self.dof = 3
             self.color = [0., 0., 0., 255.]
             self.use_joint = False
             self.body.SetMaterial(self.material)
             self.geoms = []
+
+        def setJointNearstOrientation(self, R):
+            ## @param R : VP::SE3
+            if self.dof == 3:
+                self.joint.SetOrientation(R)
+            elif self.dof == 2:
+                th0 = math.atan2(-R[7], R[8])
+                th1 = math.asin(R[6])
+                self.joint.SetAngle(0, th0)
+                self.joint.SetAngle(1, th1)
+            elif self.dof == 1:
+                th0 = Inner(LogR(R), self.joint.GetAxis())
+                self.joint.SetAngle(th0)
 
     def __init__(self, pWorld, createPosture, config):
         self._pWorld = pWorld._world
@@ -650,19 +666,21 @@ class VpControlModel(VpModel):
         strstr = VpModel.__str__(self)
         strstr += "<INTERNAL JOINTS>\n"
         for i in range(1, len(self._nodes)):
-            strstr += "[" + str(i-1) + "]:" + self._nodes[i].name + ", "
+            strstr += "[" + str(i-1) + "]:" + self._nodes[i].name + ", " + str(self._nodes[i].dof) + "DOF\n"
         strstr += "\n"
 
         return strstr
 
     def getInternalJointDOFs(self):
-        ls = [3] * (len(self._nodes)-1)
+        # ls = [3] * (len(self._nodes)-1)
         # for i in range(1, len(self._nodes)):
         #     ls.append(3)
+        ls = [self._nodes[i].dof for i in range(1, len(self._nodes))]
         return ls
 
     def getTotalInternalJointDOF(self):
-        return 3*(len(self._nodes)-1)
+        # return 3*(len(self._nodes)-1)
+        return sum(self.getInternalJointDOFs())
 
     def getDOFs(self):
         ls = [6]
@@ -671,6 +689,9 @@ class VpControlModel(VpModel):
 
     def getTotalDOF(self):
         return 6 + self.getTotalInternalJointDOF()
+
+    def get3dExtendDOF(self):
+        return 6 + 3*(len(self._nodes)-1)
 
     def createJoints(self, posture):
         joint = posture.skeleton.root
@@ -737,6 +758,19 @@ class VpControlModel(VpModel):
 
             # parentOffset = parentCfgNode.offset
             # parentOffsetT = SE3(pyVec3_2_Vec3(parentOffset))
+
+            if cfgNode.jointType == "R":
+                pNode.dof = 1
+                pNode.joint = hpRJoint()
+            elif cfgNode.jointType == "U":
+                pNode.dof = 2
+                pNode.joint = hpUJoint()
+            elif cfgNode.jointType == "B":
+                pNode.dof = 3
+                pNode.joint = hpBJoint()
+            else:
+                pNode.dof = 3
+                pNode.joint = hpBJoint()
 
             pParentNode.body.SetJoint(pNode.joint, Inv(self._boneTs[parent_index]) * Inv(invLocalT))
             pNode.body.SetJoint(pNode.joint, Inv(self._boneTs[joint_index]))
@@ -810,7 +844,8 @@ class VpControlModel(VpModel):
         if self._config.hasNode(joint_name):
             pNode = self._nodes[joint_index]
             if nodeExistParentJoint is not None:
-                pNode.joint.SetOrientation(R)
+                # pNode.joint.SetOrientation(R)
+                pNode.setJointNearstOrientation(R)
             else:
                 pNode.body.SetFrame(SE3(pyVec3_2_Vec3(posture.rootPos)) * P * R * self._boneTs[joint_index])
 
@@ -866,7 +901,7 @@ class VpControlModel(VpModel):
             pyV[2] = genVelJointLocal[2]
             return pyV
 
-        return Vec3_2_pyVec3(self._nodes[index].joint.GetVelocity())
+        return Vec3_2_pyVec3(self._nodes[index].joint.GetVelocityLocal())
 
     def getJointAccelerationLocal(self, index):
         pospos = Inv(self._boneTs[index]).GetPosition()
@@ -882,7 +917,7 @@ class VpControlModel(VpModel):
             pyV[1] = genAccJointLocal[1]
             pyV[2] = genAccJointLocal[2]
             return pyV
-        return Vec3_2_pyVec3(self._nodes[index].joint.GetAcceleration())
+        return Vec3_2_pyVec3(self._nodes[index].joint.GetAccelerationLocal())
 
     # Get Joints Local State
     def getJointOrientationsLocal(self):
@@ -902,6 +937,13 @@ class VpControlModel(VpModel):
 
     def getInternalJointAngAccelerationsLocal(self):
         return [self.getJointAngAccelerationLocal(i) for i in range(1, len(self._nodes))]
+
+    def getInternalJointDOFAccelerationsLocalFlat(self):
+        acc = []
+        for i in range(1, len(self._nodes)):
+            for j in range(self._nodes[i].joint.GetDOF()):
+                acc.append(self._nodes[i].joint.GetSecondDeriv(j))
+        return np.array(acc)
 
     # Get Joint Global State
     def getJointFrame(self, index):
@@ -1100,6 +1142,48 @@ class VpControlModel(VpModel):
 
         return ls
 
+    def getBodyRootJointAngJacobiansGlobal(self):
+        rootAxes = self.getBodyOrientationGlobal(0)
+        rootJacobian = mm.getLocalAngJacobianForAngleAxis(mm.logSO3(rootAxes))
+
+        # rootAxeses = np.hstack((rootAxes, np.dot(rootAxes, rootJacobian))).T
+        rootAxeses = np.hstack((rootAxes, rootAxes)).T
+
+        ls = [rootAxeses]+[np.dot(self.getJointOrientationGlobal(i), self.getJointLocalAngJacobian(i)).T for i in range(1, len(self._nodes))]
+        return ls
+
+    def getJointLocalAngJacobian(self, i):
+        _joint = self._nodes[i].joint
+        if self._nodes[i].dof == 1:
+            return Vec3_2_pyVec3(_joint.GetAxis()).reshape([3, 1])
+            # return Vec3_2_pyVec3(_joint.GetAxis())
+        elif self._nodes[i].dof == 2:
+            axis0 = Vec3_2_pyVec3(_joint.GetAxis(0))
+            axis1 = Vec3_2_pyVec3(_joint.GetAxis(1))
+            return np.vstack((axis0, axis1)).T
+            # return np.vstack((axis0, axis1))
+        elif self._nodes[i].dof == 3:
+            m_rQ = np.array([_joint.GetDisplacement(0), _joint.GetDisplacement(1), _joint.GetDisplacement(2)])
+            return mm.getLocalAngJacobianForAngleAxis(m_rQ)
+            '''
+            t = np.linalg.norm(m_rQ)
+            t2 = t*t
+            alpha = 0.
+            beta = 0.
+            gamma = 0.
+            if t < BJOINT_EPS:
+                alpha = SCALAR_1_6 - SCALAR_1_120 * t2
+                beta = SCALAR_1 - SCALAR_1_6 * t2
+                gamma = SCALAR_1_2 - SCALAR_1_24 * t2
+            else:
+                beta = math.sin(t) / t
+                alpha = (1. - beta) / t2
+                gamma = (1. - math.cos(t)) / t2
+            return alpha * mm.getPosDefMatrixForm(m_rQ) + beta*np.eye(3) - gamma * mm.getCrossMatrixForm(m_rQ)
+            # return alpha * mm.getPosDefMatrixForm(m_rQ) + beta*np.eye(3) + gamma * mm.getCrossMatrixForm(m_rQ)
+            '''
+
+
     # set Joints
     def setJointAngVelocityLocal(self, index, angvel):
         if index == 0:
@@ -1129,7 +1213,7 @@ class VpControlModel(VpModel):
             genVelBodyLocal = Ad(Inv(self._boneTs[index]), genAccJointLocal)
             self._nodes[index].body.SetGenAccelerationLocal(genAccBodyLocal)
         else:
-            self._nodes[index].joint.SetVelocity(pyVec3_2_Vec3(angacc))
+            self._nodes[index].joint.SetAcceleration(pyVec3_2_Vec3(angacc))
 
     def setJointAccelerationGlobal(self, index, acc):
         if index == 0:
@@ -1147,7 +1231,8 @@ class VpControlModel(VpModel):
 
     def setInternalJointAngAccelerationsLocal(self, angaccs):
         for i in range(1, len(self._nodes)):
-            self._nodes[i].joint.SetAcceleration(pyVec3_2_Vec3(angaccs[i-1]))
+            # self._nodes[i].joint.SetAcceleration(pyVec3_2_Vec3(angaccs[i-1]))
+            self._nodes[i].joint.SetAccelerationLocal(pyVec3_2_Vec3(angaccs[i-1]))
 
     def setDOFAccelerations(self, dofaccs):
         self.setJointAccelerationGlobal(0, dofaccs[0][0:3])
@@ -1194,11 +1279,11 @@ class VpControlModel(VpModel):
         return [self.getJointTorqueLocal(i) for i in range(1, len(self._nodes))]
 
     def setJointTorqueLocal(self, index, torque):
-        self._nodes[index].joint.SetTorque(pyVec3_2_Vec3(torque))
+        self._nodes[index].joint.SetTorqueLocal(pyVec3_2_Vec3(torque))
 
     def setInternalJointTorquesLocal(self, torques):
         for i in range(1, len(self._nodes)):
-            self._nodes[i].joint.SetTorque(pyVec3_2_Vec3(torques[i-1]))
+            self._nodes[i].joint.SetTorqueLocal(pyVec3_2_Vec3(torques[i-1]))
 
     def applyBodyGenForceGlobal(self, index, torque, force, positionLocal=None):
         if positionLocal is None:
@@ -1263,6 +1348,103 @@ class VpControlModel(VpModel):
 
     # must be called at first:clear all torques and accelerations
     def getInverseEquationOfMotion(self):
+        # M^-1 * tau - M^-1 * b = ddq
+        # ddq^T = [rootjointLin^T rootjointAng^T joints^T]^T
+        n = len(self._nodes)-1
+        N = 6 + self.getTotalInternalJointDOF()
+
+        invMb = np.zeros(N)
+        invM = np.zeros((N, N))
+
+        zero_dse3 = dse3(0.)
+        zero_Vec3 = Vec3(0.)
+
+        Hip = self._nodes[0].body
+
+        # save current ddq and tau
+        accBackup = []
+        torBackup = []
+        for i in range(n):
+            self._nodes[i+1].joint.BackupAccTau()
+
+        hipAccBackup = Hip.ResetForce()
+        for i in range(1, len(self._nodes)):
+            self._nodes[i].body.ResetForce()
+            self._nodes[i].joint.SetTorqueLocal(zero_Vec3)
+
+        # get invMb
+        Hip.ApplyLocalForce(zero_dse3, zero_Vec3)
+        for i in range(n):
+            joint = self._nodes[i+1].joint
+            joint.SetTorqueLocal(zero_Vec3)
+
+        Hip.GetSystem().ForwardDynamics()
+        hipAcc_tmp = se3_2_pyVec6(Hip.GetGenAccelerationLocal())   # represented in body frame
+
+        invMb[:3] = -hipAcc_tmp[3:]
+        invMb[3:6] = -hipAcc_tmp[:3]
+        invMb[6:] = -self.getInternalJointDOFAccelerationsLocalFlat()
+
+        # get M
+        for i in range(N):
+            Hip.ResetForce()
+            for j in range(1, len(self._nodes)):
+                self._nodes[j].body.ResetForce()
+                self._nodes[j].joint.SetTorqueLocal(zero_Vec3)
+
+            _torque = np.zeros(N)
+            if i<3:
+                _torque[i+3] = 1.
+            elif i<6:
+                _torque[i-3] = 1.
+            else:
+                _torque[i] = 1.
+
+            genForceLocal = pyVec6_2_dse3(_torque[:6])
+
+            curJointTorqueIdx = 6
+            for j in range(n):
+                dof = self._nodes[j+1].joint.GetDOF()
+                if 0 <= i-curJointTorqueIdx < dof:
+                    if dof == 1:
+                        self._nodes[j+1].joint.SetGenTorque(1.)
+                    else:
+                        self._nodes[j+1].joint.SetGenTorque(i-curJointTorqueIdx, 1.)
+                    break
+                curJointTorqueIdx += dof
+
+
+            Hip.ApplyLocalForce(genForceLocal, zero_Vec3)
+
+            Hip.GetSystem().ForwardDynamics()
+
+            hipAcc_tmp = Hip.GetGenAccelerationLocal()
+            for j in range(3):
+                invM[j, i] = hipAcc_tmp[j+3] + invMb[j]
+            for j in range(3, 6):
+                invM[j, i] = hipAcc_tmp[j-3] + invMb[j]
+            invM[6:, i] = self.getInternalJointDOFAccelerationsLocalFlat() + invMb[6:]
+            # for j in range(n):
+            #     joint = self._nodes[j+1].joint
+            #     acc = joint.GetAcceleration()
+            #     for k in range(3):
+            #         invM[6+3*j+k, i] = acc[k] + invMb[6+3*j+k]
+
+        # restore ddq and tau
+        for i in range(n):
+            self._nodes[i+1].joint.RestoreAccTau()
+            # joint.SetAcceleration(zero_Vec3)
+            # joint.SetTorque(zero_Vec3)
+
+        # Hip.SetGenAcceleration(hipAccBackup)
+
+        Hip.ResetForce()
+        # Hip.ApplyGlobalForce(hipTorBackup, zero_Vec3)
+
+        return invM, invMb
+
+    # must be called at first:clear all torques and accelerations
+    def getInverseEquationOfMotion_deprecated(self):
         # M^-1 * tau - M^-1 * b = ddq
         # ddq^T = [rootjointLin^T rootjointAng^T joints^T]^T
         n = len(self._nodes)-1

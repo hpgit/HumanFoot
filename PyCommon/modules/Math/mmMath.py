@@ -219,7 +219,8 @@ def logSO3(SO3):
         theta = math.acos(cosTheta)
         
         if theta < LIE_EPS: 
-            cof = 3.0 / (6.0 - theta*theta)
+            # cof = 3.0 / (6.0 - theta*theta)
+            cof = .5 + theta*theta/12.
         else:
             cof = theta / (2.0 * math.sin(theta))
             
@@ -252,6 +253,22 @@ def exp(axis, theta = None):
                        [(1.0-c)*x*y + s*z,    c + (1.0-c)*y*y,    (1.0-c)*y*z - s*x],
                        [(1.0-c)*z*x - s*y,    (1.0-c)*z*y + s*x,    c + (1.0-c)*z*z]])  
     return SO3
+
+def getLocalAngJacobianForAngleAxis(m_rQ):
+    t = np.linalg.norm(m_rQ)
+    t2 = t*t
+    alpha = 0.
+    beta = 0.
+    gamma = 0.
+    if t < 1.0e-6:
+        alpha = 1./6. - (1./120.) * t2
+        beta = 1. - (1./6.) * t2
+        gamma = .5 - (1./24.) * t2
+    else:
+        beta = math.sin(t) / t
+        alpha = (1. - beta) / t2
+        gamma = (1. - math.cos(t)) / t2
+    return alpha * getPosDefMatrixForm(m_rQ) + beta*np.eye(3) - gamma * getCrossMatrixForm(m_rQ)
 
 # returns X that X dot vec1 = vec2 
 def getSO3FromVectors(vec1, vec2):
@@ -523,6 +540,11 @@ def getCrossMatrixForm(w):
     W[0,2] = w[1]; W[2,0] = -w[1]
     W[1,2] = -w[0]; W[2,1] = w[0]
     return W
+
+def getPosDefMatrixForm(r):
+    _r = np.array(r).reshape([3,1])
+    return np.dot(_r, _r.T)
+
 
 from numpy.linalg import svd
 from numpy import sum,where

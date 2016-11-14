@@ -17,13 +17,14 @@ from ..Util import ysPythonEx as ype
 # len(jointDOFs) : number of real joints
 #    ex. jointDOFs = [3,3] : 2 ball joints 
 # sum of all elements of jointDOFs : total DOF 
-def makeEmptyJacobian(jointDOFs, effectorNum, applyOrientation = True):
+def makeEmptyJacobian(jointDOFs, effectorNum, applyOrientation=True):
     dof_per_effector = 3 if applyOrientation==False else 6
     rowNum = dof_per_effector * effectorNum
     colNum = 0
     for i in range(len(jointDOFs)):
         colNum += jointDOFs[i]
     return np.zeros((rowNum, colNum), float)
+
 
 def computeLocalRootJacobian(J, jointDOFs, jointPositions, jointAxeses, effectorPositions, effectorJointMasks=None, linearFirst=True):
     rowNum, colNum = J.shape
@@ -587,50 +588,54 @@ def computePartialJacobianDerivative2(dJ, jointDOFs, jointPositions, jointAxeses
 #     len(effectorPositions) == 2
 #     effectorJointMasks == [[1,1,1], [1,1,1]] : every effector affected by every joint
 #     effectorJointMasks == [[1,0,0], [1,1,0]] : 1st effector affected by only 1st joint, 2nd effector affected by 1st & 2nd joints
-def computeControlModelJacobian(J, model, jointDOFs, jointPositions, jointAxeses, linkAngVels, effectorPositions, effectorJointMasks, internalJointsOnly=False, partialDOFIndex = [0,0], linearFirst=True):
+def computeControlModelJacobian(J, jointDOFs, jointPositions, jointAxeses, effectorPositions, effectorJointMasks, internalJointsOnly=False, partialDOFIndex = [0,0], linearFirst=True):
     rowNum, colNum = J.shape
     dof_per_effector = rowNum / len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
-    index = 0
-    model.getJointOrientationGlobal(index)
-    model.getJointBodyJacobianLocal(index)
-
-    jointNum = model.getInternalJointNum()
 
     for e in range(len(effectorPositions)):
         col = 0
 
         for j in range(len(jointDOFs)):
-            jointDOF_jth_joint = jointDOFs[j]
             jointPosition_jth_joint = jointPositions[j]
             jointAxes_jth_joint = jointAxeses[j]
 
-            for d in range(jointDOF_jth_joint):
-                if (effectorJointMasks==None or effectorJointMasks[e][j]) and (j < partialDOFIndex[0] or j >= partialDOFIndex[1] or (j >= partialDOFIndex[0] and j < partialDOFIndex[1] and d == 0) ):
-                    axis_colth_dof = jointAxes_jth_joint[d]
-                    rotationalDOF = False if jointDOF_jth_joint==6 and d<3 else True
-
-                    if rotationalDOF:
-                        instanteneousAngVelocity_colth_dof = axis_colth_dof
-                        instanteneousVelocity_colth_dof = np.cross(axis_colth_dof, effectorPositions[e] - jointPosition_jth_joint)
-                    else:   # translationalDOF
-                        instanteneousAngVelocity_colth_dof = [0.,0.,0.]
-                        instanteneousVelocity_colth_dof = axis_colth_dof
-                else:
-                    instanteneousAngVelocity_colth_dof = [0.,0.,0.]
-                    instanteneousVelocity_colth_dof = [0.,0.,0.]
-
-                for i in range(3):
-                    if dof_per_effector == 6:
-                        if linearFirst:
-                            J[e*dof_per_effector + i, col] = instanteneousVelocity_colth_dof[i]
-                            J[e*dof_per_effector + 3 + i, col] = instanteneousAngVelocity_colth_dof[i]
-                        else:
-                            J[e*dof_per_effector + i, col] = instanteneousAngVelocity_colth_dof[i]
-                            J[e*dof_per_effector + 3 + i, col] = instanteneousVelocity_colth_dof[i]
+            skew_jointPosition_jth_joint = mm.getCrossMatrixForm(effectorPositions[e]-jointPosition_jth_joint)
+            jointColNum = jointAxes_jth_joint.shape[0]
+            if j == 0:
+                velJacobianLin = jointAxes_jth_joint[:3, :3].T
+                velJacobianAng = - np.dot(skew_jointPosition_jth_joint, jointAxes_jth_joint[3:, :3].T)
+                if dof_per_effector == 6:
+                    if linearFirst:
+                        J[e*dof_per_effector  :e*dof_per_effector+3, col  :col+3] = velJacobianLin
+                        J[e*dof_per_effector+3:e*dof_per_effector+6, col  :col+3] = np.zeros((3,3))
+                        J[e*dof_per_effector  :e*dof_per_effector+3, col+3:col+6] = velJacobianAng
+                        J[e*dof_per_effector+3:e*dof_per_effector+6, col+3:col+6] = jointAxes_jth_joint[3:, :3].T
                     else:
-                        J[e*dof_per_effector + i, col] = instanteneousVelocity_colth_dof[i]
+                        J[e*dof_per_effector  :e*dof_per_effector+3, col  :col+3] = np.zeros((3,3))
+                        J[e*dof_per_effector+3:e*dof_per_effector+6, col  :col+3] = velJacobianLin
+                        J[e*dof_per_effector  :e*dof_per_effector+3, col+3:col+6] = jointAxes_jth_joint[3:, :3].T
+                        J[e*dof_per_effector+3:e*dof_per_effector+6, col+3:col+6] = velJacobianAng
+                else:
+                    J[e*dof_per_effector:e*dof_per_effector+3, col  :col+3] = velJacobianLin
+                    J[e*dof_per_effector:e*dof_per_effector+3, col+3:col+6] = velJacobianAng
 
-                col += 1
+            elif effectorJointMasks is None or effectorJointMasks[e][j]:
+                velJacobian = - np.dot(skew_jointPosition_jth_joint, jointAxes_jth_joint.T)
+                # print "jointNum", j
+                # print "jointColNum", jointColNum
+                # print "velJacobian", velJacobian.shape
+                # print "J.shape", J.shape
+                if dof_per_effector == 6:
+                    if linearFirst:
+                        J[e*dof_per_effector  :e*dof_per_effector+3, col:col+jointColNum] = velJacobian
+                        J[e*dof_per_effector+3:e*dof_per_effector+6, col:col+jointColNum] = jointAxes_jth_joint.T
+                    else:
+                        J[e*dof_per_effector  :e*dof_per_effector+3, col:col+jointColNum] = jointAxes_jth_joint.T
+                        J[e*dof_per_effector+3:e*dof_per_effector+6, col:col+jointColNum] = velJacobian
+                else:
+                    J[e*dof_per_effector:e*dof_per_effector+3, col:col+jointColNum] = velJacobian
+
+            col += jointColNum
 
 
 if __name__=='__main__':
