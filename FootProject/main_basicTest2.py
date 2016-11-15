@@ -6,10 +6,10 @@ import copy
 import math
 import PyCommon.modules.Math.mmMath as mm
 import PyCommon.modules.Renderer.ysRenderer as yr
-import PyCommon.modules.Renderer.csVpRenderer as cvr
-import PyCommon.modules.Simulator.csVpWorld as cvw
-import PyCommon.modules.Simulator.csVpModel as cvm
-import PyCommon.modules.Simulator.hpLCPSimulator as hls
+# import PyCommon.modules.Renderer.csVpRenderer as cvr
+# import PyCommon.modules.Simulator.csVpWorld as cvw
+# import PyCommon.modules.Simulator.csVpModel as cvm
+# import PyCommon.modules.Simulator.hpLCPSimulator as hls
 import PyCommon.modules.GUI.hpSimpleViewer as hsv
 import PyCommon.modules.Util.ysPythonEx as ype
 import PyCommon.modules.ArticulatedBody.ysControl as yct
@@ -23,6 +23,10 @@ import PyCommon.modules.ArticulatedBody.hpInvKine as hik
 
 import PyCommon.modules.Resource.ysMotionLoader as yf
 import PyCommon.modules.Simulator.ysPhysConfig as ypc
+
+import PyCommon.modules.Simulator.csVpWorld_py as cvw
+import PyCommon.modules.Simulator.csVpModel_py as cvm
+import PyCommon.modules.Simulator.hpLCPSimul2 as hls
 
 
 MOTION_COLOR = (213, 111, 162)
@@ -125,17 +129,20 @@ def init():
         node = mcfg.getNode('root')
         node.geom = 'MyFoot3'
         node.geom = 'MyBox'
+        node.jointType = "U"
         # node.length = 1.
         node.mass = 1.
 
         node = mcfg.getNode('foot00')
         node.geom = 'MyFoot4'
         node.geom = 'MyBox'
+        node.jointType = "U"
         node.mass = 1.
 
         node = mcfg.getNode('foot01')
         node.geom = 'MyFoot4'
         node.geom = 'MyBox'
+        node.jointType = "U"
         node.mass = 1.
 
         def mcfgFix(_mcfg):
@@ -200,6 +207,7 @@ def init():
     vpWorld.SetIntegrator("RK4")
     # vpWorld.SetIntegrator("IMPLICIT_EULER_FAST")
     # vpWorld.SetIntegrator("EULER")
+    # vpWorld.SetGravity([0., 0., 0.])
 
     vpWorld.initialize()
 
@@ -209,7 +217,10 @@ def init():
     bodyIDsToCheck = range(vpWorld.getBodyNum())
 
     # flat data structure
+    extendDOF = controlModel.get3dExtendTotalDOF()
+
     ddth_des_flat = ype.makeFlatList(totalDOF)
+
     dth_flat = ype.makeFlatList(totalDOF)
     ddth_sol = ype.makeNestedList(DOFs)
     torques_nested = ype.makeNestedList(DOFs)
@@ -228,44 +239,27 @@ def init():
 
     viewer = hsv.hpSimpleViewer(title='main_Test')
     viewer.doc.addObject('motion', motion)
-    # viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(
-    #     motionModel, MOTION_COLOR, yr.POLYGON_FILL))
-    # viewer.doc.addRenderer('IKModel', cvr.VpModelRenderer(
-    #      solver.model, MOTION_COLOR, yr.POLYGON_FILL))
-    viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(
-        controlModel, CHARACTER_COLOR, yr.POLYGON_FILL))
-    viewer.doc.addRenderer('rd_contactForcesControl', yr.VectorsRenderer(
-        rd_cForcesControl, rd_cPositionsControl, (255, 0, 0), .1))
-    viewer.doc.addRenderer('rd_contactForces', yr.VectorsRenderer(
-        rd_cForces, rd_cPositions, (0, 255, 0), .1))
-    viewer.doc.addRenderer('rd_contactForceControl', yr.VectorsRenderer(
-        rd_ForceControl, rd_Position, (0, 0, 255), .1))
+    # viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(motionModel, MOTION_COLOR, yr.POLYGON_FILL))
+    # viewer.doc.addRenderer('IKModel', cvr.VpModelRenderer(solver.model, MOTION_COLOR, yr.POLYGON_FILL))
+    viewer.doc.addRenderer('controlModel', yr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL))
+    viewer.doc.addRenderer('rd_contactForcesControl', yr.VectorsRenderer(rd_cForcesControl, rd_cPositionsControl, (255, 0, 0), .1))
+    viewer.doc.addRenderer('rd_contactForces', yr.VectorsRenderer(rd_cForces, rd_cPositions, (0, 255, 0), .1))
+    viewer.doc.addRenderer('rd_contactForceControl', yr.VectorsRenderer(rd_ForceControl, rd_Position, (0, 0, 255), .1))
     # viewer.doc.addRenderer('rd_contactForceDes', yr.VectorsRenderer(rd_ForceDes, rd_PositionDes, (255, 0, 255), .1))
     # viewer.doc.addRenderer('rd_jointPos', yr.PointsRenderer(rd_jointPos))
     viewer.doc.addRenderer('rd_point2', yr.PointsRenderer(rd_point2, (255,0,0)))
 
-    viewer.objectInfoWnd.add1DSlider(
-        'PD gain', minVal=0., maxVal=200., initVal=10., valStep=.1)
-    viewer.objectInfoWnd.add1DSlider(
-        'Joint Damping', minVal=1., maxVal=2000., initVal=35., valStep=1.)
-    viewer.objectInfoWnd.add1DSlider(
-        'steps per frame', minVal=1., maxVal=200., initVal=config['stepsPerFrame'], valStep=1.)
-    viewer.objectInfoWnd.add1DSlider(
-        '1/simul speed', minVal=1., maxVal=100., initVal=config['simulSpeedInv'], valStep=1.)
-    viewer.objectInfoWnd.add1DSlider(
-        'normal des force min', minVal=0., maxVal=1000., initVal=0., valStep=1.)
-    viewer.objectInfoWnd.add1DSlider(
-        'normal des force max', minVal=0., maxVal=1000., initVal=80., valStep=1.)
-    viewer.objectInfoWnd.add1DSlider(
-        'des force begin', minVal=0., maxVal=len(motion) - 1, initVal=70., valStep=1.)
-    viewer.objectInfoWnd.add1DSlider(
-        'des force dur', minVal=1., maxVal=len(motion) - 1, initVal=5., valStep=1.)
-    viewer.objectInfoWnd.add1DSlider(
-        'force weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
-    viewer.objectInfoWnd.add1DSlider(
-        'LCP weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
-    viewer.objectInfoWnd.add1DSlider(
-        'tau weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
+    viewer.objectInfoWnd.add1DSlider('PD gain', minVal=0., maxVal=200., initVal=10., valStep=.1)
+    viewer.objectInfoWnd.add1DSlider('Joint Damping', minVal=1., maxVal=2000., initVal=35., valStep=1.)
+    viewer.objectInfoWnd.add1DSlider('steps per frame', minVal=1., maxVal=200., initVal=config['stepsPerFrame'], valStep=1.)
+    viewer.objectInfoWnd.add1DSlider('1/simul speed', minVal=1., maxVal=100., initVal=config['simulSpeedInv'], valStep=1.)
+    viewer.objectInfoWnd.add1DSlider('normal des force min', minVal=0., maxVal=1000., initVal=0., valStep=1.)
+    viewer.objectInfoWnd.add1DSlider('normal des force max', minVal=0., maxVal=1000., initVal=80., valStep=1.)
+    viewer.objectInfoWnd.add1DSlider('des force begin', minVal=0., maxVal=len(motion) - 1, initVal=70., valStep=1.)
+    viewer.objectInfoWnd.add1DSlider('des force dur', minVal=1., maxVal=len(motion) - 1, initVal=5., valStep=1.)
+    viewer.objectInfoWnd.add1DSlider('force weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
+    viewer.objectInfoWnd.add1DSlider('LCP weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
+    viewer.objectInfoWnd.add1DSlider('tau weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
     viewer.objectInfoWnd.addBtn('image', viewer.motionViewWnd.dump)
     viewer.objectInfoWnd.addBtn('image seq dump', viewer.motionViewWnd.dumpMov)
 
@@ -371,11 +365,13 @@ class Callback:
         weightMapTuple = None
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMapTuple)
         ddth_c = controlModel.getDOFAccelerations()
-        ype.flatten(ddth_des, ddth_des_flat)
+
+        # ype.flatten(ddth_des, ddth_des_flat)
 
         ddth_des_flat = np.zeros(len(ddth_des_flat))
 
-        ddth_des_flat[10] += getVal('normal des force min')/50.
+        # ddth_des_flat[9] += getVal('normal des force min')/50.
+        ddth_des_flat[8] += getVal('normal des force min')/50.
 
         desForceFrameBegin = getVal('des force begin')
         desForceDuration = getVal('des force dur') * simulSpeedInv
@@ -457,8 +453,9 @@ class Callback:
                     print "angVel:", controlModel.getBodyAngVelocityGlobal(2)
                     print cBodyIDs[-1], cPositions[-1], cForces[-1]
 
-            ype.nested(torques, torques_nested)
-            controlModel.setDOFTorques(torques_nested[1:])
+            # ype.nested(torques, torques_nested)
+            # controlModel.setDOFTorques(torques_nested[1:])
+            controlModel.setDOFGenTorquesFlat(torques[6:])
             vpWorld.step()
         print('totalContactStep:', contactStep)
 

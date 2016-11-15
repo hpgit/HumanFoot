@@ -6,6 +6,10 @@ import math
 def pyVec3_2_Vec3(pyV):
     return Vec3(pyV[0], pyV[1], pyV[2])
 
+def pyVec_2_Vec3_extend(pyV):
+    if len(pyV) == 1:
+        return Vec3()
+
 def Vec3_2_pyVec3(vpVec3):
     return np.array((vpVec3[0], vpVec3[1], vpVec3[2]))
 

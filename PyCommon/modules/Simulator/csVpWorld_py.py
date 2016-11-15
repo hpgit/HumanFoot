@@ -22,8 +22,8 @@ class VpWorld:
         self._lockingVel = config.lockingVel
 
         self._ground = vpBody()
-        # self.models = [VpControlModel(None, None, None)]
-        self.models = []
+        self.models = [VpControlModel(None, None, None)]*0
+        # self.models = []
 
         if config.useDefaultContactModel:
             vpMaterial.GetDefaultMaterial().SetRestitution(0.01)
@@ -55,6 +55,25 @@ class VpWorld:
     def GetTimeStep(self):
         return self._world.GetTimeStep()
 
+    def SetTimeStep(self, h):
+        self._world.SetTimeStep(h)
+
+    def SetGlobalDamping(self, damp):
+        self._world.SetGlobalDamping(damp)
+
+    def SetGravity(self, g):
+        self._world.SetGravity(Vec3(g[0], g[1], g[2]))
+
+    def SetIntegrator(self, _integrator):
+        if _integrator == "RK4":
+            self._world.SetIntegrator(RK4)
+        elif _integrator == "IMPLICIT_EULER_FAST":
+            self._world.SetIntegrator(IMPLICIT_EULER_FAST)
+        elif _integrator == "IMPLICIT_EULER":
+            self._world.SetIntegrator(IMPLICIT_EULER)
+        elif _integrator == "EULER":
+            self._world.SetIntegrator(EULER)
+
     def calcPenaltyForce(self, bodyIDsToCheck, mus, Ks, Ds, notForce=False):
         bodyIDs = []
         positions = []
@@ -69,7 +88,7 @@ class VpWorld:
                     if bodyID in bodyIDsToCheck:
                         for pGeom in node.geoms:
                             geomType = pGeom.GetType()
-                            if geomType == 'C':
+                            if geomType == 'C' or geomType == 'B':
                                 verticesLocal = pGeom.getVerticesLocal()
                                 verticesGlobal = pGeom.getVerticesGlobal()
 

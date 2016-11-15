@@ -6,9 +6,6 @@ from PyCommon.modules.Math import mmMath as mm
 from PyCommon.modules.Math import csMath as cm
 from PyCommon.modules.Math import ysFunctionGraph as yfg
 from PyCommon.modules.Renderer import ysRenderer as yr
-from PyCommon.modules.Renderer import csVpRenderer as cvr
-from PyCommon.modules.Simulator import csVpWorld as cvw
-from PyCommon.modules.Simulator import csVpModel as cvm
 from PyCommon.modules.Simulator import ysVpUtil as yvu
 from PyCommon.modules.GUI import ysSimpleViewer as ysv
 from PyCommon.modules.GUI import ysMultiViewer as ymv
@@ -25,12 +22,12 @@ from PyCommon.modules.Util import ysMatplotEx as ymp
 from PyCommon.modules.Resource import ysMotionLoader as yf
 from PyCommon.modules.Simulator import ysPhysConfig as ypc
 
-from PyCommon.modules.Simulator import hpLCPSimulator as hls
+from PyCommon.modules.Simulator import hpLCPSimul2 as hls
 from PyCommon.modules.GUI import hpSimpleViewer as hsv
 from PyCommon.modules.Util import ysPythonEx as ype
 
-# from PyCommon.modules.Simulator import csVpModel_py as pcvm
-# from PyCommon.modules.Simulator import csVpWorld_py as pcvw
+from PyCommon.modules.Simulator import csVpModel_py as pcvm
+from PyCommon.modules.Simulator import csVpWorld_py as pcvw
 
 
 import math
@@ -436,6 +433,7 @@ def walkings():
     else:
         REPEATED = False
 
+
     #===============================================================================
     # options
     #===============================================================================
@@ -478,17 +476,16 @@ def walkings():
     stepsPerFrame = 30
     wcfg.timeStep = (frameTime)/stepsPerFrame
 
-    vpWorld = cvw.VpWorld(wcfg)
-    # vpWorld = pcvw.VpWorld(wcfg)
-    motionModel = cvm.VpMotionModel(vpWorld, motion_ori[0], mcfg)
-    # motionModel = pcvm.VpMotionModel(vpWorld, motion_ori[0], mcfg)
+    vpWorld = pcvw.VpWorld(wcfg)
+    motionModel = pcvm.VpMotionModel(vpWorld, motion_ori[0], mcfg)
     # ModelOffset = np.array([0., 0., 0.])
     # motionModel.translateByOffset(ModelOffset)
-    controlModel = cvm.VpControlModel(vpWorld, motion_ori[0], mcfg)
-    # controlModel = pcvm.VpControlModel(vpWorld, motion_ori[0], mcfg)
+    controlModel = pcvm.VpControlModel(vpWorld, motion_ori[0], mcfg)
+    vpWorld.SetIntegrator("IMPLICIT_EULER_FAST")
     vpWorld.initialize()
     print controlModel
     # controlModel = None
+
 
     #   motionModel.recordVelByFiniteDiff()
     controlModel.initializeHybridDynamics()
@@ -660,8 +657,8 @@ def walkings():
         # viewer = hsv.hpSimpleViewer()
         #    viewer.record(False)
 
-        viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(motionModel, (0,150,255), yr.POLYGON_LINE))
-        viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (50,200,200), yr.POLYGON_FILL))
+        viewer.doc.addRenderer('motionModel', yr.VpModelRenderer(motionModel, (0,150,255), yr.POLYGON_LINE))
+        viewer.doc.addRenderer('controlModel', yr.VpModelRenderer(controlModel, (50,200,200), yr.POLYGON_FILL))
 
         # viewer.doc.addObject('motion_ori', motion_ori)
         # viewer.doc.addRenderer('motion_ori', yr.JointMotionRenderer(motion_ori, (0,100,255), yr.LINK_BONE))
@@ -1122,8 +1119,8 @@ def walkings():
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMap)
 
         totalDOF = controlModel.getTotalDOF()
-        ddth_des_flat = ype.makeFlatList(totalDOF)
-        # ddth_des_flat = ype.makeFlatList(controlModel.get3dExtendDOF())
+        # ddth_des_flat = ype.makeFlatList(totalDOF)
+        ddth_des_flat = ype.makeFlatList(controlModel.get3dExtendTotalDOF())
         ype.flatten(ddth_des, ddth_des_flat)
 
         #=======================================================================

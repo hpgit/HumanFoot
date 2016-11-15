@@ -4,6 +4,7 @@ import numpy as np
 import itertools
 
 from PyCommon.modules.pyVirtualPhysics import *
+from PyCommon.modules.Simulator import ysVpUtil as yvu
 
 def _getVerticesGlobal(pGeom, verticesLocal):
     verticesGlobal = []
@@ -33,7 +34,7 @@ class MyBox(vpBox):
         return _getVerticesGlobal(self, self._verticesLocal)
 
     def GetType(self):
-        return 'M'
+        return 'B'
 
 
 class MyFoot3(vpCapsule):

@@ -8,9 +8,9 @@
 #include "csVpModel.h"
 #include "csVpWorld.h"
 #include "myGeom.h"
-#include "hpBJoint.h"
-#include "hpUJoint.h"
-#include "hpRJoint.h"
+//#include "hpBJoint.h"
+//#include "hpUJoint.h"
+//#include "hpRJoint.h"
 
 #define MAX_X 1	// 0001
 #define MAX_Y 2	// 0010
@@ -1033,7 +1033,7 @@ VpMotionModel::VpMotionModel( VpWorld* pWorld, const object& createPosture, cons
 
 	update(createPosture);
 	
-	addBody(false);
+//	addBody(false);
 }
 
 
@@ -1104,7 +1104,7 @@ VpControlModel::VpControlModel( VpWorld* pWorld, const object& createPosture, co
 
 	update(createPosture);
 
-	addBody(true);
+//	addBody(true);
 }
 
 std::string VpControlModel::__str__()
@@ -1826,79 +1826,6 @@ boost::python::object VpControlModel::getJointFrame( int index )
 	return frame;
 }
 
-boost::python::object VpControlModel::getJointBodyJacobianLocal(int index)
-{
-	// axis-angle dfferentiate
-	// return angular velocity jacobian represented in local frame
-	hpBJoint * _joint = &(_nodes[index]->joint);
-	Vec3 m_rQ(_joint->GetDisplacement(0), _joint->GetDisplacement(1), _joint->GetDisplacement(2));
-	Vec3 m_sS[3];
-
-	scalar t = Norm(m_rQ), alpha, beta, gamma, t2 = t * t;
-	
-    if ( t < BJOINT_EPS )
-	{
-		alpha = SCALAR_1_6 - SCALAR_1_120 * t2;
-		beta = SCALAR_1 - SCALAR_1_6 * t2;
-		gamma = SCALAR_1_2 - SCALAR_1_24 * t2;
-	} 
-	else
-	{
-		beta = sin(t) / t;
-		alpha = (SCALAR_1 - beta) / t2;
-		gamma = (SCALAR_1 - cos(t)) / t2;
-	}
-
-	m_sS[0] = (alpha * m_rQ[0]) * m_rQ + Vec3(beta, -gamma * m_rQ[2], gamma * m_rQ[1]);	// (alpha * Inner(m_rQ, e0)) * m_rQ + beta * e0 + gamma * Cross(e0, m_rQ);
-	m_sS[1] = (alpha * m_rQ[1]) * m_rQ + Vec3(gamma * m_rQ[2], beta, -gamma * m_rQ[0]);	// (alpha * Inner(m_rQ, e1)) * m_rQ + beta * e1 + gamma * Cross(e1, m_rQ);
-	m_sS[2] = (alpha * m_rQ[2]) * m_rQ + Vec3(-gamma * m_rQ[1], gamma * m_rQ[0], beta);	// (alpha * Inner(m_rQ, e2)) * m_rQ + beta * e2 + gamma * Cross(e2, m_rQ);
-
-	SE3 _jacobian(m_sS[0], m_sS[1], m_sS[2], Vec3(0., 0., 0.));
-
-
-	
-	numeric::array jacobian( make_tuple(make_tuple(m_sS[0][0],m_sS[1][0],m_sS[2][0]), 
-										make_tuple(m_sS[0][1],m_sS[1][1],m_sS[2][1]), 
-										make_tuple(m_sS[0][2],m_sS[1][2],m_sS[2][2])));
-
-
-	return SE3_2_pySE3(_jacobian);
-}
-
-boost::python::object VpControlModel::getJointBodyJacobianGlobal(int index)
-{
-	// axis-angle dfferentiate
-	// return angular velocity jacobian represented in local frame
-	hpBJoint * _joint = &(_nodes[index]->joint);
-	Vec3 m_rQ(_joint->GetDisplacement(0), _joint->GetDisplacement(1), _joint->GetDisplacement(2));
-	Vec3 m_sS[3];
-
-	scalar t = Norm(m_rQ), alpha, beta, gamma, t2 = t * t;
-	
-    if ( t < BJOINT_EPS )
-	{
-		alpha = SCALAR_1_6 - SCALAR_1_120 * t2;
-		beta = SCALAR_1 - SCALAR_1_6 * t2;
-		gamma = SCALAR_1_2 - SCALAR_1_24 * t2;
-	} 
-	else
-	{
-		beta = sin(t) / t;
-		alpha = (SCALAR_1 - beta) / t2;
-		gamma = (SCALAR_1 - cos(t)) / t2;
-	}
-
-	m_sS[0] = (alpha * m_rQ[0]) * m_rQ + Vec3(beta, -gamma * m_rQ[2], gamma * m_rQ[1]);	// (alpha * Inner(m_rQ, e0)) * m_rQ + beta * e0 + gamma * Cross(e0, m_rQ);
-	m_sS[1] = (alpha * m_rQ[1]) * m_rQ + Vec3(gamma * m_rQ[2], beta, -gamma * m_rQ[0]);	// (alpha * Inner(m_rQ, e1)) * m_rQ + beta * e1 + gamma * Cross(e1, m_rQ);
-	m_sS[2] = (alpha * m_rQ[2]) * m_rQ + Vec3(-gamma * m_rQ[1], gamma * m_rQ[0], beta);	// (alpha * Inner(m_rQ, e2)) * m_rQ + beta * e2 + gamma * Cross(e2, m_rQ);
-
-	SE3 _jacobian(m_sS[0], m_sS[1], m_sS[2], Vec3(0., 0., 0.));
-	SE3 global_jacobian = getJointOrientationLocal(index) * _jacobian;
-
-	return SE3_2_pySO3(global_jacobian);
-
-}
-
 object VpControlModel::getJointVelocityLocal( int index )
 {
 	numeric::array O(make_tuple(0.,0.,0.));
@@ -2366,7 +2293,7 @@ bp::list VpControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
 	std::vector<Vec3> torBackup;
 	for(int i=0; i<n; i++)
 	{
-		hpBJoint *joint = &(_nodes.at(i+1)->joint);
+		vpBJoint *joint = &(_nodes.at(i+1)->joint);
 		accBackup.push_back(joint->GetAcceleration());
 		torBackup.push_back(joint->GetTorque());
 	}
@@ -2384,7 +2311,7 @@ bp::list VpControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
 	Hip->ApplyLocalForce(zero_dse3, zero_Vec3);
 	for(int i=0; i<n; i++)
 	{
-		hpBJoint *joint = &(_nodes.at(i+1)->joint);
+		vpBJoint *joint = &(_nodes.at(i+1)->joint);
 		joint->SetTorque(zero_Vec3);
 	}
 	Hip->GetSystem()->ForwardDynamics();
@@ -2434,7 +2361,7 @@ bp::list VpControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
 	for(int i=0; i<n; i++)
 	{
 		Vec3 acc(0,0,0);
-		hpBJoint *joint = &(_nodes.at(i+1)->joint);
+		vpBJoint *joint = &(_nodes.at(i+1)->joint);
 		acc = joint->GetAcceleration();
 		for(int j=0; j<3; j++)
 		{
@@ -2460,7 +2387,7 @@ bp::list VpControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
 			Vec3 torque(0., 0., 0.);
 			if ( i >= 6 && (i-6)/3 == j )
 				torque[ (i-6)%3 ] = 1.;
-			hpBJoint *joint = &(_nodes.at(j+1)->joint);
+			vpBJoint *joint = &(_nodes.at(j+1)->joint);
 			joint->SetTorque(torque);
 		}
 		Hip->ApplyLocalForce(genForceLocal, zero_Vec3);
@@ -2512,7 +2439,7 @@ bp::list VpControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
 		for(int j=0; j<n; j++)
 		{
 			Vec3 acc(0,0,0);
-			hpBJoint *joint = &(_nodes.at(j+1)->joint);
+			vpBJoint *joint = &(_nodes.at(j+1)->joint);
 			acc = joint->GetAcceleration();
 			for(int k=0; k<3; k++)
 			{
@@ -2524,7 +2451,7 @@ bp::list VpControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
 	// restore ddq and tau
 	for(int i=0; i<n; i++)
 	{
-		hpBJoint *joint = &(_nodes.at(i+1)->joint);
+		vpBJoint *joint = &(_nodes.at(i+1)->joint);
 		joint->SetAcceleration(accBackup.at(i));
 		joint->SetTorque(torBackup.at(i));
 		joint->SetAcceleration(Vec3(0., 0., 0.));
@@ -2580,7 +2507,7 @@ bp::list VpControlModel::getEquationOfMotion(object& M, object& b)
 	std::vector<Vec3> torBackup;
 	for(int i=0; i<n; i++)
 	{
-		hpBJoint *joint = &(_nodes.at(i+1)->joint);
+		vpBJoint *joint = &(_nodes.at(i+1)->joint);
 		accBackup.push_back(joint->GetAcceleration());
 		torBackup.push_back(joint->GetTorque());
 	}
@@ -2601,7 +2528,7 @@ bp::list VpControlModel::getEquationOfMotion(object& M, object& b)
 //	Hip->SetGenAcceleration(zero_se3);
 	for(int i=0; i<n; i++)
 	{
-		hpBJoint *joint = &(_nodes.at(i+1)->joint);
+		vpBJoint *joint = &(_nodes.at(i+1)->joint);
 		joint->SetAcceleration(zero_Vec3);
 	}
 	Hip->GetSystem()->InverseDynamics();
@@ -2619,7 +2546,7 @@ bp::list VpControlModel::getEquationOfMotion(object& M, object& b)
 	for(int i=0; i<n; i++)
 	{
 		Vec3 torque(0,0,0);
-		hpBJoint *joint = &(_nodes.at(i+1)->joint);
+		vpBJoint *joint = &(_nodes.at(i+1)->joint);
 		torque = joint->GetTorque();
 		//std::cout << "name: " << _nodes[i+1]->name <<std::endl;
 		//std::cout << "torque: " << joint->GetTorque(); 
@@ -2648,7 +2575,7 @@ bp::list VpControlModel::getEquationOfMotion(object& M, object& b)
 			Vec3 acc(0., 0., 0.);
 			if ( i >= 6 && (i-6)/3 == j )
 				acc[ (i-6)%3 ] = 1.;
-			hpBJoint *joint = &(_nodes.at(j+1)->joint);
+			vpBJoint *joint = &(_nodes.at(j+1)->joint);
 			joint->SetAcceleration(acc);
 		}
 		{
@@ -2672,7 +2599,7 @@ bp::list VpControlModel::getEquationOfMotion(object& M, object& b)
 		for(int j=0; j<n; j++)
 		{
 			Vec3 torque(0,0,0);
-			hpBJoint *joint = &(_nodes.at(j+1)->joint);
+			vpBJoint *joint = &(_nodes.at(j+1)->joint);
 			torque = joint->GetTorque();
 			for(int k=0; k<3; k++)
 			{
@@ -2685,7 +2612,7 @@ bp::list VpControlModel::getEquationOfMotion(object& M, object& b)
 	
 	for(int i=0; i<n; i++)
 	{
-		hpBJoint *joint = &(_nodes.at(i+1)->joint);
+		vpBJoint *joint = &(_nodes.at(i+1)->joint);
 		joint->SetAcceleration(accBackup.at(i));
 		joint->SetTorque(torBackup.at(i));
 	}
@@ -2726,7 +2653,7 @@ void VpControlModel::stepKinematics(double dt, const bp::list& accs)
 	for(int i=1; i<_nodes.size(); ++i)
 	{
 		ddq = pyVec3_2_Vec3(accs[i]);
-		hpBJoint *joint = &(_nodes[i]->joint);
+		vpBJoint *joint = &(_nodes[i]->joint);
 		dq = joint->GetVelocity() + ddq * dt;
 		joint->SetVelocity(dq);
 		q = joint->GetOrientation() * Exp(Axis(dq*dt));
@@ -2743,552 +2670,4 @@ void VpControlModel::stepKinematics(double dt, const bp::list& accs)
 		////_nodes.at(i)->body.ResetForce();
 		//_nodes.at(i)->body.SetGenAcceleration(zero_se3);
 	//}
-}
-
-VpGenControlModel::VpGenControlModel(VpWorld* pWorld, const object& createPosture, const object& config)
-:_pWorld(&pWorld->_world), _config(config), _skeleton(createPosture.attr("skeleton"))
-{
-	int num = XI(createPosture.attr("skeleton").attr("getJointNum")());
-	_nodes.resize(num, NULL);
-	_boneTs.resize(num, SE3());
-
-	createBodies(createPosture);
-	build_name2index();
-
-	addBodiesToWorld(createPosture);
-	ignoreCollisionBtwnBodies();
-
-	object tpose = createPosture.attr("getTPose")();
-	createJoints(tpose);
-
-	update(createPosture);
-
-	addBody(true);
-}
-
-void VpGenControlModel::_createJoint(const object& joint, const object& posture)
-{
-	int len_joint_children = len(joint.attr("children")); 
-	if (len_joint_children == 0 )
-		return;
-
-	SE3 invLocalT;
-
-	object offset = joint.attr("offset");
-	SE3 P = SE3(pyVec3_2_Vec3(joint.attr("offset")));
-
-	string joint_name = XS(joint.attr("name"));
-//	int joint_index = XI(posture.attr("skeleton").attr("getElementIndex")(joint_name));
-//	SE3 R = pySO3_2_SE3(posture.attr("getLocalR")(joint_index));
-	int joint_index = XI(posture.attr("skeleton").attr("getJointIndex")(joint_name));
-	SE3 R = pySO3_2_SE3(posture.attr("getJointOrientationLocal")(joint_index));
-
-	// parent      <--------->        child
-	// link     L1      L2      L3      L4
-	// L4_M =  P1*R1 * P2*R2 * P3*R3 * P4*R4  (forward kinematics matrix of L4)
-	// ���� ��Ÿ�������� ���⿡�� while loop�� ��� ������ back tracking�� �����
-	// L4_M = Inv( Inv(R4)*Inv(P4) * Inv(R3)*Inv(P3) * ...)
-	// ���� �ڵ�����.
-
-	invLocalT = invLocalT * Inv(R);
-	invLocalT = invLocalT * Inv(P);
-
-	object temp_joint = joint;
-	object nodeExistParentJoint = object();
-	string temp_parent_name;
-	int temp_parent_index;
-	while(true)
-	{
-		if(temp_joint.attr("parent") == object())
-		{
-			nodeExistParentJoint = object();
-			break;
-		}
-		else
-		{
-			temp_parent_name = XS(temp_joint.attr("parent").attr("name"));
-//			temp_parent_index = XI(posture.attr("skeleton").attr("getElementIndex")(temp_parent_name));
-			temp_parent_index = XI(posture.attr("skeleton").attr("getJointIndex")(temp_parent_name));
-
-			if(_nodes[temp_parent_index] != NULL) 
-			{
-				nodeExistParentJoint = temp_joint.attr("parent");
-				break;
-			}
-			else
-			{
-				temp_joint = temp_joint.attr("parent");
-
-				object offset = temp_joint.attr("offset");
-				SE3 P = SE3(pyVec3_2_Vec3(offset));
-
-				string joint_name = XS(temp_joint.attr("name"));
-				object localSO3 = posture.attr("localRs")[joint_index];
-				SE3 R = pySO3_2_SE3(localSO3);
-
-				invLocalT = invLocalT * Inv(R);
-				invLocalT = invLocalT * Inv(P);
-			}
-		}
-	}
-
-//	int len_joint_children = len(joint.attr("children")); 
-
-//	if ( nodeExistParentJoint!=object() && len_joint_children > 0  &&
-//		_config.attr("hasNode")(joint_name))
-	if ( nodeExistParentJoint!=object() && _config.attr("hasNode")(joint_name))
-	{
-		Node* pNode = _nodes[joint_index];
-		object cfgNode = _config.attr("getNode")(joint_name);
-
-		string parent_name = XS(nodeExistParentJoint.attr("name"));
-//		int parent_index = XI(posture.attr("skeleton").attr("getElementIndex")(parent_name));
-		int parent_index = XI(posture.attr("skeleton").attr("getJointIndex")(parent_name));
-		Node* pParentNode = _nodes[parent_index];
-		object parentCfgNode = _config.attr("getNode")(parent_name);
-
-		//object offset = cfgNode.attr("offset");
-		//SE3 offsetT = SE3(pyVec3_2_Vec3(offset));
-
-		//object parentOffset = parentCfgNode.attr("offset");
-		//SE3 parentOffsetT = SE3(pyVec3_2_Vec3(parentOffset));
-		std::string jointType = XS(cfgNode.attr("jointType"));
-		if (jointType == std::string("B"))
-		{
-			pNode->pJoint = new hpBJoint();
-			pNode->dof = 3;
-		}
-		else if (jointType == std::string("U"))
-		{
-			pNode->pJoint = new hpUJoint();
-			pNode->dof = 2;
-		}
-		else if (jointType == std::string("R"))
-		{
-			pNode->pJoint = new hpRJoint();
-			pNode->dof = 1;
-		}
-
-		pParentNode->body.SetJoint(pNode->pJoint, Inv(_boneTs[parent_index])*Inv(invLocalT));
-		pNode->body.SetJoint(pNode->pJoint, Inv(_boneTs[joint_index]));
-
-		scalar kt = 16.;
-		scalar dt = 8.;
-		SpatialSpring el(kt);
-		SpatialDamper dam(dt);
-		//std::cout << el <<std::endl;
-		// pNode->joint.SetElasticity(el);
-		// pNode->joint.SetDamping(dam);
-		pNode->use_joint = true;
-	}
-
-	for( int i=0 ; i<len_joint_children; ++i)
-		_createJoint(joint.attr("children")[i], posture);
-}
-
-
-void VpGenControlModel::_updateJoint( const object& joint, const object& posture )
-{
-	int len_joint_children = len(joint.attr("children")); 
-	if (len_joint_children == 0 )
-		return;
-
-	SE3 invLocalT;
-
-	SE3 P = SE3(pyVec3_2_Vec3(joint.attr("offset")));
-
-	string joint_name = XS(joint.attr("name"));
-//	int joint_index = XI(posture.attr("skeleton").attr("getElementIndex")(joint_name));
-//	SE3 R = pySO3_2_SE3(posture.attr("getLocalR")(joint_index));
-	int joint_index = XI(posture.attr("skeleton").attr("getJointIndex")(joint_name));
-	SE3 R = pySO3_2_SE3(posture.attr("getJointOrientationLocal")(joint_index));
-
-	// parent      <--------->        child
-	// link     L1      L2      L3      L4
-	// L4_M =  P1*R1 * P2*R2 * P3*R3 * P4*R4  (forward kinematics matrix of L4)
-	// ���� ��Ÿ�������� ���⿡�� while loop�� ��� ������ back tracking�� �����
-	// L4_M = Inv( Inv(R4)*Inv(P4) * Inv(R3)*Inv(P3) * ...)
-	// ���� �ڵ�����.
-
-	invLocalT = invLocalT * Inv(R);
-	invLocalT = invLocalT * Inv(P);
-
-	object temp_joint = joint;
-	object nodeExistParentJoint = object();
-	string temp_parent_name;
-	int temp_parent_index;
-	while(true)
-	{
-		if(temp_joint.attr("parent") == object())
-		{
-			nodeExistParentJoint = object();
-			break;
-		}
-		else
-		{
-			temp_parent_name = XS(temp_joint.attr("parent").attr("name"));
-//			temp_parent_index = XI(posture.attr("skeleton").attr("getElementIndex")(temp_parent_name));
-			temp_parent_index = XI(posture.attr("skeleton").attr("getJointIndex")(temp_parent_name));
-
-			if(_nodes[temp_parent_index] != NULL) 
-			{
-				nodeExistParentJoint = temp_joint.attr("parent");
-				break;
-			}
-			else
-			{
-				temp_joint = temp_joint.attr("parent");
-
-				object offset = temp_joint.attr("offset");
-				SE3 P = SE3(pyVec3_2_Vec3(offset));
-
-				string joint_name = XS(temp_joint.attr("name"));
-				object localSO3 = posture.attr("localRs")[joint_index];
-				SE3 R = pySO3_2_SE3(localSO3);
-
-				invLocalT = invLocalT * Inv(R);
-				invLocalT = invLocalT * Inv(P);
-			}
-		}
-	}
-
-//	int len_joint_children = len(joint.attr("children")); 
-
-//	if(len_joint_children > 0 && _config.attr("hasNode")(joint_name))
-	if(_config.attr("hasNode")(joint_name))
-	{
-		Node* pNode = _nodes[joint_index];
-
-		if(nodeExistParentJoint!=object())
-			// pNode->joint.SetOrientation(R);
-			pNode->SetJointNearestOrientation(R);
-		else
-			// root�� ���� body�� ���� SetFrame() ���ش�.
-			pNode->body.SetFrame(SE3(pyVec3_2_Vec3(posture.attr("rootPos")))*P*R*_boneTs[joint_index]);
-	}
-
-	for( int i=0 ; i<len_joint_children; ++i)
-		_updateJoint(joint.attr("children")[i], posture);
-}
-
-boost::python::object VpGenControlModel::getJointBodyJacobianLocal(int index)
-{
-	// axis-angle dfferentiate
-	// return angular velocity jacobian represented in local frame
-	if (_nodes[index]->dof == 3)
-	{
-	    hpBJoint *_joint = (hpBJoint*)(_nodes[index]->pJoint);
-	    Axis m_rQ(_joint->GetDisplacement(0), _joint->GetDisplacement(1), _joint->GetDisplacement(2));
-	    Axis m_sS[3];
-
-	    scalar t = Norm(m_rQ), alpha, beta, gamma, t2 = t * t;
-
-	    if (t < BJOINT_EPS)
-	    {
-			alpha = SCALAR_1_6 - SCALAR_1_120 * t2;
-			beta = SCALAR_1 - SCALAR_1_6 * t2;
-			gamma = SCALAR_1_2 - SCALAR_1_24 * t2;
-	    }
-	    else
-	    {
-			beta = sin(t) / t;
-			alpha = (SCALAR_1 - beta) / t2;
-			gamma = (SCALAR_1 - cos(t)) / t2;
-	    }
-
-	    m_sS[0] = (alpha * m_rQ[0]) * m_rQ + Axis(beta, -gamma * m_rQ[2], gamma * m_rQ[1]); // (alpha * Inner(m_rQ, e0)) * m_rQ + beta * e0 + gamma * Cross(e0, m_rQ);
-	    m_sS[1] = (alpha * m_rQ[1]) * m_rQ + Axis(gamma * m_rQ[2], beta, -gamma * m_rQ[0]); // (alpha * Inner(m_rQ, e1)) * m_rQ + beta * e1 + gamma * Cross(e1, m_rQ);
-	    m_sS[2] = (alpha * m_rQ[2]) * m_rQ + Axis(-gamma * m_rQ[1], gamma * m_rQ[0], beta); // (alpha * Inner(m_rQ, e2)) * m_rQ + beta * e2 + gamma * Cross(e2, m_rQ);
-
-	    numeric::array jacobian(make_tuple(make_tuple(m_sS[0][0], m_sS[1][0], m_sS[2][0]),
-					       make_tuple(m_sS[0][1], m_sS[1][1], m_sS[2][1]),
-					       make_tuple(m_sS[0][2], m_sS[1][2], m_sS[2][2])));
-		return jacobian;
-	}
-	else if(_nodes[index]->dof == 2)
-	{
-	    hpUJoint *_joint = (hpUJoint*)(_nodes[index]->pJoint);
-
-		Vec3 axis0 = _joint->GetAxis(0);
-		Vec3 axis1 = _joint->GetAxis(1);
-
-	    numeric::array jacobian(make_tuple(make_tuple(axis0[0], axis1[0]),
-										   make_tuple(axis0[1], axis1[1]),
-										   make_tuple(axis0[2], axis1[2])));
-		return jacobian;
-	}
-
-	hpRJoint *_joint = (hpRJoint*)(_nodes[index]->pJoint);
-	Vec3 axis = _joint->GetAxis();
-
-	numeric::array jacobian(make_tuple(make_tuple(axis[0]),
-										make_tuple(axis[1]),
-										make_tuple(axis[2])));
-
-	return jacobian;
-
-}
-
-boost::python::object VpGenControlModel::getJointBodyJacobianGlobal(int index)
-{
-	// axis-angle dfferentiate
-	// return angular velocity jacobian represented in local frame
-	if (_nodes[index]->dof == 3)
-	{
-	    hpBJoint *_joint = (hpBJoint*)(_nodes[index]->pJoint);
-	    Axis m_rQ(_joint->GetDisplacement(0), _joint->GetDisplacement(1), _joint->GetDisplacement(2));
-	    Axis m_sS[3];
-
-	    scalar t = Norm(m_rQ), alpha, beta, gamma, t2 = t * t;
-
-	    if (t < BJOINT_EPS)
-	    {
-			alpha = SCALAR_1_6 - SCALAR_1_120 * t2;
-			beta = SCALAR_1 - SCALAR_1_6 * t2;
-			gamma = SCALAR_1_2 - SCALAR_1_24 * t2;
-	    }
-	    else
-	    {
-			beta = sin(t) / t;
-			alpha = (SCALAR_1 - beta) / t2;
-			gamma = (SCALAR_1 - cos(t)) / t2;
-	    }
-
-	    m_sS[0] = (alpha * m_rQ[0]) * m_rQ + Axis(beta, -gamma * m_rQ[2], gamma * m_rQ[1]); // (alpha * Inner(m_rQ, e0)) * m_rQ + beta * e0 + gamma * Cross(e0, m_rQ);
-	    m_sS[1] = (alpha * m_rQ[1]) * m_rQ + Axis(gamma * m_rQ[2], beta, -gamma * m_rQ[0]); // (alpha * Inner(m_rQ, e1)) * m_rQ + beta * e1 + gamma * Cross(e1, m_rQ);
-	    m_sS[2] = (alpha * m_rQ[2]) * m_rQ + Axis(-gamma * m_rQ[1], gamma * m_rQ[0], beta); // (alpha * Inner(m_rQ, e2)) * m_rQ + beta * e2 + gamma * Cross(e2, m_rQ);
-
-	    numeric::array jacobian(make_tuple(make_tuple(m_sS[0][0], m_sS[1][0], m_sS[2][0]),
-					       make_tuple(m_sS[0][1], m_sS[1][1], m_sS[2][1]),
-					       make_tuple(m_sS[0][2], m_sS[1][2], m_sS[2][2])));
-		return jacobian;
-	}
-	else if(_nodes[index]->dof == 2)
-	{
-	    hpUJoint *_joint = (hpUJoint*)(_nodes[index]->pJoint);
-
-		Vec3 axis0 = _joint->GetAxis(0);
-		Vec3 axis1 = _joint->GetAxis(1);
-
-	    numeric::array jacobian(make_tuple(make_tuple(axis0[0], axis1[0]),
-										   make_tuple(axis0[1], axis1[1]),
-										   make_tuple(axis0[2], axis1[2])));
-		return jacobian;
-	}
-
-	hpRJoint *_joint = (hpRJoint*)(_nodes[index]->pJoint);
-	Vec3 axis = _joint->GetAxis();
-
-	numeric::array jacobian(make_tuple(make_tuple(axis[0]),
-										make_tuple(axis[1]),
-										make_tuple(axis[2])));
-
-	return jacobian;
-
-}
-
-bp::list VpGenControlModel::getInternalJointDOFs()
-{
-	bp::list ls;
-	for(int i=1; i<_nodes.size(); ++i)
-		ls.append(_nodes[i]->pJoint->GetDOF());
-	return ls;
-}
-
-// must be called at first:clear all torques and accelerations
-bp::list VpGenControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
-{
-	bp::list ls;
-	ls.append(_nodes.size());
-
-	// M^-1 * tau - M^-1 * b = ddq
-	// ddq^T = [rootjointLin^T rootjointAng^T joints^T]^T
-	
-	int n = _nodes.size()-1;
-	int N = 6;
-
-	for(int i=1; i<_nodes.size(); i++)
-	{
-		N += _nodes[i]->pJoint->GetDOF();
-	}
-
-	dse3 zero_dse3(0.0);
-	Vec3 zero_Vec3(0.0);
-
-	vpBody *Hip = &(_nodes.at(0)->body);
-
-	//save current ddq and tau
-	std::vector<Vec3> accBackup;
-	std::vector<Vec3> torBackup;
-	for(int i=0; i<n; i++)
-	{
-		hpBJoint *joint = &(_nodes.at(i+1)->joint);
-		accBackup.push_back(joint->GetAcceleration());
-		torBackup.push_back(joint->GetTorque());
-	}
-	se3 hipAccBackup = Hip->GetGenAcceleration();
-	dse3 hipTorBackup = Hip->GetForce();
-
-	Hip->ResetForce();
-	for(int i=0; i<_nodes.size(); i++)
-	{
-		_nodes.at(i)->body.ResetForce();
-		_nodes.at(i)->joint.SetTorque(Vec3(0,0,0));
-	}
-
-	//get invMb
-	Hip->ApplyLocalForce(zero_dse3, zero_Vec3);
-	for(int i=0; i<n; i++)
-	{
-		hpBJoint *joint = &(_nodes.at(i+1)->joint);
-		joint->SetTorque(zero_Vec3);
-	}
-	Hip->GetSystem()->ForwardDynamics();
-	se3 hipAcc_tmp = Hip->GetGenAccelerationLocal(); // represented in body frame
-//	se3 hipAcc_tmp = InvAd((_boneTs[0]), Hip->GetGenAccelerationLocal()); // represented in body frame
-
-//	se3 hipAcc_tmp = InvAd(_boneTs[0], Hip->GetGenAccelerationLocal());
-//	se3 hipVelLocal_joint = InvAd(_boneTs[0], Hip->GetGenVelocityLocal());
-//	Vec3 hipAngVelLocal_joint(hipVelLocal_joint[0], hipVelLocal_joint[1], hipVelLocal_joint[2]);
-//	Vec3 hipLinVelLocal_joint(hipVelLocal_joint[3], hipVelLocal_joint[4], hipVelLocal_joint[5]);
-//
-//	hipAcc_tmp += Cross(hipAngVelLocal_joint, hipLinVelLocal_joint);
-
-//	Vec3 hipJointPosLocal = Inv(_boneTs[0]).GetPosition();
-//	SE3 hipFrame_joint = Hip->GetFrame() * Inv(_boneTs[0]);
-//	SE3 hipFrame_body = Hip->GetFrame();
-//
-//	Vec3 hipAngVelGlobal = Hip->GetAngVelocity();
-//
-//	se3 hipGenAccLocal_body = Hip->GetGenAccelerationLocal();
-//	Vec3 hipAngAccLocal_body(hipGenAccLocal_body[0], hipGenAccLocal_body[1], hipGenAccLocal_body[2]);
-//	Vec3 hipLinAccLocal_body(hipGenAccLocal_body[3], hipGenAccLocal_body[4], hipGenAccLocal_body[5]);
-//
-//	Vec3 hipAngAccGlobal_body = Rotate(hipFrame_body, hipAngAccLocal_body);
-//	Vec3 hipLinAccGlobal_body = Rotate(hipFrame_body, hipLinAccLocal_body);
-//
-//	Vec3 hipAngAccGlobal_joint = hipAngAccGlobal_body;
-//	Vec3 hipLinAccGlobal_joint = hipLinAccGlobal_body + Cross(hipAngAccGlobal_body, hipJointPosLocal)
-//							+ Cross(hipAngVelGlobal, Cross(hipAngVelGlobal, hipJointPosLocal));
-//
-//	Vec3 hipAngAccLocal_joint = InvRotate(hipFrame_joint, hipAngAccGlobal_joint);
-//	Vec3 hipLinAccLocal_joint = InvRotate(hipFrame_joint, hipLinAccGlobal_joint);
-//
-////	se3 hipAcc_tmp(hipAngAccGlobal_joint[0], hipAngAccGlobal_joint[1], hipAngAccGlobal_joint[2],
-////				   hipLinAccGlobal_joint[0], hipLinAccGlobal_joint[1], hipLinAccGlobal_joint[2]);
-//	se3 hipAcc_tmp(hipAngAccLocal_joint[0], hipAngAccLocal_joint[1], hipAngAccLocal_joint[2],
-//				   hipLinAccLocal_joint[0], hipLinAccLocal_joint[1], hipLinAccLocal_joint[2]);
-	{
-		invMb[0] = -hipAcc_tmp[3];
-		invMb[1] = -hipAcc_tmp[4];
-		invMb[2] = -hipAcc_tmp[5];
-		invMb[3] = -hipAcc_tmp[0];
-		invMb[4] = -hipAcc_tmp[1];
-		invMb[5] = -hipAcc_tmp[2];
-	}
-	//std::cout << "Hip velocity: " << Hip->GetGenVelocity();
-	for(int i=0; i<n; i++)
-	{
-		Vec3 acc(0,0,0);
-		hpBJoint *joint = &(_nodes.at(i+1)->joint);
-		acc = joint->GetAcceleration();
-		for(int j=0; j<3; j++)
-		{
-			invMb[6+3*i+j] = -acc[j];
-		}
-	}
-
-	//get M
-	for(int i=0; i<N; i++)
-	{
-		Hip->ResetForce();
-		for(size_t i=0; i<_nodes.size(); i++)
-		{
-			_nodes.at(i)->body.ResetForce();
-			_nodes.at(i)->joint.SetTorque(Vec3(0,0,0));
-		}
-
-		dse3 genForceLocal(0.0);
-		if (i < 3) genForceLocal[i+3] = 1.0;
-		else if(i<6) genForceLocal[i-3] = 1.0;
-		for(int j=0; j<n; j++)
-		{
-			Vec3 torque(0., 0., 0.);
-			if ( i >= 6 && (i-6)/3 == j )
-				torque[ (i-6)%3 ] = 1.;
-			hpBJoint *joint = &(_nodes.at(j+1)->joint);
-			joint->SetTorque(torque);
-		}
-		Hip->ApplyLocalForce(genForceLocal, zero_Vec3);
-
-		Hip->GetSystem()->ForwardDynamics();
-		 se3 hipAcc_tmp = Hip->GetGenAccelerationLocal();
-////		 se3 hipAcc_tmp_1 = Ad((_boneTs[0]), Hip->GetGenAccelerationLocal());
-////		se3 hipAcc_tmp_1 = InvAd(_boneTs[0], Hip->GetGenAccelerationLocal());
-////		se3 hipVelLocal_joint_1 = InvAd(_boneTs[0], Hip->GetGenVelocityLocal());
-////		Vec3 hipAngVelLocal_joint_1(hipVelLocal_joint_1[0], hipVelLocal_joint_1[1], hipVelLocal_joint_1[2]);
-////		Vec3 hipLinVelLocal_joint_1(hipVelLocal_joint_1[3], hipVelLocal_joint_1[4], hipVelLocal_joint_1[5]);
-////
-////		hipAcc_tmp_1 += Cross(hipAngVelLocal_joint_1, hipLinVelLocal_joint_1);
-//
-//		Vec3 hipJointPosLocal = Inv(_boneTs[0]).GetPosition();
-//		SE3 hipFrame_joint = Hip->GetFrame() * Inv(_boneTs[0]);
-//		SE3 hipFrame_body = Hip->GetFrame();
-//
-//		Vec3 hipAngVelGlobal = Hip->GetAngVelocity();
-//
-//		se3 hipGenAccLocal_body = Hip->GetGenAccelerationLocal();
-//		Vec3 hipAngAccLocal_body(hipGenAccLocal_body[0], hipGenAccLocal_body[1], hipGenAccLocal_body[2]);
-//		Vec3 hipLinAccLocal_body(hipGenAccLocal_body[3], hipGenAccLocal_body[4], hipGenAccLocal_body[5]);
-//
-//		Vec3 hipAngAccGlobal_body = Rotate(hipFrame_body, hipAngAccLocal_body);
-//		Vec3 hipLinAccGlobal_body = Rotate(hipFrame_body, hipLinAccLocal_body);
-//
-//		Vec3 hipAngAccGlobal_joint = hipAngAccGlobal_body;
-//		Vec3 hipLinAccGlobal_joint = hipLinAccGlobal_body + Cross(hipAngAccGlobal_body, hipJointPosLocal)
-//									 + Cross(hipAngVelGlobal, Cross(hipAngVelGlobal, hipJointPosLocal));
-//
-//		Vec3 hipAngAccLocal_joint = InvRotate(hipFrame_joint, hipAngAccGlobal_joint);
-//		Vec3 hipLinAccLocal_joint = InvRotate(hipFrame_joint, hipLinAccGlobal_joint);
-//
-////	se3 hipAcc_tmp(hipAngAccGlobal_joint[0], hipAngAccGlobal_joint[1], hipAngAccGlobal_joint[2],
-////				   hipLinAccGlobal_joint[0], hipLinAccGlobal_joint[1], hipLinAccGlobal_joint[2]);
-//		se3 hipAcc_tmp(hipAngAccLocal_joint[0], hipAngAccLocal_joint[1], hipAngAccLocal_joint[2],
-//					   hipLinAccLocal_joint[0], hipLinAccLocal_joint[1], hipLinAccLocal_joint[2]);
-
-
-		for (int j = 0; j < 3; j++)
-		{
-			invM[j][i] = hipAcc_tmp[j+3] + invMb[j];
-		}
-		for (int j = 3; j < 6; j++)
-		{
-			invM[j][i] = hipAcc_tmp[j-3] + invMb[j];
-		}
-		for(int j=0; j<n; j++)
-		{
-			Vec3 acc(0,0,0);
-			hpBJoint *joint = &(_nodes.at(j+1)->joint);
-			acc = joint->GetAcceleration();
-			for(int k=0; k<3; k++)
-			{
-				invM[6+3*j+k][i] = acc[k] + invMb[6+3*j+k];
-			}
-		}
-	}
-
-	// restore ddq and tau
-	for(int i=0; i<n; i++)
-	{
-		hpBJoint *joint = &(_nodes.at(i+1)->joint);
-		joint->SetAcceleration(accBackup.at(i));
-		joint->SetTorque(torBackup.at(i));
-		joint->SetAcceleration(Vec3(0., 0., 0.));
-		joint->SetTorque(Vec3(0., 0., 0.));
-	}
-	//Hip->SetGenAcceleration(hipAccBackup);
-
-	Hip->ResetForce();
-//	Hip->ApplyGlobalForce(hipTorBackup, zero_Vec3);
-	return ls;
 }

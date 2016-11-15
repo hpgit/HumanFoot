@@ -3,7 +3,6 @@
 #include <VP/vphysics.h>
 #include "../VirtualPhysics/pyVpBody.h"
 #include "../VirtualPhysics/pyVpJoint.h"
-#include "hpBJoint.h"
 
 class VpWorld;
 
@@ -22,8 +21,7 @@ public:
 		string name;
 		vpBody body;
 		vpMaterial material;
-		hpBJoint joint;
-		vpJoint *pJoint;
+		vpBJoint joint;
 		int dof;
 		bool use_joint;
 		unsigned char color[4];
@@ -36,31 +34,6 @@ public:
 			color[1] = 0;
 			color[2] = 0;
 			color[3] = 255;
-		}
-		// set orientation as near as possible according to joint type
-		void SetJointNearestOrientation(const SE3& R)
-		{
-			if(dof == 3)
-			{
-				((hpBJoint*)pJoint)->SetOrientation(R);
-			}
-			else if (dof == 2)
-			{
-				vpUJoint* _pJoint = (vpUJoint*)pJoint;
-				// theta should be depend on current configuration to prevent discontinuity
-				double theta0 = std::atan2(-R[7], R[8]);
-				double theta1 = std::asin(R[6]);
-				_pJoint->SetAngle(0, theta0);
-				_pJoint->SetAngle(1, theta1);
-			}
-			else if (dof == 1)
-			{
-				vpRJoint* _pJoint = (vpRJoint*)pJoint;
-				Vec3 jointAxis = _pJoint->GetAxis();
-				double angle = Inner(LogR(R), jointAxis);
-				_pJoint->SetAngle(angle);
-
-			}
 		}
 	};
 
@@ -282,9 +255,6 @@ public:	// expose to python
 
 	object getJointFrame(int index);
 
-	object getJointBodyJacobianLocal(int index);
-	object getJointBodyJacobianGlobal(int index);
-
 	object getJointVelocityLocal(int index);
 	object getJointAccelerationLocal(int index);
 
@@ -356,17 +326,4 @@ public:	// expose to python
 	bp::list getEquationOfMotion(object& M, object& b);// buggy
 	//void stepKinematics( double dt, const object& acc);
 	void stepKinematics( double dt, const bp::list& accs);
-};
-
-class VpGenControlModel : private VpControlModel
-{
-	VpGenControlModel(VpWorld* pWorld, const object& createPosture, const object& config);
-
-	void _createJoint(const object& joint, const object& posture);
-	void _updateJoint(const object& joint, const object& posture);
-
-	boost::python::object getJointBodyJacobianLocal(int index);
-	boost::python::list getInverseEquationOfMotion(object &invM, object &invMb)
-	bp::list getInternalJointDOFs();
-
 };

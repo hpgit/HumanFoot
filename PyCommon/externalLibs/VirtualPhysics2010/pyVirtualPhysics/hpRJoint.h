@@ -8,12 +8,12 @@ class hpRJoint : public vpRJoint
 {
 public:
     hpRJoint():vpRJoint(){backup = false;}
-	scalar                   GetDisplacement(){return m_rQ;}
-	scalar                   GetFirstDeriv(){return m_rDq;}
-	scalar                   GetSecondDeriv(){return m_rDdq;}
-	scalar                   GetGenTorque(){return m_rActuationTau;}
-	void                     SetSecondDeriv( const scalar &a){m_rDdq = a;}
-	void                     SetGenTorque(const scalar &a){m_rActuationTau = a;}
+	scalar                   GetDisplacement(int i){return m_rQ;}
+	scalar                   GetFirstDeriv(int i){return m_rDq;}
+	scalar                   GetSecondDeriv(int i){return m_rDdq;}
+	scalar                   GetGenTorque(int i){return m_rActuationTau;}
+	void                     SetSecondDeriv(int i, const scalar &a){m_rDdq = a;}
+	void                     SetGenTorque(int i,const scalar &a){m_rActuationTau = a;}
     SE3                      GetTransform(){return Transform();}
     SE3                      GetOrientation(){return Transform();}
 

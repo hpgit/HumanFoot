@@ -49,8 +49,8 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
     #     jointAxeses[0][i] = body0Ori.T[i]
     #     jointAxeses[0][i+3] = body0Ori.T[i]
 
-    jointAxeses = model.getBodyRootDOFAxeses()
-    # jointAxeses = model.getBodyRootJointAngJacobiansGlobal()
+    # jointAxeses = model.getBodyRootDOFAxeses()
+    jointAxeses = model.getBodyRootJointAngJacobiansGlobal()
 
     # totalDOF = model.getTotalDOF()
     # qdot_0 = ype.makeFlatList(totalDOF)
@@ -65,8 +65,8 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
     for vpidx in range(len(cVpBodyIds)):
         bodyidx = model.id2index(cVpBodyIds[vpidx])
         contactJointMasks = [yjc.getLinkJointMask(skeleton, bodyidx)]
-        yjc.computeLocalRootJacobian(Jic, DOFs, jointPositions, jointAxeses, [cPositions[vpidx]], contactJointMasks)
-        # yjc.computeControlModelJacobian(Jic, DOFs, jointPositions, jointAxeses, [cPositions[vpidx]], contactJointMasks)
+        # yjc.computeLocalRootJacobian(Jic, DOFs, jointPositions, jointAxeses, [cPositions[vpidx]], contactJointMasks)
+        yjc.computeControlModelJacobian(Jic, DOFs, jointPositions, jointAxeses, [cPositions[vpidx]], contactJointMasks)
         n = np.array([[0., 1., 0., 0., 0., 0.]]).T
         JTn = Jic.T.dot(n)
         if N is None:
@@ -166,13 +166,15 @@ def getLCPMatrix(world, model, invM, invMc, mu, tau, contactNum, contactPosition
     )
     # A = A + 0.1*np.eye(A.shape[0])
 
-    qdot_0 = ype.makeFlatList(totalDOF)
-    ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
-    # bodyGenVelLocal = model.getBodyGenVelLocal(0)
-    # for i in range(3):
-    #     qdot_0[i] = bodyGenVelLocal[i+3]
-    #     qdot_0[i+3] = bodyGenVelLocal[i]
-    ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
+    qdot_0 = ype.makeFlatList(model.getTotalDOF())
+    # # ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
+    # # bodyGenVelLocal = model.getBodyGenVelLocal(0)
+    # # for i in range(3):
+    # #     qdot_0[i] = bodyGenVelLocal[i+3]
+    # #     qdot_0[i+3] = bodyGenVelLocal[i]
+    # ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
+    ype.flatten(model.getBodyRootDOFFirstDerivs(), qdot_0)
+
 
     qdot_0 = np.asarray(qdot_0)
     if tau is None:
@@ -187,7 +189,8 @@ def getLCPMatrix(world, model, invM, invMc, mu, tau, contactNum, contactPosition
     for i in range(contactNum):
         if abs(contactPositions[i][1]) > penDepth:
             bPenDepth[i] = contactPositions[i][1] + penDepth
-
+    print tau.shape
+    print qdot_0.shape, invMc.shape, temp_NM.dot(tau).shape, bPenDepth.shape
     b1 = JTN.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau) + 0.05 * invh * bPenDepth
     b2 = JTD.T.dot(qdot_0 - h*invMc) + h*temp_DM.dot(tau)
     b3 = np.zeros(mus.shape[0])
@@ -316,7 +319,7 @@ def getLCPMatrixGenHD(world, model, invM, invMc, mu, ddth, tau, contactNum, cont
     # A = A + 0.1*np.eye(A.shape[0])
 
     qdot_0 = ype.makeFlatList(totalDOF)
-    ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
+    ype.flatten(model.getBodyRootDOFFirstDerivs(), qdot_0)
 
     qdot_0 = np.asarray(qdot_0)
     if ddth is None:
@@ -380,7 +383,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
     invM = np.zeros((totalDOF, totalDOF))
     invMc = np.zeros(totalDOF)
 
-    model.getInverseEquationOfMotion(invM, invMc)
+    invM, invMc = model.getInverseEquationOfMotion()
 
     timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
 
@@ -529,22 +532,23 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
         Jic = yjc.makeEmptyJacobian(DOFs, 1)
 
         qdot_0 = ype.makeFlatList(totalDOF)
-        ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
+        ype.flatten(model.getBodyRootDOFFirstDerivs(), qdot_0)
 
-        jointAxeses = model.getBodyRootDOFAxeses()
+        jointAxeses = model.getBodyRootJointAngJacobiansGlobal()
         bodyidx = model.id2index(bodyIDs[vpidx])
         contactJointMasks = [yjc.getLinkJointMask(motion[0].skeleton, bodyidx)]
 
         jointPositions = model.getJointPositionsGlobal()
         jointPositions[0] = model.getBodyPositionGlobal(0)
-        yjc.computeLocalRootJacobian(Jic, DOFs, jointPositions, jointAxeses, [contactPositions[vpidx]], contactJointMasks)
+        # yjc.computeLocalRootJacobian(Jic, DOFs, jointPositions, jointAxeses, [contactPositions[vpidx]], contactJointMasks)
+        yjc.computeControlModelJacobian(Jic, DOFs, jointPositions, jointAxeses, [contactPositions[vpidx]], contactJointMasks)
 
         h = world.GetTimeStep()
         vv = np.dot(Jic, qdot_0) - h * np.dot(Jic, invMc) + h * np.dot(Jic, np.dot(invM, tau))
         for vpidxx in range(len(bodyIDs)):
             bodyidx = model.id2index(bodyIDs[vpidxx])
             contactJointMasks = [yjc.getLinkJointMask(motion[0].skeleton, bodyidx)]
-            yjc.computeLocalRootJacobian(Jic, DOFs, jointPositions, jointAxeses, [contactPositions[vpidxx]], contactJointMasks)
+            yjc.computeControlModelJacobian(Jic, DOFs, jointPositions, jointAxeses, [contactPositions[vpidxx]], contactJointMasks)
             vv += h * np.dot(Jic, np.dot(invM, np.dot(Jic[:3].T, forces[vpidxx])))
 
         print "vv:", vv[:3]
@@ -843,8 +847,7 @@ def calcLCPForcesHD(motion, world, model, bodyIDsToCheck, mu, ddth, tau, numFric
     invM = np.zeros((totalDOF, totalDOF))
     invMc = np.zeros(totalDOF)
 
-    model.getInverseEquationOfMotion(invM, invMc)
-    # invM, invMc = model.getInverseEquationOfMotion()
+    invM, invMc = model.getInverseEquationOfMotion()
 
     timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
 

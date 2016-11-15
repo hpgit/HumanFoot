@@ -160,7 +160,7 @@ inline void SE3_2_pySO3(const SE3& T, object& pyR)
 	pyR[make_tuple(1,0)] = T[1]; pyR[make_tuple(1,1)] = T[4]; pyR[make_tuple(1,2)] = T[7];
 	pyR[make_tuple(2,0)] = T[2]; pyR[make_tuple(2,1)] = T[5]; pyR[make_tuple(2,2)] = T[8];
 }
-inline void SE_2_pySO3(const SE& T)
+inline numeric::array SE3_2_pySO3(const SE3& T)
 {
 	return numeric::array(make_tuple(
 							make_tuple(T[0], T[3], T[6]), 

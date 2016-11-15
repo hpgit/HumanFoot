@@ -139,16 +139,7 @@ class VpModelRenderer(Renderer):
         glPushMatrix()
         _T = pNode.body.GetFrame()
 
-        _t = _T.GetPosition()
-        _r_Vec3 = LogR(_T)
-        _r = cvu.Vec3_2_pyVec3(_r_Vec3)
-        _r_norm = Norm(_r_Vec3)
-
-        glTranslatef(_t[0], _t[1], _t[2])
-        if _r_norm > LIE_EPS:
-            glRotatef(_r_norm*180./math.pi, _r[0]/_r_norm, _r[1]/_r_norm, _r[2]/_r_norm)
-        # glMultMatrixd(_T)
-
+        glMultMatrixd(cvu.SE3_2_pySE3(_T).T)
 
         for j in range(len(pNode.geoms)):
             pGeom = pNode.geoms[j]
@@ -156,16 +147,7 @@ class VpModelRenderer(Renderer):
             # _T = SE3_2_pySE3(pGeom.GetLocalFrame())
             _T = pGeom.GetLocalFrame()
 
-            _t = _T.GetPosition()
-            _r_Vec3 = LogR(_T)
-            _r = cvu.Vec3_2_pyVec3(_r_Vec3)
-            _r_norm = Norm(_r_Vec3)
-
-            glTranslatef(_t[0], _t[1], _t[2])
-            if _r_norm > LIE_EPS:
-                glRotatef(_r_norm*180./math.pi, _r[0]/_r_norm, _r[1]/_r_norm, _r[2]/_r_norm)
-
-            # glMultMatrixd(_T)
+            glMultMatrixd(cvu.SE3_2_pySE3(_T).T)
 
             geomType = pGeom.GetType()
             data = []

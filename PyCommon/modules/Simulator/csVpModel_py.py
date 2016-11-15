@@ -20,16 +20,17 @@ QP = True
 class VpModel:
     class Node:
         def __init__(self, _name):
-            self.name = _name
-            self.body = vpBody()
-            self.material = vpMaterial()
-            # self.joint = hpBJoint()
-            self.joint = None
-            self.dof = 3
-            self.color = [0., 0., 0., 255.]
-            self.use_joint = False
-            self.body.SetMaterial(self.material)
-            self.geoms = []
+            if _name is not None:
+                self.name = _name
+                self.body = vpBody()
+                self.material = vpMaterial()
+                # self.joint = hpBJoint()
+                self.joint = None
+                self.dof = 3
+                self.color = [0., 0., 0., 255.]
+                self.use_joint = False
+                self.body.SetMaterial(self.material)
+                self.geoms = []
 
         def setJointNearstOrientation(self, R):
             ## @param R : VP::SE3
@@ -45,21 +46,22 @@ class VpModel:
                 self.joint.SetAngle(th0)
 
     def __init__(self, pWorld, createPosture, config):
-        self._pWorld = pWorld._world
-        self._config = config
-        self._skeleton = createPosture.skeleton
+        if pWorld is not None:
+            self._pWorld = pWorld._world
+            self._config = config
+            self._skeleton = createPosture.skeleton
 
-        num = createPosture.skeleton.getJointNum()
+            num = createPosture.skeleton.getJointNum()
 
-        self._nodes = [None] * num
-        # self._nodes = [self.Node(None)]*num
-        self._boneTs = [SE3()] * num
+            # self._nodes = [None] * num
+            self._nodes = [self.Node(None)]*num
+            self._boneTs = [SE3()] * num
 
-        self._name2index = dict()
-        self._id2index = dict()
+            self._name2index = dict()
+            self._id2index = dict()
 
-        self.createBodies(createPosture)
-        self.build_name2index()
+            self.createBodies(createPosture)
+            self.build_name2index()
 
     def build_name2index(self):
         for i in range(len(self._nodes)):
@@ -207,6 +209,7 @@ class VpModel:
                         geom = MyFoot5(radius, length)
 
                     pNode.geoms.append(geom)
+                    pNode.body.AddGeometry(geom)
                     pNode.body.SetInertia(CylinderInertia(density, radius, length))
 
                 else:
@@ -233,7 +236,11 @@ class VpModel:
                             width = .1
                         height = width
 
-                    box = vpBox(Vec3(width, height, length))
+                    box = None
+                    if geomType == "MyBox":
+                        box = MyBox(Vec3(width, height, length))
+                    else:
+                        box = vpBox(Vec3(width, height, length))
                     pNode.geoms.append(box)
                     pNode.body.AddGeometry(box)
                     pNode.body.SetInertia(BoxInertia(density, Vec3(width/2., height/2., length/2.)))
@@ -446,12 +453,8 @@ class VpModel:
 
     def getBodyAngVelocityGlobal(self, index):
         # se3 genVel;
-        pyV = Vec3(0., 0., 0.)
         genVel = self._nodes[index].body.GetGenVelocity()
-        pyV[0] = genVel[0]
-        pyV[1] = genVel[1]
-        pyV[2] = genVel[2]
-        return pyV
+        return se3_2_pyVec6(genVel)[:3]
 
     def getBodyAngVelocitiesGlobal(self):
         ls = []
@@ -478,7 +481,7 @@ class VpModel:
     def setBodyPositionGlobal(self, index, position):
         # SE3 bodyFrame;
         bodyFrame = self._nodes[index].body.GetFrame()
-        bodyFrame.SetPosition(position)
+        bodyFrame.SetPosition(pyVec3_2_Vec3(position))
         self._nodes[index].body.SetFrame(bodyFrame)
 
     def setBodyAccelerationGlobal(self, index, acc, pPositionLocal=None):
@@ -593,12 +596,12 @@ void VpModel::addBody(bool flagControl)
 class VpMotionModel(VpModel):
     def __init__(self, pWorld, createPosture, config):
         VpModel.__init__(self, pWorld, createPosture, config)
+        if pWorld is not None:
+            self._recordVelByFiniteDiff = False
+            self._inverseMotionTimeStep = 30.
 
-        self._recordVelByFiniteDiff = False
-        self._inverseMotionTimeStep = 30.
-
-        self.update(createPosture)
-        self.addBody(False)
+            self.update(createPosture)
+            self.addBody(False)
 
     def recordVelByFiniteDiff(self, flag=True, motionTimeStep=1./30.):
         self._recordVelByFiniteDiff = flag
@@ -650,17 +653,18 @@ class VpMotionModel(VpModel):
 class VpControlModel(VpModel):
     def __init__(self, pWorld, createPosture, config):
         VpModel.__init__(self, pWorld, createPosture, config)
-        self.addBodiesToWorld(createPosture)
-        self.ignoreCollisionBtwnBodies()
-        pWorld.addVpModel(self)
+        if pWorld is not None:
+            self.addBodiesToWorld(createPosture)
+            self.ignoreCollisionBtwnBodies()
+            pWorld.addVpModel(self)
 
-        tpose = createPosture.getTPose()
-        self.createJoints(tpose)
+            tpose = createPosture.getTPose()
+            self.createJoints(tpose)
 
-        self.update(createPosture)
-        self.addBody(True)
+            self.update(createPosture)
+            self.addBody(True)
 
-        self._springs = [vpSpring()] * 0
+            self._springs = [vpSpring()] * 0
 
     def __str__(self):
         strstr = VpModel.__str__(self)
@@ -690,8 +694,11 @@ class VpControlModel(VpModel):
     def getTotalDOF(self):
         return 6 + self.getTotalInternalJointDOF()
 
-    def get3dExtendDOF(self):
+    def get3dExtendTotalDOF(self):
         return 6 + 3*(len(self._nodes)-1)
+
+    def get3dExtendDOFs(self):
+        return [[6]] + [[3]]*(len(self._nodes)-1)
 
     def createJoints(self, posture):
         joint = posture.skeleton.root
@@ -743,7 +750,10 @@ class VpControlModel(VpModel):
         # if (nodeExistParentJoint is not None) \
         #        and (len_joint_children > 0) \
         #        and self._config.hasNode(joint_name):
-        if (nodeExistParentJoint is not None) and self._config.hasNode(joint_name):
+        if nodeExistParentJoint is None:
+            self._nodes[joint_index].dof = 6
+
+        elif self._config.hasNode(joint_name):
             pNode = self._nodes[joint_index]
             cfgNode = self._config.getNode(joint_name)
 
@@ -765,6 +775,7 @@ class VpControlModel(VpModel):
             elif cfgNode.jointType == "U":
                 pNode.dof = 2
                 pNode.joint = hpUJoint()
+                pNode.joint.SetAxis(1, Vec3(0., 0., 1.))
             elif cfgNode.jointType == "B":
                 pNode.dof = 3
                 pNode.joint = hpBJoint()
@@ -866,6 +877,32 @@ class VpControlModel(VpModel):
             else:
                 self._nodes[i].joint.SetHybridDynamicsType(KINEMATIC)
 
+    def makeDOFFlatList(self):
+        return [None] * self.getTotalDOF()
+
+    def makeDOFNestedList(self):
+        ls = []
+        for node in self._nodes:
+            ls.append([None]*node.dof)
+        return ls
+
+    def makeExtendDOFFlatList(self):
+        return [None] * self.get3dExtendDOF()
+
+    def makeExtendDOFNestedList(self):
+        ls = []
+        for node in self._nodes:
+            ls.append([None]*3)
+        return ls
+
+    def flattenDOF(self, DOFs):
+        raise NotImplementedError
+        # return
+
+    def nestedDOF(self, dofs):
+        raise NotImplementedError
+        # return
+
     def initializeForwardDynamics(self):
         for i in range(len(self._nodes)):
             self._nodes[i].body.SetHybridDynamicsType(DYNAMIC)
@@ -887,8 +924,8 @@ class VpControlModel(VpModel):
 
     def getJointVelocityLocal(self, index):
         pospos = Inv(self._boneTs[index]).GetPosition()
-        jointFrame = self._nodes[index].body.GetFrmae() * Inv(self._boneTs[index])
-        return Vec3_2_pyVec3(InvRotate(jointFrame, self.getBodyVelocityGlobal(index, pospos)))
+        jointFrame = self._nodes[index].body.GetFrame() * Inv(self._boneTs[index])
+        return Vec3_2_pyVec3(InvRotate(jointFrame, pyVec3_2_Vec3(self.getBodyVelocityGlobal(index, pospos))))
 
     def getJointAngVelocityLocal(self, index):
         if index == 0:
@@ -938,12 +975,37 @@ class VpControlModel(VpModel):
     def getInternalJointAngAccelerationsLocal(self):
         return [self.getJointAngAccelerationLocal(i) for i in range(1, len(self._nodes))]
 
-    def getInternalJointDOFAccelerationsLocalFlat(self):
+    def getInternalJointDOFSecondDerivesLocal(self):
+        accs = []
+        for i in range(1, len(self._nodes)):
+            acc = []
+            for j in range(self._nodes[i].joint.GetDOF()):
+                acc.append(self._nodes[i].joint.GetSecondDeriv(j))
+            accs.append(acc)
+        return accs
+
+    def getInternalJointDOFSecondDerivesLocalFlat(self):
         acc = []
         for i in range(1, len(self._nodes)):
             for j in range(self._nodes[i].joint.GetDOF()):
                 acc.append(self._nodes[i].joint.GetSecondDeriv(j))
         return np.array(acc)
+
+    def getInternalJointDOFFirstDerivesLocal(self):
+        vels = []
+        for i in range(1, len(self._nodes)):
+            vel = []
+            for j in range(self._nodes[i].joint.GetDOF()):
+                vel.append(self._nodes[i].joint.GetFirstDeriv(j))
+            vels.append(vel)
+        return vels
+
+    def getInternalJointDOFFirstDerivesLocalFlat(self):
+        vel = []
+        for i in range(1, len(self._nodes)):
+            for j in range(self._nodes[i].joint.GetDOF()):
+                vel.append(self._nodes[i].joint.GetFirstDeriv(j))
+        return np.array(vel)
 
     # Get Joint Global State
     def getJointFrame(self, index):
@@ -1142,6 +1204,12 @@ class VpControlModel(VpModel):
 
         return ls
 
+    # get dof function for jacobian and mass matrix
+    def getBodyRootDOFFirstDerivs(self):
+        rootGenVel = self.getBodyGenVelLocal(0)
+        rootGenVel_swaped = np.hstack((rootGenVel[3:], rootGenVel[:3]))
+        return [rootGenVel_swaped] + self.getInternalJointDOFFirstDerivesLocal()
+
     def getBodyRootJointAngJacobiansGlobal(self):
         rootAxes = self.getBodyOrientationGlobal(0)
         rootJacobian = mm.getLocalAngJacobianForAngleAxis(mm.logSO3(rootAxes))
@@ -1240,9 +1308,49 @@ class VpControlModel(VpModel):
         self.setJointAngAccelerationLocal(0, dofaccs[0][3:6])
         self.setInternalJointAngAccelerationsLocal(dofaccs[1:])
 
+    def setDOFAccelerationsFlatFromExtendDOF(self, dofaccs):
+        self.setJointAccelerationGlobal(0, dofaccs[0:3])
+        self.setJointAngAccelerationLocal(0, dofaccs[3:6])
+        for i in range(1, len(self._nodes)):
+            self._nodes[i].joint.SetTorqueLocal(pyVec3_2_Vec3(dofaccs[3+3*i:6+3*i]))
+
     def setDOFTorques(self, dofTorque):
         for i in range(1, len(self._nodes)):
-            self._nodes[i].joint.SetTorque(pyVec3_2_Vec3(dofTorque[i-1]))
+            self._nodes[i].joint.SetTorqueLocal(pyVec3_2_Vec3(dofTorque[i-1]))
+
+    def setDOFTorquesFlatFromExtendDOF(self, dofTorque):
+        # all joints are treated as 3dof
+        for i in range(1, len(self._nodes)):
+            self._nodes[i].joint.SetTorqueLocal(pyVec3_2_Vec3(dofTorque[3*(i-1):3*i]))
+
+    def setDOFGenTorquesFlat(self, dofTorque):
+        # compact dof representation
+        curIdx = 0
+        for i in range(1, len(self._nodes)):
+            for j in range(self._nodes[i].dof):
+                self._nodes[i].joint.SetGenTorque(j, dofTorque[curIdx])
+                curIdx += 1
+                # self._nodes[i].joint.SetTorqueLocal(pyVec3_2_Vec3(dofTorque[i-1]))
+
+    def setDOFGenTorquesFlatFromExtendDOF(self, dofTorque):
+        #
+        curIdx = 0
+        for i in range(1, len(self._nodes)):
+            for j in range(self._nodes[i].dof):
+                self._nodes[i].joint.SetGenTorque(j, dofTorque[curIdx])
+                curIdx += 1
+            curIdx += 3 - self._nodes[i].dof
+
+    def setDOFAccelerationsFromExtendDOF(self, dofaccs):
+        self.setJointAccelerationGlobal(0, dofaccs[0][0:3])
+        # self.setJointAngAccelerationGlobal(0, dofaccs[0][3:6])
+        self.setJointAngAccelerationLocal(0, dofaccs[0][3:6])
+        curIdx = 0
+        for i in range(1, len(self._nodes)):
+            for j in range(self._nodes[i].dof):
+                self._nodes[i].joint.SetGenTorque(j, dofaccs[curIdx])
+                curIdx += 1
+                # self._nodes[i].joint.SetTorqueLocal(pyVec3_2_Vec3(dofTorque[i-1]))
 
     def SetJointElasticity(self, index, Kx, Ky=None, Kz=None):
         assert (Kx < 0. and "Joint Elasticity must larger than 0")
@@ -1258,17 +1366,27 @@ class VpControlModel(VpModel):
             self.SetJointElasticity(i, Kx, Ky, Kz)
 
     def SetJointDamping(self, index, Dx, Dy=None, Dz=None):
-        assert (Dx < 0. and "Joint Elasticity must larger than 0")
-        d = None
-        if Dy is None:
-            d = Inertia(Dx)
-        else:
-            d = Inertia(0., Dx, Dy, Dz)
-        self._nodes[index].joint.SetDamping(d)
+        assert (Dx >= 0. and "Joint Elasticity must larger than 0")
+        if self._nodes[index].dof == 3:
+            d = None
+            if Dy is None:
+                d = Inertia(Dx)
+            else:
+                d = Inertia(0., Dx, Dy, Dz)
+            self._nodes[index].joint.SetDamping(d)
+        elif self._nodes[index].dof == 2:
+            self._nodes[index].joint.SetDamping(0, Dx)
+            self._nodes[index].joint.SetDamping(1, Dy)
+        elif self._nodes[index].dof == 1:
+            self._nodes[index].joint.SetDamping(Dx)
 
-    def SetJointsDamping(self, Dx, Dy, Dz):
-        for i in range(1, len(self._nodes)):
-            self.SetJointDamping(i, Dx, Dy, Dz)
+    def SetJointsDamping(self, Dx, Dy=None, Dz=None):
+        if Dy is None:
+            for i in range(1, len(self._nodes)):
+                self.SetJointDamping(i, Dx, Dx, Dx)
+        else:
+            for i in range(1, len(self._nodes)):
+                self.SetJointDamping(i, Dx, Dy, Dz)
 
     def getJointTorqueLocal(self, index):
         if index == 0:
@@ -1383,7 +1501,7 @@ class VpControlModel(VpModel):
 
         invMb[:3] = -hipAcc_tmp[3:]
         invMb[3:6] = -hipAcc_tmp[:3]
-        invMb[6:] = -self.getInternalJointDOFAccelerationsLocalFlat()
+        invMb[6:] = -self.getInternalJointDOFSecondDerivesLocalFlat()
 
         # get M
         for i in range(N):
@@ -1423,7 +1541,7 @@ class VpControlModel(VpModel):
                 invM[j, i] = hipAcc_tmp[j+3] + invMb[j]
             for j in range(3, 6):
                 invM[j, i] = hipAcc_tmp[j-3] + invMb[j]
-            invM[6:, i] = self.getInternalJointDOFAccelerationsLocalFlat() + invMb[6:]
+            invM[6:, i] = self.getInternalJointDOFSecondDerivesLocalFlat() + invMb[6:]
             # for j in range(n):
             #     joint = self._nodes[j+1].joint
             #     acc = joint.GetAcceleration()
