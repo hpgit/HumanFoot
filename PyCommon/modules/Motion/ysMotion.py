@@ -41,6 +41,10 @@ class MotionSystem:
 #===============================================================================
 class Motion(list):
     def __init__(self, ls=[]):
+        """
+
+        :param ls: list[Posture]
+        """
         list.__init__(self, ls)
         self.frame = 0
         self.fps = 30.
@@ -134,6 +138,10 @@ class Motion(list):
 
 
 class Skeleton:
+    """
+    :type elementNames: list[str]
+
+    """
     def __init__(self):
         self.elements = []
         self.elementNames = []
@@ -179,6 +187,9 @@ class Skeleton:
 
 
 class Posture:
+    """
+    :type skeleton : Skeleton
+    """
     def __init__(self, skeleton):
         self.skeleton = skeleton
     def getPosition(self, index):
@@ -233,7 +244,16 @@ class PointPosture(Posture):
 # link[0]: (root body) 
 #===============================================================================
 class JointMotion(Motion):
-    # lv : linear velocity, av : angular velocity, la : linear acceleration, aa : angular acceleration 
+    def __init__(self, ls=[]):
+        """
+
+        :param ls: list[JointPosture]
+        """
+        Motion.__init__(self, ls)
+        self.frame = 0
+        self.fps = 30.
+        self.resourceName = 'unnamed'
+    # lv : linear velocity, av : angular velocity, la : linear acceleration, aa : angular acceleration
     # p: Vec3(position), R : SO3(orientation)
     # _g : w.r.t. global frame, _l : w.r.t. local frame
     # x[0] : x of joint[0]
@@ -439,6 +459,9 @@ class JointMotion(Motion):
 
 
 class JointSkeleton(Skeleton):
+    """
+    :type root : Joint
+    """
     def __init__(self, root):
         Skeleton.__init__(self)
         self.root = root
@@ -571,6 +594,11 @@ class JointSkeleton(Skeleton):
 
 
 class Joint:
+    """
+    :type name : str
+    :type parent : Joint
+    :type children : list[Joint]
+    """
     def __init__(self, name, parent):
         self.name = name
         self.parent = parent
@@ -608,6 +636,8 @@ class Joint:
         for child in self.children:
             s += child.__strHierarchy__(depth)
         return s
+
+
 class JointPosture(Posture):
     def __init__(self, skeleton):
         Posture.__init__(self, skeleton)
@@ -619,6 +649,11 @@ class JointPosture(Posture):
     # m2 = m1 + d
     # R_m2 = R_m1 (dot) R_d
     def __add__(self, displacement):
+        """
+
+        :param displacement: JointDisplacement
+        :return:
+        """
         if displacement.__class__ == JointDisplacement:
             m1 = self
             d = displacement
@@ -930,7 +965,6 @@ class JointPosture(Posture):
         self.rootPos *= scale
         if update:
             self.updateGlobalT()
-
 
 class JointDisplacement(JointPosture):
     def __init__(self, jointSkeleton):

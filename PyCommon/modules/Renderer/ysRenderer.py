@@ -19,6 +19,7 @@ from PyCommon.modules.Mesh import ysMesh as yms
 # import Mesh.ysMesh as yms
 
 from PyCommon.modules.pyVirtualPhysics import *
+from PyCommon.modules.Simulator import csVpModel_py as pcvm
 from PyCommon.modules.Simulator import csVpUtil as cvu
 
 # RendererContext
@@ -108,6 +109,9 @@ class OdeModelRenderer(Renderer):
                 glColor3ubv(self.totalColor)
 
 class VpModelRenderer(Renderer):
+    """
+    :type model : pcvm.VpModel
+    """
     def __init__(self, target, color=(255,255,255), polygonStyle=POLYGON_FILL, lineWidth=1.):
         Renderer.__init__(self, target, color)
         self.model = target
@@ -476,7 +480,7 @@ class OrientationsRenderer(Renderer):
         self.axisLength = axisLength
     def render(self, renderType=None):
         for i in range(len(self.Rs)):
-            if self.Rs[i]!=None and self.ps[i]!=None:
+            if self.Rs[i] is not None and self.ps[i] is not None:
                 T = mm.Rp2T(self.Rs[i], self.ps[i])
                 glPushMatrix()
                 glMultMatrixf(T.transpose())

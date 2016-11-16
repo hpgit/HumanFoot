@@ -876,7 +876,6 @@ def walkings():
         P.append(p_temp)
         P.goToFrame(frame)
 
-
         # stance foot stabilize
         motion_stf_stabilize.append(motion_stitch[frame].copy())
         motion_stf_stabilize.goToFrame(frame)

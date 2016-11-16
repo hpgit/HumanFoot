@@ -200,8 +200,8 @@ def init():
     # solver = hik.numIkSolver(wcfg, motion[0], mcfg)
 
     vpWorld.SetGlobalDamping(0.9999)
-    # controlModel.initializeHybridDynamics()
-    controlModel.initializeForwardDynamics()
+    controlModel.initializeHybridDynamics()
+    # controlModel.initializeForwardDynamics()
     ModelOffset = np.array([0., 1.42, 0.])
     controlModel.translateByOffset(ModelOffset)
     motionModel.translateByOffset(ModelOffset)
@@ -380,8 +380,8 @@ class Callback:
 
         ddth_des_flat = np.zeros(len(ddth_des_flat))
 
-        ddth_des_flat[8] += getVal('normal des force min')/50.
         # ddth_des_flat[9] += getVal('normal des force min')/50.
+        # ddth_des_flat[8] += getVal('normal des force min')/50.
 
         desForceFrameBegin = getVal('des force begin')
         desForceDuration = getVal('des force dur') * simulSpeedInv
@@ -446,8 +446,12 @@ class Callback:
         cPositions = None
         for i in range(int(stepsPerFrame)):
             if i % 5 == 4:
+                # cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
+                #     = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 10., torques, solver='qp')
+                # cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
+                #     = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 10., torques, solver='qp')
                 cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
-                    = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 10., torques, solver='qp')
+                    = hls.calcLCPForcesHD(motion, vpWorld, controlModel, bodyIDsToCheck, 10., ddth_des_flat, ddth_des_flat, solver='qp')
 
             if i % 5 == 4 and len(cBodyIDs) > 0:
                 contactStep += 1
@@ -464,7 +468,9 @@ class Callback:
 
             # ype.nested(torques, torques_nested)
             # controlModel.setDOFTorques(torques_nested[1:])
-            controlModel.setDOFGenTorquesFlat(torques[6:])
+            # controlModel.setDOFGenTorquesFlat(torques[6:])
+            controlModel.setDOFAccelerations(ddth_des)
+            controlModel.solveHybridDynamics()
             vpWorld.step()
         print('totalContactStep:', contactStep)
 

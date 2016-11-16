@@ -13,13 +13,38 @@ from PyCommon.modules.Simulator.csVpUtil import *
 from PyCommon.modules.Simulator.myGeom import *
 
 from PyCommon.modules.Math import mmMath as mm
+import PyCommon.modules.Simulator.ysPhysConfig as ypc
+from PyCommon.modules.Motion import ysMotion as ym
 
 QP = True
 
 
 class VpModel:
+    """
+    :type _pWorld : vpWorld
+    :type _config : ypc.ModelConfig
+    :type _skeleton: ym.JointSkeleton
+    :type _nodes : list[VpModel.Node]
+    :type _boneTs : list[SE3]
+    :type _name2index : dict[str, int]
+    :type _id2index : dict[int, int]
+    """
     class Node:
+        """
+        :type name : str
+        :type body : vpBody
+        :type material : vpMaterial
+        :type joint : hpBJoint | hpRJoint | hpUJoint | None
+        :type dof : int
+        :type color : list[int]
+        :type use_joint : bool
+        :type geoms : list[MyBox | MyFoot3 | MyFoot4 | MyFoot5]
+        """
         def __init__(self, _name):
+            """
+
+            :param _name: str
+            """
             if _name is not None:
                 self.name = _name
                 self.body = vpBody()
@@ -33,7 +58,10 @@ class VpModel:
                 self.geoms = []
 
         def setJointNearstOrientation(self, R):
-            ## @param R : VP::SE3
+            """
+            :param R: SE3
+            :return: None
+            """
             if self.dof == 3:
                 self.joint.SetOrientation(R)
             elif self.dof == 2:
@@ -45,6 +73,7 @@ class VpModel:
                 th0 = Inner(LogR(R), self.joint.GetAxis())
                 self.joint.SetAngle(th0)
 
+
     def __init__(self, pWorld, createPosture, config):
         if pWorld is not None:
             self._pWorld = pWorld._world
@@ -53,8 +82,8 @@ class VpModel:
 
             num = createPosture.skeleton.getJointNum()
 
-            # self._nodes = [None] * num
-            self._nodes = [self.Node(None)]*num
+            self._nodes = [None] * num
+            # self._nodes = [self.Node(None)]*num
             self._boneTs = [SE3()] * num
 
             self._name2index = dict()
@@ -89,6 +118,11 @@ class VpModel:
         self._nodes[index].body.SetGround(flag)
 
     def createBodies(self, posture):
+        """
+
+        :param posture: ym.JointPosture
+        :return:
+        """
         joint = posture.skeleton.root
         rootPos = posture.rootPos
         T = SE3(Vec3(rootPos[0], rootPos[1], rootPos[2]))
@@ -96,6 +130,13 @@ class VpModel:
         self._createBody(joint, T, tpose)
 
     def _createBody(self, joint, parentT, posture):
+        """
+
+        :param joint: ym.Joint
+        :param parentT: SE3
+        :param posture: ym.JointPosture
+        :return:
+        """
         len_joint_children = len(joint.children)
         if len_joint_children == 0:
             return
@@ -548,49 +589,30 @@ class VpModel:
             self._pWorld.IgnoreCollision(self._nodes[i].body, pBody )
 
     def addBody(self, flagControl):
-        return
-        '''
-void VpModel::addBody(bool flagControl)
-{
-    return;
+        node = VpModel.Node("Left_Toes")
+        density = 1000.
+        width = .1
+        height = .1
+        length = .1
+        node.body.AddGeometry(MyBox(Vec3(width, height, length)))
+        node.body.SetInertia(BoxInertia(density, Vec3(width/2., height/2., length/2.)))
 
-    int n = _nodes.size();
-    _nodes.resize(n + 1);
-    _boneTs.resize(n + 1);
+        newT = SE3()
+        node.body.SetFrame(newT)
+        self._nodes.append(node)
+        self._boneTs.append(newT)
+        if flagControl:
+            self._pWorld.AddBody(node.body)
 
-    //add body
-    Node* pNode = new Node("Left_Toes");
-    scalar density = 1000;
-    scalar width = 0.1;
-    scalar height = 0.1;
-    scalar length = 0.1;
-    pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)));
-    pNode->body.SetInertia(BoxInertia(density, Vec3(width / 2., height / 2., length / 2.)));
+        invLocalT = SE3()
+        parentIndex = len(self._nodes) - 1
+        parentNode = self._nodes[parentIndex]
+        parentNode.body.SetJoint(node.joint, Inv(self._boneTs[parentIndex])*Inv(invLocalT))
+        node.body.SetJoint(node.joint, Inv(self._boneTs[len(self._nodes)]))
+        node.use_joint = True
 
-    //boneT = boneT * SE3(pyVec3_2_Vec3(cfgNode.attr("offset")));
-    //_boneTs[joint_index] = boneT;
-    SE3 newT;// = T * boneT;
-
-    pNode->body.SetFrame(newT);
-    _nodes[n] = pNode;
-
-    _boneTs[n] = newT;
-
-    if (flagControl == true)
-        _pWorld->AddBody(&pNode->body);
-
-
-    //create new joint
-    int parent_index = n - 1;
-    SE3 invLocalT;
-    Node* pParentNode = _nodes[parent_index];
-
-    pParentNode->body.SetJoint(&pNode->joint, Inv(_boneTs[parent_index])*Inv(invLocalT));
-    pNode->body.SetJoint(&pNode->joint, Inv(_boneTs[n]));
-    pNode->use_joint = true;
-
-}
-    '''
+        raise NotImplementedError
+        # return
 
 
 class VpMotionModel(VpModel):
@@ -601,19 +623,32 @@ class VpMotionModel(VpModel):
             self._inverseMotionTimeStep = 30.
 
             self.update(createPosture)
-            self.addBody(False)
+            # self.addBody(False)
 
     def recordVelByFiniteDiff(self, flag=True, motionTimeStep=1./30.):
         self._recordVelByFiniteDiff = flag
         self._inverseMotionTimeStep = 1./motionTimeStep
 
     def update(self, posture):
+        """
+
+        :param posture: ym.JointPosture
+        :return:
+        """
         joint = posture.skeleton.root
         rootPos = posture.rootPos
         T = SE3(pyVec3_2_Vec3(rootPos))
         self._updateBody(joint, T, posture)
 
     def _updateBody(self, joint, parentT, posture):
+        """
+
+        :param joint: ym.Joint
+        :param parentT: SE3
+        :param posture: ym.JointPosture
+        :return:
+        """
+
         len_joint_children = len(joint.children)
         if len_joint_children == 0:
             return
@@ -651,6 +686,9 @@ class VpMotionModel(VpModel):
 
 
 class VpControlModel(VpModel):
+    """
+    :type _springs : vpSpring
+    """
     def __init__(self, pWorld, createPosture, config):
         VpModel.__init__(self, pWorld, createPosture, config)
         if pWorld is not None:
@@ -662,9 +700,9 @@ class VpControlModel(VpModel):
             self.createJoints(tpose)
 
             self.update(createPosture)
-            self.addBody(True)
+            # self.addBody(True)
 
-            self._springs = [vpSpring()] * 0
+            self._springs = []
 
     def __str__(self):
         strstr = VpModel.__str__(self)
@@ -701,10 +739,21 @@ class VpControlModel(VpModel):
         return [[6]] + [[3]]*(len(self._nodes)-1)
 
     def createJoints(self, posture):
+        """
+
+        :param posture: ym.JointPosture
+        :return:
+        """
         joint = posture.skeleton.root
         self._createJoint(joint, posture)
 
     def _createJoint(self, joint, posture):
+        """
+
+        :param joint: ym.Joint
+        :param posture: ym.JointPosture
+        :return:
+        """
         len_joint_children = len(joint.children)
         if len_joint_children == 0:
             return
@@ -806,10 +855,21 @@ class VpControlModel(VpModel):
         self._pWorld.AddBody(self._nodes[0].body)
 
     def update(self, posture):
+        """
+
+        :param posture: ym.JointPosture
+        :return:
+        """
         joint = posture.skeleton.root
         self._updateJoint(joint, posture)
 
     def _updateJoint(self, joint, posture):
+        """
+
+        :param joint: ym.Joint
+        :param posture: ym.JointPosture
+        :return:
+        """
         len_joint_children = len(joint.children)
         if len_joint_children == 0:
             return
@@ -887,11 +947,11 @@ class VpControlModel(VpModel):
         return ls
 
     def makeExtendDOFFlatList(self):
-        return [None] * self.get3dExtendDOF()
+        return [None] * self.get3dExtendTotalDOF()
 
     def makeExtendDOFNestedList(self):
         ls = []
-        for node in self._nodes:
+        for i in range(len(self._nodes)):
             ls.append([None]*3)
         return ls
 
@@ -1034,16 +1094,14 @@ class VpControlModel(VpModel):
         return SE3_2_pySO3(bodyFrame * Inv(self._boneTs[index]))
 
     def getJointAngVelocityGlobal(self, index):
+        # angVel = self._nodes[index].body.GetAngVelocity()
+        # parentIndex = self.getParentIndex(index)
+        # if parentIndex == -1:
+        #     parentAngVel = Vec3(0., 0., 0.)
+        # else:
+        #     parentAngVel = self._nodes[parentIndex].body.GetAngVelocity()
+        #     return Vec3_2_pyVec3(angVel - parentAngVel)
         return self.getBodyAngVelocityGlobal(index)
-        '''
-        angVel = self._nodes[index].body.GetAngVelocity()
-        parentIndex = self.getParentIndex(index)
-        if parentIndex == -1:
-            parentAngVel = Vec3(0., 0., 0.)
-        else:
-            parentAngVel = self._nodes[parentIndex].body.GetAngVelocity()
-            return Vec3_2_pyVec3(angVel - parentAngVel)
-        '''
 
     def getJointAngAccelerationGlobal(self, index):
         return self.getBodyAngAccelerationGlobal(index)
@@ -1217,7 +1275,8 @@ class VpControlModel(VpModel):
         # rootAxeses = np.hstack((rootAxes, np.dot(rootAxes, rootJacobian))).T
         rootAxeses = np.hstack((rootAxes, rootAxes)).T
 
-        ls = [rootAxeses]+[np.dot(self.getJointOrientationGlobal(i), self.getJointLocalAngJacobian(i)).T for i in range(1, len(self._nodes))]
+        ls = [rootAxeses]\
+             +[np.dot(self.getJointOrientationGlobal(i), self.getJointLocalAngJacobian(i)).T for i in range(1, len(self._nodes))]
         return ls
 
     def getJointLocalAngJacobian(self, i):
@@ -1233,24 +1292,6 @@ class VpControlModel(VpModel):
         elif self._nodes[i].dof == 3:
             m_rQ = np.array([_joint.GetDisplacement(0), _joint.GetDisplacement(1), _joint.GetDisplacement(2)])
             return mm.getLocalAngJacobianForAngleAxis(m_rQ)
-            '''
-            t = np.linalg.norm(m_rQ)
-            t2 = t*t
-            alpha = 0.
-            beta = 0.
-            gamma = 0.
-            if t < BJOINT_EPS:
-                alpha = SCALAR_1_6 - SCALAR_1_120 * t2
-                beta = SCALAR_1 - SCALAR_1_6 * t2
-                gamma = SCALAR_1_2 - SCALAR_1_24 * t2
-            else:
-                beta = math.sin(t) / t
-                alpha = (1. - beta) / t2
-                gamma = (1. - math.cos(t)) / t2
-            return alpha * mm.getPosDefMatrixForm(m_rQ) + beta*np.eye(3) - gamma * mm.getCrossMatrixForm(m_rQ)
-            # return alpha * mm.getPosDefMatrixForm(m_rQ) + beta*np.eye(3) + gamma * mm.getCrossMatrixForm(m_rQ)
-            '''
-
 
     # set Joints
     def setJointAngVelocityLocal(self, index, angvel):
@@ -1524,10 +1565,7 @@ class VpControlModel(VpModel):
             for j in range(n):
                 dof = self._nodes[j+1].joint.GetDOF()
                 if 0 <= i-curJointTorqueIdx < dof:
-                    if dof == 1:
-                        self._nodes[j+1].joint.SetGenTorque(1.)
-                    else:
-                        self._nodes[j+1].joint.SetGenTorque(i-curJointTorqueIdx, 1.)
+                    self._nodes[j+1].joint.SetGenTorque(i-curJointTorqueIdx, 1.)
                     break
                 curJointTorqueIdx += dof
 
@@ -1584,7 +1622,8 @@ class VpControlModel(VpModel):
             accBackup.append(joint.GetAcceleration())
             torBackup.append(joint.GetTorque())
 
-        hipAccBackup = Hip.ResetForce()
+        # hipAccBackup = Hip.ResetForce()
+        Hip.ResetForce()
         for i in range(len(self._nodes)):
             self._nodes[i].body.ResetForce()
             self._nodes[i].joint.SetTorque(zero_Vec3)
@@ -1619,10 +1658,10 @@ class VpControlModel(VpModel):
                 self._nodes[j].joint.SetTorque(zero_Vec3)
 
             _torque = np.zeros(N)
-            if i<3:
-                _torque[i+3] = 1.
-            elif i<6:
-                _torque[i-3] = 1.
+            if i < 3:
+                _torque[i + 3] = 1.
+            elif i < 6:
+                _torque[i - 3] = 1.
             else:
                 _torque[i] = 1.
 

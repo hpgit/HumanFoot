@@ -48,6 +48,19 @@ class CapsuleMaterial(Material):
 
 
 class Node:
+    """
+    :type name : str
+    :type mass : float
+    :type offset : tuple[float]
+    :type length : float
+    :type width : float
+    :type geom : str
+    :type jointType : str
+    :type jointAxes : list[list[float]]
+    :type geoms : list[str]
+    :type geomTs : list[np.array]
+    :type geomMaterial : list[CapsuleMaterial | BoxMaterial]
+    """
     def __init__(self, name):
         self.name = name
         self.mass = None
@@ -87,6 +100,9 @@ class Node:
 
 
 class ModelConfig:
+    """
+    :type nodes: dict(str, Node)
+    """
     def __init__(self):
         self.nodes = {}
         # tempNode = ModelConfig.Node('')

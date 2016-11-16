@@ -62,6 +62,11 @@ def normalize(transV):
         return transV
     
 def normalize2(transV):
+    """
+
+    :param transV:
+    :return: np.array
+    """
     l = length(transV)
     if l > 0.:
         return v3(transV[0]/l, transV[1]/l, transV[2]/l)

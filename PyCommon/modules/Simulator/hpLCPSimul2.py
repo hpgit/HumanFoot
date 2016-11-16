@@ -235,6 +235,7 @@ def getLCPMatrixHD(world, model, invM, invMc, mu, ddth, contactNum, contactPosit
     #     qdot_0[i] = bodyGenVelLocal[i+3]
     #     qdot_0[i+3] = bodyGenVelLocal[i]
     ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
+    ype.flatten(model.getBodyRootDOFFirstDerivs(), qdot_0)
 
     qdot_0 = np.asarray(qdot_0)
     if ddth is None:

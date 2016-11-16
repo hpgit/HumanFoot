@@ -4,6 +4,11 @@ import math
 
 
 def pyVec3_2_Vec3(pyV):
+    """
+
+    :param pyV:
+    :return: Vec3
+    """
     return Vec3(pyV[0], pyV[1], pyV[2])
 
 def pyVec_2_Vec3_extend(pyV):
@@ -53,6 +58,11 @@ def SE3_2_pySE3(T):
 
 
 def pySO3_2_SE3(pyR):
+    """
+
+    :param pyR:
+    :return: SE3
+    """
     T = SE3(pyR[0, 0], pyR[1,0], pyR[2,0], pyR[0, 1], pyR[1,1], pyR[2,1], pyR[0,2], pyR[1,2], pyR[2,2])
 
     return T
