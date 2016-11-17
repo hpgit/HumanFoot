@@ -39,29 +39,89 @@ class MotionSystem:
 #===============================================================================
 # base classes
 #===============================================================================
-class Motion(list):
-    def __init__(self, ls=[]):
+# class Motion(list):
+#     def __init__(self, ls=[]):
+#         """
+#
+#         :param ls: list[Posture]
+#         """
+#         list.__init__(self, ls)
+#         self.data = []
+#         self.frame = 0
+#         self.fps = 30.
+#         self.resourceName = 'unnamed'
+#
+#     def __getslice__(self, i, j):
+#         motion = self.__new__(self.__class__)
+#         motion.__init__(list.__getslice__(self, i, j))
+#         motion.fps = self.fps
+#         motion.resourceName = self.resourceName
+#         return motion
+#     def __add__(self, nextMotion):
+#         motion = self.__new__(self.__class__)
+#         motion.__init__(list.__add__(self, nextMotion))
+#         motion.fps = self.fps
+#         motion.resourceName = self.resourceName
+#         return motion
+class Motion():
+    """
+    :type data : list[Posture]
+    :type fps : float
+    :type resoureceName : str
+    """
+    def __init__(self, ls=None):
         """
 
         :param ls: list[Posture]
         """
-        list.__init__(self, ls)
+        # list.__init__(self, ls)
+        self.data = []
+        if ls is not None:
+            for l in ls:
+                self.data.append(l)
+
         self.frame = 0
         self.fps = 30.
         self.resourceName = 'unnamed'
 
-    def __getslice__(self, i, j):
-        motion = self.__new__(self.__class__)
-        motion.__init__(list.__getslice__(self, i, j))
-        motion.fps = self.fps
-        motion.resourceName = self.resourceName
-        return motion
+    # def __getslice__(self, i, j):
+    #     motion = Motion(self.data[i:j])
+    #     motion.fps = self.fps
+    #     motion.resourceName = self.resourceName
+    #     return motion
+
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return self.data[item]
+        elif isinstance(item, slice):
+            motion = Motion(self.data[item])
+            motion.fps = self.fps
+            motion.resourceName = self.resourceName
+            return motion
+        else:
+            raise TypeError
+
     def __add__(self, nextMotion):
-        motion = self.__new__(self.__class__)
-        motion.__init__(list.__add__(self, nextMotion))
-        motion.fps = self.fps
-        motion.resourceName = self.resourceName
-        return motion
+        """
+
+        :param nextMotion: Motion
+        :return: Motion
+        """
+        if isinstance(nextMotion, Motion):
+            motion = Motion(self.data)
+            motion.data.extend(nextMotion.data)
+            motion.fps = self.fps
+            motion.resourceName = self.resourceName
+            return motion
+        else:
+            raise TypeError
+
+    def __len__(self):
+        return len(self.data)
+
+    def append(self, posture):
+        self.data.append(posture)
+
     def getState(self):
         return self.frame
     def setState(self, state):
@@ -244,15 +304,48 @@ class PointPosture(Posture):
 # link[0]: (root body) 
 #===============================================================================
 class JointMotion(Motion):
-    def __init__(self, ls=[]):
+    """
+    :type data : list[JointPosture]
+    """
+    def __init__(self, ls=None):
         """
 
         :param ls: list[JointPosture]
         """
-        Motion.__init__(self, ls)
+        Motion.__init__(self, None)
+        self.data = []
+        if ls is not None:
+            for l in ls:
+                self.data.append(l)
         self.frame = 0
         self.fps = 30.
         self.resourceName = 'unnamed'
+
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return self.data[item]
+        elif isinstance(item, slice):
+            motion = JointMotion(self.data[item])
+            motion.fps = self.fps
+            motion.resourceName = self.resourceName
+            return motion
+        else:
+            raise TypeError
+
+    def __add__(self, nextMotion):
+        """
+
+        :param nextMotion: Motion
+        :return: Motion
+        """
+        if isinstance(nextMotion, Motion):
+            motion = JointMotion(self.data)
+            motion.data.extend(nextMotion.data)
+            motion.fps = self.fps
+            motion.resourceName = self.resourceName
+            return motion
+        else:
+            raise TypeError
     # lv : linear velocity, av : angular velocity, la : linear acceleration, aa : angular acceleration
     # p: Vec3(position), R : SO3(orientation)
     # _g : w.r.t. global frame, _l : w.r.t. local frame
@@ -1454,8 +1547,8 @@ if __name__ == '__main__':
     #    test_motions()
     #    test_JointDisplacement()
     #    test_Motion_getVelocity_getVelocities()
-    #    test_get_setslice()
-    test_getGlobalT()
+    test_get_setslice()
+    # test_getGlobalT()
     #    test_Motion_getPosition_getPositions()
     #    test_setPosition()
     #    test_blendPosture()

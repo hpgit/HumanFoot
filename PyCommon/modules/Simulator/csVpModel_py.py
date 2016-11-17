@@ -1532,6 +1532,7 @@ class VpControlModel(VpModel):
         HipFrame = Hip.GetFrame()
         HipGenDOF = Vec3_2_pyVec3(LogR(HipFrame))
         HipAngVel = Vec3_2_pyVec3(Hip.GetAngVelocity())
+        HipGenDOFVel = angvel_2_genangvel(HipAngVel, HipGenDOF)
 
         # save current ddq and tau
         accBackup = []
@@ -1544,18 +1545,18 @@ class VpControlModel(VpModel):
             self._nodes[i].body.ResetForce()
             self._nodes[i].joint.SetTorqueLocal(zero_Vec3)
 
+
         # get invMb
         Hip.ApplyLocalForce(zero_dse3, zero_Vec3)
         for i in range(n):
-            joint = self._nodes[i+1].joint
-            joint.SetTorqueLocal(zero_Vec3)
+            self._nodes[i+1].joint.SetTorqueLocal(zero_Vec3)
 
         Hip.GetSystem().ForwardDynamics()
         hipAcc_tmp = se3_2_pyVec6(Hip.GetGenAccelerationLocal())   # represented in body frame
 
         invMb[:3] = -hipAcc_tmp[3:]
         # invMb[3:6] = -hipAcc_tmp[:3]
-        invMb[3:6] = -angacc_2_genangacc(hipAcc_tmp[:3], HipGenDOF, angvel_2_genangvel(HipAngVel, HipGenDOF), HipAngVel)
+        invMb[3:6] = -angacc_2_genangacc(hipAcc_tmp[:3], HipGenDOF, HipGenDOFVel, HipAngVel)
         invMb[6:] = -self.getInternalJointDOFSecondDerivesLocalFlat()
 
         # get M
@@ -1563,7 +1564,10 @@ class VpControlModel(VpModel):
             Hip.ResetForce()
             for j in range(1, len(self._nodes)):
                 self._nodes[j].body.ResetForce()
-                self._nodes[j].joint.SetTorqueLocal(zero_Vec3)
+                dof = self._nodes[i].dof
+                for j in range(dof):
+                    self._nodes[i].joint.SetGenTorque(j, 0.)
+                # self._nodes[j].joint.SetTorqueLocal(zero_Vec3)
 
             _torque = np.zeros(N)
             if i<3:
@@ -1583,14 +1587,13 @@ class VpControlModel(VpModel):
                     break
                 curJointTorqueIdx += dof
 
-
             Hip.ApplyLocalForce(genForceLocal, zero_Vec3)
 
             Hip.GetSystem().ForwardDynamics()
 
             hipAcc_tmp = se3_2_pyVec6(Hip.GetGenAccelerationLocal())
             invM[:3, i] = hipAcc_tmp[3:6] + invMb[:3]
-            invM[3:6, i] = angacc_2_genangacc(hipAcc_tmp[:3], HipGenDOF, angvel_2_genangvel(HipAngVel, HipGenDOF), HipAngVel) + invMb[3:6]
+            invM[3:6, i] = angacc_2_genangacc(hipAcc_tmp[:3], HipGenDOF, HipGenDOFVel, HipAngVel) + invMb[3:6]
             # for j in range(3):
             #     invM[j, i] = hipAcc_tmp[j+3] + invMb[j]
             # for j in range(3, 6):
