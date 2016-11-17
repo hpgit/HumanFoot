@@ -463,13 +463,11 @@ class Callback:
                     vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForces)
                     simulContactForces += sum(cForces)
                     # simulContactForces += sum(cForces)
-                    print "angVel:", controlModel.getBodyAngVelocityGlobal(2)
+                    # print "angVel:", controlModel.getBodyAngVelocityGlobal(2)
                     print cBodyIDs[-1], cPositions[-1], cForces[-1]
 
-            # ype.nested(torques, torques_nested)
-            # controlModel.setDOFTorques(torques_nested[1:])
-            # controlModel.setDOFGenTorquesFlat(torques[6:])
-            controlModel.setDOFAccelerations(ddth_des)
+            # controlModel.setDOFAccelerations(ddth_des_flat)
+            controlModel.setDOFGenAccelerationsFlat(ddth_des_flat)
             controlModel.solveHybridDynamics()
             vpWorld.step()
         print('totalContactStep:', contactStep)

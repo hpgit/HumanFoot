@@ -445,11 +445,11 @@ class Callback:
         contactStep = 0
         cPositions = None
         for i in range(int(stepsPerFrame)):
-            if i % 5 == 4:
+            if i % 5 == 0:
                 cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
                     = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 10., torques, solver='qp')
 
-            if i % 5 == 4 and len(cBodyIDs) > 0:
+            if i % 5 == 0 and len(cBodyIDs) > 0:
                 contactStep += 1
                 # apply contact forces
                 if False and not torque_None:

@@ -547,15 +547,17 @@ def getCrossMatrixForm(w):
     return W
 
 def getPosDefMatrixForm(r):
-    _r = np.array(r).reshape([3,1])
-    return np.dot(_r, _r.T)
+    _r = np.array(r)
+    return np.outer(_r, _r)
+    # _r = np.array(r).reshape([3,1])
+    # return np.dot(_r, _r.T)
 
 
 from numpy.linalg import svd
 from numpy import sum,where
 
 def matrixrank(A,tol=1e-8):
-    s = svd(A,compute_uv=0)
+    s = svd(A, compute_uv=False)
     return sum( where( s>tol, 1, 0 ) ) 
 
 def rotX(theta):   

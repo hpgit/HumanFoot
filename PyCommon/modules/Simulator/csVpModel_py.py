@@ -1353,7 +1353,17 @@ class VpControlModel(VpModel):
         self.setJointAccelerationGlobal(0, dofaccs[0:3])
         self.setJointAngAccelerationLocal(0, dofaccs[3:6])
         for i in range(1, len(self._nodes)):
-            self._nodes[i].joint.SetTorqueLocal(pyVec3_2_Vec3(dofaccs[3+3*i:6+3*i]))
+            self._nodes[i].joint.SetAccelerationLocal(pyVec3_2_Vec3(dofaccs[3+3*i:6+3*i]))
+
+    def setDOFGenAccelerationsFlat(self, dofaccs):
+        # self.setJointAccelerationGlobal(0, dofaccs[0:3])
+        # self.setJointAngAccelerationLocal(0, dofaccs[3:6])
+        curIdx = 6
+        for i in range(1, len(self._nodes)):
+            node = self._nodes[i]
+            for j in range(node.dof):
+                node.joint.SetSecondDeriv(j, dofaccs[curIdx])
+                curIdx += 1
 
     def setDOFTorques(self, dofTorque):
         for i in range(1, len(self._nodes)):
@@ -1519,6 +1529,9 @@ class VpControlModel(VpModel):
         zero_Vec3 = Vec3(0.)
 
         Hip = self._nodes[0].body
+        HipFrame = Hip.GetFrame()
+        HipGenDOF = Vec3_2_pyVec3(LogR(HipFrame))
+        HipAngVel = Vec3_2_pyVec3(Hip.GetAngVelocity())
 
         # save current ddq and tau
         accBackup = []
@@ -1541,7 +1554,8 @@ class VpControlModel(VpModel):
         hipAcc_tmp = se3_2_pyVec6(Hip.GetGenAccelerationLocal())   # represented in body frame
 
         invMb[:3] = -hipAcc_tmp[3:]
-        invMb[3:6] = -hipAcc_tmp[:3]
+        # invMb[3:6] = -hipAcc_tmp[:3]
+        invMb[3:6] = -angacc_2_genangacc(hipAcc_tmp[:3], HipGenDOF, angvel_2_genangvel(HipAngVel, HipGenDOF), HipAngVel)
         invMb[6:] = -self.getInternalJointDOFSecondDerivesLocalFlat()
 
         # get M
@@ -1574,12 +1588,17 @@ class VpControlModel(VpModel):
 
             Hip.GetSystem().ForwardDynamics()
 
-            hipAcc_tmp = Hip.GetGenAccelerationLocal()
-            for j in range(3):
-                invM[j, i] = hipAcc_tmp[j+3] + invMb[j]
-            for j in range(3, 6):
-                invM[j, i] = hipAcc_tmp[j-3] + invMb[j]
+            hipAcc_tmp = se3_2_pyVec6(Hip.GetGenAccelerationLocal())
+            invM[:3, i] = hipAcc_tmp[3:6] + invMb[:3]
+            invM[3:6, i] = angacc_2_genangacc(hipAcc_tmp[:3], HipGenDOF, angvel_2_genangvel(HipAngVel, HipGenDOF), HipAngVel) + invMb[3:6]
+            # for j in range(3):
+            #     invM[j, i] = hipAcc_tmp[j+3] + invMb[j]
+            # for j in range(3, 6):
+            #    # invM[j, i] = hipAcc_tmp[j-3] + invMb[j]
+            #    invM[j, i] = angacc_2_genangacc(hipAcc_tmp[:3], HipGenDOF, angvel_2_genangvel(HipAngVel, HipGenDOF), HipAngVel) + invMb[j]
+
             invM[6:, i] = self.getInternalJointDOFSecondDerivesLocalFlat() + invMb[6:]
+
             # for j in range(n):
             #     joint = self._nodes[j+1].joint
             #     acc = joint.GetAcceleration()
@@ -1589,8 +1608,8 @@ class VpControlModel(VpModel):
         # restore ddq and tau
         for i in range(n):
             self._nodes[i+1].joint.RestoreAccTau()
-            # joint.SetAcceleration(zero_Vec3)
-            # joint.SetTorque(zero_Vec3)
+            joint.SetAccelerationLocal(zero_Vec3)
+            joint.SetTorqueLocal(zero_Vec3)
 
         # Hip.SetGenAcceleration(hipAccBackup)
 

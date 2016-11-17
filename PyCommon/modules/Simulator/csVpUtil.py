@@ -1,5 +1,6 @@
 from PyCommon.modules.pyVirtualPhysics import *
 import numpy as np
+import numpy.linalg as npl
 import math
 
 
@@ -100,3 +101,142 @@ def getSE3FromVectors(vec1, vec2):
             (1.0-c)*z*x - s*y,    (1.0-c)*z*y + s*x,    c + (1.0-c)*z*z)
 
     return Inv(R)
+
+def genangvel_2_angvel(genangvel, r):
+    """
+
+    :param genangvel: np.array
+    :param r: np.array
+    :return: np.array
+    """
+    m_rQ = r
+    m_rDq = genangvel
+    t = npl.norm(m_rQ)
+    alpha = 0
+    beta = 0
+    gamma = 0
+    t2 = t * t
+
+    if t < BJOINT_EPS:
+        alpha = SCALAR_1_6 - SCALAR_1_120 * t2
+        beta = SCALAR_1 - SCALAR_1_6 * t2
+        gamma = SCALAR_1_2 - SCALAR_1_24 * t2
+    else:
+        beta = math.sin(t) / t
+        alpha = (SCALAR_1 - beta) / t2
+        gamma = (SCALAR_1 - math.cos(t)) / t2
+
+    V = (alpha * np.dot(m_rQ, m_rDq)) * m_rQ + beta * m_rDq + gamma * np.cross(m_rDq, m_rQ)
+    return V
+
+def angvel_2_genangvel(angvel, r):
+    """
+
+    :param angvel: np.array
+    :param r: np.array
+    :return: np.array
+    """
+    m_rQ = r
+    W = angvel
+    t = npl.norm(m_rQ)
+    delta = 0
+    zeta = 0
+    t2 = t * t
+
+    if t < BJOINT_EPS:
+        delta = SCALAR_1_12 + SCALAR_1_720 * t2
+        zeta = SCALAR_1 - SCALAR_1_12 * t2
+    else:
+        zeta = SCALAR_1_2 * t * (SCALAR_1 + math.cos(t)) / math.sin(t)
+        delta = (SCALAR_1 - zeta) / t2
+
+    genangvel = (delta * np.dot(m_rQ, W)) * m_rQ + zeta * W + SCALAR_1_2 * np.cross(m_rQ, W)
+    # genangvel = (delta * np.dot(m_rQ, W)) * m_rQ
+    # genangvel += zeta*W
+    # genangvel += SCALAR_1_2 *np.cross(m_rQ, W)
+    return genangvel
+
+def angacc_2_genangacc(angacc, r, dr, angvel):
+    """
+
+    :param angacc: np.array
+    :param r: np.array
+    :param dr: np.array
+    :param angvel: np.array
+    :return: np.array
+    """
+    m_rQ = r
+    m_rDq = dr
+    V = angvel
+    W = V
+    DW = angacc
+    t = np.linalg.norm(m_rQ)
+    qw = np.dot(m_rQ, W)
+    t2 = t * t
+    beta = 0
+    gamma = 0
+    delta = 0
+    zeta = 0
+    d_delta = 0
+    d_eta = 0
+
+    if t < BJOINT_EPS:
+        SCALAR_1_7560 = 0.000132275132275132275132
+        SCALAR_1_360 = 0.00277777777777777777778
+
+        delta = SCALAR_1_12 + SCALAR_1_720 * t2
+        zeta = SCALAR_1 - SCALAR_1_12 * t2
+
+        d_delta = (SCALAR_1_360 + SCALAR_1_7560 * t2) * qw
+        d_eta = -(SCALAR_1_6 + SCALAR_1_180 * t2) * qw
+    else:
+        beta = math.sin(t) / t
+        gamma = (SCALAR_1 - math.cos(t)) / t2
+
+        zeta = SCALAR_1_2 * beta / gamma
+        delta = (SCALAR_1 - zeta) / t2
+
+        d_eta = SCALAR_1_2 * (beta - SCALAR_1) / gamma / t2 * qw
+        d_delta = -(d_eta + SCALAR_2 * (SCALAR_1 - zeta) / t2 * qw) / t2
+
+    m_rDdq = (d_delta * qw + delta * (np.dot(m_rQ, DW) + np.dot(m_rDq, W))) * m_rQ \
+             + (delta * qw) * m_rDq \
+             + d_eta * W + zeta * DW \
+             + SCALAR_1_2 * (np.cross(m_rQ, DW) + np.cross(m_rDq, W))
+    return m_rDdq
+
+def genangacc_2_angacc(genangacc, r, dr, angvel):
+    m_rQ = r
+    m_rDq = dr
+    m_rDdq = genangacc
+    t = npl.norm(m_rQ)
+    alpha = 0
+    beta = 0
+    gamma = 0
+    d_alpha = 0
+    d_beta = 0
+    d_gamma = 0
+    q_dq = np.dot(m_rQ, m_rDq)
+    t2 = t * t
+
+    if t < BJOINT_EPS:
+        alpha = SCALAR_1_6 - SCALAR_1_120 * t2
+        beta = SCALAR_1 - SCALAR_1_6 * t2
+        gamma = SCALAR_1_2 - SCALAR_1_24 * t2
+
+        d_alpha = (SCALAR_1_1260 * t2 - SCALAR_1_60) * q_dq
+        d_beta = (SCALAR_1_30 * t2 - SCALAR_1_3) * q_dq
+        d_gamma = (SCALAR_1_180 * t2 - SCALAR_1_12) * q_dq
+    else:
+        beta = math.sin(t) / t
+        alpha = (SCALAR_1 - beta) / t2
+        gamma = (SCALAR_1 - math.cos(t)) / t2
+
+        d_alpha = (gamma - SCALAR_3 * alpha) / t2 * q_dq
+        d_beta = (alpha - gamma) * q_dq
+        d_gamma = (beta - SCALAR_2 * gamma) / t2 * q_dq
+
+    angacc = (d_alpha * q_dq + alpha * (SquareSum(m_rDq) + Inner(m_rQ, m_rDdq))) * m_rQ \
+            + (alpha * q_dq + d_beta) * m_rDq + beta * m_rDdq \
+            + Cross(d_gamma * m_rDq + gamma * m_rDdq, m_rQ)
+    return angacc

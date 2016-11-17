@@ -229,12 +229,12 @@ def getLCPMatrixHD(world, model, invM, invMc, mu, ddth, contactNum, contactPosit
     # A = A + 0.1*np.eye(A.shape[0])
 
     qdot_0 = ype.makeFlatList(totalDOF)
-    ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
-    # bodyGenVelLocal = model.getBodyGenVelLocal(0)
-    # for i in range(3):
-    #     qdot_0[i] = bodyGenVelLocal[i+3]
-    #     qdot_0[i+3] = bodyGenVelLocal[i]
-    ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
+    # ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
+    # # bodyGenVelLocal = model.getBodyGenVelLocal(0)
+    # # for i in range(3):
+    # #     qdot_0[i] = bodyGenVelLocal[i+3]
+    # #     qdot_0[i+3] = bodyGenVelLocal[i]
+    # ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
     ype.flatten(model.getBodyRootDOFFirstDerivs(), qdot_0)
 
     qdot_0 = np.asarray(qdot_0)
@@ -296,6 +296,7 @@ def getLCPMatrixGenHD(world, model, invM, invMc, mu, ddth, tau, contactNum, cont
     h = world.GetTimeStep()
     invh = 1./h
     mus = mu * np.eye(contactNum)
+    print invMtorReArr
 
     M_small = np.dot(invMtorReArr[:totalTorDOF, totalTorDOF:], npl.inv(invMtorReArr[totalTorDOF:, totalTorDOF:]))
 
@@ -845,10 +846,13 @@ def calcLCPForcesHD(motion, world, model, bodyIDsToCheck, mu, ddth, tau, numFric
 
     totalDOF = model.getTotalDOF()
 
-    invM = np.zeros((totalDOF, totalDOF))
-    invMc = np.zeros(totalDOF)
+    # invM = np.zeros((totalDOF, totalDOF))
+    # invMc = np.zeros(totalDOF)
 
     invM, invMc = model.getInverseEquationOfMotion()
+    print invM- invM.T
+    # print invM
+    # print npl.inv(invM)
 
     timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
 
@@ -858,8 +862,8 @@ def calcLCPForcesHD(motion, world, model, bodyIDsToCheck, mu, ddth, tau, numFric
     #   [ mus, -E.T, 0]
 
     factor = 1.
-    # A, b = getLCPMatrixHD(world, model, invM, invMc, mu, ddth[6:], contactNum, contactPositions, JTN, JTD, E, factor)
-    A, b = getLCPMatrixGenHD(world, model, invM, invMc, mu, ddth, tau, contactNum, contactPositions, contactVelocities, JTN, JTD, E, factor, hdAccMask)
+    A, b = getLCPMatrixHD(world, model, invM, invMc, mu, ddth[6:], contactNum, contactPositions, JTN, JTD, E, factor)
+    # A, b = getLCPMatrixGenHD(world, model, invM, invMc, mu, ddth, tau, contactNum, contactPositions, contactVelocities, JTN, JTD, E, factor, hdAccMask)
 
     # lo = np.zeros(A.shape[0])
     lo = 0.*np.ones(A.shape[0])
