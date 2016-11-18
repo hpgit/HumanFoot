@@ -2,6 +2,7 @@ from fltk import *
 import copy, os.path, cPickle, time
 import numpy as np
 
+import PyCommon.modules.Math.mmMath as mm
 from PyCommon.modules.Math import mmMath as mm
 from PyCommon.modules.Math import csMath as cm
 from PyCommon.modules.Math import ysFunctionGraph as yfg
@@ -1086,7 +1087,7 @@ def walkings():
                 motion_stf_balancing[frame].mulJointOrientationLocal(stanceToe, R_target_toe)
         #'''
 
-            
+
 
 
         # control trajectory

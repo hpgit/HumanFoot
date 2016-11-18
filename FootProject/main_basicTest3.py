@@ -122,6 +122,7 @@ def init():
     def create_foot(motionFile='foot3.bvh'):
         # motion
         motion = yf.readBvhFile(motionFile, .05)
+        motion.extend([motion[-1]]*300)
 
         # world, model
         mcfg = ypc.ModelConfig()
@@ -154,7 +155,8 @@ def init():
             :param _mcfg: ypc.ModelConfig
             :return:
             """
-            for v in _mcfg.nodes.itervalues():
+            # for v in _mcfg.nodes.itervalues():
+            for k, v in _mcfg.nodes:
                 if len(v.geoms) == 0:
                     v.geoms.append(v.geom)
                     v.geomMass.append(v.mass)
@@ -202,14 +204,14 @@ def init():
     vpWorld.SetGlobalDamping(0.9999)
     controlModel.initializeHybridDynamics()
     # controlModel.initializeForwardDynamics()
-    ModelOffset = np.array([0., 1.42, 0.])
+    ModelOffset = np.array([0., 1.62, 0.])
     controlModel.translateByOffset(ModelOffset)
     motionModel.translateByOffset(ModelOffset)
 
     # ModelRotateOffset = np.array([[0.707, 0., 0.707],[0., 1., 0.],[-0.707, 0., 0.707]])
     # ModelRotateOffset = np.array([[1., 0., 0.],[0., 0., -1.],[0, 1., 0.]])
     ModelRotateOffset = np.array([[1., 0., 0.],[0., 0.707, -0.707],[0, 0.707, 0.707]])
-    controlModel.rotate(ModelRotateOffset)
+    # controlModel.rotate(ModelRotateOffset)
     # motionModel.rotate(ModelRotateOffset)
 
     vpWorld.SetIntegrator("RK4")
@@ -382,6 +384,8 @@ class Callback:
 
         # ddth_des_flat[9] += getVal('normal des force min')/50.
         # ddth_des_flat[8] += getVal('normal des force min')/50.
+        ddth_des_flat[7] += getVal('normal des force min')/50.
+        ddth_des_flat[6] += getVal('normal des force min')/50.
 
         desForceFrameBegin = getVal('des force begin')
         desForceDuration = getVal('des force dur') * simulSpeedInv
@@ -445,15 +449,15 @@ class Callback:
         contactStep = 0
         cPositions = None
         for i in range(int(stepsPerFrame)):
-            if i % 5 == 4:
+            if i % 5 == 0:
                 # cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
                 #     = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 10., torques, solver='qp')
                 # cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
                 #     = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 10., torques, solver='qp')
                 cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
-                    = hls.calcLCPForcesHD(motion, vpWorld, controlModel, bodyIDsToCheck, 10., ddth_des_flat, ddth_des_flat, solver='qp')
+                    = hls.calcLCPForcesHD(motion, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, ddth_des_flat, solver='qp')
 
-            if i % 5 == 4 and len(cBodyIDs) > 0:
+            if i % 5 == 0 and len(cBodyIDs) > 0:
                 contactStep += 1
                 # apply contact forces
                 if False and not torque_None:
@@ -464,8 +468,11 @@ class Callback:
                     simulContactForces += sum(cForces)
                     # simulContactForces += sum(cForces)
                     # print "angVel:", controlModel.getBodyAngVelocityGlobal(2)
-                    print cBodyIDs[-1], cPositions[-1], cForces[-1]
+                    print frame, i, cBodyIDs[-1], cPositions[-1], cForces[-1]
 
+            print frame, i, ddth_des_flat
+            # print controlModel._nodes[2].joint.GetVelocity(0)
+            # print controlModel._nodes[2].joint.GetVelocity(1)
             # controlModel.setDOFAccelerations(ddth_des_flat)
             controlModel.setDOFGenAccelerationsFlat(ddth_des_flat)
             controlModel.solveHybridDynamics()

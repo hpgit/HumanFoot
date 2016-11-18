@@ -120,7 +120,16 @@ class Motion():
         return len(self.data)
 
     def append(self, posture):
-        self.data.append(posture)
+        if isinstance(posture, Posture):
+            self.data.append(posture)
+        else:
+            raise TypeError
+
+    def extend(self, postures):
+        if isinstance(postures, Motion) or isinstance(postures, list):
+            self.data.extend(postures)
+        else:
+            raise TypeError
 
     def getState(self):
         return self.frame

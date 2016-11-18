@@ -2,11 +2,11 @@
 {
     // editor options
     "editor.fontSize": 15,
-    "editor.cursorStyle": "line",
+    "editor.cursorStyle": "block",
 
     // python options
     "python.pythonPath": "/Users/trif/workspaces/pyenv/bin/python",
-    "python.linting.pylintEnabled": false,
+    "python.linting.pylintEnabled": true,
     
     // vim options
     "vim.useCtrlKeys": true,

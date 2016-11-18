@@ -139,13 +139,13 @@ def init():
         node = mcfg.getNode('foot00')
         node.geom = 'MyFoot4'
         # node.geom = 'MyBox'
-        node.jointType = "U"
+        node.jointType = "R"
         node.mass = 1.
 
         node = mcfg.getNode('foot01')
         node.geom = 'MyFoot4'
         # node.geom = 'MyBox'
-        node.jointType = "U"
+        node.jointType = "R"
         node.mass = 1.
 
         def mcfgFix(_mcfg):
@@ -380,7 +380,8 @@ class Callback:
 
         ddth_des_flat = np.zeros(len(ddth_des_flat))
 
-        ddth_des_flat[8] += getVal('normal des force min')/50.
+        ddth_des_flat[7] += getVal('normal des force min')/50.
+        # ddth_des_flat[8] += getVal('normal des force min')/50.
         # ddth_des_flat[9] += getVal('normal des force min')/50.
 
         desForceFrameBegin = getVal('des force begin')
