@@ -270,7 +270,8 @@ class DartModelMaker:
         #     etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., cylLen_2)), [rad]*3, "ellipsoid", "collision"))
         #     if name=='root':
         #         etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., -cylLen_2)), [rad]*3, "ellipsoid", "collision"))
-        if self.config is not None and self.config.hasNode(name):
+        if self.config.hasNode(name):
+        # if self.config is not None and self.config.hasNode(name):
             # pNode = self.Node(joint_name)
             # self._nodes[joint_index] = pNode
             # pNode = self._nodes[joint_index]
@@ -390,12 +391,11 @@ class DartModelMaker:
             partBvh.mirror(mirror)
         self.bvh.replaceJointFromBvh(attachPart, partBvh, scale)
 
-    def bvh2dartSkel(self, filename, config=None):
-        motion = self.bvh.toJointMotion(1., False)
+    def posture2dartSkel(self, posture, config=None):
         self.config = config
 
-        names, Ts, offsets, boneTs = self.createBodies(motion[0])
-        jointPairs, bodyToJointTs = self.createJoints(motion[0], boneTs)
+        names, Ts, offsets, boneTs = self.createBodies(posture)
+        jointPairs, bodyToJointTs = self.createJoints(posture, boneTs)
 
         etSkel = et.Element("skel", {"version": "1.0"})
         etSkelTree = et.ElementTree(etSkel)
@@ -451,8 +451,15 @@ class DartModelMaker:
 
         return etSkelTree
 
-    def bvh2dartSkelFile(self, skelfile, config):
-        tree = self.bvh2dartSkel(config)
+    def toDartSkelFile(self, skelfile, config):
+        tree = self.posture2dartSkel(self.bvh.toJointMotion(1., False)[0], config)
+        output = open(skelfile, "w")
+        output.write(prettifyXML(tree.getroot()))
+        output.close()
+
+    def posture2dartSkelFile(self, name, posture, skelfile, config):
+        self.skelname = name
+        tree = self.posture2dartSkel(posture, config)
         output = open(skelfile, "w")
         output.write(prettifyXML(tree.getroot()))
         output.close()

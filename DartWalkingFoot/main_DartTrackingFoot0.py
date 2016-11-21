@@ -32,6 +32,9 @@ from PyCommon.modules.Util import ysPythonEx as ype
 # from PyCommon.modules.Simulator import csVpModel_py as pcvm
 # from PyCommon.modules.Simulator import csVpWorld_py as pcvw
 
+from PyCommon.modules.dart.bvh2dartSkel import DartModelMaker
+from PyCommon.modules.pydart import pydart
+
 
 import math
 from matplotlib import pyplot as plt
@@ -484,15 +487,22 @@ def walkings():
     # motionModel = pcvm.VpMotionModel(vpWorld, motion_ori[0], mcfg)
     # ModelOffset = np.array([0., 0., 0.])
     # motionModel.translateByOffset(ModelOffset)
-    controlModel = cvm.VpControlModel(vpWorld, motion_ori[0], mcfg)
+    # controlModel = cvm.VpControlModel(vpWorld, motion_ori[0], mcfg)
     # controlModel = pcvm.VpControlModel(vpWorld, motion_ori[0], mcfg)
     vpWorld.initialize()
-    print controlModel
     # controlModel = None
 
     #   motionModel.recordVelByFiniteDiff()
-    controlModel.initializeHybridDynamics()
+    # controlModel.initializeHybridDynamics()
     # controlModel.initializeForwardDynamics()
+
+    # ModelMaker = DartModelMaker()
+    # ModelMaker.posture2dartSkelFile("dartModel", motion_ori[0], "test1.xml", buildMcfg())
+
+    pydart.init()
+    dartWorld = pydart.create_world(1.0 / 1800.0, current_path+'/test1.xml')
+    dartModel = dartWorld.skels[1] # type: pydart.Skeleton
+
 
     #===============================================================================
     # load segment info
@@ -654,14 +664,16 @@ def walkings():
         viewer = ymv.MultiViewer(800, 655)
         #        viewer = ymv.MultiViewer(800, 655, True)
         viewer.setRenderers1([yr.VpModelRenderer(motionModel, MOTION_COLOR, yr.POLYGON_FILL)])
-        viewer.setRenderers2([yr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL)])
+        # viewer.setRenderers2([yr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL)])
+        viewer.setRenderers2([yr.DartModelRenderer(dartWorld, (200, 200, 0))])
     else:
         viewer = ysv.SimpleViewer()
         # viewer = hsv.hpSimpleViewer()
         #    viewer.record(False)
 
-        viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(motionModel, (0,150,255), yr.POLYGON_LINE))
-        viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (50,200,200), yr.POLYGON_FILL))
+        # viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(motionModel, (0,150,255), yr.POLYGON_LINE))
+        # viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (50,200,200), yr.POLYGON_FILL))
+        viewer.doc.addRenderer('dartModel', yr.DartModelRenderer(dartWorld, (200, 200, 0)))
 
         # viewer.doc.addObject('motion_ori', motion_ori)
         # viewer.doc.addRenderer('motion_ori', yr.JointMotionRenderer(motion_ori, (0,100,255), yr.LINK_BONE))
@@ -824,6 +836,7 @@ def walkings():
         #        CM = yrp.getCM(controlModel.getJointPositionsGlobal(), bodyMasses, upperMass, uppers)
         #        CM = yrp.getCM(controlModel.getJointPositionsGlobal(), bodyMasses, totalMass)
         CMreal = yrp.getCM(controlModel.getJointPositionsGlobal(), bodyMasses, totalMass)
+        # CMreal = dartModel.world_com()
         stf = controlModel.getJointPositionGlobal(stanceFoots[0])
         CMr = CM - stf
 
@@ -873,11 +886,11 @@ def walkings():
         P_hat.append(M_tc[frame].copy())
         P_hat.goToFrame(frame)
 
-        p_temp = ym.JointPosture(skeleton)
-        p_temp.rootPos = controlModel.getJointPositionGlobal(0)
-        p_temp.setJointOrientationsLocal(controlModel.getJointOrientationsLocal())
-        P.append(p_temp)
-        P.goToFrame(frame)
+        # p_temp = ym.JointPosture(skeleton)
+        # p_temp.rootPos = controlModel.getJointPositionGlobal(0)
+        # p_temp.setJointOrientationsLocal(controlModel.getJointOrientationsLocal())
+        # P.append(p_temp)
+        # P.goToFrame(frame)
 
 
         # stance foot stabilize
@@ -1191,8 +1204,10 @@ def walkings():
             # rd_torques[:] = [controlModel.getJointTorqueLocal(j)/100. for j in range(1, skeleton.getJointNum())]
             rd_joint_positions[:] = controlModel.getJointPositionsGlobal()
 
-            vpWorld.step()
+            # vpWorld.step()
             #            yvu.align2D(controlModel)
+
+            dartWorld.step()
 
             if contactForces is not None and len(contactForces) > 0:
                 CP += yrp.getCP(contactPositions, contactForces)

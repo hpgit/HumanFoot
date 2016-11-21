@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.linalg import inv
-import pydart
+from PyCommon.modules.pydart import pydart
 
 
 class PDController:
@@ -45,3 +45,6 @@ class PDController:
         # Make sure the first six are zero
         tau[:6] = 0
         return tau
+
+    def setTartgetPose(self, qhat):
+        self.qhat = qhat

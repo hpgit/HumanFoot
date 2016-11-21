@@ -9,7 +9,7 @@ import os
 sys.path.append('../PyCommon/modules')
 sys.path.append('..')
 
-import pydart
+from PyCommon.modules.pydart import pydart
 
 import math
 import PyCommon.modules.Math.mmMath as mm

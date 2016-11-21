@@ -1,8 +1,8 @@
 import sys
-import pydart
+from PyCommon.modules.pydart import pydart
 import numpy as np
 # import controller
-import pydart.skeleton as dskel
+from PyCommon.modules.pydart.pydart import Skeleton as dskel
 
 print('Example: SimpleJump')
 
