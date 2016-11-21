@@ -885,9 +885,21 @@ class RenderContext:
         glPushMatrix()
         glTranslatef(0., 0., -length_z/2.)
         gluSphere(self.quad2, radius, _SLICE_SIZE, _SLICE_SIZE)
-        gluCylinder(self.quad, radius, radius, length_z, _SLICE_SIZE, 1)
+
         glTranslatef(0., 0., +length_z)
         gluSphere(self.quad2, radius, _SLICE_SIZE, _SLICE_SIZE)
+
+        glTranslatef(0., 0., -length_z)
+
+        gluCylinder(self.quad, radius, radius, length_z, _SLICE_SIZE, 1)
+
+        if False:
+            glPushMatrix()
+            glTranslatef(0.0002, 0., 0.)
+            glColor3f(1., 0., 0.)
+            gluCylinder(self.quad, radius, radius, length_z, _SLICE_SIZE, 1)
+            glPopMatrix()
+
         glPopMatrix()
 
 

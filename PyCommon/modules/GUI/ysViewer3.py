@@ -406,7 +406,7 @@ class GlWindow(Fl_Gl_Window):
         #glPopMatrix()
 
         #### SHADOW
-        if False and FLAG_SHADOW:
+        if FLAG_SHADOW:
             glDisable(GL_LIGHTING)
             glDepthMask(GL_FALSE)
     

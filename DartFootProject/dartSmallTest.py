@@ -6,6 +6,7 @@ import pydart.skeleton as dskel
 
 print('Example: SimpleJump')
 
+import PyCommon.modules.dart.bvh2dartSkel as btd
 
 import os
 pydart.init()
@@ -27,15 +28,15 @@ print (skel.num_bodies())
 
 
 # Initialize the pose. q is an instance of SkelVector.
-'''
+# '''
 q = skel.q
-q["j_pelvis_pos_y"] = -0.05
-q["j_pelvis_rot_y"] = -0.2
-q["j_thigh_left_z", "j_shin_left", "j_heel_left_1"] = 0.15, -0.4, 0.25
-q["j_thigh_right_z", "j_shin_right", "j_heel_right_1"] = 0.15, -0.4, 0.25
-q["j_abdomen_2"] = 0.0
+q["j_Hips_pos_x"] = -1.
+# q["j_pelvis_rot_y"] = -0.2
+# q["j_thigh_left_z", "j_shin_left", "j_heel_left_1"] = 0.15, -0.4, 0.25
+# q["j_thigh_right_z", "j_shin_right", "j_heel_right_1"] = 0.15, -0.4, 0.25
+# q["j_abdomen_2"] = 0.0
 skel.set_positions(q)
-'''
+# '''
 
 # q = skel.q
 # q["j_root_pos_y"] = 100.0
@@ -59,7 +60,7 @@ def step_callback(world):
     if state['ImpulseDuration'] > 0:
         f = state['Force']
         state['ImpulseDuration'] -= 1
-        world.skel.body('h_spine').add_ext_force(f)
+        world.skel.body('Hips').add_ext_force(f)
     else:
         state['Force'] = np.zeros(3)
 

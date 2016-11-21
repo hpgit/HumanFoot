@@ -821,11 +821,13 @@ class VpControlModel(VpModel):
             if cfgNode.jointType == "R":
                 pNode.dof = 1
                 pNode.joint = hpRJoint()
+                pNode.joint.SetAxis(Vec3(1., 0., 0.))
             elif cfgNode.jointType == "U":
                 pNode.dof = 2
                 pNode.joint = hpUJoint()
                 pNode.joint.SetAxis(0, Vec3(1., 0., 0.))
                 pNode.joint.SetAxis(1, Vec3(0., 1., 0.))
+                # pNode.joint.SetAxis(1, Vec3(0., 0., 1.))
             elif cfgNode.jointType == "B":
                 pNode.dof = 3
                 pNode.joint = hpBJoint()
@@ -1286,7 +1288,10 @@ class VpControlModel(VpModel):
             return Vec3_2_pyVec3(_joint.GetAxis()).reshape([3, 1])
             # return Vec3_2_pyVec3(_joint.GetAxis())
         elif self._nodes[i].dof == 2:
+            # TODO:
+            # check whether GetAxis is appropriate or not
             axis0 = Vec3_2_pyVec3(_joint.GetAxis(0))
+            # axis0 = Vec3_2_pyVec3(_joint.GetLocalAxis(0))
             axis1 = Vec3_2_pyVec3(_joint.GetAxis(1))
             return np.vstack((axis0, axis1)).T
             # return np.vstack((axis0, axis1))

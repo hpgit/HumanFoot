@@ -8,7 +8,6 @@ class DimNotSupportedError(Exception):
 
 
 class Vec3(np.ndarray):
-
     def __new__(cls, *args):
         if len(args) == 0:
             obj = np.asarray(np.zeros(3)).view(cls)
@@ -43,6 +42,9 @@ class Vec3(np.ndarray):
             return self/l
         else:
             raise ZeroDivisionError
+
+    def Norm(self):
+        return npl.norm(self)
 
 class Axis(np.ndarray):
     pass
@@ -247,7 +249,7 @@ def TorusInertia(density, ring_rad, tube_rad):
     ix = mass * (0.625 * tube_rad * tube_rad + .5 * ring_rad + ring_rad)
     iy = ix
     iz = mass * (0.75 * tube_rad * tube_rad + ring_rad + ring_rad)
-    return Inertia(mass, ix, iy, iz);
+    return Inertia(mass, ix, iy, iz)
 
 def main():
     v = Vec3(1., 2., 1.)

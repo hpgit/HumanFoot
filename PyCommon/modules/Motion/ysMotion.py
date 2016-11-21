@@ -101,6 +101,12 @@ class Motion():
         else:
             raise TypeError
 
+    def __delitem__(self, key):
+        del self.data[key]
+
+    def __setitem__(self, key, value):
+        self.data[key] = value
+
     def __add__(self, nextMotion):
         """
 
@@ -130,6 +136,7 @@ class Motion():
             self.data.extend(postures)
         else:
             raise TypeError
+
 
     def getState(self):
         return self.frame
@@ -193,11 +200,12 @@ class Motion():
             posture.rotateByOffset(R_offset, update)
 
     def copy(self):
-        copied = self.__new__(self.__class__)
-        copied.__init__([None]*len(self))
+        copied = self.__class__()
+        # copied = self.__new__(self.__class__)
+        # copied.__init__([None]*len(self))
         copied.fps = self.fps
         for i in range(len(self)):
-            copied[i] = self[i].copy()
+            copied.append(self[i].copy())
         return copied
 
     def scale(self, scale, update=True):

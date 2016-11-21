@@ -12,22 +12,23 @@ sys.path.append('..')
 import pydart
 
 import math
-import Math.mmMath as mm
-import Renderer.ysRenderer as yr
-import Renderer.csVpRenderer as cvr
-import Simulator.csVpWorld as cvw
-import Simulator.csVpModel as cvm
-import Simulator.hpLCPSimulator as hls
-import GUI.hpSimpleViewer as hsv
-import Util.ysPythonEx as ype
-import ArticulatedBody.ysControl as yct
-import GUI.hpSplineEditor as hse
-import ArticulatedBody.hpInvKine as hik
+import PyCommon.modules.Math.mmMath as mm
+import PyCommon.modules.Renderer.ysRenderer as yr
+import PyCommon.modules.Renderer.csVpRenderer as cvr
+import PyCommon.modules.Simulator.csVpWorld as cvw
+import PyCommon.modules.Simulator.csVpModel as cvm
+import PyCommon.modules.Simulator.hpLCPSimulator as hls
+import PyCommon.modules.GUI.hpSimpleViewer as hsv
+import PyCommon.modules.Util.ysPythonEx as ype
+import PyCommon.modules.ArticulatedBody.ysControl as yct
+import PyCommon.modules.GUI.hpSplineEditor as hse
+import PyCommon.modules.ArticulatedBody.hpInvKine as hik
 
 # import VirtualPhysics.vpBody as vpB
 # import VirtualPhysics.LieGroup as vpL
 
 import mtInitialize_Simple as mit
+from pdcontroller import PDController
 
 
 MOTION_COLOR = (213, 111, 162)
@@ -92,9 +93,12 @@ print('data_dir = ' + data_dir)
 dartWorld = pydart.create_world(1.0/1800.0, data_dir+'/test.xml')
 dartWorld.test()
 q = dartWorld.skels[1].q
-q['j_root_pos_z'] = -2.9
+q['j_Hips_pos_y'] = 0.
+q['j_Hips_pos_x'] = 0.
+q['j_Hips_pos_z'] = 0.
 dartWorld.skels[1].set_positions(q)
 dartWorld.skels[1].dof
+dartWorld.skels[1].controller = PDController(dartWorld.skels[1], dartWorld.dt)
 # pydart.glutgui.run(title='bipedStand', simulation=dartWorld, trans=[0, 0, -3])
 
 def init():
@@ -138,6 +142,7 @@ def init():
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot_2('simpleJump_2.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_capsule('simpleJump_onebody.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
+    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump_long.bvh')
     motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump_long.bvh')
     mcfg_motion = mit.normal_mcfg()
 
@@ -302,9 +307,9 @@ class Callback:
         # print(skel.body('root').world_com_angular_velocity())
         # print(skel.M)
         # print(skel.body('root').world_jacobian())
-        print(skel.body('root').world_jacobian())
-        print(skel.body('root').world_linear_jacobian())
-        print(skel.body('root').world_angular_jacobian())
+        # print(skel.body('Hips').world_jacobian())
+        # print(skel.body('Hips').world_linear_jacobian())
+        # print(skel.body('Hips').world_angular_jacobian())
 
 
         # for c in dartWorld.contacts():
@@ -393,7 +398,7 @@ class Callback:
         cForcesControl = None
 
         # if desForceFrame[0] <= frame <= desForceFrame[1]:
-        if True:
+        if False:
             # totalForceImpulse = stepsPerFrame * totalForce
             cBodyIDsControl, cPositionsControl, cPositionLocalsControl, cForcesControl, torques \
                 = hls.calcLCPbasicControl(

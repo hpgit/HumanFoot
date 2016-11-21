@@ -16,6 +16,9 @@ public:
 	void                     SetGenTorque(int i, const scalar &a){m_rActuationTau[i] = a;}
     SE3                      GetTransform(){return Transform();}
     SE3                      GetOrientation(){return Transform();}
+
+    Vec3                     GetLocalAxis(int idx){return Vec3(m_sAxis[idx][0], m_sAxis[idx][1], m_sAxis[idx][2]);}
+     
     
     /*!
         return angular velocity in body frame

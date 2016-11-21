@@ -361,7 +361,7 @@ class Callback:
         # Dt = 2. * (Kt**.5)/20.
         Dt = 0.
         # controlModel.SetJointsDamping(damp)
-        controlModel.SetJointsDamping(1.)
+        controlModel.SetJointsDamping(2.)
 
         wLCP = math.pow(2., getVal('LCP weight'))
         wForce = math.pow(2., getVal('force weight'))
@@ -382,9 +382,9 @@ class Callback:
 
         ddth_des_flat = np.zeros(len(ddth_des_flat))
 
-        # ddth_des_flat[9] += getVal('normal des force min')/50.
+        ddth_des_flat[9] += getVal('normal des force min')/50.
         # ddth_des_flat[8] += getVal('normal des force min')/50.
-        ddth_des_flat[7] += getVal('normal des force min')/50.
+        # ddth_des_flat[7] += getVal('normal des force min')/50.
         ddth_des_flat[6] += getVal('normal des force min')/50.
 
         desForceFrameBegin = getVal('des force begin')
@@ -455,7 +455,7 @@ class Callback:
                 # cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
                 #     = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 10., torques, solver='qp')
                 cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
-                    = hls.calcLCPForcesHD(motion, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, ddth_des_flat, solver='qp')
+                    = hls.calcLCPForcesHD(motion, vpWorld, controlModel, bodyIDsToCheck, 10., ddth_des_flat, ddth_des_flat, solver='qp')
 
             if i % 5 == 0 and len(cBodyIDs) > 0:
                 contactStep += 1

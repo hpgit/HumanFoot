@@ -139,13 +139,13 @@ def init():
         node = mcfg.getNode('foot00')
         node.geom = 'MyFoot4'
         # node.geom = 'MyBox'
-        node.jointType = "R"
+        node.jointType = "U"
         node.mass = 1.
 
         node = mcfg.getNode('foot01')
         node.geom = 'MyFoot4'
         # node.geom = 'MyBox'
-        node.jointType = "R"
+        node.jointType = "U"
         node.mass = 1.
 
         def mcfgFix(_mcfg):
@@ -359,7 +359,7 @@ class Callback:
         # Dt = 2. * (Kt**.5)/20.
         Dt = 0.
         # controlModel.SetJointsDamping(damp)
-        controlModel.SetJointsDamping(1.)
+        controlModel.SetJointsDamping(.1)
 
         wLCP = math.pow(2., getVal('LCP weight'))
         wForce = math.pow(2., getVal('force weight'))
@@ -448,7 +448,7 @@ class Callback:
         for i in range(int(stepsPerFrame)):
             if i % 5 == 0:
                 cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
-                    = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 10., torques, solver='qp')
+                    = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques, solver='qp')
 
             if i % 5 == 0 and len(cBodyIDs) > 0:
                 contactStep += 1

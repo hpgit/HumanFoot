@@ -137,6 +137,11 @@ class ModelConfig:
         self.nodes[name] = node
         return node
     def getNode(self, name):
+        """
+
+        :param name: str
+        :return: Node
+        """
         return self.nodes[name]
     def hasNode(self, name):
         return name in self.nodes
