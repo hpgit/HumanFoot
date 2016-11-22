@@ -503,7 +503,12 @@ def walkings():
 
     pydart.init()
     dartModel = cpm.DartModel(wcfg, motion_ori[0], mcfg)
-    pdController = PDController(dartModel.skeleton, wcfg.timeStep)
+    q = dartModel.skeleton.q
+    # q[0:3] = mm.logSO3(motion_ori.getJointOrientationGlobal(0, 0))
+    # q[3:6] = motion_ori.getJointPositionGlobal(0, 0)
+    # dartModel.skeleton.set_positions(q)
+    # q[3:6] = motion_ori.getJointPositionGlobal(0, 0)
+    # pdController = PDController(dartModel.skeleton, wcfg.timeStep)
 
     #===============================================================================
     # load segment info
@@ -1156,7 +1161,8 @@ def walkings():
         # ype.flatten(ddth_des, ddth_des_flat)
         # ype.flatten(dth_r, dth_r_flat)
 
-        print dartModel.skeleton.q[:6]
+        # print dartModel.skeleton.q[:6]
+        print dartModel.getBody(0).com(), dartModel.skeleton.joint(0).position_in_world_frame(), dartModel.skeleton.q[:6]
 
         #=======================================================================
         # simulation

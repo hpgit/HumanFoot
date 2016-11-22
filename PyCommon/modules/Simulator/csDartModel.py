@@ -44,6 +44,8 @@ class DartModel:
         self.lockingVel = wcfg.lockingVel
         self.skeleton = self.world.skeletons[1]
 
+        self.update(posture)
+
     def step(self):
         self.world.step()
 
@@ -515,60 +517,6 @@ class DartModel:
         self._recordVelByFiniteDiff = flag
         self._inverseMotionTimeStep = 1./motionTimeStep
 
-    def update(self, posture):
-        """
-
-        :param posture: ym.JointPosture
-        :return:
-        """
-        joint = posture.skeleton.root
-        rootPos = posture.rootPos
-        T = SE3(pyVec3_2_Vec3(rootPos))
-        self._updateBody(joint, T, posture)
-
-    def _updateBody(self, joint, parentT, posture):
-        """
-
-        :param joint: ym.Joint
-        :param parentT: SE3
-        :param posture: ym.JointPosture
-        :return:
-        """
-
-        len_joint_children = len(joint.children)
-        if len_joint_children == 0:
-            return
-
-        P = SE3(pyVec3_2_Vec3(joint.offset))
-        T = parentT * P
-
-        joint_name = joint.name
-        # joint_index = posture.skeleton.getElementIndex(joint_name)
-        # R = pySO3_2_SE3(posture.getLocalR(joint_index))
-        joint_index = posture.skeleton.getJointIndex(joint_name)
-        R = pySO3_2_SE3(posture.getJointOrientationLocal(joint_index))
-
-        T = T * R
-        # if (len_joint_children > 0 ) and self._config.hasNode(joint_name):
-        if self._config.hasNode(joint_name):
-            boneT = self._boneTs[joint_index]
-            newT = T * boneT
-
-            pNode = self._nodes[joint_index]
-
-            if self._recordVelByFiniteDiff:
-                oldT = pNode.body.GetFame()
-                diffT = newT * Inv(oldT)
-
-                p = newT.GetPosition() - oldT.GetPosition()
-                diffT.SetPosition(p)
-
-                pNode.body.SetGenVelocity(Log(diffT) * self._inverseMotionTimeStep)
-
-            pNode.body.SetFrame(newT)
-
-        for i in range(len_joint_children):
-            self._updateBody(joint.children[i], T, posture)
 
     def __str__(self):
         strstr = VpModel.__str__(self)
@@ -726,71 +674,23 @@ class DartModel:
     def update(self, posture):
         """
 
-        :param posture: ym.JointPosture
+        :type posture: ym.JointPosture
         :return:
         """
-        joint = posture.skeleton.root
-        self._updateJoint(joint, posture)
+        q = self.skeleton.q
+        q[0:3] = mm.logSO3(posture.getJointOrientationGlobal(0))
+        q[3:6] = posture.getJointPositionGlobal(0)
+        self.skeleton.set_positions(q)
 
-    def _updateJoint(self, joint, posture):
-        """
+        for j in range(1, len(self.skeleton.joints)):
+            joint = self.skeleton.joints[j]
+            joint_q = mm.logSO3(posture.getJointOrientationLocal(posture.skeleton.getJointIndex(joint.name[2:])))
+            for i in range(len(joint.dofs)):
+                dof = joint.dofs[i] # type: pydart.Dof
+                dof.set_position(joint_q[i])
 
-        :param joint: ym.Joint
-        :param posture: ym.JointPosture
-        :return:
-        """
-        len_joint_children = len(joint.children)
-        if len_joint_children == 0:
-            return
-
-        P = SE3(pyVec3_2_Vec3(joint.offset))
-        joint_name = joint.name
-        # joint_index = posture.skeleton.getElementIndex(joint_name)
-        # R = pySO3_2_SE3(posture.getLocalR(joint_index))
-        joint_index = posture.skeleton.getJointIndex(joint_name)
-        R = pySO3_2_SE3(posture.getJointOrientationLocal(joint_index))
-
-        invLocalT = Inv(R) * Inv(P)
-
-        temp_joint = joint
-        nodeExistParentJoint = None
-        while True:
-            if temp_joint.parent is None:
-                nodeExistParentJoint = None
-                break
-            else:
-                temp_parent_name = temp_joint.parent.name
-                # temp_parent_index = posture.skeleton.getElementIndex(temp_parent_name)
-                temp_parent_index = posture.skeleton.getJointIndex(temp_parent_name)
-
-                if self._nodes[temp_parent_index] is not None:
-                    nodeExistParentJoint = temp_joint.parent
-                    break
-                else:
-                    temp_joint = temp_joint.parent
-
-                    offset = temp_joint.offset
-                    P = SE3(pyVec3_2_Vec3(offset))
-
-                    joint_name = temp_joint.name
-                    localSO3 = posture.localRs[joint_index]
-                    R = pySO3_2_SE3(localSO3)
-
-                    invLocalT = invLocalT * Inv(R) * Inv(P)
-
-        # len_joint_children = len(joint.children)
-
-        # if (len_joint_children > 0) and self._config.hasNode(joint_name):
-        if self._config.hasNode(joint_name):
-            pNode = self._nodes[joint_index]
-            if nodeExistParentJoint is not None:
-                # pNode.joint.SetOrientation(R)
-                pNode.setJointNearstOrientation(R)
-            else:
-                pNode.body.SetFrame(SE3(pyVec3_2_Vec3(posture.rootPos)) * P * R * self._boneTs[joint_index])
-
-        for i in range(len_joint_children):
-            self._updateJoint(joint.children[i], posture)
+        # joint = posture.skeleton.root
+        # self._updateJoint(joint, posture)
 
     def fixBody(self, index):
         self._nodes[index].body.SetGround()

@@ -71,7 +71,8 @@ class DartModelMaker:
         :return:
         """
         joint = posture.skeleton.root
-        rootPos = SE3(posture.rootPos)
+        # rootPos = SE3(posture.rootPos)
+        rootPos = SE3()
         tpose = posture.getTPose()
         return self._createBody(joint, rootPos, tpose)
 
@@ -100,36 +101,28 @@ class DartModelMaker:
         R = posture.getJointOrientationLocal(joint_index)
         T = T * SE3(R)
 
-        if True:
-            offset = Vec3(0.)
-            for i in range(len_joint_children):
-                offset += Vec3(joint.children[i].offset)
+        offset = Vec3(0.)
+        for i in range(len_joint_children):
+            offset += Vec3(joint.children[i].offset)
 
-            if True:
-                offset *= 1./len_joint_children
+        offset *= 1./len_joint_children
 
-            boneT = SE3(offset * .5)
-            # if joint_name == "Hips":
-            # if joint.parent is None:
-            #     boneT = SE3()
+        boneT = SE3(offset * .5)
 
-            defaultBoneV = Vec3(0., 0., 1.)
-            boneR = SE3(mm.getSO3FromVectors(defaultBoneV, offset))
+        defaultBoneV = Vec3(0., 0., 1.)
+        boneR = SE3(mm.getSO3FromVectors(defaultBoneV, offset))
 
-            # if joint_name != "Hips":
-            # if joint.parent is not None:
-            if True:
-                boneT = boneT * boneR
+        boneT = boneT * boneR
 
-            if self.config is not None:
-                if self.config.hasNode(joint_name):
-                    boneT = boneT * SE3(Vec3(self.config.getNode(joint_name).offset))
-            boneTs.append(boneT)
-            offsets.append(offset)
+        if self.config is not None:
+            if self.config.hasNode(joint_name):
+                boneT = boneT * SE3(Vec3(self.config.getNode(joint_name).offset))
+        boneTs.append(boneT)
+        offsets.append(offset)
 
-            newT = T * boneT
+        newT = T * boneT
 
-            Ts.append(newT)
+        Ts.append(newT)
 
         for i in range(len_joint_children):
             childNames, childTs, childOffsets, childBoneTs = self._createBody(joint.children[i], T, posture)
@@ -166,13 +159,13 @@ class DartModelMaker:
         def Inv(T):
             return SE3(np.linalg.inv(T))
 
-        offset = joint.offset
-        P = SE3(joint.offset)
+        # offset = joint.offset
+        # P = SE3(joint.offset)
         joint_name = joint.name
         joint_index = posture.skeleton.getJointIndex(joint_name)
-        R = SE3(posture.getJointOrientationLocal(joint_index))
+        # R = SE3(posture.getJointOrientationLocal(joint_index))
 
-        invLocalT = Inv(R) * Inv(P)
+        # invLocalT = Inv(R) * Inv(P)
 
         temp_joint = joint
         nodeExistParentJoint = None
@@ -186,7 +179,7 @@ class DartModelMaker:
             parent_name = nodeExistParentJoint.name
             parent_index = posture.skeleton.getJointIndex(parent_name)
 
-            parentbodyToJointT = Inv(boneTs[parent_index]) * Inv(invLocalT)
+            # parentbodyToJointT = Inv(boneTs[parent_index]) * Inv(invLocalT)
             bodyToJointT = Inv(boneTs[joint_index])
 
             jointPair = (parent_name, joint_name)
