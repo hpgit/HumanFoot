@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.linalg import inv
-from PyCommon.modules.pydart import pydart
+from PyCommon.modules import pydart2 as pydart
 
 
 class PDController:
@@ -20,10 +20,11 @@ class PDController:
 
     def compute(self):
         skel = self.skel
+        # deltaq =
 
         invM = inv(skel.M + self.Kd * self.h)
-        p = -self.Kp.dot(skel.q + skel.qdot * self.h - self.qhat)
-        d = -self.Kd.dot(skel.qdot)
+        p = -self.Kp.dot(skel.q + skel.dq * self.h - self.qhat)
+        d = -self.Kd.dot(skel.dq)
         qddot = invM.dot(-skel.c + p + d + skel.constraint_forces())
         tau = p + d - self.Kd.dot(qddot) * self.h
 
@@ -46,5 +47,33 @@ class PDController:
         tau[:6] = 0
         return tau
 
-    def setTartgetPose(self, qhat):
-        self.qhat = qhat
+    def setTartgetPose(self, Rs):
+        self.Rs = Rs
+
+    def calcDeltaq(self):
+        p_r0 = th_r[0][0]
+        p0 = th[0][0]
+        v_r0 = dth_r[0][0:3]
+        v0 = dth[0][0:3]
+        a_r0 = ddth_r[0][0:3]
+
+        th_r0 = th_r[0][1]
+        th0 = th[0][1]
+        dth_r0 = dth_r[0][3:6]
+        dth0 = dth[0][3:6]
+        ddth_r0 = ddth_r[0][3:6]
+
+        kt = Kt
+        dt = Dt
+
+        if weightMap is not None:
+            kt = Kt * weightMap[0]
+            dt = Dt * (weightMap[0]**.5)
+            # dt = 0.
+        a_des0 = kt*(p_r0 - p0) + dt*(v_r0 - v0) + a_r0
+        ddth_des0 = kt*(mm.logSO3(np.dot(th0.transpose(), th_r0))) + dt*(dth_r0 - dth0) + ddth_r0
+        # a_des0 = kt*(p_r0 - p0) + dt*(- v0) #+ a_r0
+        # ddth_des0 = kt*(mm.logSO3(np.dot(th0.transpose(), th_r0))) + dt*(- dth0) #+ ddth_r0
+        ddth_des[0] = np.concatenate((a_des0, ddth_des0))
+
+        return deltaq

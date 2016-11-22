@@ -1,6 +1,13 @@
 import sys, numpy, ode, math, copy
 
 class WorldConfig:
+    """
+    :type timeStep: float
+    :type gravity: tuple[float]
+    :type planeHeight: float
+    :type useDefaultContactModel:  bool
+    :type lockingVel: float
+    """
     def __init__(self):
         self.timeStep = 0.001
         

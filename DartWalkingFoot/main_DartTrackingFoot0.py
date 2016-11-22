@@ -33,7 +33,12 @@ from PyCommon.modules.Util import ysPythonEx as ype
 # from PyCommon.modules.Simulator import csVpWorld_py as pcvw
 
 from PyCommon.modules.dart.bvh2dartSkel import DartModelMaker
-from PyCommon.modules.pydart import pydart
+from PyCommon.modules import pydart2 as pydart
+from PyCommon.modules.pydart2.skeleton import Skeleton as pd2Skeleton
+from PyCommon.modules.pydart2.joint import Joint as pd2Joint
+from PyCommon.modules.pydart2.bodynode import BodyNode as pd2Body
+from PyCommon.modules.Simulator import csDartModel as cpm
+from pdcontroller import PDController
 
 
 import math
@@ -496,13 +501,9 @@ def walkings():
     # controlModel.initializeHybridDynamics()
     # controlModel.initializeForwardDynamics()
 
-    # ModelMaker = DartModelMaker()
-    # ModelMaker.posture2dartSkelFile("dartModel", motion_ori[0], "test1.xml", buildMcfg())
-
     pydart.init()
-    dartWorld = pydart.create_world(1.0 / 1800.0, current_path+'/test1.xml')
-    dartModel = dartWorld.skels[1] # type: pydart.Skeleton
-
+    dartModel = cpm.DartModel(wcfg, motion_ori[0], mcfg)
+    pdController = PDController(dartModel.skeleton, wcfg.timeStep)
 
     #===============================================================================
     # load segment info
@@ -576,8 +577,9 @@ def walkings():
     bodyIDsToCheck = range(vpWorld.getBodyNum())
     mus = [mu]*len(bodyIDsToCheck)
 
-    bodyMasses = controlModel.getBodyMasses()
-    totalMass = controlModel.getTotalMass()
+    totalMass = dartModel.getTotalMass()
+    # bodyMasses = controlModel.getBodyMasses()
+    # totalMass = controlModel.getTotalMass()
 
     # hwangpil
     #extendedFootName = ['Foot_foot_0_0', 'Foot_foot_0_1', 'Foot_foot_1_0',
@@ -605,25 +607,28 @@ def walkings():
     #     controlModel.setHybridDynamics(i, "DYNAMIC")
 
     # each dof is whether KINEMATIC or not
-    hdAccMask = [True]*controlModel.getTotalDOF()
+    # hdAccMask = [True]*controlModel.getTotalDOF()
+    print dartModel.getTotalDOF()
+    hdAccMask = [True]*dartModel.getTotalDOF()
     hdAccMask[:6] = [False]*6
     # for i in lIDs+rIDs:
     #     hdAccMask[3+3*i : 6+3*i] = [False]*3
 
 
-    lID = controlModel.name2id('LeftFoot');      rID = controlModel.name2id('RightFoot')
+    # lID = controlModel.name2id('LeftFoot');      rID = controlModel.name2id('RightFoot')
     lUpLeg = skeleton.getJointIndex('LeftUpLeg');rUpLeg = skeleton.getJointIndex('RightUpLeg')
     lKnee = skeleton.getJointIndex('LeftLeg');   rKnee = skeleton.getJointIndex('RightLeg')
     lFoot = skeleton.getJointIndex('LeftFoot');  rFoot = skeleton.getJointIndex('RightFoot')
     spine = skeleton.getJointIndex('Spine')
 
     uppers = [skeleton.getJointIndex(name) for name in ['Hips', 'Spine', 'Spine1', 'LeftArm', 'LeftForeArm', 'RightArm', 'RightForeArm']]
-    upperMass = sum([bodyMasses[i] for i in uppers])
+    # upperMass = sum([bodyMasses[i] for i in uppers])
     lLegs = [skeleton.getJointIndex(name) for name in ['LeftUpLeg', 'LeftLeg', 'LeftFoot']]
     rLegs = [skeleton.getJointIndex(name) for name in ['RightUpLeg', 'RightLeg', 'RightFoot']]
     allJoints = set(range(skeleton.getJointNum()))
 
 
+    '''
     footMass = sum([bodyMasses[i] for i in lIDs]) + bodyMasses[lID]
     HeelMass = sum([bodyMasses[i] for i in lHeels])
     ToeMass = sum([bodyMasses[i] for i in lToes])
@@ -631,9 +636,10 @@ def walkings():
     print('footMass: ', footMass)
     print('heelmass: ', HeelMass)
     print('ToeMass: ', ToeMass)
+    #'''
 
-    halfFootHeight = controlModel.getBodyShape(lFoot)[1] / 2.
-    # halfFootHeight = 0.05
+    # halfFootHeight = controlModel.getBodyShape(lFoot)[1] / 2.
+    halfFootHeight = 0.05
 
     for fi in forceInfos:
         fi.targetBody = spine
@@ -665,7 +671,7 @@ def walkings():
         #        viewer = ymv.MultiViewer(800, 655, True)
         viewer.setRenderers1([yr.VpModelRenderer(motionModel, MOTION_COLOR, yr.POLYGON_FILL)])
         # viewer.setRenderers2([yr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL)])
-        viewer.setRenderers2([yr.DartModelRenderer(dartWorld, (200, 200, 0))])
+        viewer.setRenderers2([yr.DartModelRenderer(dartModel.world, (200, 200, 0))])
     else:
         viewer = ysv.SimpleViewer()
         # viewer = hsv.hpSimpleViewer()
@@ -673,7 +679,7 @@ def walkings():
 
         # viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(motionModel, (0,150,255), yr.POLYGON_LINE))
         # viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (50,200,200), yr.POLYGON_FILL))
-        viewer.doc.addRenderer('dartModel', yr.DartModelRenderer(dartWorld, (200, 200, 0)))
+        viewer.doc.addRenderer('dartModel', yr.DartModelRenderer(dartModel.world, (200, 200, 0)))
 
         # viewer.doc.addObject('motion_ori', motion_ori)
         # viewer.doc.addRenderer('motion_ori', yr.JointMotionRenderer(motion_ori, (0,100,255), yr.LINK_BONE))
@@ -742,15 +748,18 @@ def walkings():
                 viewer.setCameraTarget1(cameraTargets1[frame])
 
                 if cameraTargets2[frame] is None:
-                    cameraTargets2[frame] = controlModel.getJointPositionGlobal(0)
+                    # cameraTargets2[frame] = controlModel.getJointPositionGlobal(0)
+                    cameraTargets2[frame] = dartModel.com()
                 viewer.setCameraTarget2(cameraTargets2[frame])
 
             else:
                 if cameraTargets[frame] is None:
-                    cameraTargets[frame] = controlModel.getJointPositionGlobal(0)
+                    cameraTargets[frame] = dartModel.com()
+                    # cameraTargets[frame] = controlModel.getJointPositionGlobal(0)
                 viewer.setCameraTarget(cameraTargets[frame])
         if plot is not None:
             plot.updateVline(frame)
+
     viewer.setPostFrameCallback_Always(postFrameCallback_Always)
 
     plot = None
@@ -832,12 +841,14 @@ def walkings():
 
         # dCM : average velocity of root of controlModel over 1 frame
         dCM = avg_dCM[0]
-        CM = controlModel.getJointPositionGlobal(0)
+        # CM = controlModel.getJointPositionGlobal(0)
+        CM = dartModel.getBody("Hips").com()
         #        CM = yrp.getCM(controlModel.getJointPositionsGlobal(), bodyMasses, upperMass, uppers)
         #        CM = yrp.getCM(controlModel.getJointPositionsGlobal(), bodyMasses, totalMass)
-        CMreal = yrp.getCM(controlModel.getJointPositionsGlobal(), bodyMasses, totalMass)
-        # CMreal = dartModel.world_com()
-        stf = controlModel.getJointPositionGlobal(stanceFoots[0])
+        # CMreal = yrp.getCM(controlModel.getJointPositionsGlobal(), bodyMasses, totalMass)
+        CMreal = dartModel.getCOM()
+        stf = dartModel.getJointPositionGlobal(stanceFoots[0])
+        # stf = controlModel.getJointPositionGlobal(stanceFoots[0])
         CMr = CM - stf
 
         diff_dCM = mm.projectionOnPlane(dCM-dCM_tar, (1,0,0), (0,0,1))
@@ -916,7 +927,9 @@ def walkings():
 
                     #                    # motion stance leg -> character stance leg as time goes
                     R_motion = motion_match_stl[frame].getJointOrientationGlobal(stanceLeg)
-                    R_character = controlModel.getJointOrientationGlobal(stanceLeg)
+                    # R_character = controlModel.getJointOrientationGlobal(stanceLeg)
+                    R_character = dartModel.joint(stanceLeg).orientation_in_world_frame()
+                    # motion_ori[0].skeleton.getJointName(stanceLeg)
                     motion_match_stl[frame].setJointOrientationGlobal(stanceLeg, cm.slerp(R_motion, R_character, match_stl_func(t)))
 
                     #                    t_y = match_stl_func_y(t)
@@ -989,15 +1002,16 @@ def walkings():
                 #                motion_debug1[frame] = motion_swf_height[frame].copy()
 
                 # rotate
-                motion_swf_height[frame].rotateByTarget(controlModel.getJointOrientationGlobal(0))
+                # motion_swf_height[frame].rotateByTarget(controlModel.getJointOrientationGlobal(0))
+                motion_swf_height[frame].rotateByTarget(dartModel.getJointOrientationGlobal(0))
                 #                motion_debug2[frame] = motion_swf_height[frame].copy()
                 #                motion_debug2[frame].translateByTarget(controlModel.getJointPositionGlobal(0))
 
                 if OLD_SWING_HEIGHT:
                     height_cur = motion_swf_height[frame].getJointPositionGlobal(swingFoot)[1] - motion_swf_height[frame].getJointPositionGlobal(stanceFoot)[1]
                 else:
-                    height_cur = controlModel.getJointPositionGlobal(swingFoot)[1] - halfFootHeight - c_swf_offset
-                    d_height_cur = controlModel.getJointVelocityGlobal(swingFoot)[1]
+                    height_cur = dartModel.getJointPositionGlobal(swingFoot)[1] - halfFootHeight - c_swf_offset
+                    d_height_cur = dartModel.getJointVelocityGlobal(swingFoot)[1]
 
                 if OLD_SWING_HEIGHT:
                     offset_height = (height_tar - height_cur) * swf_height_func(t) * c5
@@ -1073,7 +1087,7 @@ def walkings():
         # make heel as flat as possible to ground
         swf_heel_func = yfg.hermite2nd
         for swingHeel in swingHeels:
-            joint_vec_cur = np.dot(controlModel.getJointOrientationGlobal(swingHeel), np.array((0., 0., 1.)))
+            joint_vec_cur = np.dot(dartModel.getJointOrientationGlobal(swingHeel), np.array((0., 0., 1.)))
             joint_vec_tar = copy.deepcopy(joint_vec_cur)
             joint_vec_tar[1] = 0.
             R_target_heel = mm.exp(swf_heel_func(t)*mm.logSO3(mm.getSO3FromVectors(joint_vec_cur, joint_vec_tar)))
@@ -1128,16 +1142,21 @@ def walkings():
             weightMap[jointIdx] = toeWeights
 
         th_r = motion_control.getDOFPositions(frame)
-        th = controlModel.getDOFPositions()
+        th = dartModel.skeleton.q
+        # th = controlModel.getDOFPositions()
         dth_r = motion_control.getDOFVelocities(frame)
-        dth = controlModel.getDOFVelocities()
+        dth = dartModel.skeleton.dq
+        # dth = controlModel.getDOFVelocities()
         ddth_r = motion_control.getDOFAccelerations(frame)
-        ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMap)
+        # ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMap)
 
-        totalDOF = controlModel.getTotalDOF()
+        totalDOF = dartModel.getTotalDOF()
         ddth_des_flat = ype.makeFlatList(totalDOF)
-        # ddth_des_flat = ype.makeFlatList(controlModel.get3dExtendDOF())
-        ype.flatten(ddth_des, ddth_des_flat)
+        dth_r_flat = ype.makeFlatList(totalDOF)
+        # ype.flatten(ddth_des, ddth_des_flat)
+        # ype.flatten(dth_r, dth_r_flat)
+
+        print dartModel.skeleton.q[:6]
 
         #=======================================================================
         # simulation
@@ -1151,14 +1170,17 @@ def walkings():
         for fi in forceInfos:
             if fi.startFrame <= frame and frame < fi.startFrame + fi.duration*(1/frameTime):
                 rd_forces.append(fi.force)
-                rd_force_points.append(controlModel.getBodyPositionGlobal(fi.targetBody))
+                # rd_force_points.append(controlModel.getBodyPositionGlobal(fi.targetBody))
+                rd_force_points.append(dartModel.getBodyPositionGlobal(fi.targetBody))
+
         contactPositions = None
 
         for i in range(stepsPerFrame):
-            if i % 5 == 0:
+            '''
+            if False and i % 5 == 0:
                 # bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
                 bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp \
-                    = hls.calcLCPForcesHD(motion_ori, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, ddth_des_flat, solver='qp', hdAccMask=hdAccMask)
+                    = hls.calcLCPForcesHD(motion_ori, vpWorld, dartModel, bodyIDsToCheck, 1., ddth_des_flat, ddth_des_flat, solver='qp', hdAccMask=hdAccMask)
 
                 if contactForces is not None:
                     lContactNum = sum([sum([j==i for j in bodyIDs]) for i in lIDs])
@@ -1189,30 +1211,34 @@ def walkings():
             # apply external force
             for fi in forceInfos:
                 if fi.startFrame <= frame and frame < fi.startFrame + fi.duration*(1/frameTime):
-                    controlModel.applyBodyForceGlobal(fi.targetBody, fi.force)
+                    # controlModel.applyBodyForceGlobal(fi.targetBody, fi.force)
+                    dartModel.getBody(fi.targetBody).add_ext_force(fi.force)
 
-            for i in rIDs+lIDs:
-                controlModel.setJointTorqueLocal(i, ddth_des[i])
-            controlModel.setDOFAccelerations(ddth_des)
-            controlModel.solveHybridDynamics()
+            # for i in rIDs+lIDs:
+            #     controlModel.setJointTorqueLocal(i, ddth_des[i])
+            # controlModel.setDOFAccelerations(ddth_des)
+            # controlModel.solveHybridDynamics()
 
-            if TORQUE_PLOT:
-                rhip_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rUpLeg))
-                rknee_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rKnee))
-                rankle_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rFoot))
+            # if TORQUE_PLOT:
+            #     rhip_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rUpLeg))
+            #     rknee_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rKnee))
+            #     rankle_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rFoot))
 
             # rd_torques[:] = [controlModel.getJointTorqueLocal(j)/100. for j in range(1, skeleton.getJointNum())]
-            rd_joint_positions[:] = controlModel.getJointPositionsGlobal()
+            # rd_joint_positions[:] = controlModel.getJointPositionsGlobal()
 
             # vpWorld.step()
             #            yvu.align2D(controlModel)
+            '''
 
-            dartWorld.step()
+            dartModel.step()
 
+            '''
             if contactForces is not None and len(contactForces) > 0:
                 CP += yrp.getCP(contactPositions, contactForces)
                 F += sum(contactForces)
-            avg_dCM[0] += controlModel.getJointVelocityGlobal(0)
+            avg_dCM[0] += dartModel.getJointVelocityGlobal(0)
+            '''
         #            avg_dCM[0] += yrp.getCM(controlModel.getJointVelocitiesGlobal(), bodyMasses, upperMass, uppers)
         #            avg_dCM[0] += yrp.getCM(controlModel.getJointVelocitiesGlobal(), bodyMasses, totalMass)
 
@@ -1294,7 +1320,7 @@ def walkings():
                         minContactVel = 1000.
                         for i in range(len(bodyIDs)):
                             if bodyIDs[i]==swingID:
-                                vel = controlModel.getBodyVelocityGlobal(swingID, contactPositionLocals[i])
+                                vel = dartModel.getBodyVelocityGlobal(swingID, contactPositionLocals[i])
                                 vel[1] = 0
                                 contactVel = mm.length(vel)
                                 if contactVel < minContactVel: minContactVel = contactVel
@@ -1358,7 +1384,7 @@ def walkings():
                 if len(stanceFoots)>0 and len(swingFoots)>0:
                     #                    step_cur = controlModel.getJointPositionGlobal(swingFoots[0]) - controlModel.getJointPositionGlobal(stanceFoots[0])
                     #                    step_tar = motion_seg[curInterval[1]].getJointPositionGlobal(swingFoots[0]) - motion_seg[curInterval[1]].getJointPositionGlobal(stanceFoots[0])
-                    step_cur = controlModel.getJointPositionGlobal(0) - controlModel.getJointPositionGlobal(stanceFoots[0])
+                    step_cur = dartModel.getJointPositionGlobal(0) - dartModel.getJointPositionGlobal(stanceFoots[0])
                     step_tar = motion_seg[curInterval[1]].getJointPositionGlobal(0) - motion_seg[curInterval[1]].getJointPositionGlobal(stanceFoots[0])
 
                     step_cur = mm.projectionOnPlane(step_cur, (1,0,0), (0,0,1))

@@ -749,6 +749,9 @@ class Joint:
 
 
 class JointPosture(Posture):
+    """
+    :type skeleton: JointSkeleton
+    """
     def __init__(self, skeleton):
         Posture.__init__(self, skeleton)
         self.rootPos = mm.O_Vec3()

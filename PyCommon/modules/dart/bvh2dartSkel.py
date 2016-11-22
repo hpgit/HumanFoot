@@ -195,7 +195,7 @@ class DartModelMaker:
         else:
             jointPair = ("world", joint_name)
             jointPairs.append(jointPair)
-            bodyToJointTs.append(SE3())
+            bodyToJointTs.append(Inv(boneTs[joint_index]))
 
         for i in range(len_joint_children):
             childJointPairs, childbodyToJointTs = self._createJoint(joint.children[i], posture, boneTs)
@@ -441,6 +441,7 @@ class DartModelMaker:
             if jointPair[0] == "world":
                 etJoint = et.SubElement(etSkeleton, "joint", {"type": "free", "name": "j_"+jointPair[1]})
                 # etJoint = et.SubElement(etSkeleton, "joint", {"type": "free", "name": jointPair[1]})
+                et.SubElement(etJoint, "transformation").text = SE32vlogSO3str(bodyToJointTs[i])
             else:
                 etJoint = et.SubElement(etSkeleton, "joint", {"type": "ball", "name": "j_"+jointPair[1]})
                 # etJoint = et.SubElement(etSkeleton, "joint", {"type": "ball", "name": jointPair[1]})
@@ -449,20 +450,26 @@ class DartModelMaker:
             et.SubElement(etJoint, "parent").text = jointPair[0]
             et.SubElement(etJoint, "child").text = jointPair[1]
 
-        return etSkelTree
+        return etSkelTree, boneTs
 
     def toDartSkelFile(self, skelfile, config):
-        tree = self.posture2dartSkel(self.bvh.toJointMotion(1., False)[0], config)
+        tree, boneTs = self.posture2dartSkel(self.bvh.toJointMotion(1., False)[0], config)
         output = open(skelfile, "w")
         output.write(prettifyXML(tree.getroot()))
         output.close()
 
     def posture2dartSkelFile(self, name, posture, skelfile, config):
         self.skelname = name
-        tree = self.posture2dartSkel(posture, config)
+        tree, boneTs = self.posture2dartSkel(posture, config)
         output = open(skelfile, "w")
         output.write(prettifyXML(tree.getroot()))
         output.close()
+
+    def posture2dartSkelXmlStr(self, name, posture, config):
+        self.skelname = name
+        tree, boneTs = self.posture2dartSkel(posture, config)
+        # return prettifyXML(tree.getroot())
+        return et.tostring(tree.getroot(), 'ascii'), boneTs
 
 if __name__ == '__main__':
     def buildMassMap():
