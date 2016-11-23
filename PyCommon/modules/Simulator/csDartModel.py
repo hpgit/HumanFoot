@@ -246,7 +246,25 @@ class DartModel:
         return self.skeleton.mass()
 
     def getBody(self, key):
+        """
+
+        :type str|int
+        :rtype: pydart.BodyNode
+        """
         return self.skeleton.body(key)
+
+    def getJoint(self, key):
+        """
+
+        :type key: str|int
+        :rtype: pydart.Joint
+        """
+        if isinstance(key, str):
+            return self.skeleton.joint("j_"+key)
+        elif isinstance(key, int):
+            return self.skeleton.joint(key)
+        else:
+            raise TypeError
 
     def getBodyShape(self, index):
         # pGeom = self._nodes[index].body.GetGeometry(0)
@@ -362,9 +380,7 @@ class DartModel:
         return bodyFrame.dot(pPositionLocal)
 
     def getBodyOrientationGlobal(self, index):
-        bodyFrame = self._nodes[index].body.GetFrame()
-
-        return SE3_2_pySO3(bodyFrame)
+        return self.getBody(index).transform()[:3, :3]
 
     def getBodyVelocityGlobal(self, index, positionLocal=None):
         bodyGenVel = self.skeleton.body(index).com_spatial_velocity()
@@ -733,8 +749,7 @@ class DartModel:
         # return
 
     def initializeForwardDynamics(self):
-        for i in range(len(self._nodes)):
-            self._nodes[i].body.SetHybridDynamicsType(DYNAMIC)
+        pass
 
     def solveHybridDynamics(self):
         self._nodes[0].body.GetSystem().HybridDynamics()
@@ -747,9 +762,7 @@ class DartModel:
 
     # Get Joint Local State
     def getJointOrientationLocal(self, index):
-        if index == 0:
-            return self.getJointOrientationGlobal(index)
-        return SE3_2_pySO3(self._nodes[index].joint.GetOrientation())
+        return self.getJoint(index).get_local_transform()[:3, :3]
 
     def getJointVelocityLocal(self, index):
         pospos = Inv(self._boneTs[index]).GetPosition()
@@ -836,10 +849,22 @@ class DartModel:
                 vel.append(self._nodes[i].joint.GetFirstDeriv(j))
         return np.array(vel)
 
+    def getJointTransform(self, key):
+        joint = None
+        if isinstance(key, str):
+            joint = self.skeleton.joint("j_"+key)
+        elif isinstance(key, int):
+            joint = self.skeleton.joint(key)
+        else:
+            raise TypeError
+
+        return joint.get_local_transform()
+
     # Get Joint Global State
     def getJointFrame(self, index):
         # return SE3_2_pySE3(self._nodes[index].body.GetFrame() * Inv(self._boneTs[index]))
         return None
+
 
     def getJointPositionGlobal(self, index):
         if index == 0:
@@ -858,11 +883,7 @@ class DartModel:
         return None
 
     def getJointOrientationGlobal(self, index):
-        if index == 0:
-            bodyFrame = self.skeleton.body(0).world_transform()
-            return bodyFrame.dot(npl.inv(self._boneTs[0]))[:3, :3]
-        else:
-            return self.skeleton.joint(index).orientation_in_world_frame()
+        return self.getJoint(index).orientation_in_world_frame()
 
     def getJointAngVelocityGlobal(self, index):
         # angVel = self._nodes[index].body.GetAngVelocity()

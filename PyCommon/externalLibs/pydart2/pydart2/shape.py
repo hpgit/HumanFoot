@@ -107,6 +107,24 @@ class CylinderShape(Shape):
     def __init__(self, _shapenode):
         Shape.__init__(self, _shapenode)
 
+    def getRadius(self, ):
+        return papi.cylinder_shape__getRadius(self.wid, self.skid,
+                                              self.bid, self.id)
+
+    def getHeight(self, ):
+        return papi.cylinder_shape__getHeight(self.wid, self.skid,
+                                              self.bid, self.id)
+
+    def setRadius(self, radius):
+        return papi.cylinder_shape__setRadius(self.wid, self.skid,
+                                              self.bid, self.id,
+                                              radius)
+
+    def setHeight(self, height):
+        return papi.cylinder_shape__setHeight(self.wid, self.skid,
+                                              self.bid, self.id,
+                                              height)
+
     def __repr__(self):
         return '[CylinderShape(%d:%d)]' % (self.bid, self.id)
 

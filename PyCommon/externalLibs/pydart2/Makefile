@@ -16,6 +16,11 @@ all:
 	cp -R build/lib/pydart2 ../../modules/
 	cp -R build/_pydart2_api.so ../../modules/pydart2/
 
+pyonly:
+	python setup_cmake.py build
+	cp -R build/lib/pydart2 ../../modules/
+	
+
 clean:
 	rm -rf build
 	rm -rf pydart2/_pydart2_api.so

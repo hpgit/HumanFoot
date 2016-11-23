@@ -54,5 +54,16 @@ void ELLIPSOID_SHAPE(setSize)(int wid, int skid, int bid, int sid, double inv3[3
 void MESH_SHAPE(getScale)(int wid, int skid, int bid, int sid, double outv3[3]);
 const char* MESH_SHAPE(getMeshPath)(int wid, int skid, int bid, int sid);
 
+//hwangpil
+////////////////////////////////////////
+// CylinderShape Functions
+#define CYLINDER_SHAPE(funcname) cylinder_shape__##funcname
+#define GET_CYLINDER_SHAPE(wid, skid, bid, sid) dynamic_cast<dart::dynamics::CylinderShape*>((Manager::skeleton(wid, skid)->getBodyNode(bid)->getShapeNodes()[sid])->getShape().get());
+
+double CYLINDER_SHAPE(getRadius)(int wid, int skid, int bid, int sid);
+double CYLINDER_SHAPE(getHeight)(int wid, int skid, int bid, int sid);
+void CYLINDER_SHAPE(setRadius)(int wid, int skid, int bid, int sid, double radius);
+void CYLINDER_SHAPE(setHeight)(int wid, int skid, int bid, int sid, double height);
+
 
 #endif // #ifndef PYDART2_SHAPE_API_H

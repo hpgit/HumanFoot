@@ -18,9 +18,11 @@ from PyCommon.modules.Mesh import ysMesh as yms
 # import Motion.ysMotion as ym
 # import Mesh.ysMesh as yms
 
-from PyCommon.modules.pyVirtualPhysics import *
+# from PyCommon.modules.pyVirtualPhysics import *
 from PyCommon.modules.Simulator import csVpModel_py as pcvm
 from PyCommon.modules.Simulator import csVpUtil as cvu
+from PyCommon.modules.Simulator import csDartModel as cdm
+import PyCommon.modules.pydart2 as pydart
 
 # RendererContext
 NORMAL_FLAT = 0
@@ -174,30 +176,77 @@ class VpModelRenderer(Renderer):
         glPopMatrix()
 
 
-
-
 class DartModelRenderer(Renderer):
-    def __init__(self, target, color = (255,255,255), polygonStyle = POLYGON_FILL):
+    """
+    :type model: cdm.DartModel
+    """
+    def __init__(self, target, color=(255,255,255), polygonStyle=POLYGON_FILL, lineWidth=1.):
         Renderer.__init__(self, target, color)
         self.model = target
         self.rc.setPolygonStyle(polygonStyle)
+        self._lineWidth = lineWidth
 
     def render(self, renderType=RENDER_OBJECT):
-        self.model.render()
-        # glColor3ubv(self.totalColor)
-        # for node in self.model.nodes.values():
-        #     geom = node.geom
-        #     #            if node.name in self.partColors:
-        #     #                glColor3ubv(self.partColors[node.name])
-        #     #            else:
-        #     #                glColor3ubv(self.totalColor)
-        #     if geom == self.selectedElement:
-        #         glColor3ubv(SELECTION_COLOR)
-        #
-        #     self.rc.renderOdeGeom(geom)
-        #
-        #     if geom == self.selectedElement:
-        #         glColor3ubv(self.totalColor)
+        glLineWidth(self._lineWidth)
+
+        if renderType == RENDER_SHADOW:
+            glColor3ub(90, 90, 90)
+        else:
+            glColor3ubv(self.totalColor)
+
+        for body in self.model.skeleton.bodynodes:
+            glPushMatrix()
+            glMultMatrixd(body.world_transform().transpose())
+            for shapeNode in body.shapenodes:
+                if shapeNode.has_visual_aspect():
+                    # print(body.name, shapeNode)
+                    if renderType != RENDER_SHADOW:
+                        color = numpy.array(shapeNode.visual_aspect_rgba())*255
+                        if color[0] != 0 or color[1] != 0 or color[2] != 0:
+                            c = [ int(color[0]), int(color[1]), int(color[2]), int(color[3]) ]
+                            glColor4ubv(c)
+                        else:
+                            glColor3ubv(self.totalColor)
+
+                    self.renderShapeNode(shapeNode)
+            glPopMatrix()
+        self.model.world.render_contacts()
+
+
+    def renderShapeNode(self, shapeNode):
+        """
+
+        :type shapeNode: pydart.ShapeNode
+        :return:
+        """
+        # names = ["BOX", "ELLIPSOID", "CYLINDER", "PLANE",
+        #          "MESH", "SOFT_MESH", "LINE_SEGMENT"]
+
+        # shapeNode.shape.render()
+        geomType = shapeNode.shape.shape_type_name()
+        glPushMatrix()
+        glMultMatrixd(shapeNode.relative_transform().transpose())
+        if geomType == 'BOX':
+            shape = shapeNode.shape # type: pydart.BoxShape
+            data = shape.size()
+            glPushMatrix()
+            glTranslatef(-data[0]/2., -data[1]/2., -data[2]/2.)
+            glColor3f(1., 0., 0.)
+            self.rc.drawBox(data[0], data[1], data[2])
+            glPopMatrix()
+        elif geomType == 'CYLINDER':
+            shape = shapeNode.shape # type: pydart.CylinderShape
+            data = [shape.getRadius(), shape.getHeight()]
+            glTranslatef(0., 0., -data[1]/2.)
+            self.rc.drawCylinder(data[0], data[1])
+            # self.rc.drawCapsule(data[0], data[1])
+        elif geomType == 'ELLIPSOID':
+            shape = shapeNode.shape # type: pydart.EllipsoidShape
+            data = shape.size()/2.
+            glScalef(data[0], data[1], data[2])
+            self.rc.drawSphere(1.)
+        glPopMatrix()
+
 
 class JointMotionRenderer(Renderer):
     def __init__(self, target, color = (0,255,255), linkStyle = LINK_LINE, lineWidth=1.):
@@ -479,13 +528,14 @@ class OrientationsRenderer(Renderer):
         self.ps = ps
         self.axisLength = axisLength
     def render(self, renderType=None):
-        for i in range(len(self.Rs)):
-            if self.Rs[i] is not None and self.ps[i] is not None:
-                T = mm.Rp2T(self.Rs[i], self.ps[i])
-                glPushMatrix()
-                glMultMatrixf(T.transpose())
-                ygh.drawCoordinate(self.totalColor, self.axisLength)
-                glPopMatrix()
+        if renderType != RENDER_SHADOW:
+            for i in range(len(self.Rs)):
+                if self.Rs[i] is not None and self.ps[i] is not None:
+                    T = mm.Rp2T(self.Rs[i], self.ps[i])
+                    glPushMatrix()
+                    glMultMatrixf(T.transpose())
+                    ygh.drawCoordinate(self.totalColor, self.axisLength)
+                    glPopMatrix()
 
 
 class ForcesRenderer(Renderer):
@@ -876,6 +926,11 @@ class RenderContext:
         glPopMatrix()
     def drawCylinder(self, radius, length_z):
         gluCylinder(self.quad, radius, radius, length_z, 16, 1)
+        glColor3f(1., 0., 0.)
+        glPushMatrix()
+        glTranslatef(0.0001, 0., 0.)
+        gluCylinder(self.quad, radius, radius, length_z, 16, 1)
+        glPopMatrix()
         # gleSetNumSides(20)
         # glePolyCylinder(((0,0,-length_z/2.), (0,0,-length_z/2.), (0,0,length_z/2.), (0,0,length_z/2.)), None, radius)
         # gleSetNumSides(12)
@@ -904,11 +959,13 @@ class RenderContext:
 
 
     def drawSphere(self, radius):
-        SLICE = 20; STACK = 20
-        if self.polygonStyle == POLYGON_LINE:
-            glutWireSphere(radius, SLICE, STACK)
-        else:
-            glutSolidSphere(radius, SLICE, STACK)
+        _SLICE_SIZE = 8
+        gluSphere(self.quad2, radius, _SLICE_SIZE, _SLICE_SIZE)
+        # SLICE = 20; STACK = 20
+        # if self.polygonStyle == POLYGON_LINE:
+        #     glutWireSphere(radius, SLICE, STACK)
+        # else:
+        #     glutSolidSphere(radius, SLICE, STACK)
 
     #===============================================================================
     # draw primitives at its position        

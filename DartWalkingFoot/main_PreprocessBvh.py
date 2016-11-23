@@ -5,21 +5,21 @@ import numpy as np
 import sys
 if '../PyCommon/modules' not in sys.path:
     sys.path.append('../PyCommon/modules')
-import Math.mmMath as mm
-import Resource.ysMotionLoader as yf
-import Motion.mmAnalyticIK as aik
-import Motion.ysSkeletonEdit as yse
-import Motion.ysTrajectoryEdit as yte
-import GUI.ysSimpleViewer as ysv
-import Renderer.ysRenderer as yr
-import Motion.ysMotionAnalysis as yma
-import Motion.ysBipedAnalysis as yba
-import Motion.ysMotionExtend as ymt
-import Simulator.ysPhysConfig as ypc
-import Renderer.csVpRenderer as cvr
-import Simulator.csVpWorld as cvw
-import Simulator.csVpModel as cvm
-import ArticulatedBody.ysControl as yct
+import PyCommon.modules.Math.mmMath as mm
+import PyCommon.modules.Resource.ysMotionLoader as yf
+import PyCommon.modules.Motion.mmAnalyticIK as aik
+import PyCommon.modules.Motion.ysSkeletonEdit as yse
+import PyCommon.modules.Motion.ysTrajectoryEdit as yte
+import PyCommon.modules.GUI.ysSimpleViewer as ysv
+import PyCommon.modules.Renderer.ysRenderer as yr
+import PyCommon.modules.Motion.ysMotionAnalysis as yma
+import PyCommon.modules.Motion.ysBipedAnalysis as yba
+import PyCommon.modules.Motion.ysMotionExtend as ymt
+import PyCommon.modules.Simulator.ysPhysConfig as ypc
+import PyCommon.modules.Renderer.csVpRenderer as cvr
+import PyCommon.modules.Simulator.csVpWorld as cvw
+import PyCommon.modules.Simulator.csVpModel as cvm
+import PyCommon.modules.ArticulatedBody.ysControl as yct
 
 def normalizeSkeleton(motion, config):
     motion.scale(config['scale'], False)

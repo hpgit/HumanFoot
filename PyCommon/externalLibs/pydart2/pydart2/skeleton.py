@@ -319,7 +319,7 @@ class Skeleton(object):
         return self.com_acceleration()
 
     def linear_momentum(self):
-        return self.Cdot * self.m
+        return self.dC * self.m
 
     @property
     def P(self):

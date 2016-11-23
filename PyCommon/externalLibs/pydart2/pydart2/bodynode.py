@@ -255,9 +255,17 @@ class BodyNode(object):
         return (Tinv.dot(x_))[:3]
 
     def world_transform(self, ):
+        """Get the transform of this Frame with respect to the World Frame.
+        :return:
+        """
         return papi.bodynode__getWorldTransform(self.wid, self.skid, self.id)
 
     def relative_transform(self, ):
+        """
+        Get the transform of this BodyNode with respect to its parent BodyNode, which is also its parent Frame.
+        Implements dart::dynamics::Frame.
+        :return: np.ndarray
+        """
         return papi.bodynode__getRelativeTransform(self.wid,
                                                    self.skid,
                                                    self.id)

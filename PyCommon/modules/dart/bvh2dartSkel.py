@@ -151,10 +151,11 @@ class DartModelMaker:
     def _createJoint(self, joint, posture, boneTs):
         jointPairs = []
         bodyToJointTs = []
+        jointTypes = []
 
         len_joint_children = len(joint.children)
         if len_joint_children == 0:
-            return jointPairs, bodyToJointTs
+            return jointPairs, bodyToJointTs, jointTypes
 
         def Inv(T):
             return SE3(np.linalg.inv(T))
@@ -181,21 +182,35 @@ class DartModelMaker:
 
             # parentbodyToJointT = Inv(boneTs[parent_index]) * Inv(invLocalT)
             bodyToJointT = Inv(boneTs[joint_index])
+            jointType = "ball"
+            if self.config is not None:
+                if self.config.hasNode(joint_name):
+                    joint_type = self.config.getNode(joint_name).jointType
+                    if joint_type == "B":
+                        jointType = "ball"
+                    elif joint_type == "U":
+                        jointType = "universal"
+                    elif joint_type == "R":
+                        jointType = "revolute"
 
             jointPair = (parent_name, joint_name)
             jointPairs.append(jointPair)
             bodyToJointTs.append(bodyToJointT)
+            jointTypes.append(jointType)
         else:
             jointPair = ("world", joint_name)
             jointPairs.append(jointPair)
             bodyToJointTs.append(Inv(boneTs[joint_index]))
+            jointTypes.append("free")
+
 
         for i in range(len_joint_children):
-            childJointPairs, childbodyToJointTs = self._createJoint(joint.children[i], posture, boneTs)
+            childJointPairs, childbodyToJointTs, childJointTypes = self._createJoint(joint.children[i], posture, boneTs)
             jointPairs.extend(childJointPairs)
             bodyToJointTs.extend(childbodyToJointTs)
+            jointTypes.extend(childJointTypes)
 
-        return jointPairs, bodyToJointTs
+        return jointPairs, bodyToJointTs, jointTypes
 
 
     def AddDartShapeNode(self, T, size, geom, shapeType='visual'):
@@ -292,18 +307,18 @@ class DartModelMaker:
                         else:
                             print("there is no geom Ts!")
 
-                        #TODO:
-                        geomSphereT = copy.deepcopy(geomT)
-                        geomSphereT.SetPosition(geomT*Vec3(0., 0., height/2. - radius))
-
                         etBody.append(self.AddDartShapeNode(geomT, [radius, height-2.*radius], "cylinder"))
-                        etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid"))
-                        etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid", "collision"))
-                        if geomType == "MyFoot3" or geomType == "MyFoot5":
-                            geomSphereT.SetPosition(geomT*Vec3(0., 0., -(height/2. - radius)))
+
+                        geomSphereT = copy.deepcopy(geomT)
+                        geomSphereT.SetPosition(geomT*Vec3(0., 0., -(height/2. - radius)))
+                        if geomType == "MyFoot3":
                             etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid"))
-                            if geomType == "MyFoot3":
-                                etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid", "collision"))
+                            etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid", "collision"))
+
+                        geomSphereT.SetPosition(geomT*Vec3(0., 0., (height/2. - radius)))
+                        etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid"))
+                        if geomType != "MyFoot5":
+                            etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid", "collision"))
 
                         # etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., cylLen_2)), [radius]*3, "ellipsoid"))
                         # etBody.append(self.AddDartShapeNode(SE3(), [radius/2., 2.*cylLen_2], "cylinder"))
@@ -337,11 +352,12 @@ class DartModelMaker:
                         mass = density * radius * radius * math.pi * length
 
                     etBody.append(self.AddDartShapeNode(SE3(), [radius, length-2.*radius], "cylinder"))
-                    etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., length/2.-radius)), [radius*2.]*3, "ellipsoid"))
-                    if geomType == "MyFoot3" or geomType == "MyFoot5":
+                    if geomType == "MyFoot3":
                         etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., -(length/2.-radius))), [radius*2.]*3, "ellipsoid"))
-                        if geomType == "MyFoot3":
-                            etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., -(length/2.-radius))), [radius*2.]*3, "ellipsoid", "collision"))
+                        etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., -(length/2.-radius))), [radius*2.]*3, "ellipsoid", "collision"))
+                    etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., length/2.-radius)), [radius*2.]*3, "ellipsoid"))
+                    if geomType != "MyFoot5":
+                        etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., length/2.-radius)), [radius*2.]*3, "ellipsoid", "collision"))
                 else:
                     length = 1.
                     if cfgNode.length is not None:
@@ -388,7 +404,7 @@ class DartModelMaker:
         self.config = config
 
         names, Ts, offsets, boneTs = self.createBodies(posture)
-        jointPairs, bodyToJointTs = self.createJoints(posture, boneTs)
+        jointPairs, bodyToJointTs, jointTypes = self.createJoints(posture, boneTs)
 
         etSkel = et.Element("skel", {"version": "1.0"})
         etSkelTree = et.ElementTree(etSkel)
@@ -430,16 +446,27 @@ class DartModelMaker:
 
         for i in range(len(jointPairs)):
             jointPair = jointPairs[i]
+            etJoint = et.SubElement(etSkeleton, "joint", {"type": jointTypes[i], "name": "j_"+jointPair[1]})
+            if jointTypes[i] == "universal":
+                etAxis1 = et.SubElement(etJoint, "axis")
+                et.SubElement(etAxis1, "xyz").text = "1 0 0"
+                etAxis2 = et.SubElement(etJoint, "axis2")
+                et.SubElement(etAxis2, "xyz").text = "0 1 0"
+            elif jointTypes[i] == "revolute":
+                etAxis = et.SubElement(etJoint, "axis")
+                et.SubElement(etAxis, "xyz").text = "1 0 0"
 
-            if jointPair[0] == "world":
-                etJoint = et.SubElement(etSkeleton, "joint", {"type": "free", "name": "j_"+jointPair[1]})
-                # etJoint = et.SubElement(etSkeleton, "joint", {"type": "free", "name": jointPair[1]})
-                et.SubElement(etJoint, "transformation").text = SE32vlogSO3str(bodyToJointTs[i])
-            else:
-                etJoint = et.SubElement(etSkeleton, "joint", {"type": "ball", "name": "j_"+jointPair[1]})
-                # etJoint = et.SubElement(etSkeleton, "joint", {"type": "ball", "name": jointPair[1]})
-                et.SubElement(etJoint, "transformation").text = SE32vlogSO3str(bodyToJointTs[i])
-                # et.SubElement(etJoint, "axis_order").text = "xyz"
+            et.SubElement(etJoint, "transformation").text = SE32vlogSO3str(bodyToJointTs[i])
+
+            # if jointPair[0] == "world":
+            #     etJoint = et.SubElement(etSkeleton, "joint", {"type": "free", "name": "j_"+jointPair[1]})
+            #     # etJoint = et.SubElement(etSkeleton, "joint", {"type": "free", "name": jointPair[1]})
+            #     et.SubElement(etJoint, "transformation").text = SE32vlogSO3str(bodyToJointTs[i])
+            # else:
+            #     etJoint = et.SubElement(etSkeleton, "joint", {"type": "ball", "name": "j_"+jointPair[1]})
+            #     # etJoint = et.SubElement(etSkeleton, "joint", {"type": "ball", "name": jointPair[1]})
+            #     et.SubElement(etJoint, "transformation").text = SE32vlogSO3str(bodyToJointTs[i])
+            #     # et.SubElement(etJoint, "axis_order").text = "xyz"
             et.SubElement(etJoint, "parent").text = jointPair[0]
             et.SubElement(etJoint, "child").text = jointPair[1]
 
@@ -462,6 +489,7 @@ class DartModelMaker:
         self.skelname = name
         tree, boneTs = self.posture2dartSkel(posture, config)
         # return prettifyXML(tree.getroot())
+        # print prettifyXML(tree.getroot())
         return et.tostring(tree.getroot(), 'ascii'), boneTs
 
 if __name__ == '__main__':

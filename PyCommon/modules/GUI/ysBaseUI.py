@@ -19,7 +19,7 @@ class Observer:
         raise NotImplementedError("Must subclass me")
     
 class BaseSettings:
-    def __init__(self, x=100, y=100, w=800, h=600):
+    def __init__(self, x=100, y=100, w=1600, h=1200):
         self.x = x
         self.y = y
         self.w = w

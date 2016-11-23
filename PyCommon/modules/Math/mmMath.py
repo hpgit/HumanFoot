@@ -297,6 +297,13 @@ def getSO3FromVectors(vec1, vec2):
                        [(1.0-c)*z*x - s*y,    (1.0-c)*z*y + s*x,    c + (1.0-c)*z*z]])    
     return SO3
 
+def getSE3FromSO3andVec3(SO3, transV):
+    SE3 = np.eye(4)
+    SE3[:3, :3] = SO3
+    SE3[:3, 3] = transV
+    return SE3
+
+
 def getSE3ByTransV(transV):
     SE3 = np.array(
         [[1, 0, 0, transV[0]],

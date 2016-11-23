@@ -188,3 +188,26 @@ const char* MESH_SHAPE(getMeshPath)(int wid, int skid, int bid, int sid) {
     dart::dynamics::MeshShape* shape = GET_MESH_SHAPE(wid, skid, bid, sid);
     return shape->getMeshPath().c_str();
 }
+
+////////////////////////////////////////
+// CylinderShape Functions
+
+double CYLINDER_SHAPE(getRadius)(int wid, int skid, int bid, int sid){
+    dart::dynamics::CylinderShape* shape = GET_CYLINDER_SHAPE(wid, skid, bid, sid);
+    return shape->getRadius();
+}
+
+double CYLINDER_SHAPE(getHeight)(int wid, int skid, int bid, int sid){
+    dart::dynamics::CylinderShape* shape = GET_CYLINDER_SHAPE(wid, skid, bid, sid);
+    return shape->getHeight();
+}
+
+void CYLINDER_SHAPE(setRadius)(int wid, int skid, int bid, int sid, double radius){
+    dart::dynamics::CylinderShape* shape = GET_CYLINDER_SHAPE(wid, skid, bid, sid);
+    shape->setRadius(radius);
+}
+
+void CYLINDER_SHAPE(setHeight)(int wid, int skid, int bid, int sid, double height){
+    dart::dynamics::CylinderShape* shape = GET_CYLINDER_SHAPE(wid, skid, bid, sid);
+    shape->setHeight(height);
+}

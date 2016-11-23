@@ -7,6 +7,7 @@ from __future__ import absolute_import
 # Author(s): Sehoon Ha <sehoon.ha@disneyresearch.com>
 # Disney Research Robotics Group
 from . import pydart2_api as papi
+import numpy as np
 
 
 class Joint(object):
@@ -92,6 +93,18 @@ class Joint(object):
 
 ########################################
 # Joint::Parent and child functions
+    def get_world_frame_after_transform(self, ):
+        T0 = self.child_bodynode.transform()
+        T1 = self.transform_from_child_body_node()
+        T = T0.dot(T1)
+        return T
+
+    def get_world_frame_before_transform(self, ):
+        T0 = self.parent_bodynode.transform()
+        T1 = self.transform_from_parent_body_node()
+        T = T0.dot(T1)
+        return T
+
     def orientation_in_world_frame(self, ):
         T0 = self.child_bodynode.transform()
         T1 = self.transform_from_child_body_node()
@@ -109,6 +122,12 @@ class Joint(object):
 
     def child_body_node_id(self, ):
         return papi.joint__getChildBodyNode(self.wid, self.skid, self.id)
+
+    def get_local_transform(self, ):
+        jointTopBody = np.linalg.inv(self.transform_from_parent_body_node()) # type: np.ndarray
+        cBodyToJoint = self.transform_from_child_body_node() # type: np.ndarray
+        pBodyTocBody = self.child_bodynode.relative_transform() # type: np.ndarray
+        return np.dot(jointTopBody, np.dot(pBodyTocBody, cBodyToJoint))
 
     def set_transform_from_parent_body_node(self, T):
         papi.joint__setTransformFromParentBodyNode(self.wid,
