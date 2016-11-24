@@ -130,8 +130,10 @@ set_source_files_properties(${pydart2_interfaces} PROPERTIES CPLUSPLUS ON)
 set(CMAKE_SWIG_OUTDIR "${CMAKE_SOURCE_DIR}/pydart2")
 swig_add_module(pydart2_api python ${pydart2_py} ${pydart2_srcs} ${pydart2_hdrs} ${pydart2_interfaces})
 swig_link_libraries(pydart2_api ${PYTHON_LIBRARIES})
+#swig_link_libraries(pydart2_api ${LIB_DART} ${LIB_DART-GUI} ${LIB_DART-OPTIMIZER-IPOPT} ${LIB_DART-OPTIMIZER-NLOPT}
+#  ${LIB_DART-PLANNING} ${LIB_DART-UTILS} ${LIB_DART-UTILS-URDF})
 swig_link_libraries(pydart2_api ${LIB_DART} ${LIB_DART-GUI} ${LIB_DART-OPTIMIZER-IPOPT} ${LIB_DART-OPTIMIZER-NLOPT}
-  ${LIB_DART-PLANNING} ${LIB_DART-UTILS} ${LIB_DART-UTILS-URDF})
+   ${LIB_DART-UTILS} ${LIB_DART-UTILS-URDF})
 swig_link_libraries(pydart2_api ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
 swig_link_libraries(pydart2_api ${BULLET_LIBRARIES})
 

@@ -76,21 +76,21 @@ def basicTest3():
         # totalMass += node.mass
 
         node = mcfg.getNode('Hips')
-        node.geom = 'MyFoot3'
-        # node.geom = 'MyBox'
+        # node.geom = 'MyFoot3'
+        node.geom = 'MyBox'
         node.jointType = "B"
         # node.length = 1.
         node.mass = 1.
 
         node = mcfg.getNode('foot00')
-        node.geom = 'MyFoot4'
-        # node.geom = 'MyBox'
+        # node.geom = 'MyFoot4'
+        node.geom = 'MyBox'
         node.jointType = "U"
         node.mass = 1.
 
         node = mcfg.getNode('foot01')
-        node.geom = 'MyFoot4'
-        # node.geom = 'MyBox'
+        # node.geom = 'MyFoot4'
+        node.geom = 'MyBox'
         node.jointType = "U"
         node.mass = 1.
 

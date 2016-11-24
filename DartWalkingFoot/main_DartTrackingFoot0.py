@@ -3,14 +3,10 @@ import copy, os.path, cPickle, time
 import numpy as np
 
 from PyCommon.modules.Math import mmMath as mm
-# from PyCommon.modules.Math import csMath as cm
 from PyCommon.modules.Math import ysFunctionGraph as yfg
 from PyCommon.modules.Renderer import ysRenderer as yr
-# from PyCommon.modules.Renderer import csVpRenderer as cvr
-# from PyCommon.modules.Simulator import csVpWorld as cvw
-# from PyCommon.modules.Simulator import csVpModel as cvm
 from PyCommon.modules.Simulator import ysVpUtil as yvu
-from PyCommon.modules.GUI import ysSimpleViewer as ysv
+from PyCommon.modules.GUI import ysSimpleViewer_ori as ysv
 from PyCommon.modules.GUI import ysMultiViewer as ymv
 from PyCommon.modules.ArticulatedBody import ysControl as yct
 from PyCommon.modules.ArticulatedBody import ysReferencePoints as yrp
@@ -29,17 +25,9 @@ from PyCommon.modules.Simulator import hpLCPSimulator as hls
 from PyCommon.modules.GUI import hpSimpleViewer as hsv
 from PyCommon.modules.Util import ysPythonEx as ype
 
-# from PyCommon.modules.Simulator import csVpModel_py as pcvm
-# from PyCommon.modules.Simulator import csVpWorld_py as pcvw
-
-from PyCommon.modules.dart.bvh2dartSkel import DartModelMaker
 from PyCommon.modules import pydart2 as pydart
-from PyCommon.modules.pydart2.skeleton import Skeleton as pd2Skeleton
-from PyCommon.modules.pydart2.joint import Joint as pd2Joint
-from PyCommon.modules.pydart2.bodynode import BodyNode as pd2Body
 from PyCommon.modules.Simulator import csDartModel as cpm
 from pdcontroller import PDController
-
 
 import math
 from matplotlib import pyplot as plt
@@ -51,6 +39,8 @@ current_path = os.path.dirname(os.path.abspath(__file__))
 #CHARACTER_COLOR = (102,102,153)
 MOTION_COLOR = (213,111,162)
 CHARACTER_COLOR = (20,166,188)
+
+SEGMENT_FOOT = True
 
 def buildMassMap():
     massMap = {}
@@ -104,12 +94,12 @@ def buildMassMap():
     massMap['LeftLeg'] += 5.
 
     # right foot : 4
-    # massMap['RightFoot'] += 2.
-    massMap['RightFoot'] += .4
+    massMap['RightFoot'] += 2.
+    # massMap['RightFoot'] += .4
 
     # left foot : 4
-    # massMap['LeftFoot'] += 2.
-    massMap['LeftFoot'] += .4
+    massMap['LeftFoot'] += 2.
+    # massMap['LeftFoot'] += .4
     '''
     massMap['RightFoot_foot_0_0'] = .3
     massMap['RightFoot_foot_0_1'] = .3
@@ -191,7 +181,7 @@ def buildMcfg():
     # capsulize('RightFoot')
     # capsulize('LeftFoot')
 
-    if True:
+    if SEGMENT_FOOT:
         node = mcfg.getNode('RightFoot')
         node.density = 200.
         node.geom = 'MyFoot5'
@@ -426,7 +416,7 @@ def walkings():
     # motion
     bvh = yf.readBvhFileAsBvh(dir+filename)
 
-    if True:
+    if SEGMENT_FOOT:
         # partBvhFilePath = '../PyCommon/modules/samples/simpleJump_long_test2.bvh'
         partBvhFilePath = current_path+'/../PyCommon/modules/samples/simpleJump_long_test2.bvh'
         partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
@@ -612,7 +602,9 @@ def walkings():
     #     dartModel.skeleton.joints[i].set_actuator_type(pydart.Joint.ACCELERATION)
 
 
-    # lID = controlModel.name2id('LeftFoot');      rID = controlModel.name2id('RightFoot')
+    lID = dartModel.skeleton.bodynode_index('LeftFoot')
+    rID = dartModel.skeleton.bodynode_index('RightFoot')
+
     lUpLeg = skeleton.getJointIndex('LeftUpLeg');rUpLeg = skeleton.getJointIndex('RightUpLeg')
     lKnee = skeleton.getJointIndex('LeftLeg');   rKnee = skeleton.getJointIndex('RightLeg')
     lFoot = skeleton.getJointIndex('LeftFoot');  rFoot = skeleton.getJointIndex('RightFoot')
@@ -635,8 +627,9 @@ def walkings():
     print('ToeMass: ', ToeMass)
     #'''
 
-    # halfFootHeight = controlModel.getBodyShape(lFoot)[1] / 2.
     halfFootHeight = 0.05
+    if not SEGMENT_FOOT:
+        halfFootHeight = dartModel.getBody(lFoot).shapenodes[0].shape.size()[1]/2.
 
     for fi in forceInfos:
         fi.targetBody = spine
@@ -993,7 +986,8 @@ def walkings():
                 R_stance_foot = motion_swf_height[frame].getJointOrientationGlobal(stanceFoot)
 
                 if OLD_SWING_HEIGHT:
-                    height_tar = motion_swf_height[frame].getJointPositionGlobal(swingFoot)[1] - motion_swf_height[frame].getJointPositionGlobal(stanceFoot)[1]
+                    height_tar = motion_swf_height[frame].getJointPositionGlobal(swingFoot)[1] \
+                                 - motion_swf_height[frame].getJointPositionGlobal(stanceFoot)[1]
                 else:
                     height_tar = motion_swf_height[prev_frame].getJointPositionGlobal(swingFoot)[1] - groundHeight
                     d_height_tar = motion_swf_height.getJointVelocityGlobal(swingFoot, prev_frame)[1]
@@ -1006,7 +1000,8 @@ def walkings():
                 #                motion_debug2[frame].translateByTarget(controlModel.getJointPositionGlobal(0))
 
                 if OLD_SWING_HEIGHT:
-                    height_cur = motion_swf_height[frame].getJointPositionGlobal(swingFoot)[1] - motion_swf_height[frame].getJointPositionGlobal(stanceFoot)[1]
+                    height_cur = motion_swf_height[frame].getJointPositionGlobal(swingFoot)[1] \
+                                 - motion_swf_height[frame].getJointPositionGlobal(stanceFoot)[1]
                 else:
                     height_cur = dartModel.getJointPositionGlobal(swingFoot)[1] - halfFootHeight - c_swf_offset
                     d_height_cur = dartModel.getJointVelocityGlobal(swingFoot)[1]
@@ -1248,6 +1243,9 @@ def walkings():
         #            if len(stanceFoots)>0:
         #                avg_stf_v[0] += controlModel.getJointVelocityGlobal(stanceFoots[0])
         #                avg_stf_av[0] += controlModel.getJointAngVelocityGlobal(stanceFoots[0])
+
+
+
         bodyIDs, contactPositions, contactPositionLocals, velocities = dartModel.getContactPoints(bodyIDsToCheck)
 
         del rd_point2[:]
@@ -1270,26 +1268,8 @@ def walkings():
         #=======================================================================
         lastFrame = False
 
-
         # print curState
         # print bodyIDs
-
-        '''
-        print skeleton.getJointIndex('LeftFoot') = 3
-        print skeleton.getJointIndex('LeftFoot_foot_0_0') = 4
-        print skeleton.getJointIndex('LeftFoot_foot_0_1') = 5
-        print skeleton.getJointIndex('LeftFoot_foot_1_0')
-        print skeleton.getJointIndex('LeftFoot_foot_1_1')
-        print skeleton.getJointIndex('LeftFoot_foot_2_0')
-        print skeleton.getJointIndex('LeftFoot_foot_2_1') = 9
-        print skeleton.getJointIndex('RightFoot') = 18
-        print skeleton.getJointIndex('RightFoot_foot_0_0') = 19
-        print skeleton.getJointIndex('RightFoot_foot_0_1')
-        print skeleton.getJointIndex('RightFoot_foot_1_0')
-        print skeleton.getJointIndex('RightFoot_foot_1_1')
-        print skeleton.getJointIndex('RightFoot_foot_2_0')
-        print skeleton.getJointIndex('RightFoot_foot_2_1') = 24
-        '''
 
         if SEGMENT_EDITING:
             if curState==yba.GaitState.STOP:
@@ -1297,29 +1277,12 @@ def walkings():
                     lastFrame = True
 
             elif (curState==yba.GaitState.LSWING or curState==yba.GaitState.RSWING) and t>c_min_contact_time:
-                # original
-                '''
-                swingID = lID if curState==yba.GaitState.LSWING else rID
                 contact = False
 
-                if swingID in bodyIDs:
-                    minContactVel = 1000.
-                    for i in range(len(bodyIDs)):
-                        if bodyIDs[i]==swingID:
-                            vel = controlModel.getBodyVelocityGlobal(swingID, contactPositionLocals[i])
-                            vel[1] = 0
-                            contactVel = mm.length(vel)
-                            if contactVel < minContactVel: minContactVel = contactVel
-                    if minContactVel < c_min_contact_vel: contact = True
+                if not SEGMENT_FOOT:
+                    # original box foot
+                    swingID = lID if curState==yba.GaitState.LSWING else rID
 
-                extended[0] = False
-                '''
-                # segmented foot
-                swingIDs = copy.deepcopy(lIDs) if curState==yba.GaitState.LSWING else copy.deepcopy(rIDs)
-
-                contact = False
-
-                for swingID in swingIDs:
                     if swingID in bodyIDs:
                         minContactVel = 1000.
                         for i in range(len(bodyIDs)):
@@ -1329,6 +1292,23 @@ def walkings():
                                 contactVel = mm.length(vel)
                                 if contactVel < minContactVel: minContactVel = contactVel
                         if minContactVel < c_min_contact_vel: contact = True
+
+                else:
+                    # segmented foot
+                    swingIDs = copy.deepcopy(lIDs) if curState==yba.GaitState.LSWING else copy.deepcopy(rIDs)
+
+                    contact = False
+
+                    for swingID in swingIDs:
+                        if swingID in bodyIDs:
+                            minContactVel = 1000.
+                            for i in range(len(bodyIDs)):
+                                if bodyIDs[i]==swingID:
+                                    vel = dartModel.getBodyVelocityGlobal(swingID, contactPositionLocals[i])
+                                    vel[1] = 0
+                                    contactVel = mm.length(vel)
+                                    if contactVel < minContactVel: minContactVel = contactVel
+                            if minContactVel < c_min_contact_vel: contact = True
 
                 extended[0] = False
 

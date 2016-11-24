@@ -6,6 +6,7 @@ import sys
 import math
 import numpy as np
 import numpy.linalg as npl
+import itertools
 
 sys.path.append('../../..')
 
@@ -92,10 +93,24 @@ class DartModel:
                             positions.append(lowestPoint)
                             positionLocals.append(body.to_local(lowestPoint))
                             #TODO:
-                            velocities.append(body.com_spatial_velocity())
+                            # velocities.append(body.com_spatial_velocity())
                     elif geomType == "BOX":
                         shape = shapeNode.shape # type: pydart.BoxShape
-                        #TODO:
+                        data = shape.size()/2.
+                        for perm in itertools.product([1, -1], repeat=3):
+                            print perm
+                            positionLocal = np.multiply(np.array((data[0], data[1], data[2])), np.array(perm))
+                            position = np.dot(geomT[:3, :3], positionLocal) + geomT[:3, 3]
+                            #TODO:
+                            # velocity = node.body.GetLinVelocity(pyVec3_2_Vec3(positionLocal))
+
+                            if position[1] < 0.:
+                                bodyIDs.append(body.index_in_skeleton())
+                                positions.append(position)
+                                positionLocals.append(positionLocal)
+                                # forces.append(force)
+                                #TODO:
+                                # velocities.append(velocity)
 
         return bodyIDs, positions, positionLocals, None
         # return self.calcPenaltyForce(bodyIDsToCheck, None, 0., 0., True)
@@ -514,16 +529,14 @@ class DartModel:
         return ls
 
     def translateByOffset(self, offset):
-        for i in range(len(self._nodes)):
-            self.setBodyPositionGlobal(i, self.getBodyPositionGlobal(i) + offset)
+        q = self.skeleton.q
+        q[3:6] += np.array(offset)
+        self.skeleton.set_positions(q)
 
     def rotate(self, rotation):
-        R = pySO3_2_SE3(rotation)
-
-        bodyFrame = self._nodes[0].body.GetFrame()
-        self._nodes[0].body.SetFrame(bodyFrame * R)
-
-        self._pWorld.UpdateFrame()
+        q = self.skeleton.q
+        q[:3] = mm.logSO3(np.dot(rotation, mm.exp(self.skeleton.q[:3])))
+        self.skeleton.set_positions(q)
 
     def ignoreCollisionWith(self, pBody):
         for i in range(len(self._nodes)):
@@ -561,19 +574,23 @@ class DartModel:
 
 
     def __str__(self):
-        strstr = VpModel.__str__(self)
-        strstr += "<INTERNAL JOINTS>\n"
-        for i in range(1, len(self._nodes)):
-            strstr += "[" + str(i-1) + "]:" + self._nodes[i].name + ", " + str(self._nodes[i].dof) + "DOF\n"
+        strstr = "<JOINTS, BODIES>\n"
+        for i in range(len(self.skeleton.bodynodes)):
+            strstr += "[" + str(i) + "]" + self.skeleton.joints[i].name + " ," + self.skeleton.bodynodes[i].name+ "\n"
         strstr += "\n"
+        strstr = "<BODY MASSES>\n"
+        for i in range(len(self.skeleton.bodynodes)):
+            strstr += "[" + str(i) + "]" + str(self.skeleton.bodynodes[i].mass) + ", \n"
+        strstr += "\n"
+        # strstr += "<INTERNAL JOINTS>\n"
+        # for i in range(1, len(self._nodes)):
+        #     strstr += "[" + str(i-1) + "]:" + self._nodes[i].name + ", " + str(self._nodes[i].dof) + "DOF\n"
+        # strstr += "\n"
 
         return strstr
 
     def getInternalJointDOFs(self):
-        # ls = [3] * (len(self._nodes)-1)
-        # for i in range(1, len(self._nodes)):
-        #     ls.append(3)
-        ls = [self._nodes[i].dof for i in range(1, len(self._nodes))]
+        ls = [self.getJoint(i).num_dofs() for i in range(1, len(self.skeleton.joints))]
         return ls
 
     def getTotalInternalJointDOF(self):
@@ -581,9 +598,7 @@ class DartModel:
         return sum(self.getInternalJointDOFs())
 
     def getDOFs(self):
-        ls = [6]
-        ls.extend(self.getInternalJointDOFs())
-        return ls
+        return [joint.num_dofs() for joint in self.skeleton.joints]
 
     def getTotalDOF(self):
         return self.skeleton.num_dofs()
@@ -594,124 +609,10 @@ class DartModel:
     def get3dExtendDOFs(self):
         return [[6]] + [[3]]*(len(self._nodes)-1)
 
-    def createJoints(self, posture):
-        """
-
-        :param posture: ym.JointPosture
-        :return:
-        """
-        joint = posture.skeleton.root
-        self._createJoint(joint, posture)
-
-    def _createJoint(self, joint, posture):
-        """
-
-        :param joint: ym.Joint
-        :param posture: ym.JointPosture
-        :return:
-        """
-        len_joint_children = len(joint.children)
-        if len_joint_children == 0:
-            return
-
-        offset = joint.offset
-        P = SE3(pyVec3_2_Vec3(joint.offset))
-        joint_name = joint.name
-        # joint_index = posture.skeleton.getElementIndex(joint_name)
-        # R = pySO3_2_SE3(posture.getLocalR(joint_index))
-        joint_index = posture.skeleton.getJointIndex(joint_name)
-        R = pySO3_2_SE3(posture.getJointOrientationLocal(joint_index))
-
-        invLocalT = Inv(R) * Inv(P)
-
-        temp_joint = joint
-        nodeExistParentJoint = None
-        while True:
-            if temp_joint.parent is None:
-                nodeExistParentJoint = None
-                break
-            else:
-                temp_parent_name = temp_joint.parent.name
-                # temp_parent_index = posture.skeleton.getElementIndex(temp_parent_name)
-                temp_parent_index = posture.skeleton.getJointIndex(temp_parent_name)
-
-                if self._nodes[temp_parent_index] is not None:
-                    nodeExistParentJoint = temp_joint.parent
-                    break
-                else:
-                    temp_joint = temp_joint.parent
-
-                    offset = temp_joint.offset
-                    P = SE3(pyVec3_2_Vec3(offset))
-
-                    joint_name = temp_joint.name
-                    localSO3 = posture.localRs[joint_index]
-                    R = pySO3_2_SE3(localSO3)
-
-                    invLocalT = invLocalT * Inv(R) * Inv(P)
-
-        # len_joint_children = len(joint.children)
-
-        # if (nodeExistParentJoint is not None) \
-        #        and (len_joint_children > 0) \
-        #        and self._config.hasNode(joint_name):
-        if nodeExistParentJoint is None:
-            self._nodes[joint_index].dof = 6
-
-        elif self._config.hasNode(joint_name):
-            pNode = self._nodes[joint_index]
-            cfgNode = self._config.getNode(joint_name)
-
-            parent_name = nodeExistParentJoint.name
-            # parent_index = posutre.skeleton.getElementIndex(parent_name)
-            parent_index = posture.skeleton.getJointIndex(parent_name)
-            pParentNode = self._nodes[parent_index]
-            parentCfgNode = self._config.getNode(parent_name)
-
-            # offset = cfgNode.offset
-            # offsetT = SE3(pyVec3_2_Vec3(offset))
-
-            # parentOffset = parentCfgNode.offset
-            # parentOffsetT = SE3(pyVec3_2_Vec3(parentOffset))
-
-            if cfgNode.jointType == "R":
-                pNode.dof = 1
-                pNode.joint = hpRJoint()
-                pNode.joint.SetAxis(Vec3(1., 0., 0.))
-            elif cfgNode.jointType == "U":
-                pNode.dof = 2
-                pNode.joint = hpUJoint()
-                pNode.joint.SetAxis(0, Vec3(1., 0., 0.))
-                pNode.joint.SetAxis(1, Vec3(0., 1., 0.))
-                # pNode.joint.SetAxis(1, Vec3(0., 0., 1.))
-            elif cfgNode.jointType == "B":
-                pNode.dof = 3
-                pNode.joint = hpBJoint()
-            else:
-                pNode.dof = 3
-                pNode.joint = hpBJoint()
-
-            pParentNode.body.SetJoint(pNode.joint, Inv(self._boneTs[parent_index]) * Inv(invLocalT))
-            pNode.body.SetJoint(pNode.joint, Inv(self._boneTs[joint_index]))
-
-            kt = 16.
-            dt = 8.
-            el = Inertia(kt)
-            dam = Inertia(dt)
-            # pNode.joint.SetElasticity(el)
-            # pNode.joint.SetDamping(dam)
-            pNode.use_joint = True
-
-        for i in range(len_joint_children):
-            self._createJoint(joint.children[i], posture)
-
     def ignoreCollisionBtwnBodies(self):
         for i in range(len(self._nodes)):
             for j in range(i, len(self._nodes)):
                 self._pWorld.IgnoreCollision(self._nodes[i].body, self._nodes[j].body)
-
-    def addBodiesToWorld(self, createPosture):
-        self._pWorld.AddBody(self._nodes[0].body)
 
     def update(self, posture):
         """
@@ -734,27 +635,29 @@ class DartModel:
         # joint = posture.skeleton.root
         # self._updateJoint(joint, posture)
 
-    def fixBody(self, index):
-        self._nodes[index].body.SetGround()
-
     def initializeHybridDynamics(self, flotingBase=True):
         rootIndex = 0
-        for i in range(len(self._nodes)):
+        for i in range(self.skeleton.num_joints()):
+            joint = self.getJoint(i)
             if i == rootIndex:
                 if flotingBase:
-                    self._nodes[i].body.SetHybridDynamicsType(DYNAMIC)
+                    joint.set_actuator_type(pydart.Joint.FORCE)
                 else:
-                    self._nodes[i].body.SetHybridDynamicsType(KINEMATIC)
+                    joint.set_actuator_type(pydart.Joint.ACCELERATION)
             else:
-                self._nodes[i].joint.SetHybridDynamicsType(KINEMATIC)
+                joint.set_actuator_type(pydart.Joint.ACCELERATION)
+
+    def initializeForwardDynamics(self):
+        for i in range(self.skeleton.num_joints()):
+            joint = self.getJoint(i).set_actuator_type(pydart.Joint.FORCE)
 
     def makeDOFFlatList(self):
         return [None] * self.getTotalDOF()
 
     def makeDOFNestedList(self):
         ls = []
-        for node in self._nodes:
-            ls.append([None]*node.dof)
+        for joint in self.skeleton.joints:
+            ls.append([None]*joint.num_dofs())
         return ls
 
     def makeExtendDOFFlatList(self):
@@ -774,8 +677,6 @@ class DartModel:
         raise NotImplementedError
         # return
 
-    def initializeForwardDynamics(self):
-        pass
 
     def solveHybridDynamics(self):
         self._nodes[0].body.GetSystem().HybridDynamics()
