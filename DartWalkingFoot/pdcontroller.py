@@ -2,6 +2,7 @@ import numpy as np
 from numpy.linalg import inv
 from PyCommon.modules import pydart2 as pydart
 from PyCommon.modules.Math import mmMath as mm
+import math
 
 
 class PDController:
@@ -20,6 +21,7 @@ class PDController:
         self.preoffset = 0.0
 
         self.Rs = None
+        self.vel = None
 
     def compute(self):
         skel = self.skel
@@ -54,8 +56,11 @@ class PDController:
     def setTartgetPose(self, Rs):
         self.Rs = Rs
 
+    def setTargetVel(self, vel):
+        self.vel = vel
+
     def calcDeltaq(self):
-        deltaq = self.skel.q
+        deltaq = np.zeros(self.skel.q.shape)
         if self.Rs is not None:
             p_r0 = self.Rs[0][0]
             p0 = self.skel.q[3:6]
@@ -66,10 +71,29 @@ class PDController:
             deltaq[:6] = np.hstack((mm.logSO3(np.dot(th0.transpose(), th_r0)), p_r0 - p0))
             # TODO:
             # apply variety dofs
-            for i in range(1, len(self.Rs)):
-                deltaq[3*i+3:3*i+6] = mm.logSO3(np.dot(self.skel.joints[i].get_local_transform()[:3, :3].transpose(), self.Rs[i]))
+
+            dofOffset = 6
+            for i in range(1, len(self.skel.joints)):
+                # for i in range(1, len(self.Rs)):
+                joint = self.skel.joints[i]
+                if joint.num_dofs() == 3:
+                    deltaq[dofOffset:dofOffset+3] = mm.logSO3(np.dot(joint.get_local_transform()[:3, :3].transpose(), self.Rs[i]))
+                elif joint.num_dofs() == 2:
+                    targetAngle1 = math.atan2(-self.Rs[i][1,2], self.Rs[i][2,2])
+                    targetAngle2 = math.atan2(-self.Rs[i][0,1], self.Rs[i][0,0])
+                    deltaq[dofOffset:dofOffset+2] = np.array([targetAngle1, targetAngle2])
+                elif joint.num_dofs() == 1:
+                    deltaq[dofOffset] = math.atan2(self.Rs[i][2, 1], self.Rs[i][1,1])
+                dofOffset += joint.num_dofs()
 
             # a_des0 = kt*(p_r0 - p0) + dt*(- v0) #+ a_r0
             # ddth_des0 = kt*(mm.logSO3(np.dot(th0.transpose(), th_r0))) + dt*(- dth0) #+ ddth_r0
 
         return deltaq
+
+    def calcDeltadq(self):
+        deltadq = np.zeros(self.skel.dq.shape)
+        if self.vel is not None:
+
+            dth0
+            deltadq[:6] = np.hstack(())

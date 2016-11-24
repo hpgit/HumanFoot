@@ -3,12 +3,12 @@ import copy, os.path, cPickle, time
 import numpy as np
 
 from PyCommon.modules.Math import mmMath as mm
-from PyCommon.modules.Math import csMath as cm
+# from PyCommon.modules.Math import csMath as cm
 from PyCommon.modules.Math import ysFunctionGraph as yfg
 from PyCommon.modules.Renderer import ysRenderer as yr
-from PyCommon.modules.Renderer import csVpRenderer as cvr
-from PyCommon.modules.Simulator import csVpWorld as cvw
-from PyCommon.modules.Simulator import csVpModel as cvm
+# from PyCommon.modules.Renderer import csVpRenderer as cvr
+# from PyCommon.modules.Simulator import csVpWorld as cvw
+# from PyCommon.modules.Simulator import csVpModel as cvm
 from PyCommon.modules.Simulator import ysVpUtil as yvu
 from PyCommon.modules.GUI import ysSimpleViewer as ysv
 from PyCommon.modules.GUI import ysMultiViewer as ymv
@@ -196,13 +196,13 @@ def buildMcfg():
         node.density = 200.
         node.geom = 'MyFoot5'
         node.width = 0.01
-        node.jointType = 'U'
+        node.jointType = 'B'
 
         node = mcfg.getNode('LeftFoot')
         node.density = 200.
         node.geom = 'MyFoot5'
         node.width = 0.01
-        node.jointType = 'U'
+        node.jointType = 'B'
 
     # bird foot
     # capsulize('RightFoot_foot_0_0')
@@ -422,7 +422,6 @@ def walkings():
     #    filename = 'wd2_WalkBackward00_REPEATED.bvh'
 
     # motion
-    #TODO:
     bvh = yf.readBvhFileAsBvh(dir+filename)
 
     if True:
@@ -487,19 +486,6 @@ def walkings():
     stepsPerFrame = 30
     wcfg.timeStep = (frameTime)/stepsPerFrame
 
-    vpWorld = cvw.VpWorld(wcfg)
-    # vpWorld = pcvw.VpWorld(wcfg)
-    # motionModel = cvm.VpMotionModel(vpWorld, motion_ori[0], mcfg)
-    # motionModel = pcvm.VpMotionModel(vpWorld, motion_ori[0], mcfg)
-    # ModelOffset = np.array([0., 0., 0.])
-    # motionModel.translateByOffset(ModelOffset)
-    vpWorld.initialize()
-    # controlModel = None
-
-    #   motionModel.recordVelByFiniteDiff()
-    # controlModel.initializeHybridDynamics()
-    # controlModel.initializeForwardDynamics()
-
     pydart.init()
     dartModel = cpm.DartModel(wcfg, motion_ori[0], mcfg)
     dartMotionModel = cpm.DartModel(wcfg, motion_ori[0], mcfg)
@@ -510,6 +496,7 @@ def walkings():
     # q[3:6] = motion_ori.getJointPositionGlobal(0, 0)
     pdController = PDController(dartModel.skeleton, wcfg.timeStep)
     dartModel.skeleton.set_controller(pdController)
+    # dartModel.world.set_gravity(np.array((0., 0., 0.)))
 
     #===============================================================================
     # load segment info
@@ -580,7 +567,8 @@ def walkings():
     #===============================================================================
     # information
     #===============================================================================
-    bodyIDsToCheck = range(vpWorld.getBodyNum())
+    # bodyIDsToCheck = range(vpWorld.getBodyNum())
+    bodyIDsToCheck = range(dartModel.getBodyNum())
     mus = [mu]*len(bodyIDsToCheck)
 
     totalMass = dartModel.getTotalMass()
@@ -613,11 +601,13 @@ def walkings():
     #     controlModel.setHybridDynamics(i, "DYNAMIC")
 
     # each dof is whether KINEMATIC or not
-    # hdAccMask = [True]*controlModel.getTotalDOF()
     hdAccMask = [True]*dartModel.getTotalDOF()
     hdAccMask[:6] = [False]*6
     # for i in lIDs+rIDs:
     #     hdAccMask[3+3*i : 6+3*i] = [False]*3
+
+    # for i in range(1, len(dartModel.skeleton.joints)):
+    #     dartModel.skeleton.joints[i].set_actuator_type(pydart.Joint.ACCELERATION)
 
 
     # lID = controlModel.name2id('LeftFoot');      rID = controlModel.name2id('RightFoot')
@@ -674,8 +664,6 @@ def walkings():
     if MULTI_VIEWER:
         viewer = ymv.MultiViewer(800, 655)
         #        viewer = ymv.MultiViewer(800, 655, True)
-        # viewer.setRenderers1([yr.VpModelRenderer(motionModel, MOTION_COLOR, yr.POLYGON_FILL)])
-        # viewer.setRenderers2([yr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL)])
         viewer.setRenderers1([yr.DartModelRenderer(dartMotionModel, MOTION_COLOR)])
         viewer.setRenderers2([yr.DartModelRenderer(dartModel.world, (200, 200, 0))])
     else:
@@ -683,9 +671,8 @@ def walkings():
         # viewer = hsv.hpSimpleViewer()
         #    viewer.record(False)
 
-        viewer.doc.addRenderer('motionModel', yr.DartModelRenderer(dartMotionModel, (0,150,255)))
-        # viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (50,200,200), yr.POLYGON_FILL))
-        viewer.doc.addRenderer('controlModel', yr.DartModelRenderer(dartModel, (200, 200, 0)))
+        viewer.doc.addRenderer('motionModel', yr.DartModelRenderer(dartMotionModel, (0,150,255), yr.POLYGON_LINE))
+        viewer.doc.addRenderer('controlModel', yr.DartModelRenderer(dartModel, (50, 200, 200)))
 
         # viewer.doc.addObject('motion_ori', motion_ori)
         # viewer.doc.addRenderer('motion_ori', yr.JointMotionRenderer(motion_ori, (0,100,255), yr.LINK_BONE))
@@ -918,7 +905,8 @@ def walkings():
             for stanceFoot in stanceFoots:
                 R_target_foot = motion_seg[frame].getJointOrientationGlobal(stanceFoot)
                 R_current_foot = motion_stf_stabilize[frame].getJointOrientationGlobal(stanceFoot)
-                motion_stf_stabilize[frame].setJointOrientationGlobal(stanceFoot, cm.slerp(R_current_foot, R_target_foot , stf_stabilize_func(t)))
+                motion_stf_stabilize[frame].setJointOrientationGlobal(stanceFoot, mm.slerp(R_current_foot, R_target_foot , stf_stabilize_func(t)))
+                # motion_stf_stabilize[frame].setJointOrientationGlobal(stanceFoot, cm.slerp(R_current_foot, R_target_foot , stf_stabilize_func(t)))
                 #                R_target_foot = motion_seg[frame].getJointOrientationLocal(stanceFoot)
                 #                R_current_foot = motion_stf_stabilize[frame].getJointOrientationLocal(stanceFoot)
                 #                motion_stf_stabilize[frame].setJointOrientationLocal(stanceFoot, cm.slerp(R_current_foot, R_target_foot , stf_stabilize_func(t)))
@@ -937,7 +925,8 @@ def walkings():
                     # R_character = controlModel.getJointOrientationGlobal(stanceLeg)
                     R_character = dartModel.getJointOrientationGlobal(stanceLeg)
                     # motion_ori[0].skeleton.getJointName(stanceLeg)
-                    motion_match_stl[frame].setJointOrientationGlobal(stanceLeg, cm.slerp(R_motion, R_character, match_stl_func(t)))
+                    # motion_match_stl[frame].setJointOrientationGlobal(stanceLeg, cm.slerp(R_motion, R_character, match_stl_func(t)))
+                    motion_match_stl[frame].setJointOrientationGlobal(stanceLeg, mm.slerp(R_motion, R_character, match_stl_func(t)))
 
                     #                    t_y = match_stl_func_y(t)
                     #                    t_xz = match_stl_func(t)
@@ -1089,7 +1078,6 @@ def walkings():
                 if frame < 5: break
                 motion_stf_balancing[frame].mulJointOrientationGlobal(stanceFoot, R_stb)
         #TODO:
-        '''
         # hwangpil
         # swing foot heel strike adjustment
         # make heel as flat as possible to ground
@@ -1103,11 +1091,13 @@ def walkings():
 
         # stance foot ankle pushup adjustment
         # stf_ankle_func = yfg.hermite2nd
+        '''
         stf_ankle_func = lambda x: -2*(x**2)+3*(x**3)
         if len(stanceFoots) == 1:
             for stanceFoot in stanceFoots:
                 R_target_ankle = mm.exp(stf_ankle_func(t)*mm.deg2Rad(20.)*np.array([1., 0., 0.]))
                 motion_stf_balancing[frame].mulJointOrientationLocal(stanceFoot, R_target_ankle)
+        #'''
         # stance foot toe adjustment
         # stf_toe_func = yfg.hermite2nd
         stf_toe_func = lambda x: -2*(x**8)+3*(x**9)
@@ -1150,6 +1140,7 @@ def walkings():
                 weightMap[jointIdx] = toeWeights
 
         th_r = motion_control.getDOFPositions(frame)
+        # th_r = motion_ori.getDOFPositions(frame)
         th = dartModel.skeleton.q
         # th = controlModel.getDOFPositions()
         dth_r = motion_control.getDOFVelocities(frame)

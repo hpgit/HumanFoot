@@ -311,8 +311,9 @@ class DartModelMaker:
 
                         geomSphereT = copy.deepcopy(geomT)
                         geomSphereT.SetPosition(geomT*Vec3(0., 0., -(height/2. - radius)))
-                        if geomType == "MyFoot3":
+                        if geomType == "MyFoot3" or geomType =="MyFoot4":
                             etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid"))
+                        if geomType == "MyFoot3":
                             etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid", "collision"))
 
                         geomSphereT.SetPosition(geomT*Vec3(0., 0., (height/2. - radius)))
@@ -352,8 +353,9 @@ class DartModelMaker:
                         mass = density * radius * radius * math.pi * length
 
                     etBody.append(self.AddDartShapeNode(SE3(), [radius, length-2.*radius], "cylinder"))
-                    if geomType == "MyFoot3":
+                    if geomType == "MyFoot3" or geomType =="MyFoot4":
                         etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., -(length/2.-radius))), [radius*2.]*3, "ellipsoid"))
+                    if geomType == "MyFoot3":
                         etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., -(length/2.-radius))), [radius*2.]*3, "ellipsoid", "collision"))
                     etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., length/2.-radius)), [radius*2.]*3, "ellipsoid"))
                     if geomType != "MyFoot5":
@@ -451,7 +453,7 @@ class DartModelMaker:
                 etAxis1 = et.SubElement(etJoint, "axis")
                 et.SubElement(etAxis1, "xyz").text = "1 0 0"
                 etAxis2 = et.SubElement(etJoint, "axis2")
-                et.SubElement(etAxis2, "xyz").text = "0 1 0"
+                et.SubElement(etAxis2, "xyz").text = "0 0 1"
             elif jointTypes[i] == "revolute":
                 etAxis = et.SubElement(etJoint, "axis")
                 et.SubElement(etAxis, "xyz").text = "1 0 0"

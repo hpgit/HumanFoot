@@ -231,7 +231,6 @@ class DartModelRenderer(Renderer):
             data = shape.size()
             glPushMatrix()
             glTranslatef(-data[0]/2., -data[1]/2., -data[2]/2.)
-            glColor3f(1., 0., 0.)
             self.rc.drawBox(data[0], data[1], data[2])
             glPopMatrix()
         elif geomType == 'CYLINDER':
@@ -926,11 +925,13 @@ class RenderContext:
         glPopMatrix()
     def drawCylinder(self, radius, length_z):
         gluCylinder(self.quad, radius, radius, length_z, 16, 1)
-        glColor3f(1., 0., 0.)
-        glPushMatrix()
-        glTranslatef(0.0001, 0., 0.)
-        gluCylinder(self.quad, radius, radius, length_z, 16, 1)
-        glPopMatrix()
+        if False:
+            glColor3f(1., 0., 0.)
+            glPushMatrix()
+            glTranslatef(0.0001, 0., 0.)
+            gluCylinder(self.quad, radius, radius, length_z, 16, 1)
+            glPopMatrix()
+
         # gleSetNumSides(20)
         # glePolyCylinder(((0,0,-length_z/2.), (0,0,-length_z/2.), (0,0,length_z/2.), (0,0,length_z/2.)), None, radius)
         # gleSetNumSides(12)
