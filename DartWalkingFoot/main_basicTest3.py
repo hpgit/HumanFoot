@@ -143,7 +143,7 @@ def basicTest3():
     q = dartModel.skeleton.q
     q[4] = 2.
     dartModel.skeleton.set_positions(q)
-    dartModel.world.set_gravity(np.array((0., 0., 0.)))
+    dartModel.world.set_gravity(np.array((0., -9.81, 0.)))
 
     # viewer setting
     viewer = hsv.hpSimpleViewer()
@@ -154,14 +154,17 @@ def basicTest3():
     jointPositions = []
     bodyOrientations = []
     bodyPositions = []
+    rd_points = []
     viewer.doc.addRenderer('joint coord', yr.OrientationsRenderer(jointOrientations, jointPositions))
     viewer.doc.addRenderer('body coord', yr.OrientationsRenderer(bodyOrientations, bodyPositions))
+    viewer.doc.addRenderer('contact points', yr.PointsRenderer(rd_points, (255,0,0)))
 
     viewer.objectInfoWnd.add1DSlider('joint1 x torque', minVal=-2., maxVal=2., initVal=0., valStep=.01)
     viewer.objectInfoWnd.add1DSlider('joint1 y torque', minVal=-2., maxVal=2., initVal=0., valStep=.01)
     viewer.objectInfoWnd.add1DSlider('joint2 x torque', minVal=-2., maxVal=2., initVal=0., valStep=.01)
     viewer.objectInfoWnd.add1DSlider('joint2 y torque', minVal=-2., maxVal=2., initVal=0., valStep=.01)
 
+    bodyIDsToCheck = range(dartModel.getBodyNum())
 
     def simulateCallback(frame):
         # tau = np.zeros(dartModel.skeleton.q.shape)
@@ -174,12 +177,17 @@ def basicTest3():
         vel[7] = viewer.objectInfoWnd.getVal('joint1 y torque')
         vel[8] = viewer.objectInfoWnd.getVal('joint2 x torque')
         vel[9] = viewer.objectInfoWnd.getVal('joint2 y torque')
-        dartModel.skeleton.set_velocities(vel)
+        # dartModel.skeleton.set_velocities(vel)
         # print mm.logSO3(dartModel.getJoint(2).get_local_transform()[:3, :3])
 
         for i in range(stpesPerFrame):
-            dartModel.skeleton.set_velocities(vel)
+            # dartModel.skeleton.set_velocities(vel)
             dartModel.step()
+
+        bodyIDs, contactPositions, contactPositionLocals, velocities = dartModel.getContactPoints(bodyIDsToCheck)
+        del rd_points[:]
+        if contactPositions is not None:
+            rd_points.extend(contactPositions)
 
         del jointOrientations[:]
         del jointPositions[:]
@@ -192,6 +200,8 @@ def basicTest3():
         for i in range(len(dartModel.skeleton.bodynodes)):
             bodyOrientations.append(dartModel.getBodyOrientationGlobal(i))
             bodyPositions.append(dartModel.getBodyPositionGlobal(i))
+
+
 
     viewer.setSimulateCallback(simulateCallback)
 

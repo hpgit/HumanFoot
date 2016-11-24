@@ -220,46 +220,48 @@ def buildMcfg():
 
 
     # human foot
+    footJointType = 'B'
+
     capsulize('RightFoot_foot_0_0')
     node = mcfg.getNode('RightFoot_foot_0_0')
     node.addGeom('MyFoot3', [0.02*np.array([-0.3, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
     node.addGeom('MyFoot3', [0.02*np.array([-0.3-1.2, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
     # node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0., 0., 0.])], ypc.CapsuleMaterial(1000., .01, -1))
-    node.jointType = 'U'
+    node.jointType = footJointType
 
     capsulize('RightFoot_foot_0_0_0')
     node = mcfg.getNode('RightFoot_foot_0_0_0')
     node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
     node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = 'U'
+    node.jointType = footJointType
 
     capsulize('RightFoot_foot_0_1')
     node = mcfg.getNode('RightFoot_foot_0_1')
     node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
     node.addGeom('MyFoot3', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400.,.01, -1))
-    node.jointType = 'U'
+    node.jointType = footJointType
 
     capsulize('RightFoot_foot_0_1_0')
     node = mcfg.getNode('RightFoot_foot_0_1_0')
     node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
     node.addGeom('MyFoot4', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = 'U'
+    node.jointType = footJointType
 
     capsulize('RightFoot_foot_1_0')
     node = mcfg.getNode('RightFoot_foot_1_0')
     node.addGeom('MyFoot3', [0.02*np.array([0., 0., .7]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, 0.02*2.0+0.02))
     # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
-    node.jointType = 'U'
+    node.jointType = footJointType
 
     capsulize('RightFoot_foot_1_1')
     node = mcfg.getNode('RightFoot_foot_1_1')
     node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = 'U'
+    node.jointType = footJointType
 
     capsulize('RightFoot_foot_1_2')
     node = mcfg.getNode('RightFoot_foot_1_2')
     node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = 'U'
+    node.jointType = footJointType
 
 
     capsulize('LeftFoot_foot_0_0')
@@ -267,41 +269,41 @@ def buildMcfg():
     node.addGeom('MyFoot3', [0.02*np.array([0.3, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
     node.addGeom('MyFoot3', [0.02*np.array([0.3+1.2, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
     # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
-    node.jointType = 'U'
+    node.jointType = footJointType
 
     capsulize('LeftFoot_foot_0_0_0')
     node = mcfg.getNode('LeftFoot_foot_0_0_0')
     node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
     node.addGeom('MyFoot4', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = 'U'
+    node.jointType = footJointType
 
     capsulize('LeftFoot_foot_0_1')
     node = mcfg.getNode('LeftFoot_foot_0_1')
     node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
     node.addGeom('MyFoot3', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = 'U'
+    node.jointType = footJointType
 
     capsulize('LeftFoot_foot_0_1_0')
     node = mcfg.getNode('LeftFoot_foot_0_1_0')
     node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
     node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = 'U'
+    node.jointType = footJointType
 
     capsulize('LeftFoot_foot_1_0')
     node = mcfg.getNode('LeftFoot_foot_1_0')
     node.addGeom('MyFoot3', [0.02*np.array([0., 0., .7]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, 0.02*2.0+0.02))
     # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
-    node.jointType = 'U'
+    node.jointType = footJointType
 
     capsulize('LeftFoot_foot_1_1')
     node = mcfg.getNode('LeftFoot_foot_1_1')
     node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = 'U'
+    node.jointType = footJointType
 
     capsulize('LeftFoot_foot_1_2')
     node = mcfg.getNode('LeftFoot_foot_1_2')
     node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = 'U'
+    node.jointType = footJointType
 
 
     return mcfg
@@ -355,8 +357,8 @@ def walkings():
     K_stb_vel = .1
     K_stb_pos = .1
 
-    OLD_SWING_HEIGHT = False
-    #    OLD_SWING_HEIGHT = True
+    # OLD_SWING_HEIGHT = False
+    OLD_SWING_HEIGHT = True
     HIGHER_OFFSET = True
     #    HIGHER_OFFSET = False
 
@@ -404,13 +406,13 @@ def walkings():
     ##    filename = 'wd2_WalkSoldier00.bvh'    # K_swp_pos_sag = .0
     #    filename = 'wd2_WalkSoldier00_REPEATED.bvh'
 
-    #    mu = 2.
-    ##    K_swp_vel_sag = .2; K_swp_vel_cor = .4; K_swp_pos_sag = .5;K_swp_pos_cor = 0.
-    ##    K_stp_pos = 0.
-    #    K_swp_vel_sag = .05; K_swp_vel_cor = .3; K_swp_pos_sag = .5; K_swp_pos_cor = .2
-    #    K_swp_pos_sag_faster = .05
-    ##    filename = 'wd2_WalkForwardVFast00.bvh'
-    #    filename = 'wd2_WalkForwardVFast00_REPEATED.bvh'
+    # mu = 2.
+    # #    K_swp_vel_sag = .2; K_swp_vel_cor = .4; K_swp_pos_sag = .5;K_swp_pos_cor = 0.
+    # #    K_stp_pos = 0.
+    # K_swp_vel_sag = .05; K_swp_vel_cor = .3; K_swp_pos_sag = .5; K_swp_pos_cor = .2
+    # K_swp_pos_sag_faster = .05
+    # #    filename = 'wd2_WalkForwardVFast00.bvh'
+    # filename = 'wd2_WalkForwardVFast00_REPEATED.bvh'
 
     ##    K_swp_vel_sag = .0; K_swp_vel_cor = .4; K_swp_pos_sag = .04; K_swp_pos_cor = .1
     ##    K_swp_pos_sag_faster = .02
@@ -483,7 +485,7 @@ def walkings():
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
     wcfg.lockingVel = c_locking_vel
-    stepsPerFrame = 30
+    stepsPerFrame = 50
     wcfg.timeStep = (frameTime)/stepsPerFrame
 
     pydart.init()
@@ -674,20 +676,20 @@ def walkings():
         viewer.doc.addRenderer('motionModel', yr.DartModelRenderer(dartMotionModel, (0,150,255), yr.POLYGON_LINE))
         viewer.doc.addRenderer('controlModel', yr.DartModelRenderer(dartModel, (50, 200, 200)))
 
-        # viewer.doc.addObject('motion_ori', motion_ori)
+        viewer.doc.addObject('motion_ori', motion_ori)
         # viewer.doc.addRenderer('motion_ori', yr.JointMotionRenderer(motion_ori, (0,100,255), yr.LINK_BONE))
         # viewer.doc.addRenderer('motion_seg_orig', yr.JointMotionRenderer(motion_seg_orig, (0,100,255), yr.LINK_BONE))
         # viewer.doc.addRenderer('motion_seg', yr.JointMotionRenderer(motion_seg, (0,150,255), yr.LINK_BONE))
-        # viewer.doc.addRenderer('motion_stitch', yr.JointMotionRenderer(motion_stitch, (0,255,200), yr.LINK_BONE))
+        viewer.doc.addRenderer('motion_stitch', yr.JointMotionRenderer(motion_stitch, (0,255,200), yr.LINK_BONE))
 
-        viewer.doc.addRenderer('motion_stf_stabilize', yr.JointMotionRenderer(motion_stf_stabilize, (255,0,0), yr.LINK_BONE))
-        viewer.doc.addRenderer('motion_match_stl', yr.JointMotionRenderer(motion_match_stl, (255,200,0), yr.LINK_BONE))
+        # viewer.doc.addRenderer('motion_stf_stabilize', yr.JointMotionRenderer(motion_stf_stabilize, (255,0,0), yr.LINK_BONE))
+        # viewer.doc.addRenderer('motion_match_stl', yr.JointMotionRenderer(motion_match_stl, (255,200,0), yr.LINK_BONE))
         # viewer.doc.addRenderer('motion_swf_placement', yr.JointMotionRenderer(motion_swf_placement, (255,100,255), yr.LINK_BONE))
         # viewer.doc.addRenderer('motion_swf_height', yr.JointMotionRenderer(motion_swf_height, (50,255,255), yr.LINK_BONE))
         # viewer.doc.addRenderer('motion_swf_orientation', yr.JointMotionRenderer(motion_swf_orientation, (255,100,0), yr.LINK_BONE))
         # viewer.doc.addRenderer('motion_stf_push', yr.JointMotionRenderer(motion_stf_push, (50,255,200), yr.LINK_BONE))
         # viewer.doc.addRenderer('motion_stf_balancing', yr.JointMotionRenderer(motion_stf_balancing, (255,100,255), yr.LINK_BONE))
-        # viewer.doc.addRenderer('motion_control', yr.JointMotionRenderer(motion_control, (255,0,0), yr.LINK_BONE))
+        viewer.doc.addRenderer('motion_control', yr.JointMotionRenderer(motion_control, (255,0,0), yr.LINK_BONE))
 
         #        viewer.doc.addRenderer('motion_debug1', yr.JointMotionRenderer(motion_debug1, (0,255,0), yr.LINK_BONE))
         #        viewer.doc.addRenderer('motion_debug2', yr.JointMotionRenderer(motion_debug2, (255,0,255), yr.LINK_BONE))
@@ -1078,6 +1080,7 @@ def walkings():
                 if frame < 5: break
                 motion_stf_balancing[frame].mulJointOrientationGlobal(stanceFoot, R_stb)
         #TODO:
+        '''
         # hwangpil
         # swing foot heel strike adjustment
         # make heel as flat as possible to ground
@@ -1091,13 +1094,11 @@ def walkings():
 
         # stance foot ankle pushup adjustment
         # stf_ankle_func = yfg.hermite2nd
-        '''
         stf_ankle_func = lambda x: -2*(x**2)+3*(x**3)
         if len(stanceFoots) == 1:
             for stanceFoot in stanceFoots:
                 R_target_ankle = mm.exp(stf_ankle_func(t)*mm.deg2Rad(20.)*np.array([1., 0., 0.]))
                 motion_stf_balancing[frame].mulJointOrientationLocal(stanceFoot, R_target_ankle)
-        #'''
         # stance foot toe adjustment
         # stf_toe_func = yfg.hermite2nd
         stf_toe_func = lambda x: -2*(x**8)+3*(x**9)
@@ -1140,7 +1141,7 @@ def walkings():
                 weightMap[jointIdx] = toeWeights
 
         th_r = motion_control.getDOFPositions(frame)
-        # th_r = motion_ori.getDOFPositions(frame)
+        # th_r = motion_stitch.getDOFPositions(frame)
         th = dartModel.skeleton.q
         # th = controlModel.getDOFPositions()
         dth_r = motion_control.getDOFVelocities(frame)
@@ -1247,6 +1248,7 @@ def walkings():
         #            if len(stanceFoots)>0:
         #                avg_stf_v[0] += controlModel.getJointVelocityGlobal(stanceFoots[0])
         #                avg_stf_av[0] += controlModel.getJointAngVelocityGlobal(stanceFoots[0])
+        bodyIDs, contactPositions, contactPositionLocals, velocities = dartModel.getContactPoints(bodyIDsToCheck)
 
         del rd_point2[:]
         if contactPositions is not None:
@@ -1317,7 +1319,6 @@ def walkings():
 
                 contact = False
 
-                '''
                 for swingID in swingIDs:
                     if swingID in bodyIDs:
                         minContactVel = 1000.
@@ -1328,7 +1329,6 @@ def walkings():
                                 contactVel = mm.length(vel)
                                 if contactVel < minContactVel: minContactVel = contactVel
                         if minContactVel < c_min_contact_vel: contact = True
-                '''
 
                 extended[0] = False
 
@@ -1460,11 +1460,11 @@ def walkings():
 
         # rendering
         # motionModel.update(motion_ori[frame])
-        dartMotionModel.update(motion_ori[frame])
+        dartMotionModel.update(motion_stitch[frame])
         #        motionModel.update(motion_seg[frame])
 
         rd_CP[0] = CP
-        rd_CMP[0] = (CMreal[0] - (F[0]/F[1])*CMreal[1], 0, CMreal[2] - (F[2]/F[1])*CMreal[1])
+        # rd_CMP[0] = (CMreal[0] - (F[0]/F[1])*CMreal[1], 0, CMreal[2] - (F[2]/F[1])*CMreal[1])
 
         if plot!=None:
             plot.addDataPoint('zero', frame, 0)

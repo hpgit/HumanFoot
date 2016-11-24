@@ -72,7 +72,33 @@ class DartModel:
         pass
 
     def getContactPoints(self, bodyIDsToCheck):
-        return self.calcPenaltyForce(bodyIDsToCheck, None, 0., 0., True)
+        bodyIDs = []
+        positions = []
+        positionLocals = []
+        velocities = []
+        forces = []
+        for i in bodyIDsToCheck:
+            body = self.getBody(i)
+            for shapeNode in body.shapenodes:
+                if shapeNode.has_collision_aspect():
+                    geomType = shapeNode.shape.shape_type_name()
+                    geomT = np.dot(body.world_transform(), shapeNode.relative_transform())
+                    if geomType == "ELLIPSOID":
+                        shape = shapeNode.shape # type: pydart.EllipsoidShape
+                        lowestPoint = geomT[:3, 3]
+                        lowestPoint[1] -= shape.size()[0]/2.
+                        if lowestPoint[1] < 0.:
+                            bodyIDs.append(i)
+                            positions.append(lowestPoint)
+                            positionLocals.append(body.to_local(lowestPoint))
+                            #TODO:
+                            velocities.append(body.com_spatial_velocity())
+                    elif geomType == "BOX":
+                        shape = shapeNode.shape # type: pydart.BoxShape
+                        #TODO:
+
+        return bodyIDs, positions, positionLocals, None
+        # return self.calcPenaltyForce(bodyIDsToCheck, None, 0., 0., True)
 
     def calcPenaltyForce(self, bodyIDsToCheck, mus, Ks, Ds, notForce=False):
         bodyIDs = []

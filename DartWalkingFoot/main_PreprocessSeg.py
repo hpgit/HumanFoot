@@ -24,6 +24,7 @@ if __name__=='__main__':
     dir = './ppmotion/'
     # paths = glob.glob(dir+'*.bvh')
     paths = glob.glob(dir+'wd2_WalkForwardNormal00.bvh')
+    # paths = glob.glob(dir+'wd2_WalkForwardVFast00.bvh')
     '''
     paths = glob.glob(dir+'wd2_WalkSameSame01.bvh')
     paths = glob.glob(dir+'wd2_u-turn_1.bvh')
