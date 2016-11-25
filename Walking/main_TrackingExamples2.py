@@ -3,37 +3,37 @@ import copy, os.path, cPickle, time
 import numpy as np
 
 import sys
-if '../PyCommon/modules' not in sys.path:
-    sys.path.append('../PyCommon/modules')
+# if '../PyCommon/modules' not in sys.path:
+#     sys.path.append('../PyCommon/modules')
 
-#if '../../PyCommon/modules' not in sys.path:
+# if '../../PyCommon/modules' not in sys.path:
 #    sys.path.append('../../PyCommon/modules')
-import Math.mmMath as mm
-import Math.csMath as cm
-import Math.ysFunctionGraph as yfg
-import Renderer.ysRenderer as yr
-import Renderer.csVpRenderer as cvr
-import Simulator.csVpWorld as cvw
-import Simulator.csVpModel as cvm
-import Simulator.ysVpUtil as yvu
-import GUI.ysSimpleViewer as ysv
-import GUI.ysMultiViewer as ymv
-import ArticulatedBody.ysControl as yct
-import ArticulatedBody.ysReferencePoints as yrp
-import Motion.ysMotionAnalysis as yma
-import Motion.ysBipedAnalysis as yba
-import Motion.ysMotion as ym
-import Motion.ysMotionBlend as ymb
-import Motion.ysMotionExtend as ymt
-import Motion.ysSkeletonEdit as yhe
-import Motion.mmAnalyticIK as aik
-import Util.ysMatplotEx as ymp
-import Resource.ysMotionLoader as yf
-import Simulator.ysPhysConfig as ypc
+import PyCommon.modules.Math.mmMath as mm
+import PyCommon.modules.Math.csMath as cm
+import PyCommon.modules.Math.ysFunctionGraph as yfg
+import PyCommon.modules.Renderer.ysRenderer as yr
+import PyCommon.modules.Renderer.csVpRenderer as cvr
+import PyCommon.modules.Simulator.csVpWorld as cvw
+import PyCommon.modules.Simulator.csVpModel as cvm
+import PyCommon.modules.Simulator.ysVpUtil as yvu
+import PyCommon.modules.GUI.ysSimpleViewer as ysv
+import PyCommon.modules.GUI.ysMultiViewer as ymv
+import PyCommon.modules.ArticulatedBody.ysControl as yct
+import PyCommon.modules.ArticulatedBody.ysReferencePoints as yrp
+import PyCommon.modules.Motion.ysMotionAnalysis as yma
+import PyCommon.modules.Motion.ysBipedAnalysis as yba
+import PyCommon.modules.Motion.ysMotion as ym
+import PyCommon.modules.Motion.ysMotionBlend as ymb
+import PyCommon.modules.Motion.ysMotionExtend as ymt
+import PyCommon.modules.Motion.ysSkeletonEdit as yhe
+import PyCommon.modules.Motion.mmAnalyticIK as aik
+import PyCommon.modules.Util.ysMatplotEx as ymp
+import PyCommon.modules.Resource.ysMotionLoader as yf
+import PyCommon.modules.Simulator.ysPhysConfig as ypc
 
-import Simulator.hpLCPSimulator as hls
-import GUI.hpSimpleViewer as hsv
-import Util.ysPythonEx as ype
+import PyCommon.modules.Simulator.hpLCPSimulator as hls
+import PyCommon.modules.GUI.hpSimpleViewer as hsv
+import PyCommon.modules.Util.ysPythonEx as ype
 
 
 #MOTION_COLOR = (128,128,128)
@@ -721,9 +721,9 @@ def walkings():
         hdAccMask[:6] = [False]*6
 
         for i in range(stepsPerFrame):
-            # bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
-            bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp \
-                = hls.calcLCPForcesHD(motion_ori, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, ddth_des_flat, solver='qp', hdAccMask=hdAccMask)
+            bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+            # bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp \
+            #     = hls.calcLCPForcesHD(motion_ori, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, ddth_des_flat, solver='qp', hdAccMask=hdAccMask)
             if contactForces is not None:
                 vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
             # vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)

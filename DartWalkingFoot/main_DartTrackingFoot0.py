@@ -1,28 +1,31 @@
 from fltk import *
-import copy, os.path, cPickle, time
+import copy
+import os.path
+from cPickle import load
+# import time
 import numpy as np
 
 from PyCommon.modules.Math import mmMath as mm
 from PyCommon.modules.Math import ysFunctionGraph as yfg
 from PyCommon.modules.Renderer import ysRenderer as yr
-from PyCommon.modules.Simulator import ysVpUtil as yvu
+# from PyCommon.modules.Simulator import ysVpUtil as yvu
 from PyCommon.modules.GUI import ysSimpleViewer_ori as ysv
 from PyCommon.modules.GUI import ysMultiViewer as ymv
-from PyCommon.modules.ArticulatedBody import ysControl as yct
-from PyCommon.modules.ArticulatedBody import ysReferencePoints as yrp
+# from PyCommon.modules.ArticulatedBody import ysControl as yct
+# from PyCommon.modules.ArticulatedBody import ysReferencePoints as yrp
 from PyCommon.modules.Motion import ysMotionAnalysis as yma
 from PyCommon.modules.Motion import ysBipedAnalysis as yba
 from PyCommon.modules.Motion import ysMotion as ym
 from PyCommon.modules.Motion import ysMotionBlend as ymb
 from PyCommon.modules.Motion import ysMotionExtend as ymt
-from PyCommon.modules.Motion import ysSkeletonEdit as yhe
+# from PyCommon.modules.Motion import ysSkeletonEdit as yhe
 from PyCommon.modules.Motion import mmAnalyticIK as aik
-from PyCommon.modules.Util import ysMatplotEx as ymp
+# from PyCommon.modules.Util import ysMatplotEx as ymp
 from PyCommon.modules.Resource import ysMotionLoader as yf
 from PyCommon.modules.Simulator import ysPhysConfig as ypc
 
-from PyCommon.modules.Simulator import hpLCPSimulator as hls
-from PyCommon.modules.GUI import hpSimpleViewer as hsv
+# from PyCommon.modules.Simulator import hpLCPSimulator as hls
+# from PyCommon.modules.GUI import hpSimpleViewer as hsv
 from PyCommon.modules.Util import ysPythonEx as ype
 
 from PyCommon.modules import pydart2 as pydart
@@ -30,17 +33,18 @@ from PyCommon.modules.Simulator import csDartModel as cpm
 from pdcontroller import PDController
 
 import math
-from matplotlib import pyplot as plt
-from matplotlib import collections
+# from matplotlib import pyplot as plt
+# from matplotlib import collections
 
 current_path = os.path.dirname(os.path.abspath(__file__))
 
-#MOTION_COLOR = (128,128,128)
-#CHARACTER_COLOR = (102,102,153)
-MOTION_COLOR = (213,111,162)
-CHARACTER_COLOR = (20,166,188)
+# MOTION_COLOR = (128,128,128)
+# CHARACTER_COLOR = (102,102,153)
+MOTION_COLOR = (213, 111, 162)
+CHARACTER_COLOR = (20, 166, 188)
 
-SEGMENT_FOOT = True
+SEGMENT_FOOT = False
+
 
 def buildMassMap():
     massMap = {}
@@ -131,6 +135,7 @@ def buildMassMap():
     massMap['LeftFoot_foot_1_2'] = .3
 
     return massMap
+
 
 def buildMcfg():
     massMap = buildMassMap()
@@ -352,8 +357,8 @@ def walkings():
     HIGHER_OFFSET = True
     #    HIGHER_OFFSET = False
 
-    dir = current_path+'/ppmotion/'
-    # dir = './ppmotion/'
+    motionDir = current_path+'/ppmotion/'
+    # motionDir = './ppmotion/'
     #
     ##    K_swp_vel_sag = .1; K_swp_vel_cor = .4; K_swp_pos_sag = .3; K_swp_pos_cor = 0.
     #    K_swp_vel_sag = .05; K_swp_vel_cor = .2; K_swp_pos_sag = .2; K_swp_pos_cor = .2
@@ -414,7 +419,7 @@ def walkings():
     #    filename = 'wd2_WalkBackward00_REPEATED.bvh'
 
     # motion
-    bvh = yf.readBvhFileAsBvh(dir+filename)
+    bvh = yf.readBvhFileAsBvh(motionDir+filename)
 
     if SEGMENT_FOOT:
         # partBvhFilePath = '../PyCommon/modules/samples/simpleJump_long_test2.bvh'
@@ -427,7 +432,7 @@ def walkings():
 
     motion_ori = bvh.toJointMotion(1., False)
 
-    # motion_ori = yf.readBvhFile(dir+filename)
+    # motion_ori = yf.readBvhFile(motionDir+filename)
     frameTime = 1/motion_ori.fps
 
     if 'REPEATED' in filename:
@@ -476,7 +481,7 @@ def walkings():
     wcfg.useDefaultContactModel = False
     wcfg.lockingVel = c_locking_vel
     stepsPerFrame = 50
-    wcfg.timeStep = (frameTime)/stepsPerFrame
+    wcfg.timeStep = frameTime/stepsPerFrame
 
     pydart.init()
     dartModel = cpm.DartModel(wcfg, motion_ori[0], mcfg)
@@ -496,21 +501,21 @@ def walkings():
     skeleton = motion_ori[0].skeleton
 
     segname = os.path.splitext(filename)[0]+'.seg'
-    segfile = open(dir+segname, 'r')
-    seginfo = cPickle.load(segfile)
+    segfile = open(motionDir+segname, 'r')
+    seginfo = load(segfile)
     segfile.close()
 
-    for i in seginfo:
-        print i
+    for seg in seginfo:
+        print(seg)
 
     intervals = [info['interval'] for info in seginfo]
     states = [info['state'] for info in seginfo]
     temp_motion = copy.deepcopy(motion_ori)
     segments = yma.splitMotionIntoSegments(temp_motion, intervals)
-    print len(intervals), 'segments'
+    print(len(intervals), 'segments')
     for i in range(len(intervals)):
-        print '%dth'%i, yba.GaitState.text[states[i]], intervals[i], ',',
-    print ""
+        print('%dth'%i, yba.GaitState.text[states[i]], intervals[i], ',',)
+    print("")
 
     motion_seg_orig = ym.JointMotion()
     motion_seg_orig += segments[0]
@@ -763,7 +768,7 @@ def walkings():
 
 
     def viewer_onClose(data):
-        if plot!=None:
+        if plot is not None:
             plot.close()
         viewer.onClose(data)
     viewer.callback(viewer_onClose)
@@ -784,14 +789,14 @@ def walkings():
         # hwangpil
         # temporary change
         for legList in (stanceLegs, swingLegs):
-            for i in range(len(legList)):
-                if legList[i] == 10:
-                    legList[i] = skeleton.getJointIndex('RightUpLeg')
+            for legIdx in range(len(legList)):
+                if legList[legIdx] == 10:
+                    legList[legIdx] = skeleton.getJointIndex('RightUpLeg')
 
         for footList in (stanceFoots, swingFoots):
-            for i in range(len(footList)):
-                if footList[i] == 12:
-                    footList[i] = skeleton.getJointIndex('RightFoot')
+            for footIdx in range(len(footList)):
+                if footList[footIdx] == 12:
+                    footList[footIdx] = skeleton.getJointIndex('RightFoot')
 
         stanceToes = []
         if skeleton.getJointIndex('LeftFoot') in stanceFoots:
@@ -911,9 +916,9 @@ def walkings():
         motion_match_stl.goToFrame(frame)
         if MATCH_STANCE_LEG:
             if curState!=yba.GaitState.STOP:
-                for i in range(len(stanceLegs)):
-                    stanceLeg = stanceLegs[i]
-                    stanceFoot = stanceFoots[i]
+                for stanceLegIdx in range(len(stanceLegs)):
+                    stanceLeg = stanceLegs[stanceLegIdx]
+                    # stanceFoot = stanceFoots[stanceLegIdx]
 
                     #                    # motion stance leg -> character stance leg as time goes
                     R_motion = motion_match_stl[frame].getJointOrientationGlobal(stanceLeg)
@@ -985,6 +990,7 @@ def walkings():
                 R_foot = motion_swf_height[frame].getJointOrientationGlobal(swingFoot)
                 R_stance_foot = motion_swf_height[frame].getJointOrientationGlobal(stanceFoot)
 
+                d_height_tar = 0
                 if OLD_SWING_HEIGHT:
                     height_tar = motion_swf_height[frame].getJointPositionGlobal(swingFoot)[1] \
                                  - motion_swf_height[frame].getJointPositionGlobal(stanceFoot)[1]
@@ -999,6 +1005,7 @@ def walkings():
                 #                motion_debug2[frame] = motion_swf_height[frame].copy()
                 #                motion_debug2[frame].translateByTarget(controlModel.getJointPositionGlobal(0))
 
+                d_height_cur = 0
                 if OLD_SWING_HEIGHT:
                     height_cur = motion_swf_height[frame].getJointPositionGlobal(swingFoot)[1] \
                                  - motion_swf_height[frame].getJointPositionGlobal(stanceFoot)[1]
@@ -1050,6 +1057,7 @@ def walkings():
             # TODO:
             # swingFoots?????????????????????????
             for swingFoot in swingFoots:
+            # for swingFoot in stanceFoots:
                 #                max_t = (maxStfPushFrame)/float(curInterval[1]-curInterval[0])
                 #                stf_push_func = yfg.concatenate([yfg.sine, yfg.zero], [max_t*2])
                 stf_push_func = yfg.concatenate([yfg.sine, yfg.zero], [c_taking_duration*2])

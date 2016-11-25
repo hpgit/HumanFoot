@@ -98,7 +98,6 @@ class DartModel:
                         shape = shapeNode.shape # type: pydart.BoxShape
                         data = shape.size()/2.
                         for perm in itertools.product([1, -1], repeat=3):
-                            print perm
                             positionLocal = np.multiply(np.array((data[0], data[1], data[2])), np.array(perm))
                             position = np.dot(geomT[:3, :3], positionLocal) + geomT[:3, 3]
                             #TODO:
