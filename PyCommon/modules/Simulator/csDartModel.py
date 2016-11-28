@@ -114,115 +114,109 @@ class DartModel:
         return bodyIDs, positions, positionLocals, None
         # return self.calcPenaltyForce(bodyIDsToCheck, None, 0., 0., True)
 
-    def calcPenaltyForce(self, bodyIDsToCheck, mus, Ks, Ds, notForce=False):
+    def calcPenaltyForce(self, bodyIDsToCheck, mus, Ks, Ds):
+        def sphere(center, rad, row, col, height_ratio):
+            verticesLocal = list()
+            col_real = 0
+            _row = int(row*height_ratio)
+
+            for i in range(_row):
+                t = float(i)/float(row)
+                cp = math.cos(math.pi * t - math.pi/2.)
+                sp = math.sin(math.pi * t - math.pi/2.)
+
+                col_real = 1 if i==0 else col
+                for j in range(col_real):
+                    s = float(j)/float(col_real)
+                    ct = math.cos(2.*math.pi*s)
+                    st = math.sin(2.*math.pi*s)
+                    verticesLocal.append(np.array((rad*cp*ct, rad*sp, -rad*cp*st)) + center)
+
+            return verticesLocal
+
+        def _calcPenaltyForce(pBody, position, velocity, Ks, Ds, mu, lockingVel):
+            """
+
+            :type pBody: pydart.BodyNode
+            :type position: np.ndarray
+            :type velocity: np.ndarray
+            :type force: np.ndarray
+            :type Ks: float
+            :type Ds: float
+            :type mu: float
+            """
+            vNormal = np.array((0., 1., 0.))
+
+            vRelVel = velocity.copy()
+            vNormalRelVel = np.dot(vRelVel, vNormal) * vNormal
+            vTangentialRelVel = vRelVel - vNormalRelVel
+            tangentialRelVel = npl.norm(vNormalRelVel)
+            if position[1] > 0.:
+                return False, np.zeros(3)
+            else:
+                normalForce = max(0., -Ks*position[1] - Ds*velocity[1])
+                vNormalForce = normalForce * vNormal
+                frictionForce = mu * normalForce
+
+                if tangentialRelVel < lockingVel:
+                    frictionForce *= tangentialRelVel / lockingVel
+                vFrictionForce = frictionForce * (mm.normalize(vTangentialRelVel))
+                force = vNormalForce + vFrictionForce
+                return True, force
+
+        size=[1., 1., 1.]
+        t = size[2]/2.
+        b = -size[2]/2.
+        l = -size[0]/2.
+        r = size[0]/2.
+        l0 = -size[1]/2.
+
+        rad = .05
+        gap = .01
+        row = 6
+        col = 6
+        height_ratio = .5
+
         bodyIDs = []
         positions = []
-        forces = []
         positionLocals = []
         velocities = []
+        forces = []
+        for i in bodyIDsToCheck:
+            body = self.getBody(i)
+            for shapeNode in body.shapenodes:
+                if shapeNode.has_collision_aspect():
+                    geomType = shapeNode.shape.shape_type_name()
+                    geomT = np.dot(body.world_transform(), shapeNode.relative_transform())
+                    if geomType == "ELLIPSOID":
+                        shape = shapeNode.shape # type: pydart.EllipsoidShape
+                        lowestPoint = geomT[:3, 3]
+                        lowestPoint[1] -= shape.size()[0]/2.
+                        if lowestPoint[1] < 0.:
+                            bodyIDs.append(i)
+                            positions.append(lowestPoint)
+                            positionLocals.append(body.to_local(lowestPoint))
+                            #TODO:
+                            # velocities.append(body.com_spatial_velocity())
+                    elif geomType == "BOX":
+                        shape = shapeNode.shape # type: pydart.BoxShape
+                        data = shape.size()/2.
+                        for perm in itertools.product([1, -1], repeat=3):
+                            positionLocal = np.multiply(np.array((data[0], data[1], data[2])), np.array(perm))
+                            position = np.dot(geomT[:3, :3], positionLocal) + geomT[:3, 3]
+                            #TODO:
+                            # velocity = node.body.GetLinVelocity(pyVec3_2_Vec3(positionLocal))
 
-        if True:
-            for model in self.models:
-                for node in model._nodes:
-                    bodyID = node.body.GetID()
-                    if bodyID in bodyIDsToCheck:
-                        for pGeom in node.geoms:
-                            geomType = pGeom.GetType()
-                            if geomType == 'C' or geomType == 'B':
-                                verticesLocal = pGeom.getVerticesLocal()
-                                verticesGlobal = pGeom.getVerticesGlobal()
-
-                                for vertIdx in range(len(verticesLocal)):
-                                    positionLocal = Vec3_2_pyVec3(verticesLocal[vertIdx])
-                                    position = Vec3_2_pyVec3(verticesGlobal[vertIdx])
-                                    velocity = Vec3_2_pyVec3(node.body.GetLinVelocity(pyVec3_2_Vec3(positionLocal)))
-                                    if notForce:
-                                        penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, 0., True)
-                                    else:
-                                        penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, mus[0])
-
-                                    if penentrated:
-                                        bodyIDs.append(bodyID)
-                                        positions.append(position)
-                                        positionLocals.append(positionLocal)
-                                        forces.append(force)
-                                        velocities.append(velocity)
-
-                            elif False:
-                                # TODO:
-                                # how to deal with SE3?
-                                geomFrame = pGeom.GetGlobalFrame()
-                                data = pGeom.GetSize()
-                                for perm in itertools.product([1, -1], repeat=3):
-                                    positionLocal = np.multiply(np.array((data[0], data[1], data[2])), np.array(perm))
-                                    position = Vec3_2_pyVec3(geomFrame * pyVec3_2_Vec3(positionLocal))
-                                    velocity = Vec3_2_pyVec3(node.body.GetLinVelocity(pyVec3_2_Vec3(positionLocal)))
-                                    if notForce:
-                                        penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, 0., True)
-                                    else:
-                                        penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, mus[0])
-
-                                    if penentrated:
-                                        print node.name
-                                        bodyIDs.append(bodyID)
-                                        positions.append(position)
-                                        positionLocals.append(positionLocal)
-                                        forces.append(force)
-                                        velocities.append(velocity)
-
-
-        if False:
-            for bodyIdx in range(len(bodyIDsToCheck)):
-                bodyID = bodyIDsToCheck[bodyIdx]
-                pBody = self._world.GetBody(bodyIDsToCheck[bodyIdx])
-
-                for geomIdx in range(pBody.GetNumGeometry()):
-                    pGeom = pBody.GetGeometry(geomIdx)
-                    geomType = pGeom.GetType()
-
-                    if geomType == 'C':
-                        verticesLocal = pGeom.getVerticesLocal()
-                        verticesGlobal = pGeom.getVerticesGlobal()
-
-                        for vertIdx in range(len(verticesLocal)):
-                            positionLocal = Vec3_2_pyVec3(verticesLocal[vertIdx])
-                            position = Vec3_2_pyVec3(verticesGlobal[vertIdx])
-                            velocity = Vec3_2_pyVec3(pBody.GetLinVelocity(pyVec3_2_Vec3(positionLocal)))
-                            if notForce:
-                                penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, 0., True)
-                            else:
-                                penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, mus[bodyIdx])
-
-                            if penentrated:
-                                bodyIDs.append(bodyID)
+                            if position[1] < 0.:
+                                bodyIDs.append(body.index_in_skeleton())
                                 positions.append(position)
                                 positionLocals.append(positionLocal)
-                                forces.append(force)
-                                velocities.append(velocity)
-                    elif False:
-                        # TODO:
-                        # how to deal with SE3?
-                        geomFrame = pGeom.GetGlobalFrame()
-                        data = pGeom.GetSize()
-                        for perm in itertools.product([1, -1], repeat=2):
-                            positionLocal = np.multiply(np.array(data), np.array(perm))
-                            position = Vec3_2_pyVec3(geomFrame * pyVec3_2_Vec3(positionLocal))
-                            velocity = Vec3_2_pyVec3(pBody.GetLinVelocity(pyVec3_2_Vec3(positionLocal)))
-                            if notForce:
-                                penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, 0., True)
-                            else:
-                                penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, mus[bodyIdx])
+                                # forces.append(force)
+                                #TODO:
+                                # velocities.append(velocity)
 
-                            if penentrated:
-                                bodyIDs.append(bodyID)
-                                positions.append(position)
-                                positionLocals.append(positionLocal)
-                                forces.append(force)
-                                velocities.append(velocity)
-
-        if notForce:
-            return bodyIDs, positions, positionLocals, velocities
-        return bodyIDs, positions, positionLocals, forces
+        return bodyIDs, positions, positionLocals, None
+        # return self.calcPenaltyForce(bodyIDsToCheck, None, 0., 0., True)
 
     def _calcPenaltyForce(self, position, velocity, Ks, Ds, mu, notForce=False):
         vNormal = np.array([0., 1., 0.])
