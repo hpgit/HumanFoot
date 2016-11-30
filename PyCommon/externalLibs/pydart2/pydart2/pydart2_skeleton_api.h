@@ -37,6 +37,7 @@ void SKEL(getVelocities)(int wid, int skid, double* outv, int ndofs);
 void SKEL(setVelocities)(int wid, int skid, double* inv, int ndofs);
 void SKEL(getAccelerations)(int wid, int skid, double* outv, int ndofs);
 void SKEL(setForces)(int wid, int skid, double* inv, int ndofs);
+void SKEL(setAccelerations)(int wid, int skid, double* inv, int ndofs);
 
 ////////////////////////////////////////
 // Skeleton::Difference Functions

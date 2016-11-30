@@ -166,6 +166,10 @@ class Skeleton(object):
     def ddq(self):
         return self.accelerations()
 
+    def set_accelerations(self, _qddot):
+        # self._tau = _tau
+        papi.skeleton__setAccelerations(self.world.id, self.id, _qddot)
+
     def states(self):
         return np.concatenate((self.positions(), self.velocities()))
 
@@ -326,7 +330,7 @@ class Skeleton(object):
         return self.linear_momentum()
 
     def forces(self):
-        return self._tau
+        return self._tad
 
     @property
     def tau(self):

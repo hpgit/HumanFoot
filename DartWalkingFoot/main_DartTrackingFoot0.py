@@ -25,7 +25,7 @@ from PyCommon.modules.Resource import ysMotionLoader as yf
 from PyCommon.modules.Simulator import ysPhysConfig as ypc
 
 # from PyCommon.modules.Simulator import hpLCPSimulator as hls
-# from PyCommon.modules.GUI import hpSimpleViewer as hsv
+from PyCommon.modules.GUI import hpSimpleViewer as hsv
 from PyCommon.modules.Util import ysPythonEx as ype
 
 from PyCommon.modules import pydart2 as pydart
@@ -324,12 +324,12 @@ def walkings():
     Kt = 20.
     Dt = 2.*(Kt**.5)
     # Dt = Kt/900.
-    Ks = 2000.
+    Ks = 600.
     Ds = 2.*(Ks**.5)
     mu = 1.
     # Dt = 0.
 
-    # constaants
+    # constants
     c_min_contact_vel = 100.
     #    c_min_contact_vel = 2.
     c_min_contact_time = .7
@@ -344,7 +344,7 @@ def walkings():
     K_stp_pos = 0.
 
     #    c5 = .5;    c6 = .01
-    c5 = .5;    c6 = .02
+    c5 = .7;    c6 = .02
     #    c5 = .5;    c6 = .05
     #    c5 = 1.;    c6 = .05
     #    c5 = .0;    c6 = .0
@@ -352,10 +352,10 @@ def walkings():
     K_stb_vel = .1
     K_stb_pos = .1
 
-    # OLD_SWING_HEIGHT = False
-    OLD_SWING_HEIGHT = True
-    HIGHER_OFFSET = True
-    #    HIGHER_OFFSET = False
+    OLD_SWING_HEIGHT = False
+    # OLD_SWING_HEIGHT = True
+    # HIGHER_OFFSET = True
+    HIGHER_OFFSET = False
 
     motionDir = current_path+'/ppmotion/'
     # motionDir = './ppmotion/'
@@ -374,7 +374,8 @@ def walkings():
 
     # K_swp_vel_sag = .1; K_swp_vel_cor = .4; K_swp_pos_sag = 1.; K_swp_pos_cor = 0.
     # K_stp_pos = .6
-    K_swp_vel_sag = .0; K_swp_vel_cor = .3; K_swp_pos_sag = 1.2; K_swp_pos_cor = .2
+    # K_swp_vel_sag = .0; K_swp_vel_cor = 1.3; K_swp_pos_sag = 1.2; K_swp_pos_cor = .2
+    K_swp_vel_sag = .0; K_swp_vel_cor = 1.3; K_swp_pos_sag = 1.2; K_swp_pos_cor = 1.
     K_swp_pos_sag_faster = .05
     filename = 'wd2_WalkForwardNormal00.bvh'
     # filename = 'wd2_WalkForwardNormal00_REPEATED.bvh'
@@ -492,8 +493,9 @@ def walkings():
     # dartModel.skeleton.set_positions(q)
     # q[3:6] = motion_ori.getJointPositionGlobal(0, 0)
     pdController = PDController(dartModel.skeleton, wcfg.timeStep)
-    dartModel.skeleton.set_controller(pdController)
+    # dartModel.skeleton.set_controller(pdController)
     # dartModel.world.set_gravity(np.array((0., 0., 0.)))
+    dartModel.initializeHybridDynamics()
 
     #===============================================================================
     # load segment info
@@ -565,7 +567,8 @@ def walkings():
     # information
     #===============================================================================
     # bodyIDsToCheck = range(vpWorld.getBodyNum())
-    bodyIDsToCheck = range(dartModel.getBodyNum())
+    # bodyIDsToCheck = range(dartModel.getBodyNum())
+    bodyIDsToCheck = [dartModel.getBody("LeftFoot").index_in_skeleton(), dartModel.getBody("RightFoot").index_in_skeleton()]
     mus = [mu]*len(bodyIDsToCheck)
 
     totalMass = dartModel.getTotalMass()
@@ -665,10 +668,10 @@ def walkings():
         viewer = ymv.MultiViewer(800, 655)
         #        viewer = ymv.MultiViewer(800, 655, True)
         viewer.setRenderers1([yr.DartModelRenderer(dartMotionModel, MOTION_COLOR)])
-        viewer.setRenderers2([yr.DartModelRenderer(dartModel.world, (200, 200, 0))])
+        viewer.setRenderers2([yr.DartModelRenderer(dartModel, (200, 200, 0))])
     else:
-        viewer = ysv.SimpleViewer()
-        # viewer = hsv.hpSimpleViewer()
+        # viewer = ysv.SimpleViewer()
+        viewer = hsv.hpSimpleViewer()
         #    viewer.record(False)
 
         viewer.doc.addRenderer('motionModel', yr.DartModelRenderer(dartMotionModel, (0,150,255), yr.POLYGON_LINE))
@@ -728,6 +731,11 @@ def walkings():
         rhip_torques = [0.]*viewer.getMaxFrame()
         rknee_torques = [0.]*viewer.getMaxFrame()
         rankle_torques = [0.]*viewer.getMaxFrame()
+
+
+    # ===============================================================================
+    # viewer setting for parameter setting
+    # ===============================================================================
 
     #    pt = [0.]
     def postFrameCallback_Always(frame):
@@ -1181,7 +1189,14 @@ def walkings():
         # dartModel.update(motion_ori[frame])
         pdController.setTartgetPose(th_r)
 
+        ddq = pdController.compute()
         for i in range(stepsPerFrame):
+            bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+            dartModel.applyPenaltyForce(bodyIDs, contactPositions, contactForces, localForce=False)
+            dartModel.skeleton.set_accelerations(pdController.compute())
+            _tau = np.zeros(dartModel.skeleton.q.shape)
+            # dartModel.skeleton.set_forces(_tau)
+            dartModel.step()
             '''
             if False and i % 5 == 0:
                 # bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
@@ -1237,7 +1252,6 @@ def walkings():
             #            yvu.align2D(controlModel)
             '''
 
-            dartModel.step()
 
             '''
             if contactForces is not None and len(contactForces) > 0:
@@ -1254,7 +1268,7 @@ def walkings():
 
 
 
-        bodyIDs, contactPositions, contactPositionLocals, velocities = dartModel.getContactPoints(bodyIDsToCheck)
+        # bodyIDs, contactPositions, contactPositionLocals, velocities = dartModel.getContactPoints(bodyIDsToCheck)
 
         del rd_point2[:]
         if contactPositions is not None:

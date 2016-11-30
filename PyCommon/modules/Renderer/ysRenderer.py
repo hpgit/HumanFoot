@@ -202,11 +202,15 @@ class DartModelRenderer(Renderer):
                     # print(body.name, shapeNode)
                     if renderType != RENDER_SHADOW:
                         color = numpy.array(shapeNode.visual_aspect_rgba())*255
-                        if color[0] != 0 or color[1] != 0 or color[2] != 0:
+                        # if color[0] != 0 or color[1] != 0 or color[2] != 0:
+                        if sum(self.totalColor) == 765:
                             c = [ int(color[0]), int(color[1]), int(color[2]), int(color[3]) ]
                             glColor4ubv(c)
                         else:
                             glColor3ubv(self.totalColor)
+                    else:
+                        glColor3ub(90, 90, 90)
+
 
                     self.renderShapeNode(shapeNode)
             glPopMatrix()

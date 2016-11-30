@@ -413,21 +413,25 @@ class DartModelMaker:
 
         etWorld = et.SubElement(etSkel, "world", {"name": "world 1"})
 
+        # set physics constant
         etPhysics = et.SubElement(etWorld, "physics")
         et.SubElement(etPhysics, "time_step").text = "0.001"
         et.SubElement(etPhysics, "gravity").text = "0 -9.81 0"
         et.SubElement(etPhysics, "collision_detector").text = "fcl_mesh"
 
-        etGroundSkeleton = et.SubElement(etWorld, "skeleton", {"name": "grount skeleton"})
-        et.SubElement(etGroundSkeleton, "mobile").text = "false"
-        etGroundBody = et.SubElement(etGroundSkeleton, "body", {"name": "ground"})
-        et.SubElement(etGroundBody, "transformation").text = "0 -0.025 0 0 0 0"
-        # etGroundBody.append(AddDartShapeNode(SE3(), [5.0, 0.05, 5.0], "box"))
-        etGroundBody.append(self.AddDartShapeNode(SE3(), [10.0, 0.05, 10.0], "box", "collision"))
 
-        etGroundJoint = et.SubElement(etGroundSkeleton, "joint", {"type": "free", "name": "joint 1"})
-        et.SubElement(etGroundJoint, "parent").text = "world"
-        et.SubElement(etGroundJoint, "child").text = "ground"
+        if False:
+            # add ground body and joint
+            etGroundSkeleton = et.SubElement(etWorld, "skeleton", {"name": "grount skeleton"})
+            et.SubElement(etGroundSkeleton, "mobile").text = "false"
+            etGroundBody = et.SubElement(etGroundSkeleton, "body", {"name": "ground"})
+            et.SubElement(etGroundBody, "transformation").text = "0 -0.025 0 0 0 0"
+            # etGroundBody.append(AddDartShapeNode(SE3(), [5.0, 0.05, 5.0], "box"))
+            etGroundBody.append(self.AddDartShapeNode(SE3(), [10.0, 0.05, 10.0], "box", "collision"))
+
+            etGroundJoint = et.SubElement(etGroundSkeleton, "joint", {"type": "free", "name": "joint 1"})
+            et.SubElement(etGroundJoint, "parent").text = "world"
+            et.SubElement(etGroundJoint, "child").text = "ground"
 
         etSkeleton = et.SubElement(etWorld, "skeleton")
         etSkeleton.attrib["name"] = self.skelname

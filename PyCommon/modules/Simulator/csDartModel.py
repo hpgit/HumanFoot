@@ -26,7 +26,8 @@ class DartModel:
     :type world : pydart.World
     :type config : ypc.ModelConfig
     :type skeleton: pydart.Skeleton
-    :type boneTs : list[np.array]
+    :type boneTs : list[np.ndarray]
+    :type geomPoints : list[list[np.ndarray]]
     """
 
     def __init__(self, wcfg, posture, mcfg):
@@ -43,16 +44,19 @@ class DartModel:
 
         self.planeHeight = wcfg.planeHeight
         self.lockingVel = wcfg.lockingVel
-        self.skeleton = self.world.skeletons[1]
+        self.skeleton = self.world.skeletons[0]
 
         self.update(posture)
+
+        self.geomPoints = [None]*self.getBodyNum()
+        self.initContactPoint()
 
     def step(self):
         self.world.step()
 
     def getBodyNum(self):
         bodynum = 0
-        for i in range(1, len(self.world.skeletons)):
+        for i in range(0, len(self.world.skeletons)):
             bodynum += self.world.skeletons[i].num_bodynodes()
         return bodynum
 
@@ -65,12 +69,71 @@ class DartModel:
     def SetGravity(self, g):
         self.world.set_gravity(g)
 
-    def applyPenaltyForce(self, bodyIDs, positionLocals, forces):
+    def initContactPoint(self):
+        # in sphere(ellipsoid) case, saves points around center of hemisphere in local body frame,
+        #    so additional calculation is needed
+
+        # in box case, saves points around in local body frame
+
+        rad, gap, row, col, height_ratio = .05, .01, 6, 6, .5
+        for i in range(self.skeleton.num_bodynodes()):
+            body = self.getBody(i)
+            for shapeNode in body.shapenodes:
+                if shapeNode.has_collision_aspect():
+                    geomType = shapeNode.shape.shape_type_name()
+                    geomT = np.dot(body.world_transform(), shapeNode.relative_transform())
+                    if geomType == "ELLIPSOID":
+                        shape = shapeNode.shape # type: pydart.EllipsoidShape
+                        lowestCenter = geomT[:3, 3]
+                        lowestCenter[1] -= shape.size()[0]/2. + rad
+
+                        geomPoint = list()
+                        geomPoint.extend(self.getContactSphere(lowestCenter,rad, row, col, height_ratio))
+                        self.geomPoints[i] = geomPoint
+
+                    elif geomType == "BOX":
+                        shape = shapeNode.shape # type: pydart.BoxShape
+                        data = shape.size()/2. # type: np.ndarray
+
+                        t, b, l, r, l0 = data[2], -data[2], -data[0], data[0], -data[1]
+                        positionTmpCenters = [np.array((l+gap, l0+rad, t-gap)), np.array((l+gap, l0+rad, b+gap)),
+                                              np.array((r-gap, l0+rad, t-gap)), np.array((r-gap, l0+rad, b+gap)),
+                                            np.array((l+gap, l0+rad, 0.)), np.array((r-gap, l0+rad, 0.))]
+
+                        geomPoint = list()
+                        for posCenter in positionTmpCenters:
+                            geomPoint.extend(self.getContactSphere(posCenter, rad, row, col, height_ratio))
+                        self.geomPoints[i] = geomPoint
+
+    @staticmethod
+    def getContactSphere(center, rad, row, col, height_ratio):
+        verticesLocal = list()
+        col_real = 0
+        _row = int(row*height_ratio)
+
+        for i in range(_row):
+            t = float(i)/float(row)
+            cp = math.cos(math.pi * t - math.pi/2.)
+            sp = math.sin(math.pi * t - math.pi/2.)
+
+            col_real = 1 if i==0 else col
+            for j in range(col_real):
+                s = float(j)/float(col_real)
+                ct = math.cos(2.*math.pi*s)
+                st = math.sin(2.*math.pi*s)
+                verticesLocal.append(np.array((rad*cp*ct, rad*sp, -rad*cp*st)) + center)
+
+        return verticesLocal
+
+    def applyPenaltyForce(self, bodyIDs, positionLocals, forces, localForce=True):
+        for bodyIdx in range(len(bodyIDs)):
+            bodyID = bodyIDs[bodyIdx]
+            body = self.getBody(bodyID)
+            body.add_ext_force(forces[bodyIdx],positionLocals[bodyIdx], False, localForce)
         # for bodyIdx in range(len(bodyIDs)):
         #     bodyID = bodyIDs[bodyIdx]
         #     pBody = self._world.GetBody(bodyID)
         #     pBody.ApplyGlobalForce(pyVec3_2_Vec3(forces[bodyIdx]), pyVec3_2_Vec3(positionLocals[bodyIdx]))
-        pass
 
     def getContactPoints(self, bodyIDsToCheck):
         bodyIDs = []
@@ -115,26 +178,7 @@ class DartModel:
         # return self.calcPenaltyForce(bodyIDsToCheck, None, 0., 0., True)
 
     def calcPenaltyForce(self, bodyIDsToCheck, mus, Ks, Ds):
-        def sphere(center, rad, row, col, height_ratio):
-            verticesLocal = list()
-            col_real = 0
-            _row = int(row*height_ratio)
-
-            for i in range(_row):
-                t = float(i)/float(row)
-                cp = math.cos(math.pi * t - math.pi/2.)
-                sp = math.sin(math.pi * t - math.pi/2.)
-
-                col_real = 1 if i==0 else col
-                for j in range(col_real):
-                    s = float(j)/float(col_real)
-                    ct = math.cos(2.*math.pi*s)
-                    st = math.sin(2.*math.pi*s)
-                    verticesLocal.append(np.array((rad*cp*ct, rad*sp, -rad*cp*st)) + center)
-
-            return verticesLocal
-
-        def _calcPenaltyForce(pBody, position, velocity, Ks, Ds, mu, lockingVel):
+        def _calcPenaltyForce(pBody, position, velocity, mu, lockingVel):
             """
 
             :type pBody: pydart.BodyNode
@@ -145,110 +189,108 @@ class DartModel:
             :type Ds: float
             :type mu: float
             """
-            vNormal = np.array((0., 1., 0.))
-
-            vRelVel = velocity.copy()
-            vNormalRelVel = np.dot(vRelVel, vNormal) * vNormal
-            vTangentialRelVel = vRelVel - vNormalRelVel
-            tangentialRelVel = npl.norm(vNormalRelVel)
-            if position[1] > 0.:
+            if position[1] >= 0.:
                 return False, np.zeros(3)
             else:
+                vNormalRelVel = np.array((0., velocity[1], 0.))
+                vTangentialRelVel = velocity - vNormalRelVel
+                tangentialRelVel = npl.norm(vNormalRelVel)
+
                 normalForce = max(0., -Ks*position[1] - Ds*velocity[1])
-                vNormalForce = normalForce * vNormal
+                vNormalForce = np.array((0., normalForce, 0.))
                 frictionForce = mu * normalForce
 
                 if tangentialRelVel < lockingVel:
                     frictionForce *= tangentialRelVel / lockingVel
-                vFrictionForce = frictionForce * (mm.normalize(vTangentialRelVel))
+                vFrictionForce = -frictionForce * (mm.normalize2(vTangentialRelVel))
                 force = vNormalForce + vFrictionForce
                 return True, force
 
-        size=[1., 1., 1.]
-        t = size[2]/2.
-        b = -size[2]/2.
-        l = -size[0]/2.
-        r = size[0]/2.
-        l0 = -size[1]/2.
+        rad, gap, row, col, height_ratio = .03, .01, 6, 6, .5
 
-        rad = .05
-        gap = .01
-        row = 6
-        col = 6
-        height_ratio = .5
+        bodyIDs, positions, positionLocals, velocities, forces = [], [], [], [], []
 
-        bodyIDs = []
-        positions = []
-        positionLocals = []
-        velocities = []
-        forces = []
-        for i in bodyIDsToCheck:
-            body = self.getBody(i)
+        for i in range(len(bodyIDsToCheck)):
+            body = self.getBody(bodyIDsToCheck[i])
+            bodyIdx = body.index_in_skeleton()
             for shapeNode in body.shapenodes:
                 if shapeNode.has_collision_aspect():
                     geomType = shapeNode.shape.shape_type_name()
                     geomT = np.dot(body.world_transform(), shapeNode.relative_transform())
-                    if geomType == "ELLIPSOID":
+                    if True and geomType == "ELLIPSOID":
                         shape = shapeNode.shape # type: pydart.EllipsoidShape
                         lowestPoint = geomT[:3, 3]
                         lowestPoint[1] -= shape.size()[0]/2.
                         if lowestPoint[1] < 0.:
-                            bodyIDs.append(i)
+                            spatialVel = body.com_spatial_velocity() # type: np.ndarray
+                            velocity = body.com_linear_velocity() + np.cross(spatialVel[:3], lowestPoint - body.com())
+                            isPenetrated, force = _calcPenaltyForce(body, lowestPoint, velocity, mus[i], self.lockingVel)
+                            bodyIDs.append(body.index_in_skeleton())
                             positions.append(lowestPoint)
                             positionLocals.append(body.to_local(lowestPoint))
-                            #TODO:
-                            # velocities.append(body.com_spatial_velocity())
-                    elif geomType == "BOX":
+                            velocities.append(velocity)
+                            forces.append(force)
+
+                    elif geomType == "ELLIPSOID":
+                        shape = shapeNode.shape # type: pydart.EllipsoidShape
+                        lowestCenter = geomT[:3, 3]
+                        lowestCenter[1] -= shape.size()[0]/2. + rad
+
+                        positionGlobalTmps = self.getContactSphere(lowestCenter, rad, row, col, height_ratio)
+
+                        for posIdx in range(len(positionGlobalTmps)):
+                            positionGlobal = positionGlobalTmps[posIdx]
+                            spatialVel = body.com_spatial_velocity() # type: np.ndarray
+                            velocity = body.com_linear_velocity() + np.cross(spatialVel[:3], positionGlobal - body.com())
+                            isPenetrated, force = _calcPenaltyForce(body, positionGlobal, velocity, mus[i], self.lockingVel)
+                            if isPenetrated:
+                                bodyIDs.append(body.index_in_skeleton())
+                                positions.append(positionGlobal)
+                                positionLocals.append(body.to_local(positionGlobal))
+                                velocities.append(velocity)
+                                forces.append(force)
+
+                    elif True and geomType == "BOX":
                         shape = shapeNode.shape # type: pydart.BoxShape
-                        data = shape.size()/2.
+                        geomPoint = self.geomPoints[bodyIdx]
+                        # print self.getBody(bodyIdx).name, len(geomPoint)
+                        # print geomPoint
+
+                        bodySpatialVel = body.com_spatial_velocity() # type: np.ndarray
+                        bodyLinVel = body.com_linear_velocity() # type: np.ndarray
+                        # geomT = body.world_transform()
+                        for posIdx in range(len(geomPoint)):
+                            positionGlobal = np.dot(geomT[:3, :3], geomPoint[posIdx]) + geomT[:3, 3]
+                            # print self.getBody(bodyIdx).name, positionGlobal
+                            if positionGlobal[1] < 0.:
+                                velocity = bodyLinVel + np.cross(bodySpatialVel[:3], positionGlobal - body.com())
+                                isPenetrated, force = _calcPenaltyForce(body, positionGlobal, velocity, mus[i], self.lockingVel)
+                                # print "positionGlobal", positionGlobal
+                                bodyIDs.append(body.index_in_skeleton())
+                                positions.append(positionGlobal)
+                                positionLocals.append(body.to_local(positionGlobal))
+                                velocities.append(velocity)
+                                forces.append(force)
+
+                    elif False and geomType == "BOX":
+                        shape = shapeNode.shape  # type: pydart.BoxShape
+                        data = shape.size() / 2.  # type: np.ndarray
                         for perm in itertools.product([1, -1], repeat=3):
                             positionLocal = np.multiply(np.array((data[0], data[1], data[2])), np.array(perm))
                             position = np.dot(geomT[:3, :3], positionLocal) + geomT[:3, 3]
-                            #TODO:
-                            # velocity = node.body.GetLinVelocity(pyVec3_2_Vec3(positionLocal))
 
                             if position[1] < 0.:
+                                spatialVel = body.com_spatial_velocity()  # type: np.ndarray
+                                velocity = body.com_linear_velocity() + np.cross(spatialVel[:3], position - body.com())
+                                isPenetrated, force = _calcPenaltyForce(body, position, velocity, mus[i], self.lockingVel)
                                 bodyIDs.append(body.index_in_skeleton())
                                 positions.append(position)
                                 positionLocals.append(positionLocal)
-                                # forces.append(force)
-                                #TODO:
-                                # velocities.append(velocity)
+                                velocities.append(velocity)
+                                forces.append(force)
 
-        return bodyIDs, positions, positionLocals, None
-        # return self.calcPenaltyForce(bodyIDsToCheck, None, 0., 0., True)
 
-    def _calcPenaltyForce(self, position, velocity, Ks, Ds, mu, notForce=False):
-        vNormal = np.array([0., 1., 0.])
-
-        vRelVel = np.array(velocity)
-        normalRelVel = np.dot(vRelVel, vNormal)
-        vNormalRelVel = normalRelVel * vNormal
-        vTangentialRelVel = vRelVel - vNormalRelVel
-        tangentialRelVel = npl.norm(vTangentialRelVel)
-
-        depth = self._planeHeight - position[1]
-
-        if depth < 0:
-            return False, np.array([0., 0., 0.])
-        elif notForce:
-            return True, np.array([0., 0., 0.])
-        else:
-            normalForce = Ks * depth - Ds * velocity[1]
-            if normalForce < 0.:
-                return True, np.array([0., 0., 0.])
-
-            vNormalForce = normalForce * vNormal
-            frictionForce = mu * normalForce
-
-            if tangentialRelVel < self._lockingVel:
-                frictionForce *= tangentialRelVel / self._lockingVel
-
-            vFrictionForce = -frictionForce * vTangentialRelVel / npl.norm(vTangentialRelVel)
-
-            force = vNormalForce + vFrictionForce
-
-        return True, force
+        return bodyIDs, positions, positionLocals, forces
 
 
     def build_name2index(self):
@@ -299,6 +341,11 @@ class DartModel:
             return self.skeleton.joint(key)
         else:
             raise TypeError
+
+    def setRenderColor(self, color):
+        for body in self.skeleton.bodynodes:
+            for shapenode in body.shapenodes:
+                shapenode.set_visual_aspect_rgba(color)
 
     def getBodyShape(self, index):
         # pGeom = self._nodes[index].body.GetGeometry(0)

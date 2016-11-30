@@ -16,8 +16,12 @@ class PDController:
         self.skel = skel
         ndofs = self.skel.ndofs
         # self.qhat = self.skel.q
+        Kt = 400.
+        Dt = 2.*(Kt**.5)
         self.Kp = np.diagflat([0.0] * 6 + [400.0] * (ndofs - 6))
         self.Kd = np.diagflat([0.0] * 6 + [40.0] * (ndofs - 6))
+        # self.Kp = np.diagflat([0.0] * 6 + [Kt] * (ndofs - 6))
+        # self.Kd = np.diagflat([0.0] * 6 + [Dt] * (ndofs - 6))
         self.preoffset = 0.0
 
         self.Rs = None
@@ -51,7 +55,9 @@ class PDController:
 
         # Make sure the first six are zero
         tau[:6] = 0
-        return tau
+        # return qddot
+        return p+d
+
 
     def setTartgetPose(self, Rs):
         self.Rs = Rs
