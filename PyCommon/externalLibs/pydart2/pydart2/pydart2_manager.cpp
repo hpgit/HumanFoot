@@ -24,7 +24,7 @@ void Manager::init() {
     // g_ri->initialize();
     g_manager->next_id = 0;
     // if (verbose) dtmsg << "Hello!";
-    MSG << " [pydart2_api] Initialize pydart manager OK\n";
+    // MSG << " [pydart2_api] Initialize pydart manager OK\n";
 }
 
 void Manager::destroy() {
@@ -36,7 +36,7 @@ void Manager::destroy() {
         delete g_ri;
         g_ri = NULL;
     }
-    MSG << " [pydart2_api] Destroy pydart manager OK\n";
+    // MSG << " [pydart2_api] Destroy pydart manager OK\n";
 }
 
 dart::simulation::WorldPtr Manager::world(int index) {
@@ -91,8 +91,8 @@ int Manager::createWorldFromSkelXML(const std::string &xmlstr) {
     manager->worlds[id] = w;
     // int id = manager->worlds.size();
     // manager->worlds.push_back(w);
-    MSG << " [pydart2_api] worlds.size = " << manager->worlds.size() << "\n";
-    MSG << " [pydart2_api] worlds.# skeletons = " << w->getNumSkeletons() << "\n";
+    // MSG << " [pydart2_api] worlds.size = " << manager->worlds.size() << "\n";
+    // MSG << " [pydart2_api] worlds.# skeletons = " << w->getNumSkeletons() << "\n";
     return id;
 }
 

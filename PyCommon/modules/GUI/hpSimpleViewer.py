@@ -7,25 +7,31 @@ from PIL import Image as im
 import numpy as np
 
 class hpSimpleViewer(ysvOri.SimpleViewer):
-    def __init__(self, rect=None, title='hpSimpleViewer'):
+    def __init__(self, rect=None, title='hpSimpleViewer', viewForceWnd=True):
         ybu.BaseWnd.__init__(self, rect, title, ysvOri.SimpleSetting())
         self.title = title
         self.doc = ysvOri.SimpleDoc()
         self.begin()
         panelWidth = 280
         cForceHeight = 200
-        self.motionViewWnd = hpMotionViewWnd(0, 0, self.w()-panelWidth, self.h()-cForceHeight, self.doc)
         t = .3
         self.renderersWnd = ysvOri.RenderersWnd(self.w()-panelWidth, 0, panelWidth, int(self.h()*t), self.doc)
         self.objectInfoWnd = hpObjectInfoWnd(self.w()-panelWidth, int(self.h()*t), panelWidth, int(self.h()*(1-t)), self.doc)
-        self.cForceWnd = hpContactForceGraphWnd(0, self.h()-cForceHeight, self.w()-panelWidth-40, cForceHeight, self.doc)
+        if viewForceWnd:
+            self.motionViewWnd = hpMotionViewWnd(0, 0, self.w()-panelWidth, self.h()-cForceHeight, self.doc)
+            self.cForceWnd = hpContactForceGraphWnd(0, self.h()-cForceHeight, self.w()-panelWidth-40, cForceHeight, self.doc)
+        else:
+            self.motionViewWnd = hpMotionViewWnd(0, 0, self.w()-panelWidth, self.h(), self.doc)
         self.end()
         self.resizable(self.motionViewWnd)
         # self.resizable(self.cForceWnd)
         self.size_range(600, 400)
 
-        self.cForceWnd.viewer = self
-        self.motionViewWnd.cForceWnd = self.cForceWnd
+        if viewForceWnd:
+            self.cForceWnd.viewer = self
+            self.motionViewWnd.cForceWnd = self.cForceWnd
+        else:
+            self.motionViewWnd.cForceWnd = None
         self.objectInfoWnd.viewer = self
 
 
@@ -36,7 +42,8 @@ class hpMotionViewWnd(ysvOri.MotionViewWnd):
 
     def goToFrame(self, frame):
         super(hpMotionViewWnd, self).goToFrame(frame)
-        self.cForceWnd.redraw()
+        if self.cForceWnd is not None:
+            self.cForceWnd.redraw()
 
     def onTimer(self):
         if self.playing:

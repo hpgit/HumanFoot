@@ -941,7 +941,7 @@ class RenderContext:
         # gleSetNumSides(12)
 
     def drawCapsule(self, radius, length_z):
-        _SLICE_SIZE = 8
+        _SLICE_SIZE = 16
         glPushMatrix()
         glTranslatef(0., 0., -length_z/2.)
         gluSphere(self.quad2, radius, _SLICE_SIZE, _SLICE_SIZE)
@@ -953,7 +953,7 @@ class RenderContext:
 
         gluCylinder(self.quad, radius, radius, length_z, _SLICE_SIZE, 1)
 
-        if False:
+        if True:
             glPushMatrix()
             glTranslatef(0.0002, 0., 0.)
             glColor3f(1., 0., 0.)

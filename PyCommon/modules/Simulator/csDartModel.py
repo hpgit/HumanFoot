@@ -44,7 +44,13 @@ class DartModel:
 
         self.planeHeight = wcfg.planeHeight
         self.lockingVel = wcfg.lockingVel
-        self.skeleton = self.world.skeletons[0]
+
+        if self.world.skeletons[0].name == "grount skeleton":
+            self.hasGround = True
+            self.skeleton = self.world.skeletons[1]
+        else:
+            self.hasGround = False
+            self.skeleton = self.world.skeletons[0]
 
         self.update(posture)
 
@@ -55,8 +61,9 @@ class DartModel:
         self.world.step()
 
     def getBodyNum(self):
+        bodyFrom = 1 if self.hasGround else 0
         bodynum = 0
-        for i in range(0, len(self.world.skeletons)):
+        for i in range(bodyFrom, len(self.world.skeletons)):
             bodynum += self.world.skeletons[i].num_bodynodes()
         return bodynum
 

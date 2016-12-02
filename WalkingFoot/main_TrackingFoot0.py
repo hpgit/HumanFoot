@@ -214,41 +214,41 @@ def buildMcfg():
     node.addGeom('MyFoot3', [0.02*np.array([-0.3, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
     node.addGeom('MyFoot3', [0.02*np.array([-0.3-1.2, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
     # node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0., 0., 0.])], ypc.CapsuleMaterial(1000., .01, -1))
-    node.jointType = 'R'
+    node.jointType = 'B'
 
     capsulize('RightFoot_foot_0_0_0')
     node = mcfg.getNode('RightFoot_foot_0_0_0')
     node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
     node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = 'R'
+    node.jointType = 'B'
 
     capsulize('RightFoot_foot_0_1')
     node = mcfg.getNode('RightFoot_foot_0_1')
     node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
     node.addGeom('MyFoot3', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400.,.01, -1))
-    node.jointType = 'R'
+    node.jointType = 'B'
 
     capsulize('RightFoot_foot_0_1_0')
     node = mcfg.getNode('RightFoot_foot_0_1_0')
     node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
     node.addGeom('MyFoot4', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = 'R'
+    node.jointType = 'B'
 
     capsulize('RightFoot_foot_1_0')
     node = mcfg.getNode('RightFoot_foot_1_0')
     node.addGeom('MyFoot3', [0.02*np.array([0., 0., .7]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, 0.02*2.0+0.02))
     # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
-    node.jointType = 'R'
+    node.jointType = 'B'
 
     capsulize('RightFoot_foot_1_1')
     node = mcfg.getNode('RightFoot_foot_1_1')
     node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = 'R'
+    node.jointType = 'B'
 
     capsulize('RightFoot_foot_1_2')
     node = mcfg.getNode('RightFoot_foot_1_2')
     node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = 'R'
+    node.jointType = 'B'
 
 
     capsulize('LeftFoot_foot_0_0')
@@ -256,41 +256,41 @@ def buildMcfg():
     node.addGeom('MyFoot3', [0.02*np.array([0.3, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
     node.addGeom('MyFoot3', [0.02*np.array([0.3+1.2, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
     # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
-    node.jointType = 'R'
+    node.jointType = 'B'
 
     capsulize('LeftFoot_foot_0_0_0')
     node = mcfg.getNode('LeftFoot_foot_0_0_0')
     node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
     node.addGeom('MyFoot4', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = 'R'
+    node.jointType = 'B'
 
     capsulize('LeftFoot_foot_0_1')
     node = mcfg.getNode('LeftFoot_foot_0_1')
     node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
     node.addGeom('MyFoot3', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = 'R'
+    node.jointType = 'B'
 
     capsulize('LeftFoot_foot_0_1_0')
     node = mcfg.getNode('LeftFoot_foot_0_1_0')
     node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
     node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = 'R'
+    node.jointType = 'B'
 
     capsulize('LeftFoot_foot_1_0')
     node = mcfg.getNode('LeftFoot_foot_1_0')
     node.addGeom('MyFoot3', [0.02*np.array([0., 0., .7]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, 0.02*2.0+0.02))
     # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
-    node.jointType = 'R'
+    node.jointType = 'B'
 
     capsulize('LeftFoot_foot_1_1')
     node = mcfg.getNode('LeftFoot_foot_1_1')
     node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = 'R'
+    node.jointType = 'B'
 
     capsulize('LeftFoot_foot_1_2')
     node = mcfg.getNode('LeftFoot_foot_1_2')
     node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = 'R'
+    node.jointType = 'B'
 
 
     return mcfg

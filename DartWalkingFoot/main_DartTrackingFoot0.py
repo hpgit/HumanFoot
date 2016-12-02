@@ -33,8 +33,9 @@ from PyCommon.modules.Simulator import csDartModel as cpm
 from pdcontroller import PDController
 
 import math
-# from matplotlib import pyplot as plt
 # from matplotlib import collections
+
+import cma
 
 current_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -44,7 +45,6 @@ MOTION_COLOR = (213, 111, 162)
 CHARACTER_COLOR = (20, 166, 188)
 
 SEGMENT_FOOT = False
-
 
 def buildMassMap():
     massMap = {}
@@ -304,7 +304,12 @@ def buildMcfg():
     return mcfg
 
 
-def walkings():
+def walkings(params, isCma=False):
+    """
+
+    :type params: list[float]
+    :return:
+    """
     class ForceInfo:
         def __init__(self, startFrame, duration, force):
             self.startFrame = startFrame    # frame
@@ -324,7 +329,7 @@ def walkings():
     Kt = 20.
     Dt = 2.*(Kt**.5)
     # Dt = Kt/900.
-    Ks = 600.
+    Ks = 2000.
     Ds = 2.*(Ks**.5)
     mu = 1.
     # Dt = 0.
@@ -344,7 +349,7 @@ def walkings():
     K_stp_pos = 0.
 
     #    c5 = .5;    c6 = .01
-    c5 = .7;    c6 = .02
+    c5 = .5;    c6 = .02
     #    c5 = .5;    c6 = .05
     #    c5 = 1.;    c6 = .05
     #    c5 = .0;    c6 = .0
@@ -374,11 +379,11 @@ def walkings():
 
     # K_swp_vel_sag = .1; K_swp_vel_cor = .4; K_swp_pos_sag = 1.; K_swp_pos_cor = 0.
     # K_stp_pos = .6
-    # K_swp_vel_sag = .0; K_swp_vel_cor = 1.3; K_swp_pos_sag = 1.2; K_swp_pos_cor = .2
-    K_swp_vel_sag = .0; K_swp_vel_cor = 1.3; K_swp_pos_sag = 1.2; K_swp_pos_cor = 1.
+    K_swp_vel_sag = .0; K_swp_vel_cor = .3; K_swp_pos_sag = 1.2; K_swp_pos_cor = .2
+    # K_swp_vel_sag = .0; K_swp_vel_cor = 1.3; K_swp_pos_sag = 1.2; K_swp_pos_cor = 1.
     K_swp_pos_sag_faster = .05
-    filename = 'wd2_WalkForwardNormal00.bvh'
-    # filename = 'wd2_WalkForwardNormal00_REPEATED.bvh'
+    # filename = 'wd2_WalkForwardNormal00.bvh'
+    filename = 'wd2_WalkForwardNormal00_REPEATED.bvh'
 
     ##    K_swp_vel_sag = .1; K_swp_vel_cor = .4; K_swp_pos_sag = .3; K_swp_pos_cor = 0.
     ##    K_stp_pos = 0.
@@ -486,7 +491,9 @@ def walkings():
 
     pydart.init()
     dartModel = cpm.DartModel(wcfg, motion_ori[0], mcfg)
-    dartMotionModel = cpm.DartModel(wcfg, motion_ori[0], mcfg)
+    dartMotionModel = None # type: cpm.DartModel
+    if not isCma:
+        dartMotionModel = cpm.DartModel(wcfg, motion_ori[0], mcfg)
     # q = dartModel.skeleton.q
     # q[0:3] = mm.logSO3(motion_ori.getJointOrientationGlobal(0, 0))
     # q[3:6] = motion_ori.getJointPositionGlobal(0, 0)
@@ -507,17 +514,19 @@ def walkings():
     seginfo = load(segfile)
     segfile.close()
 
-    for seg in seginfo:
-        print(seg)
+    if not isCma:
+        for seg in seginfo:
+            print(seg)
 
     intervals = [info['interval'] for info in seginfo]
     states = [info['state'] for info in seginfo]
     temp_motion = copy.deepcopy(motion_ori)
     segments = yma.splitMotionIntoSegments(temp_motion, intervals)
-    print(len(intervals), 'segments')
-    for i in range(len(intervals)):
-        print('%dth'%i, yba.GaitState.text[states[i]], intervals[i], ',',)
-    print("")
+    if not isCma:
+        print(len(intervals), 'segments')
+        for i in range(len(intervals)):
+            print('%dth'%i, yba.GaitState.text[states[i]], intervals[i], ',',)
+        print("")
 
     motion_seg_orig = ym.JointMotion()
     motion_seg_orig += segments[0]
@@ -562,7 +571,6 @@ def walkings():
 
     step_length_tar = [0.]
     step_axis = [mm.O_Vec3()]
-
     #===============================================================================
     # information
     #===============================================================================
@@ -671,10 +679,10 @@ def walkings():
         viewer.setRenderers2([yr.DartModelRenderer(dartModel, (200, 200, 0))])
     else:
         # viewer = ysv.SimpleViewer()
-        viewer = hsv.hpSimpleViewer()
+        viewer = hsv.hpSimpleViewer(viewForceWnd=False)
         #    viewer.record(False)
-
-        viewer.doc.addRenderer('motionModel', yr.DartModelRenderer(dartMotionModel, (0,150,255), yr.POLYGON_LINE))
+        if not isCma:
+            viewer.doc.addRenderer('motionModel', yr.DartModelRenderer(dartMotionModel, (0,150,255), yr.POLYGON_LINE))
         viewer.doc.addRenderer('controlModel', yr.DartModelRenderer(dartModel, (50, 200, 200)))
 
         viewer.doc.addObject('motion_ori', motion_ori)
@@ -714,6 +722,31 @@ def walkings():
     #    viewer.doc.addRenderer('rd_frame1', yr.FramesRenderer(rd_frame1, (0,200,200)))
     #    viewer.doc.addRenderer('rd_frame2', yr.FramesRenderer(rd_frame2, (200,200,0)))
     #    viewer.setMaxFrame(len(motion_ori)-1)
+
+    viewer.objectInfoWnd.add1DSlider("penalty_grf_gain",    0., 5000., 10., Ks)
+    viewer.objectInfoWnd.add1DSlider("c_min_contact_vel",   0., 200., .2, 100.)
+    viewer.objectInfoWnd.add1DSlider("c_min_contact_time",  0., 5., .01, .7)
+    viewer.objectInfoWnd.add1DSlider("c_landing_duration",  0., 5., .01, .2)
+    viewer.objectInfoWnd.add1DSlider("c_taking_duration",   0., 5., .01, .3)
+    viewer.objectInfoWnd.add1DSlider("c_swf_mid_offset",    -1., 1., .001, 0.)
+    viewer.objectInfoWnd.add1DSlider("c_locking_vel",       0., 1., .001, .05)
+
+    viewer.objectInfoWnd.add1DSlider("c_swf_offset",        -1., 1., .001, .01)
+    viewer.objectInfoWnd.add1DSlider("K_stp_pos",           0., 1., .01, 0.)
+
+    viewer.objectInfoWnd.add1DSlider("c5",                  0., 5., .01, c5)
+    viewer.objectInfoWnd.add1DSlider("c6",                  0., 1., .01, c6)
+    viewer.objectInfoWnd.add1DSlider("K_stb_vel",           0., 1., .01, K_stb_vel)
+    viewer.objectInfoWnd.add1DSlider("K_stb_pos",           0., 1., .01, K_stb_pos)
+    viewer.objectInfoWnd.add1DSlider("K_swp_vel_sag",       0., 5., .01, K_swp_vel_sag)
+    viewer.objectInfoWnd.add1DSlider("K_swp_vel_cor",       0., 5., .01, K_swp_vel_cor)
+    viewer.objectInfoWnd.add1DSlider("K_swp_pos_sag",       0., 5., .01, K_swp_pos_sag)
+    viewer.objectInfoWnd.add1DSlider("K_swp_pos_cor",       0., 5., .01, K_swp_pos_cor)
+    viewer.objectInfoWnd.add1DSlider("K_swp_pos_sag_faster",0., 1., .01, K_swp_pos_sag_faster)
+
+    def getParamVal(paramname):
+        return viewer.objectInfoWnd.getVal(paramname)
+
 
     if not REPEATED:
         viewer.setMaxFrame(len(motion_ori)-1)
@@ -762,7 +795,9 @@ def walkings():
         if plot is not None:
             plot.updateVline(frame)
 
-    viewer.setPostFrameCallback_Always(postFrameCallback_Always)
+
+    if not isCma:
+        viewer.setPostFrameCallback_Always(postFrameCallback_Always)
 
     plot = None
     # plot = ymp.InteractivePlot()
@@ -782,6 +817,56 @@ def walkings():
     viewer.callback(viewer_onClose)
 
     def simulateCallback(frame):
+        # c_min_contact_vel, c_min_contact_time, c_landing_duration, \
+        # c_taking_duration, c_swf_mid_offset, c_locking_vel, c_swf_offset, \
+        # K_stp_pos, c5, c6, K_stb_vel, K_stb_pos, K_swp_vel_sag, K_swp_vel_cor, \
+        # K_swp_pos_sag, K_swp_pos_cor, K_swp_pos_sag_faster = viewer.objectInfoWnd.getVals()
+        if not isCma and params is None:
+            Ks                    = getParamVal("penalty_grf_gain")
+            Ds                    = 2.*(Ks**.5)
+            c_min_contact_vel     = getParamVal("c_min_contact_vel")
+            c_min_contact_time    = getParamVal("c_min_contact_time")
+            c_landing_duration    = getParamVal("c_landing_duration")
+            c_taking_duration     = getParamVal("c_taking_duration")
+            c_swf_mid_offset      = getParamVal("c_swf_mid_offset")
+            c_locking_vel         = getParamVal("c_locking_vel")
+            c_swf_offset          = getParamVal("c_swf_offset")
+            K_stp_pos             = getParamVal("K_stp_pos")
+            c5                    = getParamVal("c5")
+            c6                    = getParamVal("c6")
+            K_stb_vel             = getParamVal("K_stb_vel")
+            K_stb_pos             = getParamVal("K_stb_pos")
+            K_swp_vel_sag         = getParamVal("K_swp_vel_sag")
+            K_swp_vel_cor         = getParamVal("K_swp_vel_cor")
+            K_swp_pos_sag         = getParamVal("K_swp_pos_sag")
+            K_swp_pos_cor         = getParamVal("K_swp_pos_cor")
+            K_swp_pos_sag_faster  = getParamVal("K_swp_pos_sag_faster")
+        else:
+            Ks = 600.
+            Ds                    = 2.*(Ks**.5)
+            c_min_contact_vel = 100.
+            #    c_min_contact_vel = 2.
+            c_min_contact_time = .7
+            c_landing_duration = .2
+            c_taking_duration = .3
+            c_swf_mid_offset = .0
+            c_locking_vel = .05
+
+            #    c_swf_offset = .0
+            c_swf_offset = .01
+            #    c_swf_offset = .005
+            K_stp_pos             = params[0]*params[0]
+            c5                    = params[1]*params[1]
+            c6                    = params[2]*params[2]
+            K_stb_vel             = params[3]*params[3]
+            K_stb_pos             = params[4]*params[4]
+            K_swp_vel_sag         = params[5]*params[5]
+            K_swp_vel_cor         = params[6]*params[6]
+            K_swp_pos_sag         = params[7]*params[7]
+            K_swp_pos_cor         = params[8]*params[8]
+            K_swp_pos_sag_faster  = params[9]*params[9]
+
+
         # seginfo
         segIndex = seg_index[0]
         curState = seginfo[segIndex]['state']
@@ -906,6 +991,7 @@ def walkings():
         # P.goToFrame(frame)
 
 
+        '''
         # stance foot stabilize
         motion_stf_stabilize.append(motion_stitch[frame].copy())
         motion_stf_stabilize.goToFrame(frame)
@@ -918,9 +1004,11 @@ def walkings():
                 #                R_target_foot = motion_seg[frame].getJointOrientationLocal(stanceFoot)
                 #                R_current_foot = motion_stf_stabilize[frame].getJointOrientationLocal(stanceFoot)
                 #                motion_stf_stabilize[frame].setJointOrientationLocal(stanceFoot, cm.slerp(R_current_foot, R_target_foot , stf_stabilize_func(t)))
+        #'''
 
         # match stance leg
-        motion_match_stl.append(motion_stf_stabilize[frame].copy())
+        # motion_match_stl.append(motion_stf_stabilize[frame].copy())
+        motion_match_stl.append(motion_stitch[frame].copy())
         motion_match_stl.goToFrame(frame)
         if MATCH_STANCE_LEG:
             if curState!=yba.GaitState.STOP:
@@ -988,7 +1076,6 @@ def walkings():
 
         # swing foot height
         motion_swf_height.append(motion_swf_placement[frame].copy())
-        # motion_swf_height.append(motion_stitch[frame].copy())
         motion_swf_height.goToFrame(frame)
         if SWING_FOOT_HEIGHT:
             for swingFoot in swingFoots:
@@ -1059,13 +1146,12 @@ def walkings():
 
         # stance foot push
         motion_stf_push.append(motion_swf_height[frame].copy())
-        # motion_stf_push.append(motion_swf_placement[frame].copy())
         motion_stf_push.goToFrame(frame)
         if STANCE_FOOT_PUSH:
             # TODO:
             # swingFoots?????????????????????????
-            for swingFoot in swingFoots:
-            # for swingFoot in stanceFoots:
+            # for swingFoot in swingFoots:
+            for swingFoot in stanceFoots:
                 #                max_t = (maxStfPushFrame)/float(curInterval[1]-curInterval[0])
                 #                stf_push_func = yfg.concatenate([yfg.sine, yfg.zero], [max_t*2])
                 stf_push_func = yfg.concatenate([yfg.sine, yfg.zero], [c_taking_duration*2])
@@ -1081,10 +1167,22 @@ def walkings():
 
                 motion_stf_push[frame].mulJointOrientationGlobal(swingFoot, R_swp_sag)
 
+        # '''
+        # stance foot stabilize
+        motion_stf_stabilize.append(motion_stf_push[frame].copy())
+        motion_stf_stabilize.goToFrame(frame)
+        if STANCE_FOOT_STABILIZE:
+            for stanceFoot in stanceFoots:
+                R_target_foot = motion_stf_push[frame].getJointOrientationGlobal(stanceFoot)
+                R_current_foot = motion_stf_stabilize[frame].getJointOrientationGlobal(stanceFoot)
+                motion_stf_stabilize[frame].setJointOrientationGlobal(stanceFoot, mm.slerp(R_current_foot, R_target_foot , stf_stabilize_func(t)))
+        #'''
+
         # stance foot balancing
-        motion_stf_balancing.append(motion_stf_push[frame].copy())
+        # motion_stf_balancing.append(motion_stf_push[frame].copy())
+        motion_stf_balancing.append(motion_stf_stabilize[frame].copy())
         motion_stf_balancing.goToFrame(frame)
-        if STANCE_FOOT_BALANCING:
+        if STANCE_FOOT_BALANCING and False:
             R_stb = mm.exp(diff_dCM_axis * K_stb_vel * stf_balancing_func(t))
             R_stb = np.dot(R_stb, mm.exp(diff_CMr_axis * K_stb_pos * stf_balancing_func(t)))
             for stanceFoot in stanceFoots:
@@ -1178,12 +1276,13 @@ def walkings():
         avg_dCM[0] = mm.v3(0.,0.,0.)
 
         # external force rendering info
-        del rd_forces[:]; del rd_force_points[:]
-        for fi in forceInfos:
-            if fi.startFrame <= frame and frame < fi.startFrame + fi.duration*(1/frameTime):
-                rd_forces.append(fi.force)
-                # rd_force_points.append(controlModel.getBodyPositionGlobal(fi.targetBody))
-                rd_force_points.append(dartModel.getBodyPositionGlobal(fi.targetBody))
+        if not isCma:
+            del rd_forces[:]; del rd_force_points[:]
+            for fi in forceInfos:
+                if fi.startFrame <= frame and frame < fi.startFrame + fi.duration*(1/frameTime):
+                    rd_forces.append(fi.force)
+                    # rd_force_points.append(controlModel.getBodyPositionGlobal(fi.targetBody))
+                    rd_force_points.append(dartModel.getBodyPositionGlobal(fi.targetBody))
 
         contactPositions = None
         # dartModel.update(motion_ori[frame])
@@ -1270,9 +1369,10 @@ def walkings():
 
         # bodyIDs, contactPositions, contactPositionLocals, velocities = dartModel.getContactPoints(bodyIDsToCheck)
 
-        del rd_point2[:]
-        if contactPositions is not None:
-            rd_point2.extend(contactPositions)
+        if not isCma:
+            del rd_point2[:]
+            if contactPositions is not None:
+                rd_point2.extend(contactPositions)
 
 
         CP /= stepsPerFrame
@@ -1340,7 +1440,8 @@ def walkings():
                     acc_offset[0] += frame - curInterval[1]
 
                 elif frame == len(motion_seg)-1:
-                    print frame, 'extend frame', frame+1
+                    if not isCma:
+                        print(frame, 'extend frame', frame+1)
 
                     preserveJoints = []
                     #                    preserveJoints = [lFoot, rFoot]
@@ -1384,7 +1485,8 @@ def walkings():
 
         if lastFrame:
             if segIndex < len(segments)-1:
-                print '%d (%d): end of %dth seg (%s, %s)'%(frame, frame-curInterval[1],segIndex, yba.GaitState.text[curState], curInterval)
+                if not isCma:
+                    print('%d (%d): end of %dth seg (%s, %s)'%(frame, frame-curInterval[1],segIndex, yba.GaitState.text[curState], curInterval))
                 if plot!=None: plot.addDataPoint('diff', frame, (frame-curInterval[1])*.01)
 
                 if len(stanceFoots)>0 and len(swingFoots)>0:
@@ -1462,26 +1564,107 @@ def walkings():
 
         # rendering
         # motionModel.update(motion_ori[frame])
-        dartMotionModel.update(motion_stitch[frame])
+        if not isCma:
+            dartMotionModel.update(motion_stitch[frame])
         #        motionModel.update(motion_seg[frame])
 
         rd_CP[0] = CP
         # rd_CMP[0] = (CMreal[0] - (F[0]/F[1])*CMreal[1], 0, CMreal[2] - (F[2]/F[1])*CMreal[1])
 
-        if plot!=None:
+        if plot is not None:
             plot.addDataPoint('zero', frame, 0)
             plot.updatePoints()
 
+    if not isCma:
+        viewer.setSimulateCallback(simulateCallback)
 
-    viewer.setSimulateCallback(simulateCallback)
+        if MULTI_VIEWER:
+            viewer.startTimer(frameTime / 1.4)
+        else:
+            viewer.startTimer(frameTime * 3.)
+        viewer.show()
 
-    if MULTI_VIEWER:
-        viewer.startTimer(frameTime / 1.4)
+        Fl.run()
     else:
-        viewer.startTimer(frameTime * .1)
-    viewer.show()
+        fail = False
+        frameSum = 0
+        for i in range(len(motion_ori)):
+            simulateCallback(i)
+            frameSum -= 1
+            if dartModel.getCOM()[1] < 0.7:
+                break
+        print(-frameSum, params)
+        del motion_stitch[:]
+        del motion_debug1[:]
+        del motion_debug2[:]
+        del motion_debug3[:]
+        del motion_control[:]
+        del motion_stf_balancing[:]
+        del motion_match_stl[:]
+        del motion_ori[:]
+        del motion_seg[:]
+        del motion_seg_orig[:]
+        del motion_stf_push[:]
+        del motion_stf_stabilize[:]
+        del motion_swf_height[:]
+        del motion_swf_placement[:]
+        del motion_swf_orientation[:]
+        return float(frameSum)
 
-    Fl.run()
+# c_min_contact_vel = 100.
+# c_min_contact_time = .7
+# c_landing_duration = .2
+# c_taking_duration = .3
+# c_swf_mid_offset = .0
+# c_locking_vel = .05
+# c_swf_offset = .01
+
+# K_stp_pos = 0.
+# c5 = .7
+# c6 = .02
+# K_stb_vel = .1
+# K_stb_pos = .1
+# K_swp_vel_sag = .0
+# K_swp_vel_cor = 1.3
+# K_swp_pos_sag = 1.2
+# K_swp_pos_cor = 1.
+# K_swp_pos_sag_faster = .05
+
+# viewer.objectInfoWnd.add1DSlider("c_min_contact_vel",   0., 200., .2, 100.)
+# viewer.objectInfoWnd.add1DSlider("c_min_contact_time",  0., 5., .01, .7)
+# viewer.objectInfoWnd.add1DSlider("c_landing_duration",  0., 5., .01, .2)
+# viewer.objectInfoWnd.add1DSlider("c_taking_duration",   0., 5., .01, .3)
+# viewer.objectInfoWnd.add1DSlider("c_swf_mid_offset",    -1., 1., .001, 0.)
+# viewer.objectInfoWnd.add1DSlider("c_locking_vel",       0., 1., .001, .05)
+# viewer.objectInfoWnd.add1DSlider("c_swf_offset",        -1., 1., .001, .01)
+
+# viewer.objectInfoWnd.add1DSlider("K_stp_pos",           0., 1., .01, 0.)
+# viewer.objectInfoWnd.add1DSlider("c5",                  0., 5., .01, .7)
+# viewer.objectInfoWnd.add1DSlider("c6",                  0., 1., .01, .02)
+# viewer.objectInfoWnd.add1DSlider("K_stb_vel",           0., 1., .01, .1)
+# viewer.objectInfoWnd.add1DSlider("K_stb_pos",           0., 1., .01, .1)
+# viewer.objectInfoWnd.add1DSlider("K_swp_vel_sag",       0., 5., .01, 0.)
+# viewer.objectInfoWnd.add1DSlider("K_swp_vel_cor",       0., 5., .01, 1.3)
+# viewer.objectInfoWnd.add1DSlider("K_swp_pos_sag",       0., 5., .01, 1.2)
+# viewer.objectInfoWnd.add1DSlider("K_swp_pos_cor",       0., 5., .01, 1.)
+# viewer.objectInfoWnd.add1DSlider("K_swp_pos_sag_faster",0., 1., .01, .05)
 
 
-walkings()
+# walkings(None, False)
+
+
+# hand tuning
+# params = [0., .7, .02, .1, .1, .0, 1.3, 1.2, 1., .05]
+# 325 frames success, Ks = 600.
+params = [ 0.01918975,  0.86622863,  0.15111008,  0.50972221,  0.09746768, -0.09129272,  1.12736657,  1.2873114 ,  0.84409227,  0.38928674]
+
+walkings(params)
+
+# from PyCommon.modules.Math.Nomalizer import Normalizer
+# normalizer = Normalizer([0.]*10., [1., 5., .2, 1., 1., 3., 3., 3., 3., .5], [1.]*10, [-1.]*10)
+
+
+# c6, K_stb_vel, K_swp_vel_sag, K_swp_vel_cor is velocity gain
+# cmaOption = cma.CMAOptions('fixed_variables')
+# cmaOption.set('fixed_variables', {2:math.sqrt(.02), 3:math.sqrt(.1), 5:math.sqrt(0.), 6:math.sqrt(1.3)})
+# cma.fmin(walkings, np.sqrt([0., .7, .02, .1, .1, .0, 1.3, 1.2, 1., .05]).tolist(), .1, args=(True,), options=cmaOption)
