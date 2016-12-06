@@ -329,7 +329,7 @@ def walkings(params, isCma=False):
     Kt = 20.
     Dt = 2.*(Kt**.5)
     # Dt = Kt/900.
-    Ks = 2000.
+    Ks = 1000.
     Ds = 2.*(Ks**.5)
     mu = 1.
     # Dt = 0.
@@ -842,7 +842,7 @@ def walkings(params, isCma=False):
             K_swp_pos_cor         = getParamVal("K_swp_pos_cor")
             K_swp_pos_sag_faster  = getParamVal("K_swp_pos_sag_faster")
         else:
-            Ks = 600.
+            Ks = 1000.
             Ds                    = 2.*(Ks**.5)
             c_min_contact_vel = 100.
             #    c_min_contact_vel = 2.
@@ -1581,19 +1581,22 @@ def walkings(params, isCma=False):
         if MULTI_VIEWER:
             viewer.startTimer(frameTime / 1.4)
         else:
-            viewer.startTimer(frameTime * 3.)
+            viewer.startTimer(frameTime * .1)
         viewer.show()
 
         Fl.run()
     else:
         fail = False
-        frameSum = 0
+        objectiveSum = 0
         for i in range(len(motion_ori)):
             simulateCallback(i)
-            frameSum -= 1
-            if dartModel.getCOM()[1] < 0.7:
+            objectiveSum -= 1
+            _com = dartModel.getCOM()
+            objectiveSum += _com[2] * _com[2]
+            if _com[1] < 0.7:
                 break
-        print(-frameSum, params)
+
+        print(-objectiveSum, params)
         del motion_stitch[:]
         del motion_debug1[:]
         del motion_debug2[:]
@@ -1609,7 +1612,7 @@ def walkings(params, isCma=False):
         del motion_swf_height[:]
         del motion_swf_placement[:]
         del motion_swf_orientation[:]
-        return float(frameSum)
+        return float(objectiveSum)
 
 # c_min_contact_vel = 100.
 # c_min_contact_time = .7
@@ -1658,13 +1661,20 @@ def walkings(params, isCma=False):
 # 325 frames success, Ks = 600.
 params = [ 0.01918975,  0.86622863,  0.15111008,  0.50972221,  0.09746768, -0.09129272,  1.12736657,  1.2873114 ,  0.84409227,  0.38928674]
 
-walkings(params)
+# 347 frames success, Ks = 600. ????????
+# params = [-0.0096717475861028673, 0.51455174209881782, 0.1414213562373095, 0.31622776601683794, 0.19555994814530026, 0.0, 1.1401754250991381, 1.457290633087426, 0.78654212710618387, 0.61027611069961429]
+
+# 287 frames success, Ks = 1000.
+# params = [-0.15744347,  0.67592998,  0.14142136,  0.31622777,  0.35696289, 0.,  1.14017543,  1.27637941,  0.95735647,  0.23835687]
+
+# walkings(params)
+walkings(None, False)
 
 # from PyCommon.modules.Math.Nomalizer import Normalizer
 # normalizer = Normalizer([0.]*10., [1., 5., .2, 1., 1., 3., 3., 3., 3., .5], [1.]*10, [-1.]*10)
 
 
 # c6, K_stb_vel, K_swp_vel_sag, K_swp_vel_cor is velocity gain
-# cmaOption = cma.CMAOptions('fixed_variables')
-# cmaOption.set('fixed_variables', {2:math.sqrt(.02), 3:math.sqrt(.1), 5:math.sqrt(0.), 6:math.sqrt(1.3)})
+cmaOption = cma.CMAOptions('fixed_variables')
+cmaOption.set('fixed_variables', {2:math.sqrt(.02), 3:math.sqrt(.1), 5:math.sqrt(0.), 6:math.sqrt(1.3)})
 # cma.fmin(walkings, np.sqrt([0., .7, .02, .1, .1, .0, 1.3, 1.2, 1., .05]).tolist(), .1, args=(True,), options=cmaOption)

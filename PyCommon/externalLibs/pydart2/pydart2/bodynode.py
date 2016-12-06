@@ -313,6 +313,14 @@ class BodyNode(object):
 ########################################
 # Jacobian Functions
     def jacobian(self, offset=None, full=True):
+        """
+        Return the generalized Jacobian targeting the origin of this BodyNode.
+
+        The Jacobian is expressed in the Frame of this BodyNode.
+        :type offset: np.ndarray
+        :type full: bool
+        :rtype: np.ndarray
+        """
         offset = np.zeros(3) if offset is None else offset
         J = np.zeros((6, len(self.dependent_dofs)))
         papi.bodynode__getJacobian(self.wid,
@@ -323,6 +331,12 @@ class BodyNode(object):
         return self.expand_jacobian(J) if full else J
 
     def linear_jacobian(self, offset=None, full=True):
+        """
+        Return the linear Jacobian targeting an offset within the Frame of this BodyNode.
+        :type offset: np.ndarray
+        :type full: bool
+        :rtype: np.ndarray
+        """
         offset = np.zeros(3) if offset is None else offset
         J = np.zeros((3, len(self.dependent_dofs)))
         papi.bodynode__getLinearJacobian(self.wid,
@@ -333,11 +347,25 @@ class BodyNode(object):
         return self.expand_jacobian(J) if full else J
 
     def angular_jacobian(self, full=True):
+        """
+        Return the angular Jacobian targeting the origin of this BodyNode
+        within the Frame of this BodyNode.
+        :type full: bool
+        :rtype: np.ndarray
+        """
         J = np.zeros((3, len(self.dependent_dofs)))
         papi.bodynode__getAngularJacobian(self.wid, self.skid, self.id, J)
         return self.expand_jacobian(J) if full else J
 
     def world_jacobian(self, offset=None, full=True):
+        """
+        Return the generalized Jacobian targeting an offset in this JacobianNode.
+
+        The offset is expected in coordinates of this BodyNode Frame. The Jacobian is expressed in the World Frame.
+        :type offset: np.ndarray
+        :type full: bool
+        :rtype: np.ndarray
+        """
         offset = np.zeros(3) if offset is None else offset
         J = np.zeros((6, len(self.dependent_dofs)))
         papi.bodynode__getWorldJacobian(self.wid,

@@ -1,10 +1,22 @@
 import time
+import math
+import numpy as np
 
 from PyCommon.modules.Simulator import csDartModel as cdm
 import PyCommon.modules.pydart2 as pydart
 
 from PyCommon.modules.Motion import ysMotion as ym
 
+def setTimeStamp(timeStamp, timeIndex, prevTime):
+    if timeIndex == 0:
+        prevTime = time.time()
+    if len(timeStamp) < timeIndex + 1:
+        timeStamp.append(0.)
+    curTime = time.time()
+    timeStamp[timeIndex] += curTime - prevTime
+    prevTime = curTime
+    timeIndex += 1
+    return timeStamp, timeIndex, prevTime
 
 def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
     """
@@ -16,71 +28,36 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
     :type numFrictionBases: int
     :rtype:
     """
-    cVpBodyIds, cPositions, cPositionsLocal, cVelocities = world.getContactPoints(bodyIDsToCheck)
-
-    model.getBody(1).jacobian()
-    model.getBody(1).angular_jacobian()
-    model.getBody(1).linear_jacobian()
-    model.getBody(1).world_jacobian()
-    model.getBody(1).jacobian()
-    model.getBody(1).jacobian()
+    cBodyIds, cPositions, cPositionsLocal, cVelocities = world.getContactPoints(bodyIDsToCheck)
     N = None
     D = None
     E = None
 
-    cNum = len(cVpBodyIds)
+    cNum = len(cBodyIds)
     if cNum == 0:
-        return len(cVpBodyIds), cVpBodyIds, cPositions, cPositionsLocal, cVelocities, None, None, None, None, None
-    d = [None]*numFrictionBases
+        return len(cBodyIds), cBodyIds, cPositions, cPositionsLocal, cVelocities, None, None, None, None, None
+    d = [None]*numFrictionBases # type: np.ndarray
 
     DOFs = model.getDOFs()
-    Jic = yjc.makeEmptyJacobian(DOFs, 1)
 
-    jointPositions = model.getJointPositionsGlobal()
-    jointPositions[0] = model.getBodyPositionGlobal(0)
-
-    # jointAxeses = model.getDOFAxeses()
-    # body0Ori = model.getBodyOrientationGlobal(0)
-    # for i in range(3):
-    #     jointAxeses[0][i] = body0Ori.T[i]
-    #     jointAxeses[0][i+3] = body0Ori.T[i]
-
-    jointAxeses = model.getBodyRootDOFAxeses()
-    # jointAxeses = model.getBodyRootJointAngJacobiansGlobal()
-
-    # totalDOF = model.getTotalDOF()
-    # qdot_0 = ype.makeFlatList(totalDOF)
-    # # ype.flatten(model.getDOFVelocitiesLocal(), qdot_0)
-    # # bodyGenVelLocal = model.getBodyGenVelLocal(0)
-    # #
-    # # for i in range(3):
-    # #     qdot_0[i] = bodyGenVelLocal[i+3]
-    # #     qdot_0[i+3] = bodyGenVelLocal[i]
-    # ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
-
-    for vpidx in range(len(cVpBodyIds)):
-        bodyidx = model.id2index(cVpBodyIds[vpidx])
-        contactJointMasks = [yjc.getLinkJointMask(skeleton, bodyidx)]
-        yjc.computeLocalRootJacobian(Jic, DOFs, jointPositions, jointAxeses, [cPositions[vpidx]], contactJointMasks)
-        # yjc.computeControlModelJacobian(Jic, DOFs, jointPositions, jointAxeses, [cPositions[vpidx]], contactJointMasks)
+    for idx in range(len(cBodyIds)):
+        body = model.getBody(cBodyIds[idx])
+        jacobian = body.world_jacobian(cPositionsLocal[idx])
         n = np.array([[0., 1., 0., 0., 0., 0.]]).T
-        JTn = Jic.T.dot(n)
+        JTn = np.dot(jacobian.T, n)
         if N is None:
             JTN = JTn.copy()
             N = n.copy()
         else:
             JTN = np.hstack((JTN, JTn))
             N = np.hstack((N, n))
-        cVel = cVelocities[vpidx]
-        offsetAngle = np.arctan2(cVel[2], cVel[0])
+        cVel = cVelocities[idx]
+        offsetAngle = math.atan2(cVel[2], cVel[0])
         offsetAngle = 0.
         for i in range(numFrictionBases):
-            d[i] = np.array([[math.cos((2.*math.pi*i)/numFrictionBases), 0., math.sin((2.*math.pi*i)/numFrictionBases)
-                                 , 0., 0., 0.
-                              ]]).T
-
+            d[i] = np.array([[math.cos((2.*math.pi*i)/numFrictionBases), 0., math.sin((2.*math.pi*i)/numFrictionBases), 0., 0., 0.]]).T
         for i in range(numFrictionBases):
-            JTd = Jic.T.dot(d[i])
+            JTd = np.dot(jacobian.T, d[i])
             if D is None:
                 JTD = JTd.copy()
                 D = d[i].copy()
@@ -93,7 +70,8 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
         for fcIdx in range(numFrictionBases):
             E[cIdx*numFrictionBases + fcIdx][cIdx] = 1.
 
-    return len(cVpBodyIds), cVpBodyIds, cPositions, cPositionsLocal, cVelocities, JTN, JTD, E, N, D
+    return len(cBodyIds), cBodyIds, cPositions, cPositionsLocal, cVelocities, JTN, JTD, E, N, D
+
 
 def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictionBases=8, solver='qp'):
     timeStamp = []
