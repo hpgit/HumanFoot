@@ -1,6 +1,9 @@
 from fltk import *
 import copy, os.path, cPickle, time
 import numpy as np
+import sys
+if ".." not in sys.path:
+    sys.path.append("..")
 
 import PyCommon.modules.Math.mmMath as mm
 from PyCommon.modules.Math import mmMath as mm
@@ -8,7 +11,7 @@ from PyCommon.modules.Math import csMath as cm
 from PyCommon.modules.Math import ysFunctionGraph as yfg
 from PyCommon.modules.Renderer import ysRenderer as yr
 from PyCommon.modules.Simulator import ysVpUtil as yvu
-from PyCommon.modules.GUI import ysSimpleViewer as ysv
+# from PyCommon.modules.GUI import ysSimpleViewer_ori as ysv
 from PyCommon.modules.GUI import ysMultiViewer as ymv
 from PyCommon.modules.ArticulatedBody import ysControl as yct
 from PyCommon.modules.ArticulatedBody import ysReferencePoints as yrp
@@ -316,7 +319,7 @@ def walkings():
     Kt = 20.
     Dt = 2.*(Kt**.5)
     # Dt = Kt/900.
-    Ks = 2000.
+    Ks = 1600.
     Ds = 2.*(Ks**.5)
     mu = 1.
     # Dt = 0.
@@ -366,6 +369,7 @@ def walkings():
 
     # K_swp_vel_sag = .1; K_swp_vel_cor = .4; K_swp_pos_sag = 1.; K_swp_pos_cor = 0.
     # K_stp_pos = .6
+    # K_swp_vel_sag = .0; K_swp_vel_cor = .3; K_swp_pos_sag = 1.2; K_swp_pos_cor = .2
     K_swp_vel_sag = .0; K_swp_vel_cor = .3; K_swp_pos_sag = 1.2; K_swp_pos_cor = .2
     K_swp_pos_sag_faster = .05
     filename = 'wd2_WalkForwardNormal00.bvh'
@@ -654,8 +658,8 @@ def walkings():
         viewer.setRenderers1([yr.VpModelRenderer(motionModel, MOTION_COLOR, yr.POLYGON_FILL)])
         viewer.setRenderers2([yr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL)])
     else:
-        viewer = ysv.SimpleViewer()
-        # viewer = hsv.hpSimpleViewer()
+        # viewer = ysv.SimpleViewer()
+        viewer = hsv.hpSimpleViewer()
         #    viewer.record(False)
 
         viewer.doc.addRenderer('motionModel', yr.VpModelRenderer(motionModel, (0,150,255), yr.POLYGON_LINE))
@@ -877,6 +881,7 @@ def walkings():
         P.append(p_temp)
         P.goToFrame(frame)
 
+        '''
         # stance foot stabilize
         motion_stf_stabilize.append(motion_stitch[frame].copy())
         motion_stf_stabilize.goToFrame(frame)
@@ -885,12 +890,11 @@ def walkings():
                 R_target_foot = motion_seg[frame].getJointOrientationGlobal(stanceFoot)
                 R_current_foot = motion_stf_stabilize[frame].getJointOrientationGlobal(stanceFoot)
                 motion_stf_stabilize[frame].setJointOrientationGlobal(stanceFoot, cm.slerp(R_current_foot, R_target_foot , stf_stabilize_func(t)))
-            #                R_target_foot = motion_seg[frame].getJointOrientationLocal(stanceFoot)
-            #                R_current_foot = motion_stf_stabilize[frame].getJointOrientationLocal(stanceFoot)
-            #                motion_stf_stabilize[frame].setJointOrientationLocal(stanceFoot, cm.slerp(R_current_foot, R_target_foot , stf_stabilize_func(t)))
+        #'''
 
         # match stance leg
-        motion_match_stl.append(motion_stf_stabilize[frame].copy())
+        # motion_match_stl.append(motion_stf_stabilize[frame].copy())
+        motion_match_stl.append(motion_stitch[frame].copy())
         motion_match_stl.goToFrame(frame)
         if MATCH_STANCE_LEG:
             if curState!=yba.GaitState.STOP:
@@ -901,17 +905,7 @@ def walkings():
                     #                    # motion stance leg -> character stance leg as time goes
                     R_motion = motion_match_stl[frame].getJointOrientationGlobal(stanceLeg)
                     R_character = controlModel.getJointOrientationGlobal(stanceLeg)
-                    motion_match_stl[frame].setJointOrientationGlobal(stanceLeg, cm.slerp(R_motion, R_character, match_stl_func(t)))
-
-                #                    t_y = match_stl_func_y(t)
-                #                    t_xz = match_stl_func(t)
-                #
-                #                    R_motion = motion_match_stl[frame].getJointOrientationGlobal(stanceLeg)
-                #                    R_character = controlModel.getJointOrientationGlobal(stanceLeg)
-                #                    R = np.dot(R_character, R_motion.T)
-                #                    R_y, R_xz = mm.projectRotation((0,1,0), R)
-                #                    motion_match_stl[frame].mulJointOrientationGlobal(stanceLeg, mm.scaleSO3(R_xz, t_xz))
-                #                    motion_match_stl[frame].mulJointOrientationGlobal(stanceLeg, mm.scaleSO3(R_y, t_y))
+                    motion_match_stl[frame].setJointOrientationGlobal(stanceLeg, mm.slerp(R_motion, R_character, match_stl_func(t)))
 
         # swing foot placement
         motion_swf_placement.append(motion_match_stl[frame].copy())
@@ -1027,23 +1021,23 @@ def walkings():
             # TODO:
             # swingFoots?????????????????????????
             for swingFoot in swingFoots:
-                #                max_t = (maxStfPushFrame)/float(curInterval[1]-curInterval[0])
-                #                stf_push_func = yfg.concatenate([yfg.sine, yfg.zero], [max_t*2])
                 stf_push_func = yfg.concatenate([yfg.sine, yfg.zero], [c_taking_duration*2])
-
-                R_swp_sag = mm.I_SO3()
-                #                R_swp_sag = np.dot(R_swp_sag, mm.exp(diff_dCM_sag_axis * K_stp_vel * -stf_push_func(t)))
-
-                #                if step_length_cur[0] < step_length_tar[0]:
-                #                    ratio = step_length_cur[0] / step_length_tar[0]
-                #                    R_max = maxmaxStfPushFrame
-                #                    R_zero =
-                R_swp_sag = np.dot(R_swp_sag, mm.exp((step_length_tar[0] - step_length_cur[0])*step_axis[0] * K_stp_pos * -stf_push_func(t)))
-
+                R_swp_sag = mm.exp((step_length_tar[0] - step_length_cur[0])*step_axis[0] * K_stp_pos * -stf_push_func(t))
                 motion_stf_push[frame].mulJointOrientationGlobal(swingFoot, R_swp_sag)
 
+        # stance foot stabilize
+        # motion_stf_stabilize.append(motion_stitch[frame].copy())
+        motion_stf_stabilize.append(motion_stf_push[frame].copy())
+        motion_stf_stabilize.goToFrame(frame)
+        if STANCE_FOOT_STABILIZE:
+            for stanceFoot in stanceFoots:
+                R_target_foot = motion_seg[frame].getJointOrientationGlobal(stanceFoot)
+                R_current_foot = motion_stf_stabilize[frame].getJointOrientationGlobal(stanceFoot)
+                motion_stf_stabilize[frame].setJointOrientationGlobal(stanceFoot, cm.slerp(R_current_foot, R_target_foot , stf_stabilize_func(t)))
+
         # stance foot balancing
-        motion_stf_balancing.append(motion_stf_push[frame].copy())
+        # motion_stf_balancing.append(motion_stf_push[frame].copy())
+        motion_stf_balancing.append(motion_stf_stabilize[frame].copy())
         motion_stf_balancing.goToFrame(frame)
         if STANCE_FOOT_BALANCING:
             R_stb = mm.exp(diff_dCM_axis * K_stb_vel * stf_balancing_func(t))
@@ -1052,6 +1046,7 @@ def walkings():
                 if frame < 5: break
                 motion_stf_balancing[frame].mulJointOrientationGlobal(stanceFoot, R_stb)
         #TODO:
+        '''
         # hwangpil
         # swing foot heel strike adjustment
         # make heel as flat as possible to ground
@@ -1070,7 +1065,6 @@ def walkings():
             for stanceFoot in stanceFoots:
                 R_target_ankle = mm.exp(stf_ankle_func(t)*mm.deg2Rad(20.)*np.array([1., 0., 0.]))
                 motion_stf_balancing[frame].mulJointOrientationLocal(stanceFoot, R_target_ankle)
-        #'''
         # stance foot toe adjustment
         # stf_toe_func = yfg.hermite2nd
         stf_toe_func = lambda x: -2*(x**8)+3*(x**9)
@@ -1091,9 +1085,6 @@ def walkings():
 
 
         # control trajectory
-        # motion_control.append(motion_stitch[frame].copy())
-        # motion_control.append(motion_swf_height[frame].copy())
-        # motion_control.append(motion_match_stl[frame].copy())
         motion_control.append(motion_stf_balancing[frame].copy())
         motion_control.goToFrame(frame)
 
@@ -1140,9 +1131,9 @@ def walkings():
 
         for i in range(stepsPerFrame):
             if i % 5 == 0:
-                # bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
-                bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp \
-                    = hls.calcLCPForcesHD(motion_ori, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, ddth_des_flat, solver='qp', hdAccMask=hdAccMask)
+                bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+                # bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp \
+                #     = hls.calcLCPForcesHD(motion_ori, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, ddth_des_flat, solver='qp', hdAccMask=hdAccMask)
 
                 if contactForces is not None:
                     lContactNum = sum([sum([j==i for j in bodyIDs]) for i in lIDs])
@@ -1195,12 +1186,6 @@ def walkings():
                 CP += yrp.getCP(contactPositions, contactForces)
                 F += sum(contactForces)
             avg_dCM[0] += controlModel.getJointVelocityGlobal(0)
-        #            avg_dCM[0] += yrp.getCM(controlModel.getJointVelocitiesGlobal(), bodyMasses, upperMass, uppers)
-        #            avg_dCM[0] += yrp.getCM(controlModel.getJointVelocitiesGlobal(), bodyMasses, totalMass)
-
-        #            if len(stanceFoots)>0:
-        #                avg_stf_v[0] += controlModel.getJointVelocityGlobal(stanceFoots[0])
-        #                avg_stf_av[0] += controlModel.getJointAngVelocityGlobal(stanceFoots[0])
 
         del rd_point2[:]
         if contactPositions is not None:
@@ -1211,37 +1196,11 @@ def walkings():
         F /= stepsPerFrame
         avg_dCM[0] /= stepsPerFrame
 
-        #        if len(stanceFoots)>0:
-        #            avg_stf_v[0] /= stepsPerFrame
-        #            avg_stf_av[0] /= stepsPerFrame
-        #            rd_vec1[0] = avg_stf_av[0]; rd_vec1[0][0] = 0.; rd_vec1[0][2] = 0.
-        #            rd_vecori1[0]= controlModel.getJointPositionGlobal(stanceFoots[0])
-
         #=======================================================================
         # segment editing
         #=======================================================================
         lastFrame = False
 
-
-        # print curState
-        # print bodyIDs
-
-        '''
-        print skeleton.getJointIndex('LeftFoot') = 3
-        print skeleton.getJointIndex('LeftFoot_foot_0_0') = 4
-        print skeleton.getJointIndex('LeftFoot_foot_0_1') = 5
-        print skeleton.getJointIndex('LeftFoot_foot_1_0')
-        print skeleton.getJointIndex('LeftFoot_foot_1_1')
-        print skeleton.getJointIndex('LeftFoot_foot_2_0')
-        print skeleton.getJointIndex('LeftFoot_foot_2_1') = 9
-        print skeleton.getJointIndex('RightFoot') = 18
-        print skeleton.getJointIndex('RightFoot_foot_0_0') = 19
-        print skeleton.getJointIndex('RightFoot_foot_0_1')
-        print skeleton.getJointIndex('RightFoot_foot_1_0')
-        print skeleton.getJointIndex('RightFoot_foot_1_1')
-        print skeleton.getJointIndex('RightFoot_foot_2_0')
-        print skeleton.getJointIndex('RightFoot_foot_2_1') = 24
-        '''
 
         if SEGMENT_EDITING:
             if curState==yba.GaitState.STOP:
@@ -1411,8 +1370,8 @@ def walkings():
 
 
         # rendering
-        motionModel.update(motion_ori[frame])
-        #        motionModel.update(motion_seg[frame])
+        # motionModel.update(motion_ori[frame])
+        motionModel.update(motion_seg[frame])
 
         rd_CP[0] = CP
         rd_CMP[0] = (CMreal[0] - (F[0]/F[1])*CMreal[1], 0, CMreal[2] - (F[2]/F[1])*CMreal[1])

@@ -19,7 +19,7 @@ Simulation system for humanoid walking with segmented foot
 3. setup using pip
 
     	pip install --upgrade pip setuptools
-    	pip install PyOpenGL PyOpenGL-accelerate cvxopt pyode
+    	pip install PyOpenGL PyOpenGL-accelerate cvxopt pyode future pillow
 
 3. build VirtualPhysics2010 and copy libvpLib.a to PyCommon/modules/usr/lib/
 4. make in PyCommon/modules (if there is a copy error, edit setup.py in Renderer and Simulator)

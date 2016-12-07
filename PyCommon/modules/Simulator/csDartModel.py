@@ -81,24 +81,28 @@ class DartModel:
         #    so additional calculation is needed
 
         # in box case, saves points around in local body frame
+        MULTIPLE_BOX = False
+        MULTIPLE_CAPSULE = True
 
-        rad, gap, row, col, height_ratio = .05, .01, 6, 6, .5
         for i in range(self.skeleton.num_bodynodes()):
             body = self.getBody(i)
             for shapeNode in body.shapenodes:
                 if shapeNode.has_collision_aspect():
                     geomType = shapeNode.shape.shape_type_name()
-                    geomT = np.dot(body.world_transform(), shapeNode.relative_transform())
-                    if geomType == "ELLIPSOID":
+                    # geomT = np.dot(body.world_transform(), shapeNode.relative_transform())
+                    if MULTIPLE_CAPSULE and geomType == "ELLIPSOID":
+                        rad, gap, row, col, height_ratio = .01, .01, 4, 4, .5
                         shape = shapeNode.shape # type: pydart.EllipsoidShape
-                        lowestCenter = geomT[:3, 3]
-                        lowestCenter[1] -= shape.size()[0]/2. + rad
+                        lowestCenter = np.array([0., 0., 0.])
 
                         geomPoint = list()
-                        geomPoint.extend(self.getContactSphere(lowestCenter,rad, row, col, height_ratio))
+                        geomPoint.extend(self.getContactSphere(lowestCenter, rad, row, col, height_ratio))
                         self.geomPoints[i] = geomPoint
+                    elif geomType == "ELLIPSOID":
+                        self.geomPoints[i] = [np.array([0., 0., 0.])]
 
-                    elif geomType == "BOX":
+                    elif MULTIPLE_BOX and geomType == "BOX":
+                        rad, gap, row, col, height_ratio = .05, .01, 6, 6, .5
                         shape = shapeNode.shape # type: pydart.BoxShape
                         data = shape.size()/2. # type: np.ndarray
 
@@ -112,9 +116,19 @@ class DartModel:
                             geomPoint.extend(self.getContactSphere(posCenter, rad, row, col, height_ratio))
                         self.geomPoints[i] = geomPoint
 
+                    elif geomType == "BOX":
+                        shape = shapeNode.shape # type: pydart.BoxShape
+                        data = shape.size()/2. # type: np.ndarray
+                        geomPoint = list()
+                        for perm in itertools.product([1, -1], repeat=3):
+                            positionLocal = np.multiply(np.array((data[0], data[1], data[2])), np.array(perm))
+                            geomPoint.append(positionLocal)
+                        self.geomPoints[i] = geomPoint
+
+
     @staticmethod
     def getContactSphere(center, rad, row, col, height_ratio):
-        verticesLocal = list()
+        vertices = list()
         col_real = 0
         _row = int(row*height_ratio)
 
@@ -128,9 +142,9 @@ class DartModel:
                 s = float(j)/float(col_real)
                 ct = math.cos(2.*math.pi*s)
                 st = math.sin(2.*math.pi*s)
-                verticesLocal.append(np.array((rad*cp*ct, rad*sp, -rad*cp*st)) + center)
+                vertices.append(np.array((rad*cp*ct, rad*sp, -rad*cp*st)) + center)
 
-        return verticesLocal
+        return vertices
 
     def applyPenaltyForce(self, bodyIDs, positionLocals, forces, localForce=True):
         for bodyIdx in range(len(bodyIDs)):
@@ -213,7 +227,7 @@ class DartModel:
                 force = vNormalForce + vFrictionForce
                 return True, force
 
-        rad, gap, row, col, height_ratio = .03, .01, 6, 6, .5
+        # rad, gap, row, col, height_ratio = .03, .01, 6, 6, .5
 
         bodyIDs, positions, positionLocals, velocities, forces = [], [], [], [], []
 
@@ -224,7 +238,8 @@ class DartModel:
                 if shapeNode.has_collision_aspect():
                     geomType = shapeNode.shape.shape_type_name()
                     geomT = np.dot(body.world_transform(), shapeNode.relative_transform())
-                    if True and geomType == "ELLIPSOID":
+                    if False and geomType == "ELLIPSOID":
+                        # single point
                         shape = shapeNode.shape # type: pydart.EllipsoidShape
                         lowestPoint = geomT[:3, 3]
                         lowestPoint[1] -= shape.size()[0]/2.
@@ -239,18 +254,18 @@ class DartModel:
                             forces.append(force)
 
                     elif geomType == "ELLIPSOID":
+                        # multiple point
                         shape = shapeNode.shape # type: pydart.EllipsoidShape
-                        lowestCenter = geomT[:3, 3]
-                        lowestCenter[1] -= shape.size()[0]/2. + rad
+                        geomPoint = self.geomPoints[bodyIdx]
 
-                        positionGlobalTmps = self.getContactSphere(lowestCenter, rad, row, col, height_ratio)
-
-                        for posIdx in range(len(positionGlobalTmps)):
-                            positionGlobal = positionGlobalTmps[posIdx]
-                            spatialVel = body.com_spatial_velocity() # type: np.ndarray
-                            velocity = body.com_linear_velocity() + np.cross(spatialVel[:3], positionGlobal - body.com())
-                            isPenetrated, force = _calcPenaltyForce(body, positionGlobal, velocity, mus[i], self.lockingVel)
-                            if isPenetrated:
+                        bodySpatialVel = body.com_spatial_velocity() # type: np.ndarray
+                        bodyLinVel = body.com_linear_velocity() # type: np.ndarray
+                        for posIdx in range(len(geomPoint)):
+                            positionGlobal = np.dot(geomT[:3, :3], geomPoint[posIdx]) + geomT[:3, 3]
+                            # positionGlobal[1] -= shape.size()[0]/2.
+                            if positionGlobal[1] < 0.:
+                                velocity = bodyLinVel + np.cross(bodySpatialVel[:3], positionGlobal - body.com())
+                                isPenetrated, force = _calcPenaltyForce(body, positionGlobal, velocity, mus[i], self.lockingVel)
                                 bodyIDs.append(body.index_in_skeleton())
                                 positions.append(positionGlobal)
                                 positionLocals.append(body.to_local(positionGlobal))
@@ -258,6 +273,7 @@ class DartModel:
                                 forces.append(force)
 
                     elif True and geomType == "BOX":
+                        # multiple point
                         shape = shapeNode.shape # type: pydart.BoxShape
                         geomPoint = self.geomPoints[bodyIdx]
                         # print self.getBody(bodyIdx).name, len(geomPoint)
@@ -280,6 +296,7 @@ class DartModel:
                                 forces.append(force)
 
                     elif False and geomType == "BOX":
+                        # single point
                         shape = shapeNode.shape  # type: pydart.BoxShape
                         data = shape.size() / 2.  # type: np.ndarray
                         for perm in itertools.product([1, -1], repeat=3):

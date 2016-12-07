@@ -5,6 +5,10 @@ from cPickle import load
 # import time
 import numpy as np
 
+import sys
+if ".." not in sys.path:
+    sys.path.append("..")
+
 from PyCommon.modules.Math import mmMath as mm
 from PyCommon.modules.Math import ysFunctionGraph as yfg
 from PyCommon.modules.Renderer import ysRenderer as yr
@@ -24,7 +28,7 @@ from PyCommon.modules.Motion import mmAnalyticIK as aik
 from PyCommon.modules.Resource import ysMotionLoader as yf
 from PyCommon.modules.Simulator import ysPhysConfig as ypc
 
-# from PyCommon.modules.Simulator import hpLCPSimulator as hls
+from PyCommon.modules.Simulator import hpDartLCPSimulator as hdls
 from PyCommon.modules.GUI import hpSimpleViewer as hsv
 from PyCommon.modules.Util import ysPythonEx as ype
 
@@ -44,7 +48,7 @@ current_path = os.path.dirname(os.path.abspath(__file__))
 MOTION_COLOR = (213, 111, 162)
 CHARACTER_COLOR = (20, 166, 188)
 
-SEGMENT_FOOT = False
+SEGMENT_FOOT = True
 
 def buildMassMap():
     massMap = {}
@@ -575,8 +579,8 @@ def walkings(params, isCma=False):
     # information
     #===============================================================================
     # bodyIDsToCheck = range(vpWorld.getBodyNum())
-    # bodyIDsToCheck = range(dartModel.getBodyNum())
-    bodyIDsToCheck = [dartModel.getBody("LeftFoot").index_in_skeleton(), dartModel.getBody("RightFoot").index_in_skeleton()]
+    bodyIDsToCheck = range(dartModel.getBodyNum())
+    # bodyIDsToCheck = [dartModel.getBody("LeftFoot").index_in_skeleton(), dartModel.getBody("RightFoot").index_in_skeleton()]
     mus = [mu]*len(bodyIDsToCheck)
 
     totalMass = dartModel.getTotalMass()
@@ -722,6 +726,7 @@ def walkings(params, isCma=False):
     #    viewer.doc.addRenderer('rd_frame1', yr.FramesRenderer(rd_frame1, (0,200,200)))
     #    viewer.doc.addRenderer('rd_frame2', yr.FramesRenderer(rd_frame2, (200,200,0)))
     #    viewer.setMaxFrame(len(motion_ori)-1)
+
 
     viewer.objectInfoWnd.add1DSlider("penalty_grf_gain",    0., 5000., 10., Ks)
     viewer.objectInfoWnd.add1DSlider("c_min_contact_vel",   0., 200., .2, 100.)
@@ -902,8 +907,6 @@ def walkings(params, isCma=False):
             swingHeels.extend(lHeels)
         if skeleton.getJointIndex('RightFoot') in swingFoots:
             swingHeels.extend(rHeels)
-
-
 
 
         prev_frame = frame-1 if frame>0 else 0
@@ -1200,7 +1203,6 @@ def walkings(params, isCma=False):
             joint_vec_tar[1] = 0.
             R_target_heel = mm.exp(swf_heel_func(t)*mm.logSO3(mm.getSO3FromVectors(joint_vec_cur, joint_vec_tar)))
             motion_stf_balancing[frame].mulJointOrientationGlobal(swingHeel, R_target_heel)
-
         # stance foot ankle pushup adjustment
         # stf_ankle_func = yfg.hermite2nd
         stf_ankle_func = lambda x: -2*(x**2)+3*(x**3)
@@ -1291,9 +1293,11 @@ def walkings(params, isCma=False):
         ddq = pdController.compute()
         for i in range(stepsPerFrame):
             bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+            _tau = np.zeros(dartModel.skeleton.q.shape)
+            # bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp = \
+            #     hdls.calcLCPForces(motion_ori, dartModel.world, dartModel, bodyIDsToCheck, 1., _tau)
             dartModel.applyPenaltyForce(bodyIDs, contactPositions, contactForces, localForce=False)
             dartModel.skeleton.set_accelerations(pdController.compute())
-            _tau = np.zeros(dartModel.skeleton.q.shape)
             # dartModel.skeleton.set_forces(_tau)
             dartModel.step()
             '''
@@ -1659,16 +1663,16 @@ def walkings(params, isCma=False):
 # hand tuning
 # params = [0., .7, .02, .1, .1, .0, 1.3, 1.2, 1., .05]
 # 325 frames success, Ks = 600.
-params = [ 0.01918975,  0.86622863,  0.15111008,  0.50972221,  0.09746768, -0.09129272,  1.12736657,  1.2873114 ,  0.84409227,  0.38928674]
+# params = [ 0.01918975,  0.86622863,  0.15111008,  0.50972221,  0.09746768, -0.09129272,  1.12736657,  1.2873114 ,  0.84409227,  0.38928674]
 
 # 347 frames success, Ks = 600. ????????
 # params = [-0.0096717475861028673, 0.51455174209881782, 0.1414213562373095, 0.31622776601683794, 0.19555994814530026, 0.0, 1.1401754250991381, 1.457290633087426, 0.78654212710618387, 0.61027611069961429]
 
 # 287 frames success, Ks = 1000.
-# params = [-0.15744347,  0.67592998,  0.14142136,  0.31622777,  0.35696289, 0.,  1.14017543,  1.27637941,  0.95735647,  0.23835687]
+params = [-0.15744347,  0.67592998,  0.14142136,  0.31622777,  0.35696289, 0.,  1.14017543,  1.27637941,  0.95735647,  0.23835687]
 
-# walkings(params)
-walkings(None, False)
+walkings(params)
+# walkings(None, False)
 
 # from PyCommon.modules.Math.Nomalizer import Normalizer
 # normalizer = Normalizer([0.]*10., [1., 5., .2, 1., 1., 3., 3., 3., 3., .5], [1.]*10, [-1.]*10)

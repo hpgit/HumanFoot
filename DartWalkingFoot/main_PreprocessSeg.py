@@ -3,8 +3,8 @@ import os.path, glob, cPickle,pprint
 import numpy as np
 
 import sys
-if '../PyCommon/modules' not in sys.path:
-    sys.path.append('../PyCommon/modules')
+if ".." not in sys.path:
+    sys.path.append("..")
 import PyCommon.modules.Math.mmMath as mm
 import PyCommon.modules.Resource.ysMotionLoader as yf
 import PyCommon.modules.GUI.ysSimpleViewer as ysv
@@ -106,9 +106,9 @@ if __name__=='__main__':
             
             if start<end:
                 # box foot
-                seginfos[i]['ground_height'] = min([posture_seg.getJointPositionGlobal(foot)[1] for foot in [lFoot, rFoot] for posture_seg in motion_ori[start+1:end+1]])
+                # seginfos[i]['ground_height'] = min([posture_seg.getJointPositionGlobal(foot)[1] for foot in [lFoot, rFoot] for posture_seg in motion_ori[start+1:end+1]])
                 # segmented foot
-                # seginfos[i]['ground_height'] = min([posture_seg.getJointPositionGlobal(foot)[1] - 0.05 for foot in [lFoot, rFoot] for posture_seg in motion_ori[start+1:end+1]])
+                seginfos[i]['ground_height'] = min([posture_seg.getJointPositionGlobal(foot)[1] - 0.05 for foot in [lFoot, rFoot] for posture_seg in motion_ori[start+1:end+1]])
 
                 seginfos[i]['max_stf_push_frame'] = None
                 if len(swingFoots)>0:

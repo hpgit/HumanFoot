@@ -229,3 +229,8 @@ void SKEL(getConstraintForces)(int wid, int skid, double* outv, int ndofs) {
     dart::dynamics::SkeletonPtr skel = GET_SKELETON(wid, skid);
     write(skel->getConstraintForces(), outv);
 }
+
+void SKEL(getInvMassMatrix)(int wid, int skid, double* outm, int nrows, int ncols) {
+    dart::dynamics::SkeletonPtr skel = GET_SKELETON(wid, skid);
+    write_matrix(skel->getInvMassMatrix(), outm);
+}

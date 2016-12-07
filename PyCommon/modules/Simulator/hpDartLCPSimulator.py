@@ -1,11 +1,14 @@
 import time
 import math
 import numpy as np
+from cvxopt import solvers as cvxSolvers
+from cvxopt import matrix as cvxMatrix
 
 from PyCommon.modules.Simulator import csDartModel as cdm
 import PyCommon.modules.pydart2 as pydart
 
 from PyCommon.modules.Motion import ysMotion as ym
+
 
 def setTimeStamp(timeStamp, timeIndex, prevTime):
     if timeIndex == 0:
@@ -22,13 +25,13 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
     """
 
     :type skeleton: ym.JointSkeleton
-    :type world:
+    :type world: pydart.World
     :type model: cdm.DartModel
     :type bodyIDsToCheck: list[int]
     :type numFrictionBases: int
     :rtype:
     """
-    cBodyIds, cPositions, cPositionsLocal, cVelocities = world.getContactPoints(bodyIDsToCheck)
+    cBodyIds, cPositions, cPositionsLocal, cVelocities = model.getContactPoints(bodyIDsToCheck)
     N = None
     D = None
     E = None
@@ -51,8 +54,8 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
         else:
             JTN = np.hstack((JTN, JTn))
             N = np.hstack((N, n))
-        cVel = cVelocities[idx]
-        offsetAngle = math.atan2(cVel[2], cVel[0])
+        # cVel = cVelocities[idx]
+        # offsetAngle = math.atan2(cVel[2], cVel[0])
         offsetAngle = 0.
         for i in range(numFrictionBases):
             d[i] = np.array([[math.cos((2.*math.pi*i)/numFrictionBases), 0., math.sin((2.*math.pi*i)/numFrictionBases), 0., 0., 0.]]).T
@@ -72,8 +75,84 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
 
     return len(cBodyIds), cBodyIds, cPositions, cPositionsLocal, cVelocities, JTN, JTD, E, N, D
 
+def getLCPMatrix(world, model, invM, invMc, mu, tau, contactNum, contactPositions, JTN, JTD, E, factor=1.):
+    """
+
+    :type world: pydart.World
+    :type model: cdm.DartModel
+    :type invM: np.ndarray
+    :type invMc: np.ndarray
+    :type mu: float
+    :type tau: np.ndarray
+    :type contactNum: int
+    :type contactPositions: list[np.ndarray]
+    :type JTN: np.ndarray
+    :type JTD: np.ndarray
+    :type E: np.ndarray
+    :type factor: float
+    :return:
+    """
+    totalDOF = model.getTotalDOF()
+
+    h = model.GetTimeStep()
+    invh = 1./h
+    mus = mu * np.eye(contactNum) # type: np.ndarray
+    temp_NM = JTN.T.dot(invM)
+    temp_DM = JTD.T.dot(invM)
+
+    # pdb.set_trace()
+
+    # A =[ A11,  A12, 0]
+    #   [ A21,  A22, E]
+    #   [ mus, -E.T, 0]
+
+    A11 = h*temp_NM.dot(JTN)
+    A12 = h*temp_NM.dot(JTD)
+    A21 = h*temp_DM.dot(JTN)
+    A22 = h*temp_DM.dot(JTD)
+
+    A = factor * np.concatenate(
+        (
+            np.concatenate((A11, A12,  np.zeros((A11.shape[0], E.shape[1]))),  axis=1),
+            np.concatenate((A21, A22,  E),                                     axis=1),
+            h * np.concatenate((mus, -E.T, np.zeros((mus.shape[0], E.shape[1]))),  axis=1),
+        ), axis=0
+    )
+    # A = A + 0.1*np.eye(A.shape[0])
+
+    qdot_0 = np.asarray(model.skeleton.dq)
+    if tau is None:
+        tau = np.zeros(np.shape(qdot_0))
+
+    # non-penentration condition
+    # b1 = N.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau)
+
+    # improved non-penentration condition : add position condition
+    penDepth = 0.003
+    bPenDepth = np.zeros(A11.shape[0])
+    for i in range(contactNum):
+        if abs(contactPositions[i][1]) > penDepth:
+            bPenDepth[i] = contactPositions[i][1] + penDepth
+
+    b1 = JTN.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau) + 0.05 * invh * bPenDepth
+    b2 = JTD.T.dot(qdot_0 - h*invMc) + h*temp_DM.dot(tau)
+    b3 = np.zeros(mus.shape[0])
+    b = np.hstack((np.hstack((b1, b2)), b3)) * factor
+    return A, b
 
 def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictionBases=8, solver='qp'):
+    """
+
+    :type motion: ym.JointMotion
+    :type world: pydart.World
+    :type model: cdm.DartModel
+    :type bodyIDsToCheck: list[int]
+    :type mu: float
+    :type tau: np.ndarray
+    :type numFrictionBases: int
+    :type solver: str
+    :return:
+    """
     timeStamp = []
     timeIndex = 0
     prevTime = time.time()
@@ -88,10 +167,8 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
 
     totalDOF = model.getTotalDOF()
 
-    invM = np.zeros((totalDOF, totalDOF))
-    invMc = np.zeros(totalDOF)
-
-    model.getInverseEquationOfMotion(invM, invMc)
+    invM = model.skeleton.inv_mass_matrix()
+    invMc = np.dot(invM, model.skeleton.coriolis_and_gravity_forces())
 
     timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
 
@@ -111,46 +188,6 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
     # normalizeMatrix(A, b)
     # print A[0]
 
-    if solver == 'bulletLCP':
-        # solve using bullet LCP solver
-        lcpSolver = lcp.LemkeSolver()
-        # lcpSolver = lcpD.DantzigSolver()
-        lcpSolver.solve(A.shape[0], A, b, x, lo, hi)
-
-    if solver == 'openOptLCP':
-        # solve using openOpt LCP solver
-        # p = openLCP(A, b)
-        # r = p.solve('lcpsolve')
-        # f_opt, x_opt = r.ff, r.xf
-        # w, x = x_opt[x_opt.size/2:], x_opt[:x_opt.size/2]
-        pass
-
-    if solver == 'nqp':
-        # solve using cvxopt Nonlinear Optimization with linear constraint
-        Acp = cvxMatrix(A)
-        bcp = cvxMatrix(b)
-        Hcp = cvxMatrix(A+A.T)
-        Gcp = cvxMatrix(np.vstack((-A, -np.eye(A.shape[0]))))
-        hcp = cvxMatrix(np.hstack((b.T, np.zeros(A.shape[0]))))
-
-        def F(xin=None, z=None):
-            if xin is None:
-                return 0, cvxMatrix(1., (A.shape[1], 1))
-            for j in range(len(np.array(xin))):
-                if xin[j] < 0.:
-                    return None, None
-            f = xin.T*(Acp*xin+bcp)
-            # TODO:
-            # check!!!
-            Df = Hcp*xin + bcp
-            if z is None:
-                return f, Df.T
-            H = Hcp
-            return f, Df.T, H
-        solution = cvxSolvers.cp(F, Gcp, hcp)
-        xcp = np.array(solution['x']).flatten()
-        x = xcp.copy()
-
     if solver == 'qp':
         # solve using cvxopt QP
         # if True:
@@ -162,41 +199,12 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
             timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
             cvxSolvers.options['show_progress'] = False
             cvxSolvers.options['maxiters'] = 100
-            # cvxSolvers.options['kktreg'] = 1e-6
-            # cvxSolvers.options['refinement'] = 10
             solution = cvxSolvers.qp(Aqp, bqp, Gqp, hqp)
             xqp = np.array(solution['x']).flatten()
-            # xqp = np.array(cvxSolvers.qp(Aqp, bqp, Gqp, hqp)['x']).flatten()
             x = xqp.copy()
-            # print x.shape[0]
-            # print "x: ", x
-            # zqp = np.dot(A,x)+b
-            # print "z: ", zqp
-            # print "El: ", np.dot(E, x[contactNum + numFrictionBases*contactNum:])
-            # print "Ep: ", np.dot(E.T, x[contactNum:contactNum + numFrictionBases*contactNum])
-            # print "force value: ", np.dot(x, zqp)
         except Exception, e:
-            # print e
+            print e
             pass
-
-    if solver == 'qpOASES':
-        # solve using qpOASES
-        QQ = A+A.T
-        pp = b
-        # GG = np.vstack((A, np.eye(A.shape[0])))
-        # hh = np.hstack((-b.T, np.zeros(A.shape[0])))
-        GG = A.copy()
-        hh = -b
-
-        # bp::list qp(const object &H, const object &g, const object &A, const object &lb, const object &ub, const object &lbA, const object ubA, int nWSR)
-        lb = [0.]*A.shape[0]
-        xqpos = qpos.qp(QQ, pp, GG, lb, None, hh, None, 1000, False, "NONE")
-        x = np.array(xqpos)
-        zqp = np.dot(A,x)+b
-        print np.dot(x, zqp)
-        # print xqpos
-        # x = xqpos.copy()
-        pass
 
 
     normalForce = x[:contactNum]
@@ -233,7 +241,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
 
 
     # debug
-    __HP__DEBUG__= True
+    __HP__DEBUG__= False
     if __HP__DEBUG__ and len(bodyIDs) ==4:
         vpidx = 3
         DOFs = model.getDOFs()
@@ -263,5 +271,6 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
 
 
     return bodyIDs, contactPositions, contactPositionsLocal, forces, timeStamp
+
 
 

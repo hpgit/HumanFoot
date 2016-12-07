@@ -74,6 +74,26 @@ class VpWorld:
         elif _integrator == "EULER":
             self._world.SetIntegrator(EULER)
 
+    @staticmethod
+    def getContactSphere(center, rad, row, col, height_ratio):
+        vertices = list()
+        col_real = 0
+        _row = int(row*height_ratio)
+
+        for i in range(_row):
+            t = float(i)/float(row)
+            cp = math.cos(math.pi * t - math.pi/2.)
+            sp = math.sin(math.pi * t - math.pi/2.)
+
+            col_real = 1 if i==0 else col
+            for j in range(col_real):
+                s = float(j)/float(col_real)
+                ct = math.cos(2.*math.pi*s)
+                st = math.sin(2.*math.pi*s)
+                vertices.append(np.array((rad*cp*ct, rad*sp, -rad*cp*st)) + center)
+
+        return vertices
+
     def calcPenaltyForce(self, bodyIDsToCheck, mus, Ks, Ds, notForce=False):
         bodyIDs = []
         positions = []
@@ -88,6 +108,29 @@ class VpWorld:
                     if bodyID in bodyIDsToCheck:
                         for pGeom in node.geoms:
                             geomType = pGeom.GetType()
+                            if True and geomType == 'C':
+                                invBodyFrame = Inv(node.body.GetFrame())
+                                verticesLocal = pGeom.getVerticesLocal()
+                                verticesGlobal = pGeom.getVerticesGlobal()
+                                rad, gap, row, col, height_ratio = .005, .01, 6, 6, .5
+                                for vertIdx in range(len(verticesLocal)):
+                                    _positions = self.getContactSphere(Vec3_2_pyVec3(verticesGlobal[vertIdx]), rad, row, col, height_ratio)
+                                    for position in _positions:
+                                        positionLocal = Vec3_2_pyVec3(invBodyFrame * pyVec3_2_Vec3(position))
+                                        velocity = Vec3_2_pyVec3(node.body.GetLinVelocity(pyVec3_2_Vec3(positionLocal)))
+                                        if notForce:
+                                            penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, 0., True)
+                                        else:
+                                            penentrated, force = self._calcPenaltyForce(position, velocity, Ks, Ds, mus[0])
+
+                                        if penentrated:
+                                            bodyIDs.append(bodyID)
+                                            positions.append(position)
+                                            positionLocals.append(positionLocal)
+                                            forces.append(force)
+                                            velocities.append(velocity)
+
+
                             if geomType == 'C' or geomType == 'B':
                                 verticesLocal = pGeom.getVerticesLocal()
                                 verticesGlobal = pGeom.getVerticesGlobal()

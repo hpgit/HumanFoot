@@ -89,6 +89,12 @@ class Camera:
         glMultMatrixf(mmMath.invertSE3(self.getSE3()).transpose())
 
 class GlWindow(Fl_Gl_Window):
+    """
+
+    :type renderers: list[yr.Renderer]
+    :type invisibleRenderers: list[yr.Renderer]
+    :type parent: MotionViewer
+    """
     def __init__(self, x, y, w, h, parent = None):
         Fl_Gl_Window.__init__(self, x,y,w,h)
         self.initGLFlag = True
@@ -123,6 +129,9 @@ class GlWindow(Fl_Gl_Window):
         self.force = [0, 0, 0]
         self.forceMag = 1.0
         self.forceDir = 0
+
+        self.renderers = []
+        self.invisibleRenderers = []
 
     def setupLights(self):
         if self.drawStyle == POLYGON_LINE:
@@ -196,10 +205,11 @@ class GlWindow(Fl_Gl_Window):
                 count += 1
         glEnd()
     def drawGround(self):
+        '''
         if self.groundList is None:
             self.groundList = glGenLists(1)
             glNewList(self.groundList, GL_COMPILE_AND_EXECUTE)
-        
+
             glColor3f(0.4,0.4,0.4)
             glBegin(GL_LINES)
             l = 20
@@ -221,6 +231,25 @@ class GlWindow(Fl_Gl_Window):
             glEndList()
         else:
             glCallList(self.groundList)
+        #'''
+        glColor3f(0.4,0.4,0.4)
+        glBegin(GL_LINES)
+        l = 20
+        h = .1
+
+        for i in range(-l, l+1):
+            glVertex3f(i, self.planeHeight, -l)
+            glVertex3f(i, self.planeHeight, l)
+        for i in range(-l, l+1):
+            glVertex3f(-l, self.planeHeight, i)
+            glVertex3f(l, self.planeHeight, i)
+        for i in range(-l, l+1):
+            glVertex3f(i, self.planeHeight, 0)
+            glVertex3f(i, self.planeHeight-h, 0)
+            glVertex3f(0, self.planeHeight, i)
+            glVertex3f(0, self.planeHeight-h, i)
+        glEnd()
+
         
     def drawAxis(self):
         self.drawCoordinate((255,255,255), self.camera.distance*.08)
@@ -247,6 +276,25 @@ class GlWindow(Fl_Gl_Window):
         glEnd()
      
     def drawGround_grey(self):
+        h = .1
+        count = 0
+        glBegin(GL_QUADS)
+        for i in range(-15, 16):
+            for j in range(-15, 16):
+                if count % 2 == 0:
+                    glColor3d(.15, .15, .15)
+                else:
+                    glColor3d(.2, .2, .2)
+
+                glNormal3d(0.,0.,1.)
+
+                glVertex3f(j, self.planeHeight-h, i)
+                glVertex3f(j, self.planeHeight-h, i+1)
+                glVertex3f(j+1, self.planeHeight-h, i+1)
+                glVertex3f(j+1, self.planeHeight-h, i)
+                count += 1
+        glEnd()
+        '''
         if self.groundList is None:
             self.groundList = glGenLists(1)
             glNewList(self.groundList, GL_COMPILE_AND_EXECUTE)
@@ -273,8 +321,50 @@ class GlWindow(Fl_Gl_Window):
             glEndList()
         else:
             glCallList(self.groundList)
+        #'''
 
-    def drawGround_color(self):        
+    def drawGround_color(self):
+        size = 60
+        nSquares = 60
+        # size = 100
+        # nSquares = 100
+
+        maxX = size / 2.0
+        maxY = size / 2.0
+        minX = -size / 2.0
+        minY = -size / 2.0
+
+        xd = (maxX - minX) / nSquares
+        yd = (maxY - minY) / nSquares
+
+        xp = minX
+        yp = minY
+
+        i = 0
+        h = .0
+
+        glBegin(GL_QUADS)
+
+        glNormal3f(0.0, 1.0, 0.0)
+        # glNormal3f(0.0, 0.0, 1.0)
+        for x in range(0,nSquares):
+            for y in range(0,nSquares):
+                if i % 2 == 1:
+                    glColor4f(0.58, 0.58, 0.58, 0.5)
+                else:
+                    glColor4f(0.9, 0.9, 0.9, 0.5)
+                glVertex3d(xp,      self.planeHeight-h, yp)
+                glVertex3d(xp,      self.planeHeight-h, yp + yd)
+                glVertex3d(xp + xd, self.planeHeight-h, yp + yd)
+                glVertex3d(xp + xd, self.planeHeight-h, yp)
+                i +=1
+                yp += yd
+            i = x
+            yp = minY
+            xp += xd
+
+        glEnd()
+        '''
         if self.groundList is None:
             self.groundList = glGenLists(1)
             glNewList(self.groundList, GL_COMPILE_AND_EXECUTE)
@@ -320,12 +410,13 @@ class GlWindow(Fl_Gl_Window):
             glEnd()
             glEndList()
         else:
-            glCallList(self.groundList) 
+            glCallList(self.groundList)
+        #'''
       
     def glShadowProjectionPOINT(self,l,e,n):
        
         mat = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-#        mat = [0:16]
+        # mat = [0:16]
         
         d = -n[0]*l[0] -n[1]*l[1] -n[2]*l[2]
        
@@ -395,13 +486,17 @@ class GlWindow(Fl_Gl_Window):
         self.drawGround_color()
         # self.drawGroundFilled()
         # self.drawGround_grey()
-        
+
+        '''
         if self.sceneList:
 #            print '[FRAMELOG]calllist', self.parent.frame
             glCallList(self.sceneList[0])
         else:
 #            print '[FRAMELOG]draw', self.parent.frame
             self.drawScene()
+        '''
+
+        self.drawScene()
 
         #glPopMatrix()
 
@@ -423,14 +518,17 @@ class GlWindow(Fl_Gl_Window):
     #        self.glShadowProjectionPOINT(1,2,3)
             self.glShadowProjectionPOINT(lightshadow, pOnPlaneshadow, normalshadow)
               #human
-    
+
+            '''
             if self.sceneList:
     #            print '[FRAMELOG]calllist', self.parent.frame
                 glCallList(self.sceneList[1])
             else:
     #            print '[FRAMELOG]draw', self.parent.frame
                 self.drawScene(yr.RENDER_SHADOW)
-        
+            #'''
+            self.drawScene(yr.RENDER_SHADOW)
+
             glPopMatrix()
             glDepthMask(GL_TRUE)
             glEnable(GL_LIGHTING)
@@ -440,8 +538,22 @@ class GlWindow(Fl_Gl_Window):
         glFlush()
     
     def drawScene(self, renderType=yr.RENDER_OBJECT):
+        frame = self.parent.getCurrentFrame()
         for renderer in self.renderers:
-            renderer.render(renderType)
+            if frame != -1 and len(renderer.savedState) > frame:
+                renderer.renderFrame(frame, renderType)
+            elif frame == len(renderer.savedState):
+                renderer.saveState()
+                renderer.renderFrame(frame, renderType)
+            elif frame == -1:
+                renderer.renderState(renderer.getState(), renderType)
+            else:
+                renderer.renderFrame(len(renderer.savedState)-1, renderType)
+
+        for renderer in self.invisibleRenderers:
+            if frame == len(renderer.savedState):
+                renderer.saveState()
+
         self.extraDrawCallback()
         
     def extraDrawCallback(self):
@@ -624,6 +736,21 @@ class GlWindow(Fl_Gl_Window):
         
 g_first = True   
 class MotionViewer(Fl_Window):
+    """
+
+    :type playing : bool
+    :type recording : bool
+    :type frame : int
+    :type maxFrame : int
+    :type maxRecordedFrame : int
+    :type loaded : bool
+    :type motionSystem = None
+    :type sceneStates : list
+    :type initSceneState : None
+    :type stateObjects : list
+    :type initObjectStates : list
+    :type initialUpdate : bool
+    """
     def __init__(self, x, y, w, h):
         title = 'MotionViewer'
         Fl_Window.__init__(self, x, y, w, h, title)
@@ -645,8 +772,7 @@ class MotionViewer(Fl_Window):
         self.loaded = False
         
         self.motionSystem = None
-        self.glWindow.renderers = []
-        
+
         self.sceneStates = []
         self.initSceneState = None
         
@@ -660,7 +786,10 @@ class MotionViewer(Fl_Window):
 
     def setRenderers(self, renderers):
         self.glWindow.renderers = renderers
-    
+
+    def setInvisibleRendrers(self, renderers):
+        self.glWindow.invisibleRenderers = renderers
+
     def setMotionSystem(self, motionSystem):
         self.motionSystem = motionSystem
         self.loaded = True

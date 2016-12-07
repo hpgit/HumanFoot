@@ -368,7 +368,8 @@ def walkings():
 
     # K_swp_vel_sag = .1; K_swp_vel_cor = .4; K_swp_pos_sag = 1.; K_swp_pos_cor = 0.
     # K_stp_pos = .6
-    K_swp_vel_sag = .0; K_swp_vel_cor = .3; K_swp_pos_sag = 1.2; K_swp_pos_cor = .2
+    # K_swp_vel_sag = .0; K_swp_vel_cor = .3; K_swp_pos_sag = 1.2; K_swp_pos_cor = .2
+    K_swp_vel_sag = .0; K_swp_vel_cor = .8; K_swp_pos_sag = 1.2; K_swp_pos_cor = .6
     K_swp_pos_sag_faster = .05
     filename = 'wd2_WalkForwardNormal00.bvh'
     # filename = 'wd2_WalkForwardNormal00_REPEATED.bvh'

@@ -204,6 +204,15 @@ class Skeleton(object):
     def M(self):
         return self.mass_matrix()
 
+    def inv_mass_matrix(self):
+        invM = np.zeros((self.ndofs, self.ndofs))
+        papi.skeleton__getInvMassMatrix(self.world.id, self.id, invM)
+        return invM
+
+    @property
+    def invM(self):
+        return self.inv_mass_matrix()
+
     def coriolis_and_gravity_forces(self):
         return papi.skeleton__getCoriolisAndGravityForces(self.world.id,
                                                           self.id, self.ndofs)

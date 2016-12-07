@@ -5,6 +5,7 @@ from OpenGL.GLE import *
 # import ode, numpy
 import numpy
 import math
+import copy
 
 import sys
 if '..' not in sys.path:
@@ -51,15 +52,34 @@ RENDER_SHADOW = 1
 RENDER_REFLECTION = 2
 
 class Renderer:
+    """
+
+    :type rc: RenderContext
+    :type totalColor: tuple | list | numpy.ndarray
+    :type savedState: list | None
+    """
     def __init__(self, target, color):
         self.rc = RenderContext()
         self.totalColor = color
         self.selectedElement = None
         self.shadowColor = (150,150,150)
+        self.savedState = list()
 
     def render(self, renderType=RENDER_OBJECT):
         print("Renderer.render() : Must subclass me")
         raise NotImplementedError
+
+    def renderState(self, state, renderType=RENDER_OBJECT):
+        self.render(renderType)
+
+    def renderFrame(self, frame, renderType=RENDER_OBJECT):
+        self.render(renderType)
+
+    def getState(self):
+        return None
+
+    def saveState(self):
+        self.savedState.append(self.getState())
 
 
 class SelectedGeomRenderer(Renderer):
@@ -71,6 +91,7 @@ class SelectedGeomRenderer(Renderer):
         if self.geom:
             glColor3ubv(self.totalColor)
             self.rc.renderSelectedOdeGeom(self.geom, self.totalColor)
+
 
 class OdeRenderer(Renderer):
     def __init__(self, target, color = (255,255,255)):
@@ -138,8 +159,8 @@ class VpModelRenderer(Renderer):
                         glColor3ubv(self.totalColor)
                 self.renderVpNode(node)
 
-        if renderType!=RENDER_SHADOW:
-            glDisable(GL_BLEND)
+        # if renderType!=RENDER_SHADOW:
+        #     glDisable(GL_BLEND)
 
     def renderVpNode(self, pNode):
         glPushMatrix()
@@ -174,6 +195,63 @@ class VpModelRenderer(Renderer):
                 self.rc.drawSphere(data[0])
             glPopMatrix()
         glPopMatrix()
+
+    def renderState(self, state, renderType=RENDER_OBJECT):
+        """
+
+        :type state: list[tuple[str, numpy.ndarray, numpy.ndarray]]
+        :return:
+        """
+        glLineWidth(self._lineWidth)
+
+        for elem in state:
+            geomType, geomT, data, color = elem
+            glPushMatrix()
+            glMultMatrixd(geomT.transpose())
+            if renderType != RENDER_SHADOW:
+                glColor3ubv(color)
+            else:
+                glColor3ub(90, 90, 90)
+
+            if geomType == 'B' or geomType == 'M':
+                glTranslatef(-data[0]/2., -data[1]/2., -data[2]/2.)
+                self.rc.drawBox(data[0], data[1], data[2])
+            elif geomType == 'C':
+                self.rc.drawCapsule(data[0], data[1])
+            elif geomType == 'S':
+                self.rc.drawSphere(data[0])
+
+            glPopMatrix()
+
+    def renderFrame(self, frame, renderType=RENDER_OBJECT):
+        self.renderState(self.savedState[frame], renderType)
+
+    def getState(self):
+        state = []
+        for node in self.model._nodes:
+            color = None
+            if node is not None:
+                if node.color[0] != 0 or node.color[1] != 0 or node.color[2] != 0:
+                    c = ( node.color[0], node.color[1], node.color[2])
+                    color = copy.deepcopy(c)
+                else:
+                    color = copy.deepcopy(self.totalColor)
+                bodyFrame = cvu.SE3_2_pySE3(node.body.GetFrame())
+                for geom in node.geoms:
+                    geomT = numpy.dot(bodyFrame, cvu.SE3_2_pySE3(geom.GetLocalFrame()))
+                    geomType = geom.GetType()
+                    data = []
+                    if geomType ==  'B' or geomType == 'M':
+                        geomSize = geom.GetSize()
+                        data = [geomSize[i] for i in range(3)]
+                    elif geomType == 'C':
+                        data.append(geom.GetRadius())
+                        data.append(geom.GetHeight())
+                        data[1] -= 2. * data[0]
+                    elif geomType == 'S':
+                        data.append(geom.GetRadius())
+                    state.append((geomType, geomT, data, color))
+        return state
 
 
 class DartModelRenderer(Renderer):
@@ -216,7 +294,6 @@ class DartModelRenderer(Renderer):
             glPopMatrix()
         self.model.world.render_contacts()
 
-
     def renderShapeNode(self, shapeNode):
         """
 
@@ -245,10 +322,70 @@ class DartModelRenderer(Renderer):
             # self.rc.drawCapsule(data[0], data[1])
         elif geomType == 'ELLIPSOID':
             shape = shapeNode.shape # type: pydart.EllipsoidShape
-            data = shape.size()/2.
-            glScalef(data[0], data[1], data[2])
+            data = shape.size() # type: numpy.ndarray
+            glScalef(data[0]/2., data[1]/2., data[2]/2.)
             self.rc.drawSphere(1.)
         glPopMatrix()
+
+    def renderFrame(self, frame, renderType=RENDER_OBJECT):
+        self.renderState(self.savedState[frame], renderType)
+
+    def getState(self):
+        state = []
+        for body in self.model.skeleton.bodynodes:
+            bodyFrame = body.world_transform()
+            for shapeNode in body.shapenodes:
+                if shapeNode.has_visual_aspect():
+                    color = None
+                    if sum(self.totalColor) == 765:
+                        c = numpy.array(shapeNode.visual_aspect_rgba())*255
+                        color = [ int(c[0]), int(c[1]), int(c[2])]
+                    else:
+                        color = self.totalColor
+
+                    geomT = numpy.dot(bodyFrame, shapeNode.relative_transform())
+                    geomType = shapeNode.shape.shape_type_name()
+                    shape = shapeNode.shape
+                    data = None
+                    if geomType == 'BOX':
+                        data = shape.size()
+                    elif geomType == 'CYLINDER':
+                        data = [shape.getRadius(), shape.getHeight()]
+                    elif geomType == 'ELLIPSOID':
+                        data = shape.size()
+                    state.append((geomType, geomT, data, color))
+        return state
+
+    def renderState(self, state, renderType=RENDER_OBJECT):
+        """
+
+        :type state: list[tuple[str, numpy.ndarray, numpy.ndarray, tuple]]
+        :return:
+        """
+        glLineWidth(self._lineWidth)
+
+        for elem in state:
+            geomType, geomT, data, color = elem
+            glPushMatrix()
+            glMultMatrixd(geomT.transpose())
+            if renderType != RENDER_SHADOW:
+                glColor3ubv(color)
+            else:
+                glColor3ub(90, 90, 90)
+
+            if geomType == 'BOX':
+                glTranslatef(-data[0]/2., -data[1]/2., -data[2]/2.)
+                self.rc.drawBox(data[0], data[1], data[2])
+            elif geomType == 'CYLINDER':
+                glTranslatef(0., 0., -data[1]/2.)
+                self.rc.drawCylinder(data[0], data[1])
+                # self.rc.drawCapsule(data[0], data[1])
+            elif geomType == 'ELLIPSOID':
+                glScalef(data[0]/2., data[1]/2., data[2]/2.)
+                self.rc.drawSphere(1.)
+
+            glPopMatrix()
+
 
 
 class JointMotionRenderer(Renderer):
@@ -442,16 +579,37 @@ class PointsRenderer(Renderer):
         self.pointStyle = pointStyle
         self.rc.setLineWidth(2.)
     def render(self, renderType=RENDER_OBJECT):
-        self.rc.beginDraw()
-        glColor3ubv(self.totalColor)
-        for point in self.points:
-            if point is not None:
-                if self.pointStyle==POINT_POINT:
-                    self.rc.drawPoint(point)
-                elif self.pointStyle==POINT_CROSS:
-                    self.rc.drawCross(point)
-                elif self.pointStyle==POINT_CUBE:
-                    self.rc.drawCube(point)
+        if renderType == RENDER_OBJECT:
+            self.rc.beginDraw()
+            glColor3ubv(self.totalColor)
+            for point in self.points:
+                if point is not None:
+                    if self.pointStyle==POINT_POINT:
+                        self.rc.drawPoint(point)
+                    elif self.pointStyle==POINT_CROSS:
+                        self.rc.drawCross(point)
+                    elif self.pointStyle==POINT_CUBE:
+                        self.rc.drawCube(point)
+
+    def renderState(self, state, renderType=RENDER_OBJECT):
+        if renderType == RENDER_OBJECT:
+            self.rc.beginDraw()
+            glColor3ubv(self.totalColor)
+            for point in state:
+                if point is not None:
+                    if self.pointStyle==POINT_POINT:
+                        self.rc.drawPoint(point)
+                    elif self.pointStyle==POINT_CROSS:
+                        self.rc.drawCross(point)
+                    elif self.pointStyle==POINT_CUBE:
+                        self.rc.drawCube(point)
+
+    def renderFrame(self, frame, renderType=RENDER_OBJECT):
+        self.renderState(self.savedState[frame], renderType)
+
+    def getState(self):
+        return copy.deepcopy(self.points)
+
 
 class LinesRenderer(Renderer):
     def __init__(self, points, color = (255,0,0), lineWidth=.02):
@@ -953,7 +1111,7 @@ class RenderContext:
 
         gluCylinder(self.quad, radius, radius, length_z, _SLICE_SIZE, 1)
 
-        if True:
+        if False:
             glPushMatrix()
             glTranslatef(0.0002, 0., 0.)
             glColor3f(1., 0., 0.)

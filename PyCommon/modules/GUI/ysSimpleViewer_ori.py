@@ -135,6 +135,12 @@ class SimpleDoc(ybu.Subject):
             if self.renderersVisible[name]:
                 ls.append(renderer)
         return ls
+    def getInvisibleRenderers(self):
+        ls = []
+        for name, renderer in self.rendererMap.items():
+            if not self.renderersVisible[name]:
+                ls.append(renderer)
+        return ls
     def addObject(self, name, object):
         self.objectNames.append(name)
         self.objectMap[name] = object
@@ -157,6 +163,7 @@ class MotionViewWnd(yv3.MotionViewer, ybu.Observer):
     def update(self, ev, doc):
         if ev==EV_addRenderer or ev==EV_setRendererVisible:
             self.setRenderers(doc.getVisibleRenderers())
+            self.setInvisibleRendrers(doc.getInvisibleRenderers())
         elif ev==EV_addObject:
             self.setMotionSystem(doc.motionSystem)
             self.setStateObjects(doc.objectMap.values())
