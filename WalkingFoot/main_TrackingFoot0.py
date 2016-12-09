@@ -299,7 +299,7 @@ def buildMcfg():
     return mcfg
 
 
-def walkings():
+def walkings(params=None, isCma=False):
     class ForceInfo:
         def __init__(self, startFrame, duration, force):
             self.startFrame = startFrame    # frame
@@ -703,6 +703,29 @@ def walkings():
     #    viewer.doc.addRenderer('rd_frame2', yr.FramesRenderer(rd_frame2, (200,200,0)))
     #    viewer.setMaxFrame(len(motion_ori)-1)
 
+    viewer.objectInfoWnd.add1DSlider("penalty_grf_gain",    0., 5000., 10., Ks)
+    viewer.objectInfoWnd.add1DSlider("c_min_contact_vel",   0., 200., .2, c_min_contact_vel)
+    viewer.objectInfoWnd.add1DSlider("c_min_contact_time",  0., 5., .01, c_min_contact_time)
+    viewer.objectInfoWnd.add1DSlider("c_landing_duration",  0., 5., .01, c_landing_duration)
+    viewer.objectInfoWnd.add1DSlider("c_taking_duration",   0., 5., .01, c_taking_duration)
+    viewer.objectInfoWnd.add1DSlider("c_swf_mid_offset",    -1., 1., .001, c_swf_mid_offset)
+    viewer.objectInfoWnd.add1DSlider("c_locking_vel",       0., 1., .001, c_locking_vel)
+
+    viewer.objectInfoWnd.add1DSlider("c_swf_offset",        -1., 1., .001, c_swf_offset)
+    viewer.objectInfoWnd.add1DSlider("K_stp_pos",           0., 1., .01, K_stp_pos)
+
+    viewer.objectInfoWnd.add1DSlider("c5",                  0., 5., .01, c5)
+    viewer.objectInfoWnd.add1DSlider("c6",                  0., 1., .01, c6)
+    viewer.objectInfoWnd.add1DSlider("K_stb_vel",           0., 1., .01, K_stb_vel)
+    viewer.objectInfoWnd.add1DSlider("K_stb_pos",           0., 1., .01, K_stb_pos)
+    viewer.objectInfoWnd.add1DSlider("K_swp_vel_sag",       0., 5., .01, K_swp_vel_sag)
+    viewer.objectInfoWnd.add1DSlider("K_swp_vel_cor",       0., 5., .01, K_swp_vel_cor)
+    viewer.objectInfoWnd.add1DSlider("K_swp_pos_sag",       0., 5., .01, K_swp_pos_sag)
+    viewer.objectInfoWnd.add1DSlider("K_swp_pos_cor",       0., 5., .01, K_swp_pos_cor)
+    viewer.objectInfoWnd.add1DSlider("K_swp_pos_sag_faster",0., 1., .01, K_swp_pos_sag_faster)
+    def getParamVal(paramname):
+        return viewer.objectInfoWnd.getVal(paramname)
+
     if not REPEATED:
         viewer.setMaxFrame(len(motion_ori)-1)
     else:
@@ -761,6 +784,26 @@ def walkings():
     viewer.callback(viewer_onClose)
 
     def simulateCallback(frame):
+        if not isCma and params is None:
+            Ks                    = getParamVal("penalty_grf_gain")
+            Ds                    = 2.*(Ks**.5)
+            c_min_contact_vel     = getParamVal("c_min_contact_vel")
+            c_min_contact_time    = getParamVal("c_min_contact_time")
+            c_landing_duration    = getParamVal("c_landing_duration")
+            c_taking_duration     = getParamVal("c_taking_duration")
+            c_swf_mid_offset      = getParamVal("c_swf_mid_offset")
+            c_locking_vel         = getParamVal("c_locking_vel")
+            c_swf_offset          = getParamVal("c_swf_offset")
+            K_stp_pos             = getParamVal("K_stp_pos")
+            c5                    = getParamVal("c5")
+            c6                    = getParamVal("c6")
+            K_stb_vel             = getParamVal("K_stb_vel")
+            K_stb_pos             = getParamVal("K_stb_pos")
+            K_swp_vel_sag         = getParamVal("K_swp_vel_sag")
+            K_swp_vel_cor         = getParamVal("K_swp_vel_cor")
+            K_swp_pos_sag         = getParamVal("K_swp_pos_sag")
+            K_swp_pos_cor         = getParamVal("K_swp_pos_cor")
+            K_swp_pos_sag_faster  = getParamVal("K_swp_pos_sag_faster")
         # seginfo
         segIndex = seg_index[0]
         curState = seginfo[segIndex]['state']
@@ -1082,6 +1125,9 @@ def walkings():
         #'''
 
 
+
+        print("motion_seg_left_foot", mm.logSO3(motion_seg[frame].getJointOrientationGlobal(lID)))
+        print("controlModel_left_foot", mm.logSO3(controlModel.getJointOrientationGlobal(lID)))
 
 
         # control trajectory

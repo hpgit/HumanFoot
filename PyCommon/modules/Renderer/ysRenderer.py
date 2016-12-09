@@ -389,18 +389,20 @@ class DartModelRenderer(Renderer):
 
 
 class JointMotionRenderer(Renderer):
-    def __init__(self, target, color = (0,255,255), linkStyle = LINK_LINE, lineWidth=1.):
+    def __init__(self, target, color=(0,255,255), linkStyle=LINK_LINE, lineWidth=1.):
         Renderer.__init__(self, target, color)
         self.motion = target
         self.renderFrames = None
         self.setLinkStyle(linkStyle)
         self.rc.setLineWidth(lineWidth)
+
     def setLinkStyle(self, linkStyle):
         self.linkStyle = linkStyle
         if self.linkStyle == LINK_WIREBOX:
             self.rc.setPolygonStyle(POLYGON_LINE)
         else:
             self.rc.setPolygonStyle(POLYGON_FILL)
+
     def render(self, renderType=RENDER_OBJECT):
         if len(self.motion) > 0:
             self.rc.beginDraw()
@@ -415,12 +417,14 @@ class JointMotionRenderer(Renderer):
                 for renderFrame in self.renderFrames:
                     posture = self.motion[renderFrame]
                     self.renderJointPosture(posture)
+
     def renderJointPosture(self, posture):
         joint = posture.skeleton.root
         glPushMatrix()
         glTranslatef(posture.rootPos[0], posture.rootPos[1], posture.rootPos[2])
         self._renderJoint(joint, posture)
         glPopMatrix()
+
     def _renderJoint(self, joint, posture):
         glPushMatrix()
         glTranslatef(joint.offset[0],joint.offset[1],joint.offset[2])
@@ -479,6 +483,15 @@ class JointMotionRenderer(Renderer):
         for childJoint in joint.children:
             self._renderJoint(childJoint, posture)
         glPopMatrix()
+
+    def renderState(self, state, renderType=RENDER_OBJECT):
+        self.render(renderType)
+
+    def renderFrame(self, frame, renderType=RENDER_OBJECT):
+        self.render(renderType)
+
+    def getState(self):
+        return None
 
 class PointMotionRenderer(Renderer):
     def __init__(self, target, color = (0,0,255)):
