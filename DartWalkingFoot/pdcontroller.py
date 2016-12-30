@@ -19,7 +19,7 @@ class PDController:
         self.skel = skel
         ndofs = self.skel.ndofs
         # self.qhat = self.skel.q
-        Kt = 400.
+        Kt = 1000.
         Dt = 2.*(Kt**.5)
         self.Kp = np.diagflat([0.0] * 6 + [400.0] * (ndofs - 6))
         self.Kd = np.diagflat([0.0] * 6 + [40.0] * (ndofs - 6))

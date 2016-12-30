@@ -3,10 +3,10 @@ import numpy as np
 import sys
 if '..' not in sys.path:
     sys.path.append('..')
-import Math.mmMath as mm
-import Math.ysFunctionGraph as yfg
-import Motion.mmAnalyticIK as aik
-import Motion.ysMotionBlend as ymb
+import PyCommon.modules.Math.mmMath as mm
+import PyCommon.modules.Math.ysFunctionGraph as yfg
+import PyCommon.modules.Motion.mmAnalyticIK as aik
+import PyCommon.modules.Motion.ysMotionBlend as ymb
 
 # keep position of element at startFrame during motion[startFrame] ~ motion[endFrame]
 def fixPosition(motion, element_name_or_index, startFrame, endFrame, update=True):

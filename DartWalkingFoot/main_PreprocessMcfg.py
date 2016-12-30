@@ -4,7 +4,7 @@ import cPickle
 import sys
 if '../PyCommon/modules' not in sys.path:
     sys.path.append('../PyCommon/modules')
-import Simulator.ysPhysConfig as ypc
+import PyCommon.modules.Simulator.ysPhysConfig as ypc
 import numpy.core.multiarray
 
 def buildMassMap():

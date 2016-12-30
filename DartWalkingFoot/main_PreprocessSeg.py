@@ -21,6 +21,7 @@ if __name__=='__main__':
 #    dir = './icmotion_test/'
 #    paths = glob.glob(dir+'*.temp')
 
+    SEGMENT_FOOT = False
     dir = './ppmotion/'
     # paths = glob.glob(dir+'*.bvh')
     paths = glob.glob(dir+'wd2_WalkForwardNormal00.bvh')
@@ -105,10 +106,12 @@ if __name__=='__main__':
             seginfos[i]['swingKnees'] = swingKnees
             
             if start<end:
-                # box foot
-                # seginfos[i]['ground_height'] = min([posture_seg.getJointPositionGlobal(foot)[1] for foot in [lFoot, rFoot] for posture_seg in motion_ori[start+1:end+1]])
-                # segmented foot
-                seginfos[i]['ground_height'] = min([posture_seg.getJointPositionGlobal(foot)[1] - 0.05 for foot in [lFoot, rFoot] for posture_seg in motion_ori[start+1:end+1]])
+                if SEGMENT_FOOT:
+                    # segmented foot
+                    seginfos[i]['ground_height'] = min([posture_seg.getJointPositionGlobal(foot)[1] - 0.05 for foot in [lFoot, rFoot] for posture_seg in motion_ori[start+1:end+1]])
+                else:
+                    # box foot
+                    seginfos[i]['ground_height'] = min([posture_seg.getJointPositionGlobal(foot)[1] for foot in [lFoot, rFoot] for posture_seg in motion_ori[start+1:end+1]])
 
                 seginfos[i]['max_stf_push_frame'] = None
                 if len(swingFoots)>0:

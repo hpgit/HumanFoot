@@ -48,7 +48,7 @@ current_path = os.path.dirname(os.path.abspath(__file__))
 MOTION_COLOR = (213, 111, 162)
 CHARACTER_COLOR = (20, 166, 188)
 
-SEGMENT_FOOT = True
+SEGMENT_FOOT = False
 
 def buildMassMap():
     massMap = {}
@@ -1291,12 +1291,15 @@ def walkings(params, isCma=False):
         pdController.setTartgetPose(th_r)
 
         ddq = pdController.compute()
+        # bodyIDs = [body.index_in_skeleton for body in dartModel.world.collision_result.contacted_bodies]
         for i in range(stepsPerFrame):
-            bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+            # bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+            # bodyIDs = dartModel.skeleton.self_collision_check()
+
             _tau = np.zeros(dartModel.skeleton.q.shape)
             # bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp = \
             #     hdls.calcLCPForces(motion_ori, dartModel.world, dartModel, bodyIDsToCheck, 1., _tau)
-            dartModel.applyPenaltyForce(bodyIDs, contactPositions, contactForces, localForce=False)
+            # dartModel.applyPenaltyForce(bodyIDs, contactPositions, contactForces, localForce=False)
             dartModel.skeleton.set_accelerations(pdController.compute())
             # dartModel.skeleton.set_forces(_tau)
             dartModel.step()
@@ -1371,7 +1374,16 @@ def walkings(params, isCma=False):
 
 
 
-        # bodyIDs, contactPositions, contactPositionLocals, velocities = dartModel.getContactPoints(bodyIDsToCheck)
+        bodyIDs, contactPositions, contactPositionLocals, velocities = dartModel.getContactPoints(bodyIDsToCheck)
+
+        # bodyIDs = [body.index_in_skeleton() for body in contacted_bodies]
+        # contacted_bodies = dartModel.world.collision_result.contacted_bodies # type: list[pydart.BodyNode]
+        # bodyIDs = []
+        # for body in contacted_bodies:
+        #     ground_skeleton = body.skeleton # type: pydart.Skeleton
+        #     if ground_skeleton.name == "grount skeleton":
+        #         print("hehe")
+
 
         if not isCma:
             del rd_point2[:]
@@ -1663,16 +1675,16 @@ def walkings(params, isCma=False):
 # hand tuning
 # params = [0., .7, .02, .1, .1, .0, 1.3, 1.2, 1., .05]
 # 325 frames success, Ks = 600.
-# params = [ 0.01918975,  0.86622863,  0.15111008,  0.50972221,  0.09746768, -0.09129272,  1.12736657,  1.2873114 ,  0.84409227,  0.38928674]
+params = [ 0.01918975,  0.86622863,  0.15111008,  0.50972221,  0.09746768, -0.09129272,  1.12736657,  1.2873114 ,  0.84409227,  0.38928674]
 
 # 347 frames success, Ks = 600. ????????
 # params = [-0.0096717475861028673, 0.51455174209881782, 0.1414213562373095, 0.31622776601683794, 0.19555994814530026, 0.0, 1.1401754250991381, 1.457290633087426, 0.78654212710618387, 0.61027611069961429]
 
 # 287 frames success, Ks = 1000.
-params = [-0.15744347,  0.67592998,  0.14142136,  0.31622777,  0.35696289, 0.,  1.14017543,  1.27637941,  0.95735647,  0.23835687]
+# params = [-0.15744347,  0.67592998,  0.14142136,  0.31622777,  0.35696289, 0.,  1.14017543,  1.27637941,  0.95735647,  0.23835687]
 
-walkings(params)
-# walkings(None, False)
+# walkings(params)
+walkings(None, False)
 
 # from PyCommon.modules.Math.Nomalizer import Normalizer
 # normalizer = Normalizer([0.]*10., [1., 5., .2, 1., 1., 3., 3., 3., 3., .5], [1.]*10, [-1.]*10)

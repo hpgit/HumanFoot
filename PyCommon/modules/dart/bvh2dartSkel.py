@@ -420,7 +420,7 @@ class DartModelMaker:
         et.SubElement(etPhysics, "collision_detector").text = "fcl_mesh"
 
 
-        if False:
+        if True:
             # add ground body and joint
             etGroundSkeleton = et.SubElement(etWorld, "skeleton", {"name": "grount skeleton"})
             et.SubElement(etGroundSkeleton, "mobile").text = "false"

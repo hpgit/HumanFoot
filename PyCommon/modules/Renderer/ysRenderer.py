@@ -484,77 +484,83 @@ class JointMotionRenderer(Renderer):
             self._renderJoint(childJoint, posture)
         glPopMatrix()
 
-    def renderState(self, state, renderType=RENDER_OBJECT):
-        if len(self.motion) > 0:
-            zeroVec = (0., 0., 0.)
-            glPushMatrix()
-            glTranslatef(state[0][0], state[0][1], state[0][2])
-            for stateIdx in range(1, len(state)):
-                jointname, jointoffset, jointT, childrenOffsets = state[stateIdx]
-                glTranslatef(jointoffset[0], jointoffset[1], jointoffset[2])
-                glMultMatrixf(jointT.transpose())
-
-                if self.selectedElement is not None and jointname == self.selectedElement.name:
-                    glColor3ubv(SELECTION_COLOR)
-                    ygh.beginDraw()
-                    ygh.drawCoordinate()
-                    ygh.endDraw()
-
-                if self.linkStyle == LINK_LINE:
-                    self.rc.drawPoint(zeroVec)
-                    for childrenOffset in childrenOffsets:
-                        self.rc.drawLine(zeroVec, childrenOffset)
-
-                elif self.linkStyle == LINK_BONE:
-                    self.rc.drawLine((-.05, 0., 0.), (.05, 0., 0.))
-                    for childrenOffset in childrenOffsets:
-                        self.rc.drawLine(zeroVec, childrenOffset)
-
-                elif self.linkStyle in (LINK_SOLIDBOX, LINK_WIREBOX):
-                    if len(childrenOffsets) > 0:
-                        glPushMatrix()
-                        offset = sum(childrenOffsets)/len(childrenOffsets)
-                        defaultBoneV = numpy.array([0., 0., mm.length(offset)])
-                        boneT = mm.R2T(mm.getSO3FromVectors(defaultBoneV, offset))
-                        glMultMatrixf(boneT.transpose())
-                        glTranslatef(-.05, -.05, 0.)
-                        self.rc.drawBox(.1, .1, mm.length(offset))
-                        glPopMatrix()
-
-                if self.selectedElement.name is not None and jointname == self.selectedElement.name:
-                    glColor3ubv(self.totalColor)
-            glPopMatrix()
-
-    def renderFrame(self, frame, renderType=RENDER_OBJECT):
-        if len(self.motion) > 0:
-            if self.renderFrames is None:
-                self.renderState(self.savedState[frame], renderType)
-            else:
-                for renderFrame in self.renderFrames:
-                    posture = self.motion[renderFrame]
-                    self.renderJointPosture(posture)
-
-    def getState(self):
-        def _getState(_posture, joint, parentJointT):
-            offset = copy.deepcopy(joint.offset)
-            jointT = numpy.dot(parentJointT, mm.R2T(_posture.localRs[_posture.skeleton.getElementIndex(joint.name)]))
-            childrenOffsets = []
-            for child in joint.children:
-                childrenOffsets.append(copy.deepcopy(child.offset))
-
-            _state = [joint.name, offset, jointT, childrenOffsets]
-
-            for child in joint.children:
-                _state.append(_getState(_posture, child, jointT))
-
-            return _state
-
-        if self.motion.frame >= 0:
-            posture = self.motion[self.motion.frame]
-            state = [[posture.rootPos[0], posture.rootPos[1], posture.rootPos[2]]]
-            state.append(_getState(posture, posture.skeleton.root, numpy.eye(4)))
-
-            return state
+    # def renderState(self, state, renderType=RENDER_OBJECT):
+    #     if len(self.motion) > 0:
+    #         zeroVec = (0., 0., 0.)
+    #         glPushMatrix()
+    #         glTranslatef(state[0][0], state[0][1], state[0][2])
+    #         for stateIdx in range(1, len(state)):
+    #             # print(len(state[stateIdx]))
+    #             # print(state[stateIdx][0], state[stateIdx][2])
+    #             # print(state[stateIdx][3])
+    #             jointname, jointoffset, jointT, childrenOffsets = state[stateIdx]
+    #             glTranslatef(jointoffset[0], jointoffset[1], jointoffset[2])
+    #             glMultMatrixf(jointT.transpose())
+    #
+    #             if self.selectedElement is not None and jointname == self.selectedElement.name:
+    #                 glColor3ubv(SELECTION_COLOR)
+    #                 ygh.beginDraw()
+    #                 ygh.drawCoordinate()
+    #                 ygh.endDraw()
+    #
+    #             if self.linkStyle == LINK_LINE:
+    #                 self.rc.drawPoint(zeroVec)
+    #                 for childrenOffset in childrenOffsets:
+    #                     self.rc.drawLine(zeroVec, childrenOffset)
+    #
+    #             elif self.linkStyle == LINK_BONE:
+    #                 self.rc.drawLine((-.05, 0., 0.), (.05, 0., 0.))
+    #                 for childrenOffset in childrenOffsets:
+    #                     self.rc.drawLine(zeroVec, childrenOffset)
+    #
+    #             elif self.linkStyle in (LINK_SOLIDBOX, LINK_WIREBOX):
+    #                 if len(childrenOffsets) > 0:
+    #                     offset = sum(childrenOffsets)/len(childrenOffsets)
+    #                     defaultBoneV = numpy.array([0., 0., mm.length(offset)])
+    #                     boneT = mm.R2T(mm.getSO3FromVectors(defaultBoneV, offset))
+    #                     glPushMatrix()
+    #                     glMultMatrixf(boneT.transpose())
+    #                     glTranslatef(-.05, -.05, 0.)
+    #                     self.rc.drawBox(.1, .1, mm.length(offset))
+    #                     glPopMatrix()
+    #
+    #             if self.selectedElement is not None:
+    #                 if self.selectedElement.name is not None and jointname == self.selectedElement.name:
+    #                     glColor3ubv(self.totalColor)
+    #         glPopMatrix()
+    #
+    # def renderFrame(self, frame, renderType=RENDER_OBJECT):
+    #     if len(self.motion) > 0:
+    #         if self.renderFrames is None:
+    #             self.renderState(self.savedState[frame], renderType)
+    #         else:
+    #             for renderFrame in self.renderFrames:
+    #                 posture = self.motion[renderFrame]
+    #                 self.renderJointPosture(posture)
+    #
+    # def getState(self):
+    #     def _getState(_posture, joint, parentJointT):
+    #         offset = copy.deepcopy(joint.offset)
+    #         # jointT = numpy.dot(parentJointT, mm.R2T(_posture.localRs[_posture.skeleton.getElementIndex(joint.name)]))
+    #         jointT = numpy.dot(parentJointT, mm.R2T(_posture.localRs[_posture.skeleton.getElementIndex(joint.name)]))
+    #         childrenOffsets = []
+    #         for child in joint.children:
+    #             childrenOffsets.append(copy.deepcopy(child.offset))
+    #
+    #         _state = [[joint.name, offset, jointT, childrenOffsets]]
+    #
+    #         for child in joint.children:
+    #             # _state.append(_getState(_posture, child, jointT))
+    #             _state.extend(_getState(_posture, child, jointT))
+    #
+    #         return _state
+    #
+    #     if self.motion.frame >= 0 and len(self.motion) > 0:
+    #         posture = self.motion[self.motion.frame]
+    #         state = [[posture.rootPos[0], posture.rootPos[1], posture.rootPos[2]]]
+    #         state.extend(_getState(posture, posture.skeleton.root, numpy.eye(4)))
+    #
+    #         return state
 
 class PointMotionRenderer(Renderer):
     def __init__(self, target, color = (0,0,255)):
