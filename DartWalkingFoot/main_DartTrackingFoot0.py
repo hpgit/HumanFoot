@@ -48,7 +48,7 @@ current_path = os.path.dirname(os.path.abspath(__file__))
 MOTION_COLOR = (213, 111, 162)
 CHARACTER_COLOR = (20, 166, 188)
 
-SEGMENT_FOOT = False
+SEGMENT_FOOT = True
 
 def buildMassMap():
     massMap = {}
@@ -490,7 +490,7 @@ def walkings(params, isCma=False):
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
     wcfg.lockingVel = c_locking_vel
-    stepsPerFrame = 50
+    stepsPerFrame = 30
     wcfg.timeStep = frameTime/stepsPerFrame
 
     pydart.init()
@@ -1185,7 +1185,7 @@ def walkings(params, isCma=False):
         # motion_stf_balancing.append(motion_stf_push[frame].copy())
         motion_stf_balancing.append(motion_stf_stabilize[frame].copy())
         motion_stf_balancing.goToFrame(frame)
-        if STANCE_FOOT_BALANCING and False:
+        if STANCE_FOOT_BALANCING:
             R_stb = mm.exp(diff_dCM_axis * K_stb_vel * stf_balancing_func(t))
             R_stb = np.dot(R_stb, mm.exp(diff_CMr_axis * K_stb_pos * stf_balancing_func(t)))
             for stanceFoot in stanceFoots:
@@ -1293,13 +1293,13 @@ def walkings(params, isCma=False):
         ddq = pdController.compute()
         # bodyIDs = [body.index_in_skeleton for body in dartModel.world.collision_result.contacted_bodies]
         for i in range(stepsPerFrame):
-            # bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+            bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
             # bodyIDs = dartModel.skeleton.self_collision_check()
 
             _tau = np.zeros(dartModel.skeleton.q.shape)
             # bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp = \
             #     hdls.calcLCPForces(motion_ori, dartModel.world, dartModel, bodyIDsToCheck, 1., _tau)
-            # dartModel.applyPenaltyForce(bodyIDs, contactPositions, contactForces, localForce=False)
+            dartModel.applyPenaltyForce(bodyIDs, contactPositions, contactForces, localForce=False)
             dartModel.skeleton.set_accelerations(pdController.compute())
             # dartModel.skeleton.set_forces(_tau)
             dartModel.step()

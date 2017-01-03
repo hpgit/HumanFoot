@@ -95,7 +95,7 @@ def additionalEdit(motion, path):
 
 
 def preprocess():
-    SEGMENT_FOOT = False
+    SEGMENT_FOOT = True
     tasks = []
     
     outputDir = './ppmotion/'

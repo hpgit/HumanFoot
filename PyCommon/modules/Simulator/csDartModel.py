@@ -81,7 +81,7 @@ class DartModel:
         #    so additional calculation is needed
 
         # in box case, saves points around in local body frame
-        MULTIPLE_BOX = False
+        MULTIPLE_BOX = True
         MULTIPLE_CAPSULE = True
 
         for i in range(self.skeleton.num_bodynodes()):

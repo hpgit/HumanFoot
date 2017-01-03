@@ -21,7 +21,7 @@ if __name__=='__main__':
 #    dir = './icmotion_test/'
 #    paths = glob.glob(dir+'*.temp')
 
-    SEGMENT_FOOT = False
+    SEGMENT_FOOT = True
     dir = './ppmotion/'
     # paths = glob.glob(dir+'*.bvh')
     paths = glob.glob(dir+'wd2_WalkForwardNormal00.bvh')
