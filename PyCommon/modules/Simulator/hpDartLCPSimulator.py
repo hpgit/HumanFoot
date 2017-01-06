@@ -4,6 +4,7 @@ import numpy as np
 import numpy.linalg as npl
 from cvxopt import solvers as cvxSolvers
 from cvxopt import matrix as cvxMatrix
+from copy import deepcopy
 
 from PyCommon.modules.Simulator import csDartModel as cdm
 import PyCommon.modules.pydart2 as pydart
@@ -275,7 +276,8 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
 
 
 
-def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, weights, ddq0=None, numFrictionBases=8):
+def calcLCPbasicControlHD(motion, world, model, bodyIDsToCheck,
+                          mu, totalForce, weights, ddq0=None, variableDofIdx=None, numFrictionBases=8):
     """
 
     :type motion: ym.JointMotion
@@ -301,29 +303,60 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, we
 
     totalDOF = model.getTotalDOF()
 
-    invM = np.zeros((totalDOF, totalDOF))
-    invMc = np.zeros(totalDOF)
-    model.getInverseEquationOfMotion(invM, invMc)
+    specifiedDofIdxTemp = list(range(6, model.getTotalDOF()))
+    for dofidx in variableDofIdx:
+        specifiedDofIdxTemp.remove(dofidx)
+    specifiedDofIdx = np.array(specifiedDofIdxTemp)
 
-    # M = npl.inv(invM)
-    # c = np.dot(M, invMc)
 
-    # Mtmp = np.dot(M, M.T)+np.eye(M.shape[0])
-    # Mtmp[:6, :6] -= np.eye(6)
+    M = model.skeleton.mass_matrix()
+    # invM = model.skeleton.inv_mass_matrix()
+    invM = npl.inv(M)
+    c = model.skeleton.coriolis_and_gravity_forces()
+    invMc = np.dot(invM, c)
 
-    # pinvM = npl.inv(Mtmp)
 
-    h = world.GetTimeStep()
+    M00 = M[:6, :6]
+    M01 = M[:6, 6:]
+    M10 = M[6:, :6]
+    M11 = M[6:, 6:]
+
+    M11inv = npl.inv(M11)
+    Mschur = npl.inv(M00 - np.dot(M01, np.dot(M11inv, M10)))
+
+    # (A - BD^-1 C)^-1
+    # -(A - BD^-1 C)^-1 BD^-1
+    # -D^-1 C(A - BD^-1 C)^-1
+    # D^-1 + D^-1 C(A-BD^-1 C)^-1 B D^-1
+
+    invM00 = invM[:6, :6]
+    invM01 = invM[:6, 6:]
+    invM10 = invM[6:, :6]
+    invM11 = invM[6:, 6:]
+    # invM11 = M11inv + np.dot(np.dot( np.dot(M11inv, M10), Mschur), np.dot(M01, M11inv))
+
+    hatM = np.vstack((np.dot(invM01, npl.inv(invM11)), np.eye(totalDOF-6)))
+    tildeM = invM[:6, :] - np.dot(hatM[:6, :], invM[6:, :])
+
+    hatMCon = hatM[:, specifiedDofIdx - 6]
+    hatMVar = hatM[:, variableDofIdx- 6]
+
+    Mcon = M[:, specifiedDofIdx]
+    Mvar = M[:, variableDofIdx]
+    variableDofNum = len(variableDofIdx)
+
+    h = world.time_step()
     invh = 1./h
-    mus = mu * np.eye(contactNum)
-    temp_NM = JTN.T.dot(invM)
-    temp_DM = JTD.T.dot(invM)
+    mus = mu * np.eye(contactNum) # type: np.ndarray
+    temp_NM = JTN[:6, :].T.dot(tildeM)
+    temp_DM = JTD[:6, :].T.dot(tildeM)
 
-    A00 = np.eye(totalDOF)
-    A10 = h*temp_NM
+    # A00 = np.eye(totalDOF)
+    A00 = np.eye(variableDofNum)
+    A10 = h*JTN.T.dot(hatMVar)
     A11 = h*temp_NM.dot(JTN)
     A12 = h*temp_NM.dot(JTD)
-    A20 = h*temp_DM
+    A20 = h*JTD.T.dot(hatMVar)
     A21 = h*temp_DM.dot(JTN)
     A22 = h*temp_DM.dot(JTD)
 
@@ -348,11 +381,7 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, we
     #   [D.T * Jc * invM * kx]
     #   [0]
 
-    qdot_0 = ype.makeFlatList(totalDOF)
-    ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
-    qdot_0 = np.asarray(qdot_0)
-    if tau0 is None:
-        tau0 = np.zeros(np.shape(qdot_0))
+    qdot_0 = model.skeleton.dq.copy()
 
     # non-penentration condition
     # b1 = N.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau)
@@ -387,42 +416,18 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, we
             rcD[:3, dIdx] = np.cross(r, D[:3, dIdx])
 
     if True:
-        # if True:
-        try:
-            # Qqp = cvxMatrix(A+A.T)
-            # pqp = cvxMatrix(b)
+        if True:
+        # try:
+            Qtauqp = np.concatenate((Mvar + np.dot(M[:, :6], hatM[:6, :])[:, variableDofIdx-6],
+                                     np.dot(np.dot(M[:, :6], tildeM), JTN) - JTN,
+                                     np.dot(np.dot(M[:, :6], tildeM), JTD) - JTD,
+                                     np.zeros((totalDOF, E.shape[1]))), axis=1)
 
-            # Qtauqp = np.hstack((np.dot(pinvM1[:6], np.hstack((JTN, JTD))), np.zeros_like(N[:6])))
-            # ptauqp = np.dot(pinvM1[:6], (-np.asarray(c)+np.asarray(tau0))) + np.asarray(tau0[:6])
+            ptauqp = np.dot(Mcon + np.dot(M[:, :6], hatM[:6, :])[:, specifiedDofIdx], ddq0[6:]) \
+                     + np.dot(np.dot(M[:, :6], tildeM), c) - c
 
-            Qtauqp = np.hstack((np.eye(totalDOF), np.zeros((A00.shape[0], A11.shape[1]+A12.shape[1]+E.shape[1]))))
-            ptauqp = np.zeros(totalDOF)
-
-            Q2dotqp = np.hstack((np.dot(invM, np.concatenate((wTorque* np.eye(totalDOF), JTN, JTD), axis=1)), np.zeros((A0.shape[0], E.shape[1])) ))
-            p2dotqp = -invMc.copy()
-
-            # Qqp = cvxMatrix(2.*A + wTorque * np.dot(Qtauqp.T, Qtauqp))
-            # pqp = cvxMatrix(b + wTorque * np.dot(ptauqp.T, Qtauqp))
-
-            Qfqp = np.concatenate((np.zeros((3, totalDOF)), N[:3], D[:3], np.zeros_like(N[:3])), axis=1)
+            Qfqp = np.concatenate((np.zeros((3, variableDofNum)), N[:3], D[:3], np.zeros_like(N[:3])), axis=1)
             pfqp = -totalForce[:3]
-
-            # Qfqp = np.concatenate((np.zeros((1, totalDOF)),N[1:2], D[1:2], np.zeros_like(N[1:2])), axis=1)
-            # pfqp = -totalForce[1:2]
-
-            # TODO:
-            # add momentum term
-            # QtauNormqp = np.hstack((np.dot(pinvM1, np.hstack((JTN, JTD))), np.zeros((pinvM1.shape[0], N.shape[1]))))
-            # ptauNormqp = np.dot(pinvM1, (-np.asarray(c)+np.asarray(tau0))) + np.asarray(tau0)
-
-            # QqNormqp = np.hstack((np.dot(pinvM0, np.hstack((JTN, JTD))), np.zeros((pinvM0.shape[0], N.shape[1]))))
-            # pqNormqp = np.dot(pinvM0, (-np.asarray(c)+np.asarray(tau0))) + np.asarray(tau0)
-
-            # Qqp = cvxMatrix(2.*A + wTorque * np.dot(Qfqp.T, Qfqp) + np.dot(QqNormqp.T, QqNormqp))
-            # pqp = cvxMatrix(b + wTorque * np.dot(pfqp.T, Qfqp) + np.dot(pqNormqp.T, QqNormqp))
-
-            # Qqp = cvxMatrix(2.*A + wForce * np.dot(Qfqp.T, Qfqp) + wTorque * np.dot(QtauNormqp.T, QtauNormqp))
-            # pqp = cvxMatrix(b + wForce * np.dot(pfqp.T, Qfqp) + wTorque * np.dot(ptauNormqp.T, QtauNormqp))
 
             # objective : LCP
             Qqp = cvxMatrix(A+A.T )
@@ -506,6 +511,7 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, we
             Gqp = cvxMatrix(G)
             hqp = cvxMatrix(hnp)
 
+            #TODO:
             # check correctness of equality constraint
             # tau = np.dot(pinvM1, -c + tau0 + np.dot(JTN, normalForce) + np.dot(JTD, tangenForce))
             # tau = pinvM1*JTN*theta + pinvM1*JTD*phi + pinvM1*tau0 - pinvM1*b + tau0
@@ -594,9 +600,9 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, we
             '''
 
 
-        except Exception, e:
-            print 'LCPbasicControl!!', e
-            pass
+        # except Exception, e:
+        #     print 'LCPbasicControl!!', e
+        #     pass
 
     def refine(xx):
         for i in range(len(xx)):
@@ -604,10 +610,10 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, we
                 xx[i] = 0.
         return xx
 
-    tau = x[:totalDOF]
-    normalForce = x[totalDOF:totalDOF+contactNum]
-    tangenForce = x[totalDOF+contactNum:totalDOF+contactNum + numFrictionBases*contactNum]
-    minTangenVel = x[totalDOF+contactNum + numFrictionBases*contactNum:]
+    tau = x[:unspecifiedDofNum]
+    normalForce = x[unspecifiedDofNum:unspecifiedDofNum+contactNum]
+    tangenForce = x[unspecifiedDofNum+contactNum:unspecifiedDofNum+contactNum + numFrictionBases*contactNum]
+    minTangenVel = x[unspecifiedDofNum+contactNum + numFrictionBases*contactNum:]
 
     # for i in range(len(tau)):
     #     tau[i] = 10.*x[i]
@@ -619,8 +625,8 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, we
 
     lcpValue = np.dot(x[totalDOF:], zqp[totalDOF:])
     tauValue = np.dot(tau, tau)
-    Q2dotqpx = np.dot(Q2dotqp, x)+p2dotqp
-    q2dotValue = np.dot(Q2dotqpx, Q2dotqpx)
+    # Q2dotqpx = np.dot(Q2dotqp, x)+p2dotqp
+    # q2dotValue = np.dot(Q2dotqpx, Q2dotqpx)
     Qfqpx = np.dot(Qfqp, x)+pfqp
     forceValue = np.dot(Qfqpx, Qfqpx)
     print "LCP value: ", wLCP, lcpValue/wLCP, lcpValue

@@ -609,6 +609,15 @@ def walkings(params, isCma=False):
     lHeels = [skeleton.getJointIndex('Left'+name) for name in HeelName]
     rHeels = [skeleton.getJointIndex('Right'+name) for name in HeelName]
 
+    footDofNames = [] # type: list[str]
+    footDofNames += sum(list(['j_Left'+name+'_x', 'j_Left'+name+'_y', 'j_Left'+name+'_z'] for name in extendedFootName), [])
+    footDofNames += sum(list(['j_Right'+name+'_x', 'j_Right'+name+'_y', 'j_Right'+name+'_z'] for name in extendedFootName), [])
+
+    variableDofIdx = dartModel.skeleton.dof_indices(footDofNames)
+    specifiedDofIdx = list(range(dartModel.getTotalDOF()))
+    for dofidx in variableDofIdx:
+        specifiedDofIdx.remove(dofidx)
+
     # for i in lIDs+rIDs:
     #     controlModel.setHybridDynamics(i, "DYNAMIC")
 
@@ -1292,6 +1301,13 @@ def walkings(params, isCma=False):
 
         ddq = pdController.compute()
         # bodyIDs = [body.index_in_skeleton for body in dartModel.world.collision_result.contacted_bodies]
+
+        ddq0 = ddq[specifiedDofIdx]
+        print(ddq0)
+
+        hdls.calcLCPbasicControlHD(motion_ori, dartModel.world, dartModel,
+                                   bodyIDsToCheck, mu, np.array([0., 490., 0.]), [1., 1., 1.], ddq0, variableDofIdx)
+
         for i in range(stepsPerFrame):
             bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
             # bodyIDs = dartModel.skeleton.self_collision_check()
