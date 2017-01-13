@@ -48,7 +48,7 @@ current_path = os.path.dirname(os.path.abspath(__file__))
 MOTION_COLOR = (213, 111, 162)
 CHARACTER_COLOR = (20, 166, 188)
 
-SEGMENT_FOOT = True
+SEGMENT_FOOT = False
 
 def buildMassMap():
     massMap = {}
@@ -219,90 +219,91 @@ def buildMcfg():
 
 
     # human foot
-    footJointType = 'B'
+    if SEGMENT_FOOT:
+        footJointType = 'B'
 
-    capsulize('RightFoot_foot_0_0')
-    node = mcfg.getNode('RightFoot_foot_0_0')
-    node.addGeom('MyFoot3', [0.02*np.array([-0.3, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
-    node.addGeom('MyFoot3', [0.02*np.array([-0.3-1.2, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
-    # node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0., 0., 0.])], ypc.CapsuleMaterial(1000., .01, -1))
-    node.jointType = footJointType
+        capsulize('RightFoot_foot_0_0')
+        node = mcfg.getNode('RightFoot_foot_0_0')
+        node.addGeom('MyFoot3', [0.02*np.array([-0.3, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
+        node.addGeom('MyFoot3', [0.02*np.array([-0.3-1.2, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
+        # node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0., 0., 0.])], ypc.CapsuleMaterial(1000., .01, -1))
+        node.jointType = footJointType
 
-    capsulize('RightFoot_foot_0_0_0')
-    node = mcfg.getNode('RightFoot_foot_0_0_0')
-    node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = footJointType
+        capsulize('RightFoot_foot_0_0_0')
+        node = mcfg.getNode('RightFoot_foot_0_0_0')
+        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.jointType = footJointType
 
-    capsulize('RightFoot_foot_0_1')
-    node = mcfg.getNode('RightFoot_foot_0_1')
-    node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.addGeom('MyFoot3', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400.,.01, -1))
-    node.jointType = footJointType
+        capsulize('RightFoot_foot_0_1')
+        node = mcfg.getNode('RightFoot_foot_0_1')
+        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.addGeom('MyFoot3', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400.,.01, -1))
+        node.jointType = footJointType
 
-    capsulize('RightFoot_foot_0_1_0')
-    node = mcfg.getNode('RightFoot_foot_0_1_0')
-    node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.addGeom('MyFoot4', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = footJointType
+        capsulize('RightFoot_foot_0_1_0')
+        node = mcfg.getNode('RightFoot_foot_0_1_0')
+        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.addGeom('MyFoot4', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.jointType = footJointType
 
-    capsulize('RightFoot_foot_1_0')
-    node = mcfg.getNode('RightFoot_foot_1_0')
-    node.addGeom('MyFoot3', [0.02*np.array([0., 0., .7]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, 0.02*2.0+0.02))
-    # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
-    node.jointType = footJointType
+        capsulize('RightFoot_foot_1_0')
+        node = mcfg.getNode('RightFoot_foot_1_0')
+        node.addGeom('MyFoot3', [0.02*np.array([0., 0., .7]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, 0.02*2.0+0.02))
+        # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+        node.jointType = footJointType
 
-    capsulize('RightFoot_foot_1_1')
-    node = mcfg.getNode('RightFoot_foot_1_1')
-    node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = footJointType
+        capsulize('RightFoot_foot_1_1')
+        node = mcfg.getNode('RightFoot_foot_1_1')
+        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.jointType = footJointType
 
-    capsulize('RightFoot_foot_1_2')
-    node = mcfg.getNode('RightFoot_foot_1_2')
-    node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = footJointType
+        capsulize('RightFoot_foot_1_2')
+        node = mcfg.getNode('RightFoot_foot_1_2')
+        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.jointType = footJointType
 
 
-    capsulize('LeftFoot_foot_0_0')
-    node = mcfg.getNode('LeftFoot_foot_0_0')
-    node.addGeom('MyFoot3', [0.02*np.array([0.3, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
-    node.addGeom('MyFoot3', [0.02*np.array([0.3+1.2, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
-    # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
-    node.jointType = footJointType
+        capsulize('LeftFoot_foot_0_0')
+        node = mcfg.getNode('LeftFoot_foot_0_0')
+        node.addGeom('MyFoot3', [0.02*np.array([0.3, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
+        node.addGeom('MyFoot3', [0.02*np.array([0.3+1.2, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
+        # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+        node.jointType = footJointType
 
-    capsulize('LeftFoot_foot_0_0_0')
-    node = mcfg.getNode('LeftFoot_foot_0_0_0')
-    node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.addGeom('MyFoot4', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = footJointType
+        capsulize('LeftFoot_foot_0_0_0')
+        node = mcfg.getNode('LeftFoot_foot_0_0_0')
+        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.addGeom('MyFoot4', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.jointType = footJointType
 
-    capsulize('LeftFoot_foot_0_1')
-    node = mcfg.getNode('LeftFoot_foot_0_1')
-    node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.addGeom('MyFoot3', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = footJointType
+        capsulize('LeftFoot_foot_0_1')
+        node = mcfg.getNode('LeftFoot_foot_0_1')
+        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.addGeom('MyFoot3', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.jointType = footJointType
 
-    capsulize('LeftFoot_foot_0_1_0')
-    node = mcfg.getNode('LeftFoot_foot_0_1_0')
-    node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = footJointType
+        capsulize('LeftFoot_foot_0_1_0')
+        node = mcfg.getNode('LeftFoot_foot_0_1_0')
+        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.jointType = footJointType
 
-    capsulize('LeftFoot_foot_1_0')
-    node = mcfg.getNode('LeftFoot_foot_1_0')
-    node.addGeom('MyFoot3', [0.02*np.array([0., 0., .7]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, 0.02*2.0+0.02))
-    # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
-    node.jointType = footJointType
+        capsulize('LeftFoot_foot_1_0')
+        node = mcfg.getNode('LeftFoot_foot_1_0')
+        node.addGeom('MyFoot3', [0.02*np.array([0., 0., .7]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, 0.02*2.0+0.02))
+        # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
+        node.jointType = footJointType
 
-    capsulize('LeftFoot_foot_1_1')
-    node = mcfg.getNode('LeftFoot_foot_1_1')
-    node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = footJointType
+        capsulize('LeftFoot_foot_1_1')
+        node = mcfg.getNode('LeftFoot_foot_1_1')
+        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.jointType = footJointType
 
-    capsulize('LeftFoot_foot_1_2')
-    node = mcfg.getNode('LeftFoot_foot_1_2')
-    node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-    node.jointType = footJointType
+        capsulize('LeftFoot_foot_1_2')
+        node = mcfg.getNode('LeftFoot_foot_1_2')
+        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.jointType = footJointType
 
 
     return mcfg
@@ -507,6 +508,10 @@ def walkings(params, isCma=False):
     # dartModel.skeleton.set_controller(pdController)
     # dartModel.world.set_gravity(np.array((0., 0., 0.)))
     dartModel.initializeHybridDynamics()
+    dartModel.initializeForwardDynamics()
+
+    # dartModel.getJoint('LeftFoot').set_actuator_type(pydart.Joint.FORCE)
+    # dartModel.getJoint('RightFoot').set_actuator_type(pydart.Joint.FORCE)
 
     #===============================================================================
     # load segment info
@@ -578,7 +583,6 @@ def walkings(params, isCma=False):
     #===============================================================================
     # information
     #===============================================================================
-    # bodyIDsToCheck = range(vpWorld.getBodyNum())
     bodyIDsToCheck = range(dartModel.getBodyNum())
     # bodyIDsToCheck = [dartModel.getBody("LeftFoot").index_in_skeleton(), dartModel.getBody("RightFoot").index_in_skeleton()]
     mus = [mu]*len(bodyIDsToCheck)
@@ -613,10 +617,13 @@ def walkings(params, isCma=False):
     footDofNames += sum(list(['j_Left'+name+'_x', 'j_Left'+name+'_y', 'j_Left'+name+'_z'] for name in extendedFootName), [])
     footDofNames += sum(list(['j_Right'+name+'_x', 'j_Right'+name+'_y', 'j_Right'+name+'_z'] for name in extendedFootName), [])
 
-    variableDofIdx = dartModel.skeleton.dof_indices(footDofNames)
-    specifiedDofIdx = list(range(dartModel.getTotalDOF()))
-    for dofidx in variableDofIdx:
-        specifiedDofIdx.remove(dofidx)
+    # controlled foot joint dofs
+    if SEGMENT_FOOT:
+        variableDofIdx = dartModel.skeleton.dof_indices(footDofNames)
+        # joint dofs except foot joint
+        specifiedDofIdx = list(range(dartModel.getTotalDOF()))
+        for dofidx in variableDofIdx:
+            specifiedDofIdx.remove(dofidx)
 
     # for i in lIDs+rIDs:
     #     controlModel.setHybridDynamics(i, "DYNAMIC")
@@ -758,6 +765,12 @@ def walkings(params, isCma=False):
     viewer.objectInfoWnd.add1DSlider("K_swp_pos_cor",       0., 5., .01, K_swp_pos_cor)
     viewer.objectInfoWnd.add1DSlider("K_swp_pos_sag_faster",0., 1., .01, K_swp_pos_sag_faster)
 
+
+    viewer.objectInfoWnd.add1DSlider("LeftFootKp",          0., 200., 10., 80.)
+    viewer.objectInfoWnd.add1DSlider("LeftFootKd",          0., 50., 1., 10.)
+    viewer.objectInfoWnd.add1DSlider("RightFootKp",          0., 200., 10., 80.)
+    viewer.objectInfoWnd.add1DSlider("RightFootKd",          0., 50., 1., 10.)
+
     def getParamVal(paramname):
         return viewer.objectInfoWnd.getVal(paramname)
 
@@ -855,7 +868,8 @@ def walkings(params, isCma=False):
             K_swp_pos_sag         = getParamVal("K_swp_pos_sag")
             K_swp_pos_cor         = getParamVal("K_swp_pos_cor")
             K_swp_pos_sag_faster  = getParamVal("K_swp_pos_sag_faster")
-        else:
+        elif True:
+            _params = np.around(params, decimals=3)
             Ks = 1000.
             Ds                    = 2.*(Ks**.5)
             c_min_contact_vel = 100.
@@ -869,16 +883,51 @@ def walkings(params, isCma=False):
             #    c_swf_offset = .0
             c_swf_offset = .01
             #    c_swf_offset = .005
-            K_stp_pos             = params[0]*params[0]
-            c5                    = params[1]*params[1]
-            c6                    = params[2]*params[2]
-            K_stb_vel             = params[3]*params[3]
-            K_stb_pos             = params[4]*params[4]
-            K_swp_vel_sag         = params[5]*params[5]
-            K_swp_vel_cor         = params[6]*params[6]
-            K_swp_pos_sag         = params[7]*params[7]
-            K_swp_pos_cor         = params[8]*params[8]
-            K_swp_pos_sag_faster  = params[9]*params[9]
+            K_stp_pos             = _params[0]*_params[0]
+            c5                    = _params[1]*_params[1]
+            c6                    = _params[2]*_params[2]
+            K_stb_vel             = _params[3]*_params[3]
+            K_stb_pos             = _params[4]*_params[4]
+            K_swp_vel_sag         = _params[5]*_params[5]
+            K_swp_vel_cor         = _params[6]*_params[6]
+            K_swp_pos_sag         = _params[7]*_params[7]
+            K_swp_pos_cor         = _params[8]*_params[8]
+            K_swp_pos_sag_faster  = _params[9]*_params[9]
+        else:
+
+            Kt = 20.
+            Dt = 2.*(Kt**.5)
+            # Dt = Kt/900.
+            Ks = 1000.
+            Ds = 2.*(Ks**.5)
+            mu = 1.
+            # Dt = 0.
+
+            # constants
+            c_min_contact_vel = 100.
+            #    c_min_contact_vel = 2.
+            c_min_contact_time = .7
+            c_landing_duration = .2
+            c_taking_duration = .3
+            c_swf_mid_offset = .0
+            c_locking_vel = .05
+
+            #    c_swf_offset = .0
+            c_swf_offset = .01
+            #    c_swf_offset = .005
+            K_stp_pos = 0.
+
+            #    c5 = .5;    c6 = .01
+            c5 = .5;    c6 = .02
+            #    c5 = .5;    c6 = .05
+            #    c5 = 1.;    c6 = .05
+            #    c5 = .0;    c6 = .0
+
+            K_stb_vel = .1
+            K_stb_pos = .1
+            K_swp_vel_sag = .0; K_swp_vel_cor = .3; K_swp_pos_sag = 1.2; K_swp_pos_cor = .2
+            # K_swp_vel_sag = .0; K_swp_vel_cor = 1.3; K_swp_pos_sag = 1.2; K_swp_pos_cor = 1.
+            K_swp_pos_sag_faster = .05
 
 
         # seginfo
@@ -1151,7 +1200,7 @@ def walkings(params, isCma=False):
                 motion_swf_height[frame].setJointOrientationGlobal(swingFoot, R_foot)
                 motion_swf_height[frame].setJointOrientationGlobal(stanceFoot, R_stance_foot)
 
-                if plot!=None:
+                if plot is not None:
                     plot.addDataPoint('debug1', frame, offset_height)
                     #                    plot.addDataPoint('debug2', frame, height_cur)
                     #                    plot.addDataPoint('diff', frame, diff)
@@ -1187,7 +1236,8 @@ def walkings(params, isCma=False):
             for stanceFoot in stanceFoots:
                 R_target_foot = motion_stf_push[frame].getJointOrientationGlobal(stanceFoot)
                 R_current_foot = motion_stf_stabilize[frame].getJointOrientationGlobal(stanceFoot)
-                motion_stf_stabilize[frame].setJointOrientationGlobal(stanceFoot, mm.slerp(R_current_foot, R_target_foot , stf_stabilize_func(t)))
+                motion_stf_stabilize[frame].setJointOrientationGlobal(stanceFoot,
+                                                      mm.slerp(R_current_foot, R_target_foot, stf_stabilize_func(t)))
         #'''
 
         # stance foot balancing
@@ -1200,9 +1250,33 @@ def walkings(params, isCma=False):
             for stanceFoot in stanceFoots:
                 if frame < 5: break
                 motion_stf_balancing[frame].mulJointOrientationGlobal(stanceFoot, R_stb)
+
+
         #TODO:
-        '''
         # hwangpil
+        # swing foot parallelizing with ground
+        def swf_par_func(x):
+            if x<.5:
+                return -.5*math.pow(1.-2.*x, 1./3.) + .5
+            else:
+                return .5*math.pow(2.*x-1., 1./3.) + .5
+
+        for swingFoot in swingFoots:
+            swingBody = dartModel.getBody(swingFoot)
+            for shapeNode in swingBody.shapenodes:
+                if shapeNode.has_collision_aspect():
+                    geomType = shapeNode.shape.shape_type_name()
+                    geomT = np.dot(swingBody.world_transform(), shapeNode.relative_transform())
+                    if geomType == "BOX":
+                        shape = shapeNode.shape # type: pydart.BoxShape
+                        data = shape.size() * .5
+                        footVec = np.dot(geomT[:3, :3], np.array((0., 1., 0.)))
+                        R_swf_current = mm._I_SO3
+                        R_swf_par = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
+                        motion_stf_balancing[frame].mulJointOrientationGlobal(swingFoot,
+                                                              mm.slerp(R_swf_current, R_swf_par, swf_par_func(t)))
+
+        '''
         # swing foot heel strike adjustment
         # make heel as flat as possible to ground
         swf_heel_func = yfg.hermite2nd
@@ -1234,7 +1308,6 @@ def walkings(params, isCma=False):
                 R_target_toe = mm.exp(stf_toe_func(t)*mm.deg2Rad(-30.)*np.array([1., 0., 0.]))
                 motion_stf_balancing[frame].mulJointOrientationLocal(stanceToe, R_target_toe)
         #'''
-
 
 
 
@@ -1286,6 +1359,9 @@ def walkings(params, isCma=False):
         F = mm.v3(0.,0.,0.)
         avg_dCM[0] = mm.v3(0.,0.,0.)
 
+
+
+
         # external force rendering info
         if not isCma:
             del rd_forces[:]; del rd_force_points[:]
@@ -1299,25 +1375,50 @@ def walkings(params, isCma=False):
         # dartModel.update(motion_ori[frame])
         pdController.setTartgetPose(th_r)
 
-        ddq = pdController.compute()
         # bodyIDs = [body.index_in_skeleton for body in dartModel.world.collision_result.contacted_bodies]
 
-        ddq0 = ddq[specifiedDofIdx]
-        print(ddq0)
-
-        hdls.calcLCPbasicControlHD(motion_ori, dartModel.world, dartModel,
-                                   bodyIDsToCheck, mu, np.array([0., 490., 0.]), [1., 1., 1.], ddq0, variableDofIdx)
-
         for i in range(stepsPerFrame):
-            bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
-            # bodyIDs = dartModel.skeleton.self_collision_check()
+            # bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+            bodyIDs = dartModel.skeleton.self_collision_check()
 
             _tau = np.zeros(dartModel.skeleton.q.shape)
             # bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp = \
             #     hdls.calcLCPForces(motion_ori, dartModel.world, dartModel, bodyIDsToCheck, 1., _tau)
-            dartModel.applyPenaltyForce(bodyIDs, contactPositions, contactForces, localForce=False)
-            dartModel.skeleton.set_accelerations(pdController.compute())
-            # dartModel.skeleton.set_forces(_tau)
+            # dartModel.applyPenaltyForce(bodyIDs, contactPositions, contactForces, localForce=False)
+            # print('penalty force sum: ', sum(contactForce for contactForce in contactForces))
+
+            _ddq = pdController.compute()
+            if SEGMENT_FOOT:
+                _ddq = pdController.compute()
+                _ddq0 = _ddq[specifiedDofIdx]
+                temp1, temp2, temp3, temp4, temp5, qvar = hdls.calcLCPbasicControlHD(motion_ori, dartModel.world, dartModel,
+                                         bodyIDsToCheck, mu, np.array([0., 300., 0.]), [1., 1., 1.], _ddq0, variableDofIdx)
+                print('qvar: ', qvar)
+                if qvar is not None and False:
+                    _ddq[variableDofIdx] = qvar
+            # dartModel.skeleton.set_accelerations(_ddq)
+
+
+            if False:
+                # change foot Kd and Kp
+                LeftFootDofs = dartModel.skeleton.dof_indices(['j_LeftFoot_x','j_LeftFoot_y','j_LeftFoot_z'])
+                for dofs in LeftFootDofs:
+                    pdController.setKpKd(dofs, getParamVal('LeftFootKp'), getParamVal('LeftFootKd'))
+
+                RightFootDofs = dartModel.skeleton.dof_indices(['j_RightFoot_x','j_RightFoot_y','j_RightFoot_z'])
+                for dofs in RightFootDofs:
+                    pdController.setKpKd(dofs, getParamVal('RightFootKp'), getParamVal('RightFootKd'))
+            else:
+                # change foot Kd and Kp
+                LeftFootDofs = dartModel.skeleton.dof_indices(['j_LeftFoot_x','j_LeftFoot_y','j_LeftFoot_z'])
+                for dofs in LeftFootDofs:
+                    pdController.setKpKd(dofs, 80., 10.)
+
+                RightFootDofs = dartModel.skeleton.dof_indices(['j_RightFoot_x','j_RightFoot_y','j_RightFoot_z'])
+                for dofs in RightFootDofs:
+                    pdController.setKpKd(dofs, 80., 10.)
+
+            dartModel.skeleton.set_forces(pdController.compute())
             dartModel.step()
             '''
             if False and i % 5 == 0:
@@ -1389,7 +1490,6 @@ def walkings(params, isCma=False):
         #                avg_stf_av[0] += controlModel.getJointAngVelocityGlobal(stanceFoots[0])
 
 
-
         bodyIDs, contactPositions, contactPositionLocals, velocities = dartModel.getContactPoints(bodyIDsToCheck)
 
         # bodyIDs = [body.index_in_skeleton() for body in contacted_bodies]
@@ -1399,7 +1499,6 @@ def walkings(params, isCma=False):
         #     ground_skeleton = body.skeleton # type: pydart.Skeleton
         #     if ground_skeleton.name == "grount skeleton":
         #         print("hehe")
-
 
         if not isCma:
             del rd_point2[:]
@@ -1519,7 +1618,8 @@ def walkings(params, isCma=False):
             if segIndex < len(segments)-1:
                 if not isCma:
                     print('%d (%d): end of %dth seg (%s, %s)'%(frame, frame-curInterval[1],segIndex, yba.GaitState.text[curState], curInterval))
-                if plot!=None: plot.addDataPoint('diff', frame, (frame-curInterval[1])*.01)
+                if plot is not None:
+                    plot.addDataPoint('diff', frame, (frame-curInterval[1])*.01)
 
                 if len(stanceFoots)>0 and len(swingFoots)>0:
                     #                    step_cur = controlModel.getJointPositionGlobal(swingFoots[0]) - controlModel.getJointPositionGlobal(stanceFoots[0])
@@ -1618,17 +1718,35 @@ def walkings(params, isCma=False):
 
         Fl.run()
     else:
-        fail = False
         objectiveSum = 0
+        successSum = 0
+        comSum = 0
+        velSum = 0
+        dirSum = 0
+
         for i in range(len(motion_ori)):
             simulateCallback(i)
-            objectiveSum -= 1
+
             _com = dartModel.getCOM()
-            objectiveSum += _com[2] * _com[2]
-            if _com[1] < 0.7:
+
+            if i > 50:
+                successSum -= 1
+
+                comSum += _com[2] * _com[2]
+
+                _com_vel = dartModel.skeleton.com_velocity()
+                _com_vel[1] = 0.
+                velSum += (np.linalg.norm(_com_vel) - 0.7)*(np.linalg.norm(_com_vel)-0.7)
+
+                dirDiff = mm.normalize(_com_vel) - np.array((-1., 0., 0.))
+                dirSum += np.dot(dirDiff, dirDiff)
+
+            if _com[1] < 0.65 or _com[1] > 1.0:
                 break
 
-        print(-objectiveSum, params)
+        # objectiveSum = successSum + .3*comSum + velSum
+        objectiveSum = successSum + velSum + .3*dirSum
+        print(objectiveSum, successSum, velSum, .3*dirSum, params)
         del motion_stitch[:]
         del motion_debug1[:]
         del motion_debug2[:]
@@ -1699,8 +1817,16 @@ params = [ 0.01918975,  0.86622863,  0.15111008,  0.50972221,  0.09746768, -0.09
 # 287 frames success, Ks = 1000.
 # params = [-0.15744347,  0.67592998,  0.14142136,  0.31622777,  0.35696289, 0.,  1.14017543,  1.27637941,  0.95735647,  0.23835687]
 
-# walkings(params)
-walkings(None, False)
+
+
+# 400 frames success, LCP, Kp = 200, Kd = 20
+# params = [-0.11523854,  0.56103475,  0.14142136,  0.31622777,  0.13175649,        0.        ,  1.14017543,  1.18703622,  0.77193057,  0.20490717]
+
+# infinite frames success, LCP, Kp = 200, Kd = 20, foot Kp = 80, foot Kd = 10
+params = [-0.13880733, 0.3439617, 0.14142136, 0.31622777, -0.18792631, 0., 1.14017543, 1.53473264, 1.07681499, 0.22992996]
+
+walkings(params)
+# walkings(None, False)
 
 # from PyCommon.modules.Math.Nomalizer import Normalizer
 # normalizer = Normalizer([0.]*10., [1., 5., .2, 1., 1., 3., 3., 3., 3., .5], [1.]*10, [-1.]*10)
@@ -1709,4 +1835,6 @@ walkings(None, False)
 # c6, K_stb_vel, K_swp_vel_sag, K_swp_vel_cor is velocity gain
 cmaOption = cma.CMAOptions('fixed_variables')
 cmaOption.set('fixed_variables', {2:math.sqrt(.02), 3:math.sqrt(.1), 5:math.sqrt(0.), 6:math.sqrt(1.3)})
-# cma.fmin(walkings, np.sqrt([0., .7, .02, .1, .1, .0, 1.3, 1.2, 1., .05]).tolist(), .1, args=(True,), options=cmaOption)
+# cma.fmin(walkings, np.sqrt([0., .5, .02, .1, .1, .0, 0.3, 1.2, .5, .05]).tolist(), .1, args=(True,), options=cmaOption)
+# cma.fmin(walkings, params, .1, args=(True,), options=cmaOption)
+# cma.fmin(walkings, params, .1, args=(True,))

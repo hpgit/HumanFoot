@@ -540,7 +540,9 @@ class GlWindow(Fl_Gl_Window):
     def drawScene(self, renderType=yr.RENDER_OBJECT):
         frame = self.parent.getCurrentFrame()
         for renderer in self.renderers:
-            if frame != -1 and len(renderer.savedState) > frame:
+            if not hasattr(renderer, 'savedState'):
+                renderer.render(renderType)
+            elif frame != -1 and len(renderer.savedState) > frame:
                 renderer.renderFrame(frame, renderType)
             elif frame == len(renderer.savedState):
                 renderer.saveState()

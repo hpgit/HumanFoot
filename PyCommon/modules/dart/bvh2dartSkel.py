@@ -420,14 +420,14 @@ class DartModelMaker:
         et.SubElement(etPhysics, "collision_detector").text = "fcl_mesh"
 
 
-        if False:
+        if True:
             # add ground body and joint
             etGroundSkeleton = et.SubElement(etWorld, "skeleton", {"name": "grount skeleton"})
             et.SubElement(etGroundSkeleton, "mobile").text = "false"
             etGroundBody = et.SubElement(etGroundSkeleton, "body", {"name": "ground"})
             et.SubElement(etGroundBody, "transformation").text = "0 -0.025 0 0 0 0"
             # etGroundBody.append(AddDartShapeNode(SE3(), [5.0, 0.05, 5.0], "box"))
-            etGroundBody.append(self.AddDartShapeNode(SE3(), [10.0, 0.05, 10.0], "box", "collision"))
+            etGroundBody.append(self.AddDartShapeNode(SE3(), [1000.0, 0.05, 1000.0], "box", "collision"))
 
             etGroundJoint = et.SubElement(etGroundSkeleton, "joint", {"type": "free", "name": "joint 1"})
             et.SubElement(etGroundJoint, "parent").text = "world"

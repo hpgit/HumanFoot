@@ -14,7 +14,7 @@ class hpSimpleViewer(ysvOri.SimpleViewer):
         self.begin()
         panelWidth = 280
         cForceHeight = 200
-        t = .3
+        t = .2
         self.renderersWnd = ysvOri.RenderersWnd(self.w()-panelWidth, 0, panelWidth, int(self.h()*t), self.doc)
         self.objectInfoWnd = hpObjectInfoWnd(self.w()-panelWidth, int(self.h()*t), panelWidth, int(self.h()*(1-t)), self.doc)
         if viewForceWnd:

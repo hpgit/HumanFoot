@@ -119,7 +119,7 @@ def init():
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_capsule('simpleJump_onebody.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump_long.bvh')
-    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('../PyCommon/modules/samples/simpleJump_long_test2.bvh')
+    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('../PyCommon/modules/samples/simpleJump_long_test.bvh')
     mcfg_motion = mit.normal_mcfg()
 
     vpWorld = cvw.VpWorld(wcfg)
