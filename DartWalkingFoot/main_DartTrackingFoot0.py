@@ -696,6 +696,7 @@ def walkings(params, isCma=True):
     rd_frame2 = [None]
 
     viewer = None
+    plot = None
 
     def getParamVal(paramname):
         return viewer.objectInfoWnd.getVal(paramname)
@@ -800,55 +801,54 @@ def walkings(params, isCma=True):
             rankle_torques = [0.]*viewer.getMaxFrame()
 
 
-    # ===============================================================================
-    # viewer setting for parameter setting
-    # ===============================================================================
+        # ===============================================================================
+        # viewer setting for parameter setting
+        # ===============================================================================
 
-    #    pt = [0.]
-    def postFrameCallback_Always(frame):
-        #        if frame==1: pt[0] = time.time()
-        #        if frame==31: print 'elapsed time for 30 frames:', time.time()-pt[0]
-        if CAMERA_TRACKING:
-            if MULTI_VIEWER:
-                if cameraTargets1[frame] is None:
-                    # cameraTargets1[frame] = motionModel.getBodyPositionGlobal(0)
-                    cameraTargets1[frame] = dartMotionModel.getBodyPositionGlobal(0)
-                #                    cameraTargets1[frame] = motion_ori[frame].getJointPositionGlobal(0)
-                viewer.setCameraTarget1(cameraTargets1[frame])
+        #    pt = [0.]
+        def postFrameCallback_Always(frame):
+            #        if frame==1: pt[0] = time.time()
+            #        if frame==31: print 'elapsed time for 30 frames:', time.time()-pt[0]
+            if CAMERA_TRACKING:
+                if MULTI_VIEWER:
+                    if cameraTargets1[frame] is None:
+                        # cameraTargets1[frame] = motionModel.getBodyPositionGlobal(0)
+                        cameraTargets1[frame] = dartMotionModel.getBodyPositionGlobal(0)
+                    #                    cameraTargets1[frame] = motion_ori[frame].getJointPositionGlobal(0)
+                    viewer.setCameraTarget1(cameraTargets1[frame])
 
-                if cameraTargets2[frame] is None:
-                    # cameraTargets2[frame] = controlModel.getJointPositionGlobal(0)
-                    cameraTargets2[frame] = dartModel.getJointPositionGlobal(0)
-                viewer.setCameraTarget2(cameraTargets2[frame])
+                    if cameraTargets2[frame] is None:
+                        # cameraTargets2[frame] = controlModel.getJointPositionGlobal(0)
+                        cameraTargets2[frame] = dartModel.getJointPositionGlobal(0)
+                    viewer.setCameraTarget2(cameraTargets2[frame])
 
-            else:
-                if cameraTargets[frame] is None:
-                    cameraTargets[frame] = dartModel.getJointPositionGlobal(0)
-                    # cameraTargets[frame] = controlModel.getJointPositionGlobal(0)
-                viewer.setCameraTarget(cameraTargets[frame])
+                else:
+                    if cameraTargets[frame] is None:
+                        cameraTargets[frame] = dartModel.getJointPositionGlobal(0)
+                        # cameraTargets[frame] = controlModel.getJointPositionGlobal(0)
+                    viewer.setCameraTarget(cameraTargets[frame])
+            if plot is not None:
+                plot.updateVline(frame)
+
+
+        if not isCma:
+            viewer.setPostFrameCallback_Always(postFrameCallback_Always)
+
+        # plot = ymp.InteractivePlot()
         if plot is not None:
-            plot.updateVline(frame)
+            plot.setXlimit(0, len(motion_ori))
+            plot.setYlimit(-0.05, .05)
+            plot.addDataSet('zero')
+            plot.addDataSet('diff')
+            plot.addDataSet('debug1')
+            plot.addDataSet('debug2')
 
 
-    if not isCma:
-        viewer.setPostFrameCallback_Always(postFrameCallback_Always)
-
-    plot = None
-    # plot = ymp.InteractivePlot()
-    if plot is not None:
-        plot.setXlimit(0, len(motion_ori))
-        plot.setYlimit(-0.05, .05)
-        plot.addDataSet('zero')
-        plot.addDataSet('diff')
-        plot.addDataSet('debug1')
-        plot.addDataSet('debug2')
-
-
-    def viewer_onClose(data):
-        if plot is not None:
-            plot.close()
-        viewer.onClose(data)
-    viewer.callback(viewer_onClose)
+        def viewer_onClose(data):
+            if plot is not None:
+                plot.close()
+            viewer.onClose(data)
+        viewer.callback(viewer_onClose)
 
     def simulateCallback(frame):
         # c_min_contact_vel, c_min_contact_time, c_landing_duration, \
