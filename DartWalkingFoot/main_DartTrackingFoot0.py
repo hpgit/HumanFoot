@@ -695,105 +695,109 @@ def walkings(params, isCma=True):
     rd_frame1 = [None]
     rd_frame2 = [None]
 
-    if MULTI_VIEWER:
-        viewer = ymv.MultiViewer(800, 655)
-        #        viewer = ymv.MultiViewer(800, 655, True)
-        viewer.setRenderers1([yr.DartModelRenderer(dartMotionModel, MOTION_COLOR)])
-        viewer.setRenderers2([yr.DartModelRenderer(dartModel, (200, 200, 0))])
-    else:
-        # viewer = ysv.SimpleViewer()
-        viewer = hsv.hpSimpleViewer(viewForceWnd=False)
-        #    viewer.record(False)
-        if not isCma:
-            viewer.doc.addRenderer('motionModel', yr.DartModelRenderer(dartMotionModel, (0,150,255), yr.POLYGON_LINE))
-        viewer.doc.addRenderer('controlModel', yr.DartModelRenderer(dartModel, (50, 200, 200)))
-
-        viewer.doc.addObject('motion_ori', motion_ori)
-        # viewer.doc.addRenderer('motion_ori', yr.JointMotionRenderer(motion_ori, (0,100,255), yr.LINK_BONE))
-        # viewer.doc.addRenderer('motion_seg_orig', yr.JointMotionRenderer(motion_seg_orig, (0,100,255), yr.LINK_BONE))
-        # viewer.doc.addRenderer('motion_seg', yr.JointMotionRenderer(motion_seg, (0,150,255), yr.LINK_BONE))
-        viewer.doc.addRenderer('motion_stitch', yr.JointMotionRenderer(motion_stitch, (0,255,200), yr.LINK_BONE))
-
-        # viewer.doc.addRenderer('motion_stf_stabilize', yr.JointMotionRenderer(motion_stf_stabilize, (255,0,0), yr.LINK_BONE))
-        # viewer.doc.addRenderer('motion_match_stl', yr.JointMotionRenderer(motion_match_stl, (255,200,0), yr.LINK_BONE))
-        # viewer.doc.addRenderer('motion_swf_placement', yr.JointMotionRenderer(motion_swf_placement, (255,100,255), yr.LINK_BONE))
-        # viewer.doc.addRenderer('motion_swf_height', yr.JointMotionRenderer(motion_swf_height, (50,255,255), yr.LINK_BONE))
-        # viewer.doc.addRenderer('motion_swf_orientation', yr.JointMotionRenderer(motion_swf_orientation, (255,100,0), yr.LINK_BONE))
-        # viewer.doc.addRenderer('motion_stf_push', yr.JointMotionRenderer(motion_stf_push, (50,255,200), yr.LINK_BONE))
-        # viewer.doc.addRenderer('motion_stf_balancing', yr.JointMotionRenderer(motion_stf_balancing, (255,100,255), yr.LINK_BONE))
-        viewer.doc.addRenderer('motion_control', yr.JointMotionRenderer(motion_control, (255,0,0), yr.LINK_BONE))
-
-        #        viewer.doc.addRenderer('motion_debug1', yr.JointMotionRenderer(motion_debug1, (0,255,0), yr.LINK_BONE))
-        #        viewer.doc.addRenderer('motion_debug2', yr.JointMotionRenderer(motion_debug2, (255,0,255), yr.LINK_BONE))
-        #        viewer.doc.addRenderer('motion_debug3', yr.JointMotionRenderer(motion_debug3, (255,255,0), yr.LINK_BONE))
-
-        #        viewer.doc.addRenderer('M_tc', yr.JointMotionRenderer(M_tc, (255,255,0), yr.LINK_BONE))
-        #        viewer.doc.addRenderer('P_hat', yr.JointMotionRenderer(P_hat, (255,255,0), yr.LINK_BONE))
-        #        viewer.doc.addRenderer('P', yr.JointMotionRenderer(P, (255,255,0), yr.LINK_BONE))
-        #        viewer.doc.addRenderer('M_hat_tc_1', yr.JointMotionRenderer(M_hat_tc_1, (255,255,0), yr.LINK_BONE))
-
-        #    viewer.doc.addRenderer('rd_CM', yr.PointsRenderer(rd_CM, (255,255,0)))
-        #    viewer.doc.addRenderer('rd_CP', yr.PointsRenderer(rd_CP, (255,0,0)))
-        #    viewer.doc.addRenderer('rd_CMP', yr.PointsRenderer(rd_CMP, (0,255,0)))
-        #    viewer.doc.addRenderer('forces', yr.ForcesRenderer(rd_forces, rd_force_points, (255,0,0), ratio=.01, fromPoint=False))
-        #        viewer.doc.addRenderer('torques', yr.VectorsRenderer(rd_torques, rd_joint_positions, (255,0,0)))
-
-        #    viewer.doc.addRenderer('rd_point1', yr.PointsRenderer(rd_point1, (0,255,0)))
-        viewer.doc.addRenderer('rd_point2', yr.PointsRenderer(rd_point2, (255,0,0)))
-    #        viewer.doc.addRenderer('rd_vec1', yr.VectorsRenderer(rd_vec1, rd_vecori1, (255,0,0)))
-    #    viewer.doc.addRenderer('rd_vec2', yr.VectorsRenderer(rd_vec2, rd_vecori2, (0,255,0)))
-    #    viewer.doc.addRenderer('rd_frame1', yr.FramesRenderer(rd_frame1, (0,200,200)))
-    #    viewer.doc.addRenderer('rd_frame2', yr.FramesRenderer(rd_frame2, (200,200,0)))
-    #    viewer.setMaxFrame(len(motion_ori)-1)
-
-
-    viewer.objectInfoWnd.add1DSlider("penalty_grf_gain",    0., 5000., 10., Ks)
-    viewer.objectInfoWnd.add1DSlider("c_min_contact_vel",   0., 200., .2, 100.)
-    viewer.objectInfoWnd.add1DSlider("c_min_contact_time",  0., 5., .01, .7)
-    viewer.objectInfoWnd.add1DSlider("c_landing_duration",  0., 5., .01, .2)
-    viewer.objectInfoWnd.add1DSlider("c_taking_duration",   0., 5., .01, .3)
-    viewer.objectInfoWnd.add1DSlider("c_swf_mid_offset",    -1., 1., .001, 0.)
-    viewer.objectInfoWnd.add1DSlider("c_locking_vel",       0., 1., .001, .05)
-
-    viewer.objectInfoWnd.add1DSlider("c_swf_offset",        -1., 1., .001, .01)
-    viewer.objectInfoWnd.add1DSlider("K_stp_pos",           0., 1., .01, 0.)
-
-    viewer.objectInfoWnd.add1DSlider("c5",                  0., 5., .01, c5)
-    viewer.objectInfoWnd.add1DSlider("c6",                  0., 1., .01, c6)
-    viewer.objectInfoWnd.add1DSlider("K_stb_vel",           0., 1., .01, K_stb_vel)
-    viewer.objectInfoWnd.add1DSlider("K_stb_pos",           0., 1., .01, K_stb_pos)
-    viewer.objectInfoWnd.add1DSlider("K_swp_vel_sag",       0., 5., .01, K_swp_vel_sag)
-    viewer.objectInfoWnd.add1DSlider("K_swp_vel_cor",       0., 5., .01, K_swp_vel_cor)
-    viewer.objectInfoWnd.add1DSlider("K_swp_pos_sag",       0., 5., .01, K_swp_pos_sag)
-    viewer.objectInfoWnd.add1DSlider("K_swp_pos_cor",       0., 5., .01, K_swp_pos_cor)
-    viewer.objectInfoWnd.add1DSlider("K_swp_pos_sag_faster",0., 1., .01, K_swp_pos_sag_faster)
-
-
-    viewer.objectInfoWnd.add1DSlider("LeftFootKp",          0., 200., 10., 80.)
-    viewer.objectInfoWnd.add1DSlider("LeftFootKd",          0., 50., 1., 10.)
-    viewer.objectInfoWnd.add1DSlider("RightFootKp",          0., 200., 10., 80.)
-    viewer.objectInfoWnd.add1DSlider("RightFootKd",          0., 50., 1., 10.)
+    viewer = None
 
     def getParamVal(paramname):
         return viewer.objectInfoWnd.getVal(paramname)
 
-
-    if not REPEATED:
-        viewer.setMaxFrame(len(motion_ori)-1)
-    else:
-        viewer.setMaxFrame(MAX_FRAME)
-
-    if CAMERA_TRACKING:
+    if not isCma:
         if MULTI_VIEWER:
-            cameraTargets1 = [None] * (viewer.getMaxFrame()+1)
-            cameraTargets2 = [None] * (viewer.getMaxFrame()+1)
+            viewer = ymv.MultiViewer(800, 655)
+            #        viewer = ymv.MultiViewer(800, 655, True)
+            viewer.setRenderers1([yr.DartModelRenderer(dartMotionModel, MOTION_COLOR)])
+            viewer.setRenderers2([yr.DartModelRenderer(dartModel, (200, 200, 0))])
         else:
-            cameraTargets = [None] * (viewer.getMaxFrame()+1)
+            # viewer = ysv.SimpleViewer()
+            viewer = hsv.hpSimpleViewer(viewForceWnd=False)
+            #    viewer.record(False)
+            if not isCma:
+                viewer.doc.addRenderer('motionModel', yr.DartModelRenderer(dartMotionModel, (0,150,255), yr.POLYGON_LINE))
+            viewer.doc.addRenderer('controlModel', yr.DartModelRenderer(dartModel, (50, 200, 200)))
 
-    if TORQUE_PLOT:
-        rhip_torques = [0.]*viewer.getMaxFrame()
-        rknee_torques = [0.]*viewer.getMaxFrame()
-        rankle_torques = [0.]*viewer.getMaxFrame()
+            viewer.doc.addObject('motion_ori', motion_ori)
+            # viewer.doc.addRenderer('motion_ori', yr.JointMotionRenderer(motion_ori, (0,100,255), yr.LINK_BONE))
+            # viewer.doc.addRenderer('motion_seg_orig', yr.JointMotionRenderer(motion_seg_orig, (0,100,255), yr.LINK_BONE))
+            # viewer.doc.addRenderer('motion_seg', yr.JointMotionRenderer(motion_seg, (0,150,255), yr.LINK_BONE))
+            viewer.doc.addRenderer('motion_stitch', yr.JointMotionRenderer(motion_stitch, (0,255,200), yr.LINK_BONE))
+
+            # viewer.doc.addRenderer('motion_stf_stabilize', yr.JointMotionRenderer(motion_stf_stabilize, (255,0,0), yr.LINK_BONE))
+            # viewer.doc.addRenderer('motion_match_stl', yr.JointMotionRenderer(motion_match_stl, (255,200,0), yr.LINK_BONE))
+            # viewer.doc.addRenderer('motion_swf_placement', yr.JointMotionRenderer(motion_swf_placement, (255,100,255), yr.LINK_BONE))
+            # viewer.doc.addRenderer('motion_swf_height', yr.JointMotionRenderer(motion_swf_height, (50,255,255), yr.LINK_BONE))
+            # viewer.doc.addRenderer('motion_swf_orientation', yr.JointMotionRenderer(motion_swf_orientation, (255,100,0), yr.LINK_BONE))
+            # viewer.doc.addRenderer('motion_stf_push', yr.JointMotionRenderer(motion_stf_push, (50,255,200), yr.LINK_BONE))
+            # viewer.doc.addRenderer('motion_stf_balancing', yr.JointMotionRenderer(motion_stf_balancing, (255,100,255), yr.LINK_BONE))
+            viewer.doc.addRenderer('motion_control', yr.JointMotionRenderer(motion_control, (255,0,0), yr.LINK_BONE))
+
+            #        viewer.doc.addRenderer('motion_debug1', yr.JointMotionRenderer(motion_debug1, (0,255,0), yr.LINK_BONE))
+            #        viewer.doc.addRenderer('motion_debug2', yr.JointMotionRenderer(motion_debug2, (255,0,255), yr.LINK_BONE))
+            #        viewer.doc.addRenderer('motion_debug3', yr.JointMotionRenderer(motion_debug3, (255,255,0), yr.LINK_BONE))
+
+            #        viewer.doc.addRenderer('M_tc', yr.JointMotionRenderer(M_tc, (255,255,0), yr.LINK_BONE))
+            #        viewer.doc.addRenderer('P_hat', yr.JointMotionRenderer(P_hat, (255,255,0), yr.LINK_BONE))
+            #        viewer.doc.addRenderer('P', yr.JointMotionRenderer(P, (255,255,0), yr.LINK_BONE))
+            #        viewer.doc.addRenderer('M_hat_tc_1', yr.JointMotionRenderer(M_hat_tc_1, (255,255,0), yr.LINK_BONE))
+
+            #    viewer.doc.addRenderer('rd_CM', yr.PointsRenderer(rd_CM, (255,255,0)))
+            #    viewer.doc.addRenderer('rd_CP', yr.PointsRenderer(rd_CP, (255,0,0)))
+            #    viewer.doc.addRenderer('rd_CMP', yr.PointsRenderer(rd_CMP, (0,255,0)))
+            #    viewer.doc.addRenderer('forces', yr.ForcesRenderer(rd_forces, rd_force_points, (255,0,0), ratio=.01, fromPoint=False))
+            #        viewer.doc.addRenderer('torques', yr.VectorsRenderer(rd_torques, rd_joint_positions, (255,0,0)))
+
+            #    viewer.doc.addRenderer('rd_point1', yr.PointsRenderer(rd_point1, (0,255,0)))
+            viewer.doc.addRenderer('rd_point2', yr.PointsRenderer(rd_point2, (255,0,0)))
+        #        viewer.doc.addRenderer('rd_vec1', yr.VectorsRenderer(rd_vec1, rd_vecori1, (255,0,0)))
+        #    viewer.doc.addRenderer('rd_vec2', yr.VectorsRenderer(rd_vec2, rd_vecori2, (0,255,0)))
+        #    viewer.doc.addRenderer('rd_frame1', yr.FramesRenderer(rd_frame1, (0,200,200)))
+        #    viewer.doc.addRenderer('rd_frame2', yr.FramesRenderer(rd_frame2, (200,200,0)))
+        #    viewer.setMaxFrame(len(motion_ori)-1)
+
+
+        viewer.objectInfoWnd.add1DSlider("penalty_grf_gain",    0., 5000., 10., Ks)
+        viewer.objectInfoWnd.add1DSlider("c_min_contact_vel",   0., 200., .2, 100.)
+        viewer.objectInfoWnd.add1DSlider("c_min_contact_time",  0., 5., .01, .7)
+        viewer.objectInfoWnd.add1DSlider("c_landing_duration",  0., 5., .01, .2)
+        viewer.objectInfoWnd.add1DSlider("c_taking_duration",   0., 5., .01, .3)
+        viewer.objectInfoWnd.add1DSlider("c_swf_mid_offset",    -1., 1., .001, 0.)
+        viewer.objectInfoWnd.add1DSlider("c_locking_vel",       0., 1., .001, .05)
+
+        viewer.objectInfoWnd.add1DSlider("c_swf_offset",        -1., 1., .001, .01)
+        viewer.objectInfoWnd.add1DSlider("K_stp_pos",           0., 1., .01, 0.)
+
+        viewer.objectInfoWnd.add1DSlider("c5",                  0., 5., .01, c5)
+        viewer.objectInfoWnd.add1DSlider("c6",                  0., 1., .01, c6)
+        viewer.objectInfoWnd.add1DSlider("K_stb_vel",           0., 1., .01, K_stb_vel)
+        viewer.objectInfoWnd.add1DSlider("K_stb_pos",           0., 1., .01, K_stb_pos)
+        viewer.objectInfoWnd.add1DSlider("K_swp_vel_sag",       0., 5., .01, K_swp_vel_sag)
+        viewer.objectInfoWnd.add1DSlider("K_swp_vel_cor",       0., 5., .01, K_swp_vel_cor)
+        viewer.objectInfoWnd.add1DSlider("K_swp_pos_sag",       0., 5., .01, K_swp_pos_sag)
+        viewer.objectInfoWnd.add1DSlider("K_swp_pos_cor",       0., 5., .01, K_swp_pos_cor)
+        viewer.objectInfoWnd.add1DSlider("K_swp_pos_sag_faster",0., 1., .01, K_swp_pos_sag_faster)
+
+
+        viewer.objectInfoWnd.add1DSlider("LeftFootKp",          0., 200., 10., 80.)
+        viewer.objectInfoWnd.add1DSlider("LeftFootKd",          0., 50., 1., 10.)
+        viewer.objectInfoWnd.add1DSlider("RightFootKp",          0., 200., 10., 80.)
+        viewer.objectInfoWnd.add1DSlider("RightFootKd",          0., 50., 1., 10.)
+
+
+
+        if not REPEATED:
+            viewer.setMaxFrame(len(motion_ori)-1)
+        else:
+            viewer.setMaxFrame(MAX_FRAME)
+
+        if CAMERA_TRACKING:
+            if MULTI_VIEWER:
+                cameraTargets1 = [None] * (viewer.getMaxFrame()+1)
+                cameraTargets2 = [None] * (viewer.getMaxFrame()+1)
+            else:
+                cameraTargets = [None] * (viewer.getMaxFrame()+1)
+
+        if TORQUE_PLOT:
+            rhip_torques = [0.]*viewer.getMaxFrame()
+            rknee_torques = [0.]*viewer.getMaxFrame()
+            rankle_torques = [0.]*viewer.getMaxFrame()
 
 
     # ===============================================================================
