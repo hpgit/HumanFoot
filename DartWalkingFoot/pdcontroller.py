@@ -1,12 +1,12 @@
 import numpy as np
 from numpy.linalg import inv
+# from scipy.linalg import inv
 import sys
 if ".." not in sys.path:
     sys.path.append("..")
 from PyCommon.modules import pydart2 as pydart
 from PyCommon.modules.Math import mmMath as mm
 import math
-
 
 class PDController:
     """
@@ -38,12 +38,20 @@ class PDController:
         skel = self.skel
         deltaq = self.calcDeltaq()
 
-        invM = inv(skel.M + self.Kd * self.h)
+        # invM = skel.mass_matrix()
+        # hatM = skel.mass_matrix() + self.Kd * self.h
+        # print hatM.shape, np.linalg.matrix_rank(hatM)
+
+        invM = np.linalg.inv(skel.M + self.Kd * self.h)
+        # invM = np.linalg.inv(skel.M[:42, :42])
+        # invM = inv(np.eye(42))
+
         # p = -self.Kp.dot(skel.q + skel.dq * self.h - self.qhat)
         p = -self.Kp.dot(-deltaq + skel.dq * self.h)
         d = -self.Kd.dot(skel.dq)
         qddot = invM.dot(-skel.c + p + d + skel.constraint_forces())
         tau = p + d - self.Kd.dot(qddot) * self.h
+        # tau = p+d
 
         '''
         # Check the balance
