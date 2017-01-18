@@ -1729,6 +1729,7 @@ def walkings(params, isCma=True):
         dirSum = 0
 
         for i in range(MAX_FRAME):
+            print(i)
             simulateCallback(i)
 
             _com = dartModel.getCOM()
@@ -1752,7 +1753,7 @@ def walkings(params, isCma=True):
 
         # objectiveSum = successSum + .3*comSum + velSum
         objectiveSum = successSum + velSum + .3*dirSum
-        # print(objectiveSum, successSum, velSum, .3*dirSum, params)
+        print(objectiveSum, successSum, velSum, .3*dirSum, params)
         del motion_stitch[:]
         del motion_debug1[:]
         del motion_debug2[:]
@@ -1768,7 +1769,7 @@ def walkings(params, isCma=True):
         del motion_swf_height[:]
         del motion_swf_placement[:]
         del motion_swf_orientation[:]
-        return float(objectiveSum), float(successSum), float(velSum), float(.3*dirSum)
+        return float(objectiveSum)
 
 
 if __name__ == '__main__':
@@ -1846,32 +1847,31 @@ if __name__ == '__main__':
     # infinite frames success, parameter rounding, box foot, LCP,  Kp = 200, Kd = 20, foot Kp = 80, foot Kd = 10,
     params = [     0.07606566,  0.27805201, -0.18138603,  0.20727021,  0.48262504, -0.20705485,  1.41170746,  1.14726482,  0.83859169,  0.30783608]
 
-    params = [    -0.14257373,  0.64261551, -0.31873744,  0.25544465,  0.07276376, -0.10461076,  1.59102294,  1.23484208,  0.59519827,  0.25852564]
-
-    # params = [-    0.12223014,  0.66760908, -0.27198395,  0.26369412,  0.15780864,-0.1593668 ,  1.54299972,  1.17761521,  0.67680398,  0.08838062]
-
     walkings(params, False)
     # walkings(None, False)
 
-    if False:
-        # from PyCommon.modules.Math.Nomalizer import Normalizer
-        # normalizer = Normalizer([0.]*10., [1., 5., .2, 1., 1., 3., 3., 3., 3., .5], [1.]*10, [-1.]*10)
-        # c6, K_stb_vel, K_swp_vel_sag, K_swp_vel_cor is velocity gain
-        cmaOption = cma.CMAOptions('fixed_variables')
-        cmaOption.set('fixed_variables', {2:math.sqrt(.02), 3:math.sqrt(.1), 5:math.sqrt(0.), 6:math.sqrt(1.3)})
-        # cma.fmin(walkings, np.sqrt([0., .5, .02, .1, .1, .0, 0.3, 1.2, .5, .05]).tolist(), .1, args=(True,), options=cmaOption)
-        # cma.fmin(walkings, params, .1, args=(True,), options=cmaOption)
-        # cma.fmin(walkings, params, .1, args=(True,))
+    # from PyCommon.modules.Math.Nomalizer import Normalizer
+    # normalizer = Normalizer([0.]*10., [1., 5., .2, 1., 1., 3., 3., 3., 3., .5], [1.]*10, [-1.]*10)
 
+
+    # c6, K_stb_vel, K_swp_vel_sag, K_swp_vel_cor is velocity gain
+    cmaOption = cma.CMAOptions('fixed_variables')
+    cmaOption.set('fixed_variables', {2:math.sqrt(.02), 3:math.sqrt(.1), 5:math.sqrt(0.), 6:math.sqrt(1.3)})
+    # cma.fmin(walkings, np.sqrt([0., .5, .02, .1, .1, .0, 0.3, 1.2, .5, .05]).tolist(), .1, args=(True,), options=cmaOption)
+    # cma.fmin(walkings, params, .1, args=(True,), options=cmaOption)
+    # cma.fmin(walkings, params, .1, args=(True,))
+
+    if False:
+        # es = cma.CMAEvolutionStrategy(22 * [0.0], 1.0, {'maxiter': 10})
         es = cma.CMAEvolutionStrategy(params, .1,
-                                      {'maxiter':100})
+             {'maxiter':2})
         # {'maxiter':2, 'fixed_variables':{2:math.sqrt(.02), 3:math.sqrt(.1), 5:math.sqrt(0.), 6:math.sqrt(1.3)}})
         pool = mp.Pool(es.popsize)
         while not es.stop():
             X = es.ask()
             f_values = pool.map_async(walkings, X).get()
-            obj_values = [f_value[0] for f_value in f_values]
-            es.tell(X, obj_values)
+            # f_values = [walkings(x) for x in X]
+            # use chunksize parameter as es.popsize/len(pool)?
+            es.tell(X, f_values)
             es.disp()
             es.logger.add()
-            print(min(f_values), X[np.argmin(obj_values)])
