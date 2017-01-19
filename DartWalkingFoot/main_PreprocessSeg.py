@@ -21,10 +21,16 @@ if __name__=='__main__':
 #    dir = './icmotion_test/'
 #    paths = glob.glob(dir+'*.temp')
 
-    SEGMENT_FOOT = False
+    SEGMENT_FOOT = True
     dir = './ppmotion/'
     # paths = glob.glob(dir+'*.bvh')
-    paths = glob.glob(dir+'wd2_WalkForwardNormal00.bvh')
+    paths = None
+    if SEGMENT_FOOT:
+        paths = glob.glob(dir+'segfoot_wd2_WalkForwardNormal00.bvh')
+        paths = glob.glob(dir+'segfoot_wd2_WalkForwardNormal00_REPEATED.bvh')
+    else:
+        paths = glob.glob(dir+'wd2_WalkForwardNormal00.bvh')
+        paths = glob.glob(dir+'wd2_WalkForwardNormal00_REPEATED.bvh')
     # paths = glob.glob(dir+'wd2_WalkForwardVFast00.bvh')
     '''
     paths = glob.glob(dir+'wd2_WalkSameSame01.bvh')

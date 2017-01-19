@@ -427,7 +427,7 @@ class DartModelMaker:
             etGroundBody = et.SubElement(etGroundSkeleton, "body", {"name": "ground"})
             et.SubElement(etGroundBody, "transformation").text = "0 -0.025 0 0 0 0"
             # etGroundBody.append(AddDartShapeNode(SE3(), [5.0, 0.05, 5.0], "box"))
-            etGroundBody.append(self.AddDartShapeNode(SE3(), [1000.0, 0.05, 1000.0], "box", "collision"))
+            etGroundBody.append(self.AddDartShapeNode(SE3(), [10000.0, 0.05, 10000.0], "box", "collision"))
 
             etGroundJoint = et.SubElement(etGroundSkeleton, "joint", {"type": "free", "name": "joint 1"})
             et.SubElement(etGroundJoint, "parent").text = "world"

@@ -432,6 +432,34 @@ def walkings(params, isCma=True):
     ##    filename = 'wd2_WalkBackward00.bvh'
     #    filename = 'wd2_WalkBackward00_REPEATED.bvh'
 
+    # parameters
+    if params is not None:
+        _params = np.around(params, decimals=3)
+        Ks = 1000.
+        Ds                    = 2.*(Ks**.5)
+        c_min_contact_vel = 100.
+        #    c_min_contact_vel = 2.
+        c_min_contact_time = .7
+        c_landing_duration = .2
+        c_taking_duration = .3
+        c_swf_mid_offset = .0
+        c_locking_vel = .05
+
+        #    c_swf_offset = .0
+        c_swf_offset = .01
+        #    c_swf_offset = .005
+        K_stp_pos             = _params[0]*_params[0]
+        c5                    = _params[1]*_params[1]
+        c6                    = _params[2]*_params[2]
+        K_stb_vel             = _params[3]*_params[3]
+        K_stb_pos             = _params[4]*_params[4]
+        K_swp_vel_sag         = _params[5]*_params[5]
+        K_swp_vel_cor         = _params[6]*_params[6]
+        K_swp_pos_sag         = _params[7]*_params[7]
+        K_swp_pos_cor         = _params[8]*_params[8]
+        K_swp_pos_sag_faster  = _params[9]*_params[9]
+
+
     # motion
     bvh = yf.readBvhFileAsBvh(motionDir+filename)
 
@@ -755,25 +783,25 @@ def walkings(params, isCma=True):
 
 
         viewer.objectInfoWnd.add1DSlider("penalty_grf_gain",    0., 5000., 10., Ks)
-        viewer.objectInfoWnd.add1DSlider("c_min_contact_vel",   0., 200., .2, 100.)
-        viewer.objectInfoWnd.add1DSlider("c_min_contact_time",  0., 5., .01, .7)
-        viewer.objectInfoWnd.add1DSlider("c_landing_duration",  0., 5., .01, .2)
-        viewer.objectInfoWnd.add1DSlider("c_taking_duration",   0., 5., .01, .3)
-        viewer.objectInfoWnd.add1DSlider("c_swf_mid_offset",    -1., 1., .001, 0.)
-        viewer.objectInfoWnd.add1DSlider("c_locking_vel",       0., 1., .001, .05)
+        viewer.objectInfoWnd.add1DSlider("c_min_contact_vel",   0., 200., .000001, 100.)
+        viewer.objectInfoWnd.add1DSlider("c_min_contact_time",  0., 5., .000001, .7)
+        viewer.objectInfoWnd.add1DSlider("c_landing_duration",  0., 5., .000001, .2)
+        viewer.objectInfoWnd.add1DSlider("c_taking_duration",   0., 5., .000001, .3)
+        viewer.objectInfoWnd.add1DSlider("c_swf_mid_offset",    -1., 1., .000001, 0.)
+        viewer.objectInfoWnd.add1DSlider("c_locking_vel",       0., 1., .000001, .05)
 
-        viewer.objectInfoWnd.add1DSlider("c_swf_offset",        -1., 1., .001, .01)
-        viewer.objectInfoWnd.add1DSlider("K_stp_pos",           0., 1., .01, 0.)
+        viewer.objectInfoWnd.add1DSlider("c_swf_offset",        -1., 1., .000001, .01)
 
-        viewer.objectInfoWnd.add1DSlider("c5",                  0., 5., .01, c5)
-        viewer.objectInfoWnd.add1DSlider("c6",                  0., 1., .01, c6)
-        viewer.objectInfoWnd.add1DSlider("K_stb_vel",           0., 1., .01, K_stb_vel)
-        viewer.objectInfoWnd.add1DSlider("K_stb_pos",           0., 1., .01, K_stb_pos)
-        viewer.objectInfoWnd.add1DSlider("K_swp_vel_sag",       0., 5., .01, K_swp_vel_sag)
-        viewer.objectInfoWnd.add1DSlider("K_swp_vel_cor",       0., 5., .01, K_swp_vel_cor)
-        viewer.objectInfoWnd.add1DSlider("K_swp_pos_sag",       0., 5., .01, K_swp_pos_sag)
-        viewer.objectInfoWnd.add1DSlider("K_swp_pos_cor",       0., 5., .01, K_swp_pos_cor)
-        viewer.objectInfoWnd.add1DSlider("K_swp_pos_sag_faster",0., 1., .01, K_swp_pos_sag_faster)
+        viewer.objectInfoWnd.add1DSlider("K_stp_pos",           0., 1., .000001, K_stp_pos)
+        viewer.objectInfoWnd.add1DSlider("c5",                  0., 5., .000001, c5)
+        viewer.objectInfoWnd.add1DSlider("c6",                  0., 1., .000001, c6)
+        viewer.objectInfoWnd.add1DSlider("K_stb_vel",           0., 1., .000001, K_stb_vel)
+        viewer.objectInfoWnd.add1DSlider("K_stb_pos",           0., 1., .000001, K_stb_pos)
+        viewer.objectInfoWnd.add1DSlider("K_swp_vel_sag",       0., 5., .000001, K_swp_vel_sag)
+        viewer.objectInfoWnd.add1DSlider("K_swp_vel_cor",       0., 5., .000001, K_swp_vel_cor)
+        viewer.objectInfoWnd.add1DSlider("K_swp_pos_sag",       0., 5., .000001, K_swp_pos_sag)
+        viewer.objectInfoWnd.add1DSlider("K_swp_pos_cor",       0., 5., .000001, K_swp_pos_cor)
+        viewer.objectInfoWnd.add1DSlider("K_swp_pos_sag_faster",0., 1., .000001, K_swp_pos_sag_faster)
 
 
         viewer.objectInfoWnd.add1DSlider("LeftFootKp",          0., 200., 10., 80.)
@@ -875,7 +903,7 @@ def walkings(params, isCma=True):
             K_swp_pos_sag         = getParamVal("K_swp_pos_sag")
             K_swp_pos_cor         = getParamVal("K_swp_pos_cor")
             K_swp_pos_sag_faster  = getParamVal("K_swp_pos_sag_faster")
-        elif True:
+        elif params is not None:
             _params = np.around(params, decimals=3)
             Ks = 1000.
             Ds                    = 2.*(Ks**.5)
@@ -900,41 +928,6 @@ def walkings(params, isCma=True):
             K_swp_pos_sag         = _params[7]*_params[7]
             K_swp_pos_cor         = _params[8]*_params[8]
             K_swp_pos_sag_faster  = _params[9]*_params[9]
-        else:
-
-            Kt = 20.
-            Dt = 2.*(Kt**.5)
-            # Dt = Kt/900.
-            Ks = 1000.
-            Ds = 2.*(Ks**.5)
-            mu = 1.
-            # Dt = 0.
-
-            # constants
-            c_min_contact_vel = 100.
-            #    c_min_contact_vel = 2.
-            c_min_contact_time = .7
-            c_landing_duration = .2
-            c_taking_duration = .3
-            c_swf_mid_offset = .0
-            c_locking_vel = .05
-
-            #    c_swf_offset = .0
-            c_swf_offset = .01
-            #    c_swf_offset = .005
-            K_stp_pos = 0.
-
-            #    c5 = .5;    c6 = .01
-            c5 = .5;    c6 = .02
-            #    c5 = .5;    c6 = .05
-            #    c5 = 1.;    c6 = .05
-            #    c5 = .0;    c6 = .0
-
-            K_stb_vel = .1
-            K_stb_pos = .1
-            K_swp_vel_sag = .0; K_swp_vel_cor = .3; K_swp_pos_sag = 1.2; K_swp_pos_cor = .2
-            # K_swp_vel_sag = .0; K_swp_vel_cor = 1.3; K_swp_pos_sag = 1.2; K_swp_pos_cor = 1.
-            K_swp_pos_sag_faster = .05
 
 
         # seginfo
@@ -1259,7 +1252,6 @@ def walkings(params, isCma=True):
                 motion_stf_balancing[frame].mulJointOrientationGlobal(stanceFoot, R_stb)
 
 
-        #TODO:
         # hwangpil
         # swing foot parallelizing with ground
         def swf_par_func(x):
@@ -1729,6 +1721,9 @@ def walkings(params, isCma=True):
         dirSum = 0
 
         for i in range(MAX_FRAME):
+            velSum += np.random.rand()
+            if i > 20:
+                break
             simulateCallback(i)
 
             _com = dartModel.getCOM()
@@ -1844,11 +1839,13 @@ if __name__ == '__main__':
     # params = [-0.03424024,  0.32955692,  0.0850351 ,  0.28576747, -0.10735104, 0.00185764,  1.36932697,  1.27616424,  0.97477866,  0.29608671]
 
     # infinite frames success, parameter rounding, box foot, LCP,  Kp = 200, Kd = 20, foot Kp = 80, foot Kd = 10,
-    params = [     0.07606566,  0.27805201, -0.18138603,  0.20727021,  0.48262504, -0.20705485,  1.41170746,  1.14726482,  0.83859169,  0.30783608]
+    params = [ 0.07606566,  0.27805201, -0.18138603,  0.20727021, 0.48262504, -0.20705485, 1.41170746, 1.14726482, 0.83859169, 0.30783608]
 
-    params = [    -0.14257373,  0.64261551, -0.31873744,  0.25544465,  0.07276376, -0.10461076,  1.59102294,  1.23484208,  0.59519827,  0.25852564]
+    params = [ -0.14257373,  0.64261551, -0.31873744,  0.25544465, 0.07276376, -0.10461076, 1.59102294, 1.23484208, 0.59519827, 0.25852564]
 
     # params = [-    0.12223014,  0.66760908, -0.27198395,  0.26369412,  0.15780864,-0.1593668 ,  1.54299972,  1.17761521,  0.67680398,  0.08838062]
+
+    params = [ 0.23265769,  1.04283873, -0.29465862,  0.3544647, 0.2997252, -0.17338881, 2.08012922, 1.09571025, 0.6792339, -0.35920458]
 
     walkings(params, False)
     # walkings(None, False)
@@ -1857,16 +1854,17 @@ if __name__ == '__main__':
         # from PyCommon.modules.Math.Nomalizer import Normalizer
         # normalizer = Normalizer([0.]*10., [1., 5., .2, 1., 1., 3., 3., 3., 3., .5], [1.]*10, [-1.]*10)
         # c6, K_stb_vel, K_swp_vel_sag, K_swp_vel_cor is velocity gain
-        cmaOption = cma.CMAOptions('fixed_variables')
-        cmaOption.set('fixed_variables', {2:math.sqrt(.02), 3:math.sqrt(.1), 5:math.sqrt(0.), 6:math.sqrt(1.3)})
+        # cmaOption = cma.CMAOptions('fixed_variables')
+        # cmaOption.set('fixed_variables', {2:math.sqrt(.02), 3:math.sqrt(.1), 5:math.sqrt(0.), 6:math.sqrt(1.3)})
         # cma.fmin(walkings, np.sqrt([0., .5, .02, .1, .1, .0, 0.3, 1.2, .5, .05]).tolist(), .1, args=(True,), options=cmaOption)
         # cma.fmin(walkings, params, .1, args=(True,), options=cmaOption)
         # cma.fmin(walkings, params, .1, args=(True,))
 
         es = cma.CMAEvolutionStrategy(params, .1,
-                                      {'maxiter':100})
+                                      {'maxiter':1})
         # {'maxiter':2, 'fixed_variables':{2:math.sqrt(.02), 3:math.sqrt(.1), 5:math.sqrt(0.), 6:math.sqrt(1.3)}})
         pool = mp.Pool(es.popsize)
+        cmaCount = 0
         while not es.stop():
             X = es.ask()
             f_values = pool.map_async(walkings, X).get()
@@ -1874,4 +1872,11 @@ if __name__ == '__main__':
             es.tell(X, obj_values)
             es.disp()
             es.logger.add()
-            print(min(f_values), X[np.argmin(obj_values)])
+
+            print(cmaCount, min(f_values), X[np.argmin(obj_values)])
+            cmaCount += 1
+
+        print("------------best-----------")
+        print("eval: ", es.best.evals)
+        print("f: ", es.best.f)
+        print("x: ", es.best.x)

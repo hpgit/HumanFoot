@@ -12,7 +12,8 @@ class hpSimpleViewer(ysvOri.SimpleViewer):
         self.title = title
         self.doc = ysvOri.SimpleDoc()
         self.begin()
-        panelWidth = 280
+        self.panelWidth = 300
+        panelWidth = self.panelWidth
         cForceHeight = 200
         t = .2
         self.renderersWnd = ysvOri.RenderersWnd(self.w()-panelWidth, 0, panelWidth, int(self.h()*t), self.doc)
@@ -147,7 +148,8 @@ class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
 
     def add1DSlider(self, name, minVal, maxVal, valStep, initVal):
         self.begin()
-        slider = fltk.Fl_Hor_Value_Slider(10, self.valObjOffset, 250, 18, name)
+        slider = fltk.Fl_Hor_Value_Slider(10, self.valObjOffset, self.viewer.panelWidth - 30, 18, name)
+        slider.textsize(8)
         slider.bounds(minVal, maxVal)
         slider.value(initVal)
         slider.step(valStep)

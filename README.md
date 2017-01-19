@@ -60,7 +60,8 @@ setup pyfltk1.3.3 (google and download)
 
 for dart setup,
     brew install eigen assimp homebrew/science/libccd dartsim/dart/fcl boost open-scene-graph
-    brew install homebrew/science/nlopt homebrew/science/ipopt homebrew/science/flann tinyxml tinyxml2 ros/deps/urdfdom
+    brew install homebrew/science/nlopt homebrew/science/ipopt tinyxml tinyxml2 ros/deps/urdfdom
+	# brew install homebrew/science/flann  # it seems that it doesn't work.....
 
     git clone https://github.com/dartsim/dart
     cd dart;git checkout tags/v6.0.1;mkdir build;cd build;cmake ..

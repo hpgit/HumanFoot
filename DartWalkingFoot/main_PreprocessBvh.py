@@ -95,7 +95,7 @@ def additionalEdit(motion, path):
 
 
 def preprocess():
-    SEGMENT_FOOT = False
+    SEGMENT_FOOT = True
     tasks = []
     
     outputDir = './ppmotion/'
@@ -214,6 +214,8 @@ def preprocess():
             additionalEdit(motion, path)
             
             outputPath = outputDir + os.path.basename(path)
+            if SEGMENT_FOOT:
+                outputPath = outputDir + "segfoot_" + os.path.basename(path)
             yf.writeBvhFile(outputPath, motion)
             print outputPath, 'done'
             
@@ -227,6 +229,8 @@ def preprocess():
 
                 outputName = os.path.splitext(os.path.basename(path))[0]+'_REPEATED.bvh'
                 outputPath = outputDir + outputName
+                if SEGMENT_FOOT:
+                    outputPath = outputDir + 'segfoot_' + outputName
                 yf.writeBvhFile(outputPath, motion)
                 print outputPath, 'done'
                 

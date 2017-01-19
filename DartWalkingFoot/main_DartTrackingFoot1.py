@@ -51,7 +51,7 @@ CHARACTER_COLOR = (20, 166, 188)
 
 MAX_FRAME = 1500
 
-SEGMENT_FOOT = False
+SEGMENT_FOOT = True
 
 def buildMassMap():
     massMap = {}
@@ -390,8 +390,8 @@ def walkings(params, isCma=True):
     K_swp_vel_sag = .0; K_swp_vel_cor = .3; K_swp_pos_sag = 1.2; K_swp_pos_cor = .2
     # K_swp_vel_sag = .0; K_swp_vel_cor = 1.3; K_swp_pos_sag = 1.2; K_swp_pos_cor = 1.
     K_swp_pos_sag_faster = .05
-    # filename = 'wd2_WalkForwardNormal00.bvh'
-    filename = 'wd2_WalkForwardNormal00_REPEATED.bvh'
+    filename = 'segfoot_wd2_WalkForwardNormal00.bvh'
+    # filename = 'segfoot_wd2_WalkForwardNormal00_REPEATED.bvh'
 
     ##    K_swp_vel_sag = .1; K_swp_vel_cor = .4; K_swp_pos_sag = .3; K_swp_pos_cor = 0.
     ##    K_stp_pos = 0.
@@ -431,6 +431,34 @@ def walkings(params, isCma=True):
     #    K_stb_vel = .3
     ##    filename = 'wd2_WalkBackward00.bvh'
     #    filename = 'wd2_WalkBackward00_REPEATED.bvh'
+
+
+    # parameters
+    if params is not None:
+        _params = np.around(params, decimals=3)
+        Ks = 1000.
+        Ds                    = 2.*(Ks**.5)
+        c_min_contact_vel = 100.
+        #    c_min_contact_vel = 2.
+        c_min_contact_time = .7
+        c_landing_duration = .2
+        c_taking_duration = .3
+        c_swf_mid_offset = .0
+        c_locking_vel = .05
+
+        #    c_swf_offset = .0
+        c_swf_offset = .01
+        #    c_swf_offset = .005
+        K_stp_pos             = _params[0]*_params[0]
+        c5                    = _params[1]*_params[1]
+        c6                    = _params[2]*_params[2]
+        K_stb_vel             = _params[3]*_params[3]
+        K_stb_pos             = _params[4]*_params[4]
+        K_swp_vel_sag         = _params[5]*_params[5]
+        K_swp_vel_cor         = _params[6]*_params[6]
+        K_swp_pos_sag         = _params[7]*_params[7]
+        K_swp_pos_cor         = _params[8]*_params[8]
+        K_swp_pos_sag_faster  = _params[9]*_params[9]
 
     # motion
     bvh = yf.readBvhFileAsBvh(motionDir+filename)
@@ -875,10 +903,10 @@ def walkings(params, isCma=True):
             K_swp_pos_sag         = getParamVal("K_swp_pos_sag")
             K_swp_pos_cor         = getParamVal("K_swp_pos_cor")
             K_swp_pos_sag_faster  = getParamVal("K_swp_pos_sag_faster")
-        elif True:
+        elif params is not None:
             _params = np.around(params, decimals=3)
             Ks = 1000.
-            Ds                    = 2.*(Ks**.5)
+            Ds = 2. * (Ks ** .5)
             c_min_contact_vel = 100.
             #    c_min_contact_vel = 2.
             c_min_contact_time = .7
@@ -890,51 +918,16 @@ def walkings(params, isCma=True):
             #    c_swf_offset = .0
             c_swf_offset = .01
             #    c_swf_offset = .005
-            K_stp_pos             = _params[0]*_params[0]
-            c5                    = _params[1]*_params[1]
-            c6                    = _params[2]*_params[2]
-            K_stb_vel             = _params[3]*_params[3]
-            K_stb_pos             = _params[4]*_params[4]
-            K_swp_vel_sag         = _params[5]*_params[5]
-            K_swp_vel_cor         = _params[6]*_params[6]
-            K_swp_pos_sag         = _params[7]*_params[7]
-            K_swp_pos_cor         = _params[8]*_params[8]
-            K_swp_pos_sag_faster  = _params[9]*_params[9]
-        else:
-
-            Kt = 20.
-            Dt = 2.*(Kt**.5)
-            # Dt = Kt/900.
-            Ks = 1000.
-            Ds = 2.*(Ks**.5)
-            mu = 1.
-            # Dt = 0.
-
-            # constants
-            c_min_contact_vel = 100.
-            #    c_min_contact_vel = 2.
-            c_min_contact_time = .7
-            c_landing_duration = .2
-            c_taking_duration = .3
-            c_swf_mid_offset = .0
-            c_locking_vel = .05
-
-            #    c_swf_offset = .0
-            c_swf_offset = .01
-            #    c_swf_offset = .005
-            K_stp_pos = 0.
-
-            #    c5 = .5;    c6 = .01
-            c5 = .5;    c6 = .02
-            #    c5 = .5;    c6 = .05
-            #    c5 = 1.;    c6 = .05
-            #    c5 = .0;    c6 = .0
-
-            K_stb_vel = .1
-            K_stb_pos = .1
-            K_swp_vel_sag = .0; K_swp_vel_cor = .3; K_swp_pos_sag = 1.2; K_swp_pos_cor = .2
-            # K_swp_vel_sag = .0; K_swp_vel_cor = 1.3; K_swp_pos_sag = 1.2; K_swp_pos_cor = 1.
-            K_swp_pos_sag_faster = .05
+            K_stp_pos = _params[0] * _params[0]
+            c5 = _params[1] * _params[1]
+            c6 = _params[2] * _params[2]
+            K_stb_vel = _params[3] * _params[3]
+            K_stb_pos = _params[4] * _params[4]
+            K_swp_vel_sag = _params[5] * _params[5]
+            K_swp_vel_cor = _params[6] * _params[6]
+            K_swp_pos_sag = _params[7] * _params[7]
+            K_swp_pos_cor = _params[8] * _params[8]
+            K_swp_pos_sag_faster = _params[9] * _params[9]
 
 
         # seginfo
@@ -1259,7 +1252,6 @@ def walkings(params, isCma=True):
                 motion_stf_balancing[frame].mulJointOrientationGlobal(stanceFoot, R_stb)
 
 
-        #TODO:
         # hwangpil
         # swing foot parallelizing with ground
         def swf_par_func(x):
@@ -1268,20 +1260,21 @@ def walkings(params, isCma=True):
             else:
                 return .5*math.pow(2.*x-1., 1./3.) + .5
 
-        for swingFoot in swingFoots:
-            swingBody = dartModel.getBody(swingFoot)
-            for shapeNode in swingBody.shapenodes:
-                if shapeNode.has_collision_aspect():
-                    geomType = shapeNode.shape.shape_type_name()
-                    geomT = np.dot(swingBody.world_transform(), shapeNode.relative_transform())
-                    if geomType == "BOX":
-                        shape = shapeNode.shape # type: pydart.BoxShape
-                        data = shape.size() * .5
-                        footVec = np.dot(geomT[:3, :3], np.array((0., 1., 0.)))
-                        R_swf_current = mm._I_SO3
-                        R_swf_par = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
-                        motion_stf_balancing[frame].mulJointOrientationGlobal(swingFoot,
-                                                              mm.slerp(R_swf_current, R_swf_par, swf_par_func(t)))
+        if False:
+            for swingFoot in swingFoots:
+                swingBody = dartModel.getBody(swingFoot)
+                for shapeNode in swingBody.shapenodes:
+                    if shapeNode.has_collision_aspect():
+                        geomType = shapeNode.shape.shape_type_name()
+                        geomT = np.dot(swingBody.world_transform(), shapeNode.relative_transform())
+                        if geomType == "BOX":
+                            shape = shapeNode.shape # type: pydart.BoxShape
+                            data = shape.size() * .5
+                            footVec = np.dot(geomT[:3, :3], np.array((0., 1., 0.)))
+                            R_swf_current = mm._I_SO3
+                            R_swf_par = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
+                            motion_stf_balancing[frame].mulJointOrientationGlobal(swingFoot,
+                                                                  mm.slerp(R_swf_current, R_swf_par, swf_par_func(t)))
 
         '''
         # swing foot heel strike adjustment
@@ -1392,7 +1385,7 @@ def walkings(params, isCma=True):
             # print('penalty force sum: ', sum(contactForce for contactForce in contactForces))
 
             _ddq = pdController.compute()
-            if SEGMENT_FOOT:
+            if False and SEGMENT_FOOT:
                 _ddq = pdController.compute()
                 _ddq0 = _ddq[specifiedDofIdx]
                 temp1, temp2, temp3, temp4, temp5, qvar = hdls.calcLCPbasicControlHD(motion_ori, dartModel.world, dartModel,
@@ -1844,34 +1837,38 @@ if __name__ == '__main__':
     # infinite frames success, parameter rounding, box foot, LCP,  Kp = 200, Kd = 20, foot Kp = 80, foot Kd = 10,
     # params = [-0.03424024,  0.32955692,  0.0850351 ,  0.28576747, -0.10735104, 0.00185764,  1.36932697,  1.27616424,  0.97477866,  0.29608671]
 
-    # infinite frames success, parameter rounding, box foot, LCP,  Kp = 200, Kd = 20, foot Kp = 80, foot Kd = 10,
-    params = [     0.07606566,  0.27805201, -0.18138603,  0.20727021,  0.48262504, -0.20705485,  1.41170746,  1.14726482,  0.83859169,  0.30783608]
+    params = [ 0.23265769,  1.04283873, -0.29465862,  0.3544647, 0.2997252, -0.17338881, 2.08012922, 1.09571025, 0.6792339, -0.35920458]
 
     walkings(params, False)
     # walkings(None, False)
 
-    # from PyCommon.modules.Math.Nomalizer import Normalizer
-    # normalizer = Normalizer([0.]*10., [1., 5., .2, 1., 1., 3., 3., 3., 3., .5], [1.]*10, [-1.]*10)
-
-
-    # c6, K_stb_vel, K_swp_vel_sag, K_swp_vel_cor is velocity gain
-    cmaOption = cma.CMAOptions('fixed_variables')
-    cmaOption.set('fixed_variables', {2:math.sqrt(.02), 3:math.sqrt(.1), 5:math.sqrt(0.), 6:math.sqrt(1.3)})
-    # cma.fmin(walkings, np.sqrt([0., .5, .02, .1, .1, .0, 0.3, 1.2, .5, .05]).tolist(), .1, args=(True,), options=cmaOption)
-    # cma.fmin(walkings, params, .1, args=(True,), options=cmaOption)
-    # cma.fmin(walkings, params, .1, args=(True,))
-
     if False:
-        # es = cma.CMAEvolutionStrategy(22 * [0.0], 1.0, {'maxiter': 10})
+        # from PyCommon.modules.Math.Nomalizer import Normalizer
+        # normalizer = Normalizer([0.]*10., [1., 5., .2, 1., 1., 3., 3., 3., 3., .5], [1.]*10, [-1.]*10)
+        # c6, K_stb_vel, K_swp_vel_sag, K_swp_vel_cor is velocity gain
+        # cmaOption = cma.CMAOptions('fixed_variables')
+        # cmaOption.set('fixed_variables', {2:math.sqrt(.02), 3:math.sqrt(.1), 5:math.sqrt(0.), 6:math.sqrt(1.3)})
+        # cma.fmin(walkings, np.sqrt([0., .5, .02, .1, .1, .0, 0.3, 1.2, .5, .05]).tolist(), .1, args=(True,), options=cmaOption)
+        # cma.fmin(walkings, params, .1, args=(True,), options=cmaOption)
+        # cma.fmin(walkings, params, .1, args=(True,))
+
         es = cma.CMAEvolutionStrategy(params, .1,
-             {'maxiter':2})
+                                      {'maxiter':100})
         # {'maxiter':2, 'fixed_variables':{2:math.sqrt(.02), 3:math.sqrt(.1), 5:math.sqrt(0.), 6:math.sqrt(1.3)}})
         pool = mp.Pool(es.popsize)
+        cmaCount = 0
         while not es.stop():
             X = es.ask()
             f_values = pool.map_async(walkings, X).get()
-            # f_values = [walkings(x) for x in X]
-            # use chunksize parameter as es.popsize/len(pool)?
-            es.tell(X, f_values)
+            obj_values = [f_value[0] for f_value in f_values]
+            es.tell(X, obj_values)
             es.disp()
             es.logger.add()
+
+            print(cmaCount, min(f_values), X[np.argmin(obj_values)])
+            cmaCount += 1
+
+        print("------------best-----------")
+        print("eval: ", es.best.evals)
+        print("f: ", es.best.f)
+        print("x: ", es.best.x)
