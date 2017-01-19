@@ -1847,10 +1847,12 @@ if __name__ == '__main__':
 
     params = [ 0.23265769,  1.04283873, -0.29465862,  0.3544647, 0.2997252, -0.17338881, 2.08012922, 1.09571025, 0.6792339, -0.35920458]
 
-    walkings(params, False)
-    # walkings(None, False)
 
-    if False:
+    if len(sys.argv) == 1:
+        walkings(None, False)
+    elif len(sys.argv) == 2 and sys.argv[1] == '-view':
+        walkings(params, False)
+    elif len(sys.argv) == 2 and sys.argv[1] == '-cma':
         # from PyCommon.modules.Math.Nomalizer import Normalizer
         # normalizer = Normalizer([0.]*10., [1., 5., .2, 1., 1., 3., 3., 3., 3., .5], [1.]*10, [-1.]*10)
         # c6, K_stb_vel, K_swp_vel_sag, K_swp_vel_cor is velocity gain
