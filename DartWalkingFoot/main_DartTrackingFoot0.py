@@ -1860,7 +1860,7 @@ if __name__ == '__main__':
         # cma.fmin(walkings, params, .1, args=(True,))
 
         es = cma.CMAEvolutionStrategy(params, .1,
-                                      {'maxiter':1})
+                                      {'maxiter':100})
         # {'maxiter':2, 'fixed_variables':{2:math.sqrt(.02), 3:math.sqrt(.1), 5:math.sqrt(0.), 6:math.sqrt(1.3)}})
         pool = mp.Pool(es.popsize)
         cmaCount = 0
