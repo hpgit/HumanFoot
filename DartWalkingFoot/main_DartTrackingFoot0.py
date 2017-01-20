@@ -1721,9 +1721,6 @@ def walkings(params, isCma=True):
         dirSum = 0
 
         for i in range(MAX_FRAME):
-            velSum += np.random.rand()
-            if i > 20:
-                break
             simulateCallback(i)
 
             _com = dartModel.getCOM()
