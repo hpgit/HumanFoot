@@ -1722,7 +1722,6 @@ def walkings(params, isCma=True):
         dirSum = 0
 
         for i in range(MAX_FRAME):
-            print(i)
             simulateCallback(i)
 
             _com = dartModel.getCOM()

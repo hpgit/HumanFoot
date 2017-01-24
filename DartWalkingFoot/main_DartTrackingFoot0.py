@@ -1844,9 +1844,11 @@ if __name__ == '__main__':
 
     params = [ 0.23265769,  1.04283873, -0.29465862,  0.3544647, 0.2997252, -0.17338881, 2.08012922, 1.09571025, 0.6792339, -0.35920458]
 
+    params = [ 0.00369795,  0.84529692, -0.13958033,  0.25697756,  0.52204349, -0.33508889,  2.2533399 ,  0.76863784,  0.79264804, -0.65756662]
+
 
     if len(sys.argv) == 1:
-        walkings(None, False)
+        walkings(params, False)
     elif len(sys.argv) == 2 and sys.argv[1] == '-view':
         walkings(params, False)
     elif len(sys.argv) == 2 and sys.argv[1] == '-cma':
