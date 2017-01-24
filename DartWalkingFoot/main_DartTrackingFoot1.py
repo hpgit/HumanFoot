@@ -1761,7 +1761,8 @@ def walkings(params, isCma=True):
         del motion_swf_height[:]
         del motion_swf_placement[:]
         del motion_swf_orientation[:]
-        return float(objectiveSum)
+        return float(objectiveSum), float(successSum), float(velSum), float(.3*dirSum)
+        # return float(objectiveSum)
 
 
 if __name__ == '__main__':
