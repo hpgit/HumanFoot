@@ -878,6 +878,9 @@ def walkings(params, isCma=True):
             viewer.onClose(data)
         viewer.callback(viewer_onClose)
 
+    for bodynode in dartModel.skeleton.bodynodes:
+        print(bodynode.name, bodynode.mass())
+
     def simulateCallback(frame):
         # c_min_contact_vel, c_min_contact_time, c_landing_duration, \
         # c_taking_duration, c_swf_mid_offset, c_locking_vel, c_swf_offset, \

@@ -126,20 +126,20 @@ def buildMassMap():
     massMap['LeftFoot_foot_2_1'] = .3
     #'''
 
-    massMap['RightFoot_foot_0_0'] = .3
-    massMap['RightFoot_foot_0_1'] = .3
-    massMap['RightFoot_foot_0_0_0'] = .3
-    massMap['RightFoot_foot_0_1_0'] = .3
-    massMap['RightFoot_foot_1_0'] = .3
-    massMap['RightFoot_foot_1_1'] = .3
-    massMap['RightFoot_foot_1_2'] = .3
-    massMap['LeftFoot_foot_0_0'] = .3
-    massMap['LeftFoot_foot_0_1'] = .3
-    massMap['LeftFoot_foot_0_0_0'] = .3
-    massMap['LeftFoot_foot_0_1_0'] = .3
-    massMap['LeftFoot_foot_1_0'] = .3
-    massMap['LeftFoot_foot_1_1'] = .3
-    massMap['LeftFoot_foot_1_2'] = .3
+    massMap['RightFoot_foot_0_0'] = .1
+    massMap['RightFoot_foot_0_1'] = .1
+    massMap['RightFoot_foot_0_0_0'] = .1
+    massMap['RightFoot_foot_0_1_0'] = .1
+    massMap['RightFoot_foot_1_0'] = .1
+    massMap['RightFoot_foot_1_1'] = .1
+    massMap['RightFoot_foot_1_2'] = .1
+    massMap['LeftFoot_foot_0_0'] = .1
+    massMap['LeftFoot_foot_0_1'] = .1
+    massMap['LeftFoot_foot_0_0_0'] = .1
+    massMap['LeftFoot_foot_0_1_0'] = .1
+    massMap['LeftFoot_foot_1_0'] = .1
+    massMap['LeftFoot_foot_1_1'] = .1
+    massMap['LeftFoot_foot_1_2'] = .1
 
     return massMap
 
@@ -185,6 +185,7 @@ def buildMcfg():
         node = mcfg.getNode(node_name)
         node.geom = 'MyFoot4'
         node.width = 0.01
+        node.density = 200.
         # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0., math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .2))
         # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0., math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
         # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0., 0., 0.])], ypc.CapsuleMaterial(1000., .01, -1))
@@ -224,88 +225,89 @@ def buildMcfg():
     # human foot
     if SEGMENT_FOOT:
         footJointType = 'B'
+        capsulDensity = 400.
 
         capsulize('RightFoot_foot_0_0')
         node = mcfg.getNode('RightFoot_foot_0_0')
-        node.addGeom('MyFoot3', [0.02*np.array([-0.3, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
-        node.addGeom('MyFoot3', [0.02*np.array([-0.3-1.2, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
+        node.addGeom('MyFoot3', [0.02*np.array([-0.3, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(capsulDensity, .01, 0.02*2.5+0.02))
+        node.addGeom('MyFoot3', [0.02*np.array([-0.3-1.2, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(capsulDensity, .01, 0.02*2.5+0.02))
         # node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0., 0., 0.])], ypc.CapsuleMaterial(1000., .01, -1))
         node.jointType = footJointType
 
         capsulize('RightFoot_foot_0_0_0')
         node = mcfg.getNode('RightFoot_foot_0_0_0')
-        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-        node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
+        node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
         node.jointType = footJointType
 
         capsulize('RightFoot_foot_0_1')
         node = mcfg.getNode('RightFoot_foot_0_1')
-        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-        node.addGeom('MyFoot3', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400.,.01, -1))
+        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
+        node.addGeom('MyFoot3', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity,.01, -1))
         node.jointType = footJointType
 
         capsulize('RightFoot_foot_0_1_0')
         node = mcfg.getNode('RightFoot_foot_0_1_0')
-        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-        node.addGeom('MyFoot4', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
+        node.addGeom('MyFoot4', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
         node.jointType = footJointType
 
         capsulize('RightFoot_foot_1_0')
         node = mcfg.getNode('RightFoot_foot_1_0')
-        node.addGeom('MyFoot3', [0.02*np.array([0., 0., .7]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, 0.02*2.0+0.02))
+        node.addGeom('MyFoot3', [0.02*np.array([0., 0., .7]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, 0.02*2.0+0.02))
         # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
         node.jointType = footJointType
 
         capsulize('RightFoot_foot_1_1')
         node = mcfg.getNode('RightFoot_foot_1_1')
-        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
         node.jointType = footJointType
 
         capsulize('RightFoot_foot_1_2')
         node = mcfg.getNode('RightFoot_foot_1_2')
-        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
         node.jointType = footJointType
 
 
         capsulize('LeftFoot_foot_0_0')
         node = mcfg.getNode('LeftFoot_foot_0_0')
-        node.addGeom('MyFoot3', [0.02*np.array([0.3, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
-        node.addGeom('MyFoot3', [0.02*np.array([0.3+1.2, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(400., .01, 0.02*2.5+0.02))
+        node.addGeom('MyFoot3', [0.02*np.array([0.3, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(capsulDensity, .01, 0.02*2.5+0.02))
+        node.addGeom('MyFoot3', [0.02*np.array([0.3+1.2, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(capsulDensity, .01, 0.02*2.5+0.02))
         # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
         node.jointType = footJointType
 
         capsulize('LeftFoot_foot_0_0_0')
         node = mcfg.getNode('LeftFoot_foot_0_0_0')
-        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-        node.addGeom('MyFoot4', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
+        node.addGeom('MyFoot4', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
         node.jointType = footJointType
 
         capsulize('LeftFoot_foot_0_1')
         node = mcfg.getNode('LeftFoot_foot_0_1')
-        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-        node.addGeom('MyFoot3', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
+        node.addGeom('MyFoot3', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
         node.jointType = footJointType
 
         capsulize('LeftFoot_foot_0_1_0')
         node = mcfg.getNode('LeftFoot_foot_0_1_0')
-        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
-        node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
+        node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
         node.jointType = footJointType
 
         capsulize('LeftFoot_foot_1_0')
         node = mcfg.getNode('LeftFoot_foot_1_0')
-        node.addGeom('MyFoot3', [0.02*np.array([0., 0., .7]), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, 0.02*2.0+0.02))
+        node.addGeom('MyFoot3', [0.02*np.array([0., 0., .7]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, 0.02*2.0+0.02))
         # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
         node.jointType = footJointType
 
         capsulize('LeftFoot_foot_1_1')
         node = mcfg.getNode('LeftFoot_foot_1_1')
-        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
         node.jointType = footJointType
 
         capsulize('LeftFoot_foot_1_2')
         node = mcfg.getNode('LeftFoot_foot_1_2')
-        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(400., .01, -1))
+        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
         node.jointType = footJointType
 
 
@@ -877,6 +879,10 @@ def walkings(params, isCma=True):
                 plot.close()
             viewer.onClose(data)
         viewer.callback(viewer_onClose)
+
+    for bodynode in dartModel.skeleton.bodynodes:
+        print(bodynode.name, bodynode.mass())
+
 
     def simulateCallback(frame):
         # c_min_contact_vel, c_min_contact_time, c_landing_duration, \
@@ -1496,6 +1502,7 @@ def walkings(params, isCma=True):
         #     ground_skeleton = body.skeleton # type: pydart.Skeleton
         #     if ground_skeleton.name == "grount skeleton":
         #         print("hehe")
+        print dartModel.getCOM()
 
         if not isCma:
             del rd_point2[:]

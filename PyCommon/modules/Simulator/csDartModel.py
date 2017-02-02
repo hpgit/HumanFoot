@@ -37,6 +37,7 @@ class DartModel:
         :type mcfg: ypc.ModelConfig
         """
         xmlstr, self._boneTs = DartModelMaker().posture2dartSkelXmlStr("dartModel", posture, mcfg)
+        print xmlstr
 
         self.world = pydart.World(wcfg.timeStep, xmlstr, True)
 
