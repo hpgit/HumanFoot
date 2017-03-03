@@ -804,12 +804,10 @@ def walkings(params, isCma=True):
         viewer.objectInfoWnd.add1DSlider("K_swp_pos_sag_faster",0., 1., .000001, K_swp_pos_sag_faster)
 
 
-        viewer.objectInfoWnd.add1DSlider("LeftFootKp",          0., 200., 10., 80.)
-        viewer.objectInfoWnd.add1DSlider("LeftFootKd",          0., 50., 1., 10.)
-        viewer.objectInfoWnd.add1DSlider("RightFootKp",          0., 200., 10., 80.)
-        viewer.objectInfoWnd.add1DSlider("RightFootKd",          0., 50., 1., 10.)
-
-
+        viewer.objectInfoWnd.add1DSlider("LeftFootKp",          0., 1000., 10., 400.)
+        viewer.objectInfoWnd.add1DSlider("LeftFootKd",          0., 50., 1., 20.)
+        viewer.objectInfoWnd.add1DSlider("RightFootKp",          0., 1000., 10., 400.)
+        viewer.objectInfoWnd.add1DSlider("RightFootKd",          0., 50., 1., 20.)
 
         if not REPEATED:
             viewer.setMaxFrame(len(motion_ori)-1)
@@ -1398,7 +1396,7 @@ def walkings(params, isCma=True):
             # dartModel.skeleton.set_accelerations(_ddq)
 
 
-            if False:
+            if True:
                 # change foot Kd and Kp
                 LeftFootDofs = dartModel.skeleton.dof_indices(['j_LeftFoot_x','j_LeftFoot_y','j_LeftFoot_z'])
                 for dofs in LeftFootDofs:

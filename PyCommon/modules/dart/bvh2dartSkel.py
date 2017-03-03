@@ -241,10 +241,16 @@ class DartModelMaker:
         return etShape
 
 
-    def AddInertia(self):
+    def AddInertia(self, geomMaterialOrMass):
         # TODO:
         etInertia = et.Element("inertia")
-        et.SubElement(etInertia, "mass").text = ".5"
+        if isinstance(geomMaterialOrMass, ypc.Material):
+            # et.SubElement(etInertia, "mass").text = ".5"
+            et.SubElement(etInertia, "mass").text = str(geomMaterialOrMass.getMass())
+        elif isinstance(geomMaterialOrMass, float):
+            et.SubElement(etInertia, "mass").text = str(geomMaterialOrMass)
+
+        # et.SubElement(etInertia, "mass").text = ".5"
         et.SubElement(etInertia, "offset").text = "0.0 0 0.0"
 
         return etInertia
@@ -263,7 +269,7 @@ class DartModelMaker:
         etBody.attrib["name"] = name
         et.SubElement(etBody, "transformation").text = SE32veulerXYZstr(T)
 
-        etBody.append(self.AddInertia())
+        # etBody.append(self.AddInertia(.5))
 
         cylLen_2 = np.linalg.norm(offset)/2.
         # if False and("foot" in name or "Foot" in name):
@@ -299,6 +305,9 @@ class DartModelMaker:
 
                         if height <= 0.:
                             height = offset.Norm() + 2.*radius
+                            cfgNode.geomMaterial[i].height = height
+
+                        etBody.append(self.AddInertia(cfgNode.geomMaterial[i]))
 
                         geomT = SE3()
                         if cfgNode.geomTs[i] is not None:
@@ -328,6 +337,7 @@ class DartModelMaker:
                         width = cfgNode.geomMaterial[i].width
                         length = cfgNode.geomMaterial[i].length
                         height = cfgNode.geomMaterial[i].height
+                        etBody.append(self.AddInertia(cfgNode.geomMaterial[i]))
 
                         geomT = SE3()
                         if cfgNode.geomTs[i] is not None:
@@ -352,6 +362,8 @@ class DartModelMaker:
                     else:
                         mass = density * radius * radius * math.pi * length
 
+                    etBody.append(self.AddInertia(mass))
+
                     etBody.append(self.AddDartShapeNode(SE3(), [radius, length-2.*radius], "cylinder"))
                     if geomType == "MyFoot3" or geomType =="MyFoot4":
                         etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., -(length/2.-radius))), [radius*2.]*3, "ellipsoid"))
@@ -370,6 +382,7 @@ class DartModelMaker:
                     density = cfgNode.density
                     width = .1
                     height = .1
+                    mass = density * width * height
 
                     if cfgNode.width is not None:
                         width = cfgNode.width
@@ -383,6 +396,8 @@ class DartModelMaker:
                         else:
                             width = .1
                         height = width
+
+                    etBody.append(self.AddInertia(cfgNode.mass))
 
                     etBody.append(self.AddDartShapeNode(SE3(), [width, height, length], "box"))
                     etBody.append(self.AddDartShapeNode(SE3(), [width, height, length], "box", "collision"))
