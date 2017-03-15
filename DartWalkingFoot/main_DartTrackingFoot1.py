@@ -537,7 +537,7 @@ def walkings(params, isCma=True):
     # q[3:6] = motion_ori.getJointPositionGlobal(0, 0)
     # dartModel.skeleton.set_positions(q)
     # q[3:6] = motion_ori.getJointPositionGlobal(0, 0)
-    pdController = PDController(dartModel.skeleton, wcfg.timeStep)
+    pdController = PDController(dartModel.skeleton, wcfg.timeStep, Kt=1000., Dt=50.)
     # dartModel.skeleton.set_controller(pdController)
     # dartModel.world.set_gravity(np.array((0., 0., 0.)))
     dartModel.initializeHybridDynamics()
@@ -806,10 +806,10 @@ def walkings(params, isCma=True):
         viewer.objectInfoWnd.add1DSlider("K_swp_pos_sag_faster",0., 1., .01, K_swp_pos_sag_faster)
 
 
-        viewer.objectInfoWnd.add1DSlider("LeftFootKp",          0., 200., 10., 80.)
-        viewer.objectInfoWnd.add1DSlider("LeftFootKd",          0., 50., 1., 10.)
-        viewer.objectInfoWnd.add1DSlider("RightFootKp",          0., 200., 10., 80.)
-        viewer.objectInfoWnd.add1DSlider("RightFootKd",          0., 50., 1., 10.)
+        viewer.objectInfoWnd.add1DSlider("LeftFootKp",          0., 500., 10., 300.)
+        viewer.objectInfoWnd.add1DSlider("LeftFootKd",          0., 100., 1., 30.)
+        viewer.objectInfoWnd.add1DSlider("RightFootKp",          0., 500., 10., 300.)
+        viewer.objectInfoWnd.add1DSlider("RightFootKd",          0., 100., 1., 30.)
 
 
 
@@ -1057,6 +1057,16 @@ def walkings(params, isCma=True):
         # P.append(p_temp)
         # P.goToFrame(frame)
 
+        # Jacobian Transpose Balance Control
+        balanceKp = 100.
+        balanceKd = 100.
+        balanceDiff = dartMotionModel.getCOM() - dartModel.getCOM()
+        balanceDiff[1] = 0.
+        balanceVelDiff = -dartModel.skeleton.com_velocity()
+        balanceVelDiff[1] = 0.
+        balanceTorque = np.dot(dartModel.getBody('RightFoot').world_jacobian()[3:6].T,
+                               balanceKp*balanceDiff + balanceKd*balanceVelDiff)
+        balanceTorque[:6] = np.array([0.]*6)
 
         '''
         # stance foot stabilize
@@ -1402,7 +1412,7 @@ def walkings(params, isCma=True):
             # dartModel.skeleton.set_accelerations(_ddq)
 
 
-            if False:
+            if True:
                 # change foot Kd and Kp
                 LeftFootDofs = dartModel.skeleton.dof_indices(['j_LeftFoot_x','j_LeftFoot_y','j_LeftFoot_z'])
                 for dofs in LeftFootDofs:
@@ -1421,7 +1431,8 @@ def walkings(params, isCma=True):
                 for dofs in RightFootDofs:
                     pdController.setKpKd(dofs, 80., 10.)
 
-            dartModel.skeleton.set_forces(pdController.compute())
+            # dartModel.skeleton.set_forces(pdController.compute())
+            dartModel.skeleton.set_forces(pdController.compute()+balanceTorque)
             dartModel.step()
             '''
             if False and i % 5 == 0:

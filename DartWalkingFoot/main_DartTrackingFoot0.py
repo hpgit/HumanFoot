@@ -1052,6 +1052,17 @@ def walkings(params, isCma=True):
         # P.append(p_temp)
         # P.goToFrame(frame)
 
+        # Jacobian Transpose Balance Control
+        balanceKp = 2000.
+        # balanceKd = 1000.
+        balanceKd = 0.
+        balanceDiff = dartMotionModel.getCOM() - dartModel.getCOM()
+        balanceDiff[1] = 0.
+        balanceVelDiff = -dartModel.skeleton.com_velocity()
+        balanceVelDiff[1] = 0.
+        balanceTorque = np.dot(dartModel.getBody('RightFoot').world_jacobian()[3:6].T,
+                               balanceKp*balanceDiff + balanceKd*balanceVelDiff)
+        balanceTorque[:6] = np.array([0.]*6)
 
         '''
         # stance foot stabilize
@@ -1415,7 +1426,10 @@ def walkings(params, isCma=True):
                 for dofs in RightFootDofs:
                     pdController.setKpKd(dofs, 80., 10.)
 
-            dartModel.skeleton.set_forces(pdController.compute())
+            if curState == yba.GaitState.STOP:
+                dartModel.skeleton.set_forces(pdController.compute()+balanceTorque)
+            else:
+                dartModel.skeleton.set_forces(pdController.compute())
             dartModel.step()
             '''
             if False and i % 5 == 0:
