@@ -524,7 +524,7 @@ def walkings(params, isCma=True):
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
     wcfg.lockingVel = c_locking_vel
-    stepsPerFrame = 30
+    stepsPerFrame = 50
     wcfg.timeStep = frameTime/stepsPerFrame
 
     pydart.init()
@@ -537,7 +537,8 @@ def walkings(params, isCma=True):
     # q[3:6] = motion_ori.getJointPositionGlobal(0, 0)
     # dartModel.skeleton.set_positions(q)
     # q[3:6] = motion_ori.getJointPositionGlobal(0, 0)
-    pdController = PDController(dartModel.skeleton, wcfg.timeStep, Kt=1000., Dt=50.)
+    # pdController = PDController(dartModel.skeleton, wcfg.timeStep, Kt=1000., Dt=50.)
+    pdController = PDController(dartModel.skeleton, wcfg.timeStep)
     # dartModel.skeleton.set_controller(pdController)
     # dartModel.world.set_gravity(np.array((0., 0., 0.)))
     dartModel.initializeHybridDynamics()
@@ -775,7 +776,7 @@ def walkings(params, isCma=True):
             #    viewer.doc.addRenderer('forces', yr.ForcesRenderer(rd_forces, rd_force_points, (255,0,0), ratio=.01, fromPoint=False))
             #        viewer.doc.addRenderer('torques', yr.VectorsRenderer(rd_torques, rd_joint_positions, (255,0,0)))
 
-            #    viewer.doc.addRenderer('rd_point1', yr.PointsRenderer(rd_point1, (0,255,0)))
+            viewer.doc.addRenderer('rd_point1', yr.PointsRenderer(rd_point1, (0,255,0)))
             viewer.doc.addRenderer('rd_point2', yr.PointsRenderer(rd_point2, (255,0,0)))
         #        viewer.doc.addRenderer('rd_vec1', yr.VectorsRenderer(rd_vec1, rd_vecori1, (255,0,0)))
         #    viewer.doc.addRenderer('rd_vec2', yr.VectorsRenderer(rd_vec2, rd_vecori2, (0,255,0)))
@@ -1390,6 +1391,29 @@ def walkings(params, isCma=True):
 
         # bodyIDs = [body.index_in_skeleton for body in dartModel.world.collision_result.contacted_bodies]
 
+        if True:
+            # change foot Kd and Kp
+            LeftFootDofs = dartModel.skeleton.dof_indices(['j_LeftFoot_x','j_LeftFoot_y','j_LeftFoot_z'])
+            for dofs in LeftFootDofs:
+                pdController.setKpKd(dofs, getParamVal('LeftFootKp'), getParamVal('LeftFootKd'))
+
+            RightFootDofs = dartModel.skeleton.dof_indices(['j_RightFoot_x','j_RightFoot_y','j_RightFoot_z'])
+            for dofs in RightFootDofs:
+                pdController.setKpKd(dofs, getParamVal('RightFootKp'), getParamVal('RightFootKd'))
+
+            footDofs = dartModel.skeleton.dof_indices(footDofNames)
+            for dofs in footDofs:
+                pdController.setKpKd(dofs, 2000., 20.)
+        else:
+            # change foot Kd and Kp
+            LeftFootDofs = dartModel.skeleton.dof_indices(['j_LeftFoot_x','j_LeftFoot_y','j_LeftFoot_z'])
+            for dofs in LeftFootDofs:
+                pdController.setKpKd(dofs, 80., 10.)
+
+            RightFootDofs = dartModel.skeleton.dof_indices(['j_RightFoot_x','j_RightFoot_y','j_RightFoot_z'])
+            for dofs in RightFootDofs:
+                pdController.setKpKd(dofs, 80., 10.)
+
         for i in range(stepsPerFrame):
             # bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
             bodyIDs = dartModel.skeleton.self_collision_check()
@@ -1411,28 +1435,8 @@ def walkings(params, isCma=True):
                     _ddq[variableDofIdx] = qvar
             # dartModel.skeleton.set_accelerations(_ddq)
 
-
-            if True:
-                # change foot Kd and Kp
-                LeftFootDofs = dartModel.skeleton.dof_indices(['j_LeftFoot_x','j_LeftFoot_y','j_LeftFoot_z'])
-                for dofs in LeftFootDofs:
-                    pdController.setKpKd(dofs, getParamVal('LeftFootKp'), getParamVal('LeftFootKd'))
-
-                RightFootDofs = dartModel.skeleton.dof_indices(['j_RightFoot_x','j_RightFoot_y','j_RightFoot_z'])
-                for dofs in RightFootDofs:
-                    pdController.setKpKd(dofs, getParamVal('RightFootKp'), getParamVal('RightFootKd'))
-            else:
-                # change foot Kd and Kp
-                LeftFootDofs = dartModel.skeleton.dof_indices(['j_LeftFoot_x','j_LeftFoot_y','j_LeftFoot_z'])
-                for dofs in LeftFootDofs:
-                    pdController.setKpKd(dofs, 80., 10.)
-
-                RightFootDofs = dartModel.skeleton.dof_indices(['j_RightFoot_x','j_RightFoot_y','j_RightFoot_z'])
-                for dofs in RightFootDofs:
-                    pdController.setKpKd(dofs, 80., 10.)
-
-            # dartModel.skeleton.set_forces(pdController.compute())
-            dartModel.skeleton.set_forces(pdController.compute()+balanceTorque)
+            dartModel.skeleton.set_forces(pdController.compute())
+            # dartModel.skeleton.set_forces(pdController.compute()+balanceTorque)
             dartModel.step()
             '''
             if False and i % 5 == 0:
@@ -1513,12 +1517,18 @@ def walkings(params, isCma=True):
         #     ground_skeleton = body.skeleton # type: pydart.Skeleton
         #     if ground_skeleton.name == "grount skeleton":
         #         print("hehe")
-        print dartModel.getCOM()
+        print "COM: ", dartModel.getCOM()
+
+        print "dq: ", dartModel.skeleton.dq
 
         if not isCma:
             del rd_point2[:]
             if contactPositions is not None:
                 rd_point2.extend(contactPositions)
+
+        if not isCma:
+            del rd_point1[:]
+            rd_point1.append(dartModel.getCOM())
 
 
         CP /= stepsPerFrame

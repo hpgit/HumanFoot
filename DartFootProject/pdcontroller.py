@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.linalg import inv
-import pydart
+# import pydart
+from PyCommon.modules import pydart2 as pydart
 
 
 class PDController:
@@ -22,8 +23,8 @@ class PDController:
         skel = self.skel
 
         invM = inv(skel.M + self.Kd * self.h)
-        p = -self.Kp.dot(skel.q + skel.qdot * self.h - self.qhat)
-        d = -self.Kd.dot(skel.qdot)
+        p = -self.Kp.dot(skel.q + skel.dq * self.h - self.qhat)
+        d = -self.Kd.dot(skel.dq)
         qddot = invM.dot(-skel.c + p + d + skel.constraint_forces())
         tau = p + d - self.Kd.dot(qddot) * self.h
 

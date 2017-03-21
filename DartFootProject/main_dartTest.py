@@ -9,7 +9,8 @@ import os
 sys.path.append('../PyCommon/modules')
 sys.path.append('..')
 
-from PyCommon.modules.pydart import pydart
+# from PyCommon.modules.pydart import pydart
+from PyCommon.modules import pydart2 as pydart
 
 import math
 import PyCommon.modules.Math.mmMath as mm
@@ -29,6 +30,7 @@ import PyCommon.modules.ArticulatedBody.hpInvKine as hik
 
 import mtInitialize_Simple as mit
 from pdcontroller import PDController
+from PyCommon.modules.Simulator import csDartModel as cpm
 
 
 MOTION_COLOR = (213, 111, 162)
@@ -90,16 +92,19 @@ viewer = None
 pydart.init()
 data_dir = os.path.dirname(__file__)
 print('data_dir = ' + data_dir)
-dartWorld = pydart.create_world(1.0/1800.0, data_dir+'/test.xml')
-dartWorld.test()
-q = dartWorld.skels[1].q
+'''
+dartWorld = pydart.World(1.0/1800.0, data_dir+'/test.xml')
+# dartWorld.test()
+q = dartWorld.skeletons[1].q
 q['j_Hips_pos_y'] = 0.
 q['j_Hips_pos_x'] = 0.
 q['j_Hips_pos_z'] = 0.
-dartWorld.skels[1].set_positions(q)
-dartWorld.skels[1].dof
-dartWorld.skels[1].controller = PDController(dartWorld.skels[1], dartWorld.dt)
+dartWorld.skeletons[1].set_positions(q)
+# dartWorld.skeletons[1].dof
+dartWorld.skeletons[1].controller = PDController(dartWorld.skeletons[1], dartWorld.dt)
 # pydart.glutgui.run(title='bipedStand', simulation=dartWorld, trans=[0, 0, -3])
+'''
+dartModel = None # type: cpm.DartModel
 
 def init():
     global motion
@@ -131,7 +136,7 @@ def init():
     global solver
     global IKModel
 
-    global dartWorld
+    global dartModel
 
     np.set_printoptions(precision=4, linewidth=200)
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_1()
@@ -151,6 +156,11 @@ def init():
     motionModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)
     IKModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)
 
+
+    dartModel = cpm.DartModel(wcfg, motion[0], mcfg)
+    dartModel.skeleton.controller = PDController(dartModel.skeleton, dartModel.world.time_step())
+    # dartWorld.skeletons[1].controller = PDController(dartWorld.skeletons[1], dartWorld.dt)
+
     # solver = hik.numIkSolver(wcfg, motion[0], mcfg)
 
     vpWorld.SetGlobalDamping(0.9999)
@@ -159,6 +169,7 @@ def init():
     ModelOffset = np.array([0., .12, 0.])
     controlModel.translateByOffset(ModelOffset)
     motionModel.translateByOffset(ModelOffset)
+    dartModel.translateByOffset(ModelOffset)
 
     vpWorld.SetIntegrator("RK4")
     # vpWorld.SetIntegrator("IMPLICIT_EULER_FAST")
@@ -197,17 +208,13 @@ def init():
     # viewer.doc.addRenderer('IKModel', cvr.VpModelRenderer(
     #      solver.model, MOTION_COLOR, yr.POLYGON_FILL))
 
-    viewer.doc.addRenderer('dartModel', yr.DartModelRenderer(
-        dartWorld, CHARACTER_COLOR2))
+    # viewer.doc.addRenderer('dartModel', yr.DartModelRenderer(dartWorld, CHARACTER_COLOR2))
+    viewer.doc.addRenderer('dartModel', yr.DartModelRenderer(dartModel, CHARACTER_COLOR2))
 
-    viewer.doc.addRenderer('rd_contactForcesControl', yr.VectorsRenderer(
-        rd_cForcesControl, rd_cPositionsControl, (255, 0, 0), .1))
-    viewer.doc.addRenderer('rd_contactForces', yr.VectorsRenderer(
-        rd_cForces, rd_cPositions, (0, 255, 0), .1))
-    viewer.doc.addRenderer('rd_contactForceControl', yr.VectorsRenderer(
-        rd_ForceControl, rd_Position, (0, 0, 255), .1))
-    viewer.doc.addRenderer('rd_contactForceDes', yr.VectorsRenderer(
-        rd_ForceDes, rd_PositionDes, (255, 0, 255), .1))
+    # viewer.doc.addRenderer('rd_contactForcesControl', yr.VectorsRenderer(rd_cForcesControl, rd_cPositionsControl, (255, 0, 0), .1))
+    # viewer.doc.addRenderer('rd_contactForces', yr.VectorsRenderer(rd_cForces, rd_cPositions, (0, 255, 0), .1))
+    # viewer.doc.addRenderer('rd_contactForceControl', yr.VectorsRenderer(rd_ForceControl, rd_Position, (0, 0, 255), .1))
+    # viewer.doc.addRenderer('rd_contactForceDes', yr.VectorsRenderer(rd_ForceDes, rd_PositionDes, (255, 0, 255), .1))
     # viewer.doc.addRenderer('rd_jointPos', yr.PointsRenderer(rd_jointPos))
 
     viewer.objectInfoWnd.add1DSlider(
@@ -285,8 +292,6 @@ class Callback:
         global wcfg
         global vpWorld
 
-        global dartWorld
-
         # reload(tf)
         motionModel.update(motion[0])
         self.frame = frame
@@ -296,12 +301,10 @@ class Callback:
         self.setTimeStamp()
 
 
-        skel = dartWorld.skels[1]
+        # skel = dartWorld.skels[1]
         # print(skel.q)
         # print(skel.dof('j_foot_1_0_x'))
         # skel.tau = skel.q
-        for i in range(60):
-            dartWorld.step()
 
         # print(skel.body('root').J)
         # print(skel.body('root').world_com_angular_velocity())
@@ -310,7 +313,6 @@ class Callback:
         # print(skel.body('Hips').world_jacobian())
         # print(skel.body('Hips').world_linear_jacobian())
         # print(skel.body('Hips').world_angular_jacobian())
-
 
         # for c in dartWorld.contacts():
         #     print(c.p)
@@ -424,12 +426,29 @@ class Callback:
         else:
             torques *= 1.
 
-        for i in range(int(stepsPerFrame)):
-            if i % 5 == 0:
-                cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
-                    = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques, solver='qp')
+        # for i in range(int(stepsPerFrame)):
+        #     if i % 5 == 0:
+        #         cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp \
+        #             = hls.calcLCPForces(motion, vpWorld, controlModel, bodyIDsToCheck, 1., torques, solver='qp')
+        #
+        #     if i % 5 == 0 and len(cBodyIDs) > 0:
+        #         # apply contact forces
+        #         if False and not torque_None:
+        #             vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForcesControl)
+        #             simulContactForces += sum(cForcesControl)
+        #         else:
+        #             vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForces)
+        #             simulContactForces += sum(cForces)
+        #             # simulContactForces += sum(cForces)
+        #
+        #     ype.nested(torques, torques_nested)
+        #     controlModel.setDOFTorques(torques_nested[1:])
+        #     # vpWorld.step()
 
-            if i % 5 == 0 and len(cBodyIDs) > 0:
+        for i in range(int(stepsPerFrame)):
+            if i%5 ==0:
+                cBodyIDs, cPositions, cPositionLocals, velocities = dartModel.getContactPoints(bodyIDsToCheck)
+            if False and i % 5 == 0 and len(cBodyIDs):
                 # apply contact forces
                 if False and not torque_None:
                     vpWorld.applyPenaltyForce(cBodyIDs, cPositionLocals, cForcesControl)
@@ -439,9 +458,11 @@ class Callback:
                     simulContactForces += sum(cForces)
                     # simulContactForces += sum(cForces)
 
-            ype.nested(torques, torques_nested)
-            controlModel.setDOFTorques(torques_nested[1:])
-            # vpWorld.step()
+            # ype.nested(torques, torques_nested)
+            # dartModel.setDOFTorques(torques_nested[1:])
+            dartModel.step()
+
+        print "dartModel com: ", dartModel.getCOM()
 
         self.setTimeStamp()
 
@@ -478,7 +499,7 @@ class Callback:
         del rd_cPositions[:]
         for i in range(len(cBodyIDs)):
             # print calculated force
-            rd_cForces.append(cForces[i].copy() / 50.)
+            # rd_cForces.append(cForces[i].copy() / 50.)
             rd_cPositions.append(cPositions[i].copy())
 
         # rendering joint position
