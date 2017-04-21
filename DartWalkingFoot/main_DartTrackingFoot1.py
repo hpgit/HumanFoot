@@ -651,6 +651,10 @@ def walkings(params, isCma=True):
     footDofNames += sum(list(['j_Left'+name+'_x', 'j_Left'+name+'_y', 'j_Left'+name+'_z'] for name in extendedFootName), [])
     footDofNames += sum(list(['j_Right'+name+'_x', 'j_Right'+name+'_y', 'j_Right'+name+'_z'] for name in extendedFootName), [])
 
+    footDofs = dartModel.skeleton.dof_indices(footDofNames)
+    LeftFootDofs = dartModel.skeleton.dof_indices(['j_LeftFoot_x','j_LeftFoot_y','j_LeftFoot_z'])
+    RightFootDofs = dartModel.skeleton.dof_indices(['j_RightFoot_x','j_RightFoot_y','j_RightFoot_z'])
+
     # controlled foot joint dofs
     if SEGMENT_FOOT:
         variableDofIdx = dartModel.skeleton.dof_indices(footDofNames)
@@ -726,6 +730,11 @@ def walkings(params, isCma=True):
     rd_frame1 = [None]
     rd_frame2 = [None]
 
+    rd_cForces = [None]
+    rd_cPositions = [None]
+    rd_cForcesControl = [None]
+    rd_cPositionsControl = [None]
+
     viewer = None
     plot = None
 
@@ -740,7 +749,7 @@ def walkings(params, isCma=True):
             viewer.setRenderers2([yr.DartModelRenderer(dartModel, (200, 200, 0))])
         else:
             # viewer = ysv.SimpleViewer()
-            viewer = hsv.hpSimpleViewer(viewForceWnd=False)
+            viewer = hsv.hpSimpleViewer(viewForceWnd=True)
             #    viewer.record(False)
             if not isCma:
                 viewer.doc.addRenderer('motionModel', yr.DartModelRenderer(dartMotionModel, (0,150,255), yr.POLYGON_LINE))
@@ -775,6 +784,9 @@ def walkings(params, isCma=True):
             #    viewer.doc.addRenderer('rd_CMP', yr.PointsRenderer(rd_CMP, (0,255,0)))
             #    viewer.doc.addRenderer('forces', yr.ForcesRenderer(rd_forces, rd_force_points, (255,0,0), ratio=.01, fromPoint=False))
             #        viewer.doc.addRenderer('torques', yr.VectorsRenderer(rd_torques, rd_joint_positions, (255,0,0)))
+
+            viewer.doc.addRenderer('rd_contactForcesControl', yr.VectorsRenderer(rd_cForcesControl, rd_cPositionsControl, (255, 0, 0), .1, 'rd_c1'))
+            viewer.doc.addRenderer('rd_contactForces', yr.VectorsRenderer(rd_cForces, rd_cPositions, (0, 255, 0), .1, 'rd_c2'))
 
             viewer.doc.addRenderer('rd_point1', yr.PointsRenderer(rd_point1, (0,255,0)))
             viewer.doc.addRenderer('rd_point2', yr.PointsRenderer(rd_point2, (255,0,0)))
@@ -812,6 +824,10 @@ def walkings(params, isCma=True):
         viewer.objectInfoWnd.add1DSlider("RightFootKp",          0., 500., 10., 300.)
         viewer.objectInfoWnd.add1DSlider("RightFootKd",          0., 100., 1., 30.)
 
+        viewer.cForceWnd.addDataSet('expForce', FL_BLACK)
+        viewer.cForceWnd.addDataSet('desForceMin', FL_RED)
+        viewer.cForceWnd.addDataSet('desForceMax', FL_RED)
+        viewer.cForceWnd.addDataSet('realForce', FL_GREEN)
 
 
         if not REPEATED:
@@ -1393,26 +1409,25 @@ def walkings(params, isCma=True):
 
         if True:
             # change foot Kd and Kp
-            LeftFootDofs = dartModel.skeleton.dof_indices(['j_LeftFoot_x','j_LeftFoot_y','j_LeftFoot_z'])
             for dofs in LeftFootDofs:
                 pdController.setKpKd(dofs, getParamVal('LeftFootKp'), getParamVal('LeftFootKd'))
 
-            RightFootDofs = dartModel.skeleton.dof_indices(['j_RightFoot_x','j_RightFoot_y','j_RightFoot_z'])
             for dofs in RightFootDofs:
                 pdController.setKpKd(dofs, getParamVal('RightFootKp'), getParamVal('RightFootKd'))
 
-            footDofs = dartModel.skeleton.dof_indices(footDofNames)
             for dofs in footDofs:
                 pdController.setKpKd(dofs, 2000., 20.)
         else:
             # change foot Kd and Kp
-            LeftFootDofs = dartModel.skeleton.dof_indices(['j_LeftFoot_x','j_LeftFoot_y','j_LeftFoot_z'])
             for dofs in LeftFootDofs:
                 pdController.setKpKd(dofs, 80., 10.)
 
-            RightFootDofs = dartModel.skeleton.dof_indices(['j_RightFoot_x','j_RightFoot_y','j_RightFoot_z'])
             for dofs in RightFootDofs:
                 pdController.setKpKd(dofs, 80., 10.)
+
+        simulContactForces = np.zeros(3)
+        cForcesControl = []
+        cPointsControl = []
 
         for i in range(stepsPerFrame):
             # bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
@@ -1425,19 +1440,22 @@ def walkings(params, isCma=True):
             # print('penalty force sum: ', sum(contactForce for contactForce in contactForces))
 
             _ddq = pdController.compute()
+            controlTau = None
             if False and SEGMENT_FOOT:
                 _ddq = pdController.compute()
                 _ddq0 = _ddq[specifiedDofIdx]
-                temp1, temp2, temp3, temp4, temp5, qvar = hdls.calcLCPbasicControlHD(motion_ori, dartModel.world, dartModel,
-                                         bodyIDsToCheck, mu, np.array([0., 300., 0.]), [1., 1., 1.], _ddq0, variableDofIdx)
-                print('qvar: ', qvar)
-                if qvar is not None and False:
-                    _ddq[variableDofIdx] = qvar
+                temp1, cPointsControl, temp3, cForcesControl, controlTau = hdls.calcLCPbasicControl(
+                    motion_ori, dartModel.world, dartModel, bodyIDsToCheck, mu, np.array([0., 300., 0.]), [1., 1., 1.],
+                    tau0=_ddq, variableDofIdx=footDofs)
+                print('controlTau: ', controlTau)
             # dartModel.skeleton.set_accelerations(_ddq)
 
             dartModel.skeleton.set_forces(pdController.compute())
             # dartModel.skeleton.set_forces(pdController.compute()+balanceTorque)
             dartModel.step()
+            sumForce = sum([(-contact.force if contact.bodynode1.name == 'ground' else contact.force)
+                            for contact in dartModel.world.collision_result.contacts])
+            simulContactForces += sumForce
             '''
             if False and i % 5 == 0:
                 # bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
@@ -1509,6 +1527,28 @@ def walkings(params, isCma=True):
 
 
         bodyIDs, contactPositions, contactPositionLocals, velocities = dartModel.getContactPoints(bodyIDsToCheck)
+
+        contactPoints = [contact.point for contact in dartModel.world.collision_result.contacts]
+        contactForces = [(-contact.force if contact.bodynode1.name == 'ground' else contact.force)
+                         for contact in dartModel.world.collision_result.contacts]
+
+        sumForce = sum(contactForces)
+
+        # graph calculated force
+        viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame)
+
+        if not isCma:
+            del rd_cForces[:]
+            del rd_cPositions[:]
+            for i in range(len(contactPoints)):
+                rd_cForces.append(contactForces[i] / 50.)
+                rd_cPositions.append(contactPoints[i])
+
+            del rd_cForcesControl[:]
+            del rd_cPositionsControl[:]
+            for i in range(len(cForcesControl)):
+                rd_cForces.append(cForcesControl[i] / 50.)
+                rd_cPositions.append(cPointsControl[i])
 
         # bodyIDs = [body.index_in_skeleton() for body in contacted_bodies]
         # contacted_bodies = dartModel.world.collision_result.contacted_bodies # type: list[pydart.BodyNode]

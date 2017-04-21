@@ -483,7 +483,8 @@ class DartModel:
         bodyFrame = self.skeleton.body(index).world_transform()
         if pPositionLocal is None:
             return bodyFrame[:3, 3]
-        return bodyFrame.dot(pPositionLocal)
+        positionLocal = np.array((pPositionLocal[0], pPositionLocal[1], pPositionLocal[2], 1.))
+        return bodyFrame.dot(positionLocal)[:3]
 
     def getBodyOrientationGlobal(self, index):
         return self.getBody(index).transform()[:3, :3]

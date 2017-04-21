@@ -15,10 +15,12 @@ from PyCommon.modules import pydart2 as pydart
 import math
 import PyCommon.modules.Math.mmMath as mm
 import PyCommon.modules.Renderer.ysRenderer as yr
+from PyCommon.modules.Motion import ysMotion as ym
 import PyCommon.modules.Renderer.csVpRenderer as cvr
 import PyCommon.modules.Simulator.csVpWorld as cvw
 import PyCommon.modules.Simulator.csVpModel as cvm
-import PyCommon.modules.Simulator.hpLCPSimulator as hls
+# import PyCommon.modules.Simulator.hpLCPSimulator as hls
+import PyCommon.modules.Simulator.hpDartLCPSimulator as hls
 import PyCommon.modules.GUI.hpSimpleViewer as hsv
 import PyCommon.modules.Util.ysPythonEx as ype
 import PyCommon.modules.ArticulatedBody.ysControl as yct
@@ -31,6 +33,7 @@ import PyCommon.modules.ArticulatedBody.hpInvKine as hik
 import mtInitialize_Simple as mit
 from pdcontroller import PDController
 from PyCommon.modules.Simulator import csDartModel as cpm
+from PyCommon.modules.ArticulatedBody.pdcontroller import *
 
 
 MOTION_COLOR = (213, 111, 162)
@@ -50,7 +53,7 @@ def getBodyGlobalPos(_model, _motion, _name):
 def getBodyGlobalOri(_model, _motion, _name):
     return _model.getBodyOrientationGlobal(_motion[0].skeleton.getJointIndex(_name))
 
-motion = None
+motion = None # type: ym.JointMotion
 mcfg = None
 wcfg = None
 stepsPerFrame = None
@@ -66,7 +69,7 @@ solver = None
 totalDOF = None
 DOFs = None
 
-bodyIDsToCheck = None
+bodyIDsToCheck = None # type: list[int]
 
 torques_nested = None
 
@@ -105,6 +108,7 @@ dartWorld.skeletons[1].controller = PDController(dartWorld.skeletons[1], dartWor
 # pydart.glutgui.run(title='bipedStand', simulation=dartWorld, trans=[0, 0, -3])
 '''
 dartModel = None # type: cpm.DartModel
+pdController = None # type: PDController
 
 def init():
     global motion
@@ -137,6 +141,7 @@ def init():
     global IKModel
 
     global dartModel
+    global pdController
 
     np.set_printoptions(precision=4, linewidth=200)
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_1()
@@ -158,7 +163,7 @@ def init():
 
 
     dartModel = cpm.DartModel(wcfg, motion[0], mcfg)
-    dartModel.skeleton.controller = PDController(dartModel.skeleton, dartModel.world.time_step())
+    pdController = PDController(dartModel.skeleton, dartModel.world.time_step())
     # dartWorld.skeletons[1].controller = PDController(dartWorld.skeletons[1], dartWorld.dt)
 
     # solver = hik.numIkSolver(wcfg, motion[0], mcfg)
@@ -211,43 +216,31 @@ def init():
     # viewer.doc.addRenderer('dartModel', yr.DartModelRenderer(dartWorld, CHARACTER_COLOR2))
     viewer.doc.addRenderer('dartModel', yr.DartModelRenderer(dartModel, CHARACTER_COLOR2))
 
-    # viewer.doc.addRenderer('rd_contactForcesControl', yr.VectorsRenderer(rd_cForcesControl, rd_cPositionsControl, (255, 0, 0), .1))
-    # viewer.doc.addRenderer('rd_contactForces', yr.VectorsRenderer(rd_cForces, rd_cPositions, (0, 255, 0), .1))
-    # viewer.doc.addRenderer('rd_contactForceControl', yr.VectorsRenderer(rd_ForceControl, rd_Position, (0, 0, 255), .1))
+    viewer.doc.addRenderer('rd_contactForcesControl', yr.VectorsRenderer(rd_cForcesControl, rd_cPositionsControl, (255, 0, 0), .1, 'rd_c1'))
+    viewer.doc.addRenderer('rd_contactForces', yr.VectorsRenderer(rd_cForces, rd_cPositions, (0, 255, 0), .1, 'rd_c2'))
+    viewer.doc.addRenderer('rd_contactForceControl', yr.VectorsRenderer(rd_ForceControl, rd_Position, (0, 0, 255), .1, 'rd_c3'))
     # viewer.doc.addRenderer('rd_contactForceDes', yr.VectorsRenderer(rd_ForceDes, rd_PositionDes, (255, 0, 255), .1))
     # viewer.doc.addRenderer('rd_jointPos', yr.PointsRenderer(rd_jointPos))
 
-    viewer.objectInfoWnd.add1DSlider(
-        'PD gain', minVal=0., maxVal=200., initVal=10., valStep=.1)
-    viewer.objectInfoWnd.add1DSlider(
-        'Joint Damping', minVal=1., maxVal=2000., initVal=35., valStep=1.)
-    viewer.objectInfoWnd.add1DSlider(
-        'steps per frame', minVal=1., maxVal=200., initVal=config['stepsPerFrame'], valStep=1.)
-    viewer.objectInfoWnd.add1DSlider(
-        '1/simul speed', minVal=1., maxVal=100., initVal=config['simulSpeedInv'], valStep=1.)
-    viewer.objectInfoWnd.add1DSlider(
-        'normal des force min', minVal=0., maxVal=1000., initVal=80., valStep=1.)
-    viewer.objectInfoWnd.add1DSlider(
-        'normal des force max', minVal=0., maxVal=1000., initVal=80., valStep=1.)
-    viewer.objectInfoWnd.add1DSlider(
-        'des force begin', minVal=0., maxVal=len(motion) - 1, initVal=70., valStep=1.)
-    viewer.objectInfoWnd.add1DSlider(
-        'des force dur', minVal=1., maxVal=len(motion) - 1, initVal=5., valStep=1.)
-    viewer.objectInfoWnd.add1DSlider(
-        'force weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
-    viewer.objectInfoWnd.add1DSlider(
-        'LCP weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
-    viewer.objectInfoWnd.add1DSlider(
-        'tau weight', minVal=-10., maxVal=10., initVal=0., valStep=.01)
-    viewer.objectInfoWnd.add1DSlider(
-        'ref', minVal=-10., maxVal=10., initVal=0., valStep=.01)
+    viewer.objectInfoWnd.add1DSlider('PD gain', minVal=0., maxVal=200., initVal=10., valStep=.1)
+    viewer.objectInfoWnd.add1DSlider('Joint Damping', minVal=1., maxVal=2000., initVal=35., valStep=1.)
+    viewer.objectInfoWnd.add1DSlider('steps per frame', minVal=1., maxVal=200., initVal=config['stepsPerFrame'], valStep=1.)
+    viewer.objectInfoWnd.add1DSlider('1/simul speed', minVal=1., maxVal=100., initVal=config['simulSpeedInv'], valStep=1.)
+    viewer.objectInfoWnd.add1DSlider('normal des force min', minVal=0., maxVal=1000., initVal=40., valStep=1.)
+    viewer.objectInfoWnd.add1DSlider('normal des force max', minVal=0., maxVal=1000., initVal=40., valStep=1.)
+    viewer.objectInfoWnd.add1DSlider('des force begin', minVal=0., maxVal=len(motion) - 1, initVal=50., valStep=1.)
+    viewer.objectInfoWnd.add1DSlider('des force dur', minVal=1., maxVal=len(motion) - 1, initVal=5., valStep=1.)
+    viewer.objectInfoWnd.add1DSlider('force weight', minVal=-10., maxVal=10., initVal=-1.3, valStep=.01)
+    viewer.objectInfoWnd.add1DSlider('LCP weight', minVal=-10., maxVal=10., initVal=1.3, valStep=.01)
+    viewer.objectInfoWnd.add1DSlider('tau weight', minVal=-10., maxVal=10., initVal=-3., valStep=.01)
+    viewer.objectInfoWnd.add1DSlider('ref', minVal=-10., maxVal=10., initVal=0., valStep=.01)
     viewer.objectInfoWnd.addBtn('image', viewer.motionViewWnd.dump)
     viewer.objectInfoWnd.addBtn('image seq dump', viewer.motionViewWnd.dumpMov)
 
-    # viewer.cForceWnd.addDataSet('expForce', FL_BLACK)
-    # viewer.cForceWnd.addDataSet('desForceMin', FL_RED)
-    # viewer.cForceWnd.addDataSet('desForceMax', FL_RED)
-    # viewer.cForceWnd.addDataSet('realForce', FL_GREEN)
+    viewer.cForceWnd.addDataSet('expForce', FL_BLACK)
+    viewer.cForceWnd.addDataSet('desForceMin', FL_RED)
+    viewer.cForceWnd.addDataSet('desForceMax', FL_RED)
+    viewer.cForceWnd.addDataSet('realForce', FL_GREEN)
 
     for i in range(motion[0].skeleton.getJointNum()):
         print(i, motion[0].skeleton.getJointName(i))
@@ -365,6 +358,8 @@ class Callback:
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMapTuple)
         ype.flatten(ddth_des, ddth_des_flat)
 
+        pdController.setTartgetPose(motion.getDOFPositions(0))
+
 
         desForceFrameBegin = getVal('des force begin')
         desForceDuration = getVal('des force dur') * simulSpeedInv
@@ -399,12 +394,12 @@ class Callback:
         cPositionLocalsControl = None
         cForcesControl = None
 
-        # if desForceFrame[0] <= frame <= desForceFrame[1]:
-        if False:
+        if desForceFrame[0] <= frame <= desForceFrame[1]:
+        # if False:
             # totalForceImpulse = stepsPerFrame * totalForce
             cBodyIDsControl, cPositionsControl, cPositionLocalsControl, cForcesControl, torques \
                 = hls.calcLCPbasicControl(
-                motion, vpWorld, controlModel, bodyIDsToCheck, 1., totalForce, [wLCP, wTorque, wForce], ddth_des_flat)
+                motion, dartModel.world, dartModel, bodyIDsToCheck, 1., totalForce, [wLCP, wTorque, wForce], ddth_des_flat)
             # if cForces is not None:
             #     print "control: ", sum(cForces)
 
@@ -415,6 +410,7 @@ class Callback:
         timeStamp = None
 
         torque_None = False
+        print "torques: ", torques
 
         if not (desForceFrame[0] <= frame <= desForceFrame[1]) or (torques is None):
             torque_None = True
@@ -460,9 +456,33 @@ class Callback:
 
             # ype.nested(torques, torques_nested)
             # dartModel.setDOFTorques(torques_nested[1:])
+            if torque_None:
+                dartModel.skeleton.set_forces(pdController.compute())
+            # elif i%5 == 0:
+            else:
+                dartModel.skeleton.set_forces(torques)
             dartModel.step()
+            sumForce = sum([(-contact.force if contact.bodynode1.name == 'ground' else contact.force)
+                            for contact in dartModel.world.collision_result.contacts])
+            simulContactForces += sumForce
 
-        print "dartModel com: ", dartModel.getCOM()
+
+        if False:
+            # debug contact force
+            for contact in dartModel.world.collision_result.contacts:
+                if contact.bodynode2.name == 'ground':
+                    print 'contact info: ', contact.bodynode1.name, contact
+                    print 'contact info: ', contact.bodynode2.name, contact
+                else:
+                    print 'contact info: ', contact.bodynode1.name, contact
+                    print 'contact info: ', contact.bodynode2.name, contact
+
+        contactPoints = [contact.point for contact in dartModel.world.collision_result.contacts]
+        contactForces = [(-contact.force if contact.bodynode1.name == 'ground' else contact.force)
+                         for contact in dartModel.world.collision_result.contacts]
+
+        sumForce = sum(contactForces)
+
 
         self.setTimeStamp()
 
@@ -473,7 +493,7 @@ class Callback:
             # print cBodyIDsControl
             for i in range(len(cBodyIDsControl)):
                 # print expected force
-                rd_cForcesControl.append(cForcesControl[i].copy() /50.)
+                rd_cForcesControl.append(cForcesControl[i].copy() /20.)
                 rd_cPositionsControl.append(cPositionsControl[i].copy())
 
         # rendering sum of expected force
@@ -481,7 +501,7 @@ class Callback:
         del rd_Position[:]
         if cForcesControl is not None:
             # print expected force
-            rd_ForceControl.append(sum(cForcesControl) /50.)
+            rd_ForceControl.append(sum(cForcesControl) /20.)
             rd_Position.append(np.array([0., 0., 0.1]))
 
         # graph expected force
@@ -494,13 +514,16 @@ class Callback:
             viewer.cForceWnd.insertData('expForce', frame, 0.)
 
 
+
         # rendering calculated forces
         del rd_cForces[:]
         del rd_cPositions[:]
-        for i in range(len(cBodyIDs)):
+        for i in range(len(contactPoints)):
             # print calculated force
             # rd_cForces.append(cForces[i].copy() / 50.)
-            rd_cPositions.append(cPositions[i].copy())
+            rd_cForces.append(contactForces[i].copy() / 20.)
+            # rd_cPositions.append(cPositions[i].copy())
+            rd_cPositions.append(contactPoints[i].copy())
 
         # rendering joint position
         del rd_jointPos[:]
@@ -518,13 +541,7 @@ class Callback:
         #     rd_PositionDes.append(np.array([0., 0., -0.1]))
 
         # graph calculated force
-        if cForces is not None:
-            sumForce = sum(cForces)
-            # viewer.cForceWnd.insertData('realForce', frame, sumForce[1])
-            viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame)
-        else:
-            viewer.cForceWnd.insertData('realForce', frame, 0.)
-        # viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame)
+        viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame)
 
         # graph desired force
         if desForceFrame[0] <= frame <= desForceFrame[1]:

@@ -18,6 +18,8 @@ class hpSimpleViewer(ysvOri.SimpleViewer):
         t = .2
         self.renderersWnd = ysvOri.RenderersWnd(self.w()-panelWidth, 0, panelWidth, int(self.h()*t), self.doc)
         self.objectInfoWnd = hpObjectInfoWnd(self.w()-panelWidth, int(self.h()*t), panelWidth, int(self.h()*(1-t)), self.doc)
+        self.motionViewWnd = None #type: hpMotionViewWnd
+        self.cForceWnd = None #type: None|hpContactForceGraphWnd
         if viewForceWnd:
             self.motionViewWnd = hpMotionViewWnd(0, 0, self.w()-panelWidth, self.h()-cForceHeight, self.doc)
             self.cForceWnd = hpContactForceGraphWnd(0, self.h()-cForceHeight, self.w()-panelWidth-40, cForceHeight, self.doc)
@@ -240,6 +242,7 @@ class hpContactForceGraphWnd(fltk.Fl_Widget, ybu.Observer):
             self.data[dataIdx][valIdx] = val
             self.redraw()
         except ValueError:
+            print "error"
             pass
 
 

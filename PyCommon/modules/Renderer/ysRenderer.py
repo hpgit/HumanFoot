@@ -710,12 +710,13 @@ class LinesRenderer(Renderer):
                     self.rc.drawLine(point1, point2)
 
 class VectorsRenderer(Renderer):
-    def __init__(self, vectors, origins, color = (255,0,0), lineWidth=.02):
+    def __init__(self, vectors, origins, color = (255,0,0), lineWidth=.02, name=""):
         Renderer.__init__(self, vectors, color)
         self.vectors = vectors
         self.origins = origins
         self.lineWidth = lineWidth
         self.rc.setLineWidth(lineWidth)
+        self.name = name
 
     def render(self, renderType=RENDER_OBJECT):
         if renderType==RENDER_OBJECT:
@@ -725,6 +726,26 @@ class VectorsRenderer(Renderer):
                 if (self.vectors[i] is not None) and (self.origins[i] is not None):
                     origin = self.origins[i]; vector = self.vectors[i]
                     self.rc.drawLine(origin, (origin[0]+vector[0],origin[1]+vector[1],origin[2]+vector[2]))
+
+
+    def renderState(self, state, renderType=RENDER_OBJECT):
+        if renderType == RENDER_OBJECT:
+            self.rc.beginDraw()
+            glColor3ubv(self.totalColor)
+            vectors = state[0]
+            origins = state[1]
+            for i in range(len(vectors)):
+                if (vectors[i] is not None) and (origins[i] is not None):
+                    origin, vector = origins[i], vectors[i]
+                    self.rc.drawLine(origin, (origin[0]+vector[0],origin[1]+vector[1],origin[2]+vector[2]))
+
+    def renderFrame(self, frame, renderType=RENDER_OBJECT):
+        self.renderState(self.savedState[frame], renderType)
+
+    def getState(self):
+        return [copy.deepcopy(self.vectors), copy.deepcopy(self.origins)]
+
+
 
 class PolygonRenderer(Renderer):
     def __init__(self, vertices, color = (0,255,0)):
