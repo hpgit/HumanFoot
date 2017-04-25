@@ -354,9 +354,16 @@ for i in range(dartMotionModel.getBodyNum()):
     transform = dartMotionModel.getBodyOrientationGlobal(i)
     xaxis = dartMotionModel.getBodyOrientationGlobal(i).dot(np.array((1., 0., 0.)))
     yaxis = dartMotionModel.getBodyOrientationGlobal(i).dot(np.array((0., 1., 0.)))
+    zaxis = dartMotionModel.getBodyOrientationGlobal(i).dot(np.array((0., 0., 1.)))
 
-    bodies.append(_world.CreateDynamicBody(position=pos2d, angle=math.radians(1.)))
-    bodies[-1].CreatePolygonFixture(box=boxsize2d, density=1., friction=.3)
+    zaxis[2] = 0.
+
+    _angle = math.atan2(zaxis[1], zaxis[0]) - math.radians(90.)
+
+    # bodies.append(_world.CreateDynamicBody(position=pos2d, angle=math.radians(1.)))
+    bodies.append(_world.CreateDynamicBody(position=pos2d, angle=_angle))
+    geom = bodies[-1].CreatePolygonFixture(box=boxsize2d, density=1., friction=.3)  # type: Box2D.b2Fixture
+
 
 for j in range(dartMotionModel.skeleton.num_joints()):
     parentId = dartMotionModel.getJoint(j).parent_body_node_id()
@@ -366,9 +373,6 @@ for j in range(dartMotionModel.skeleton.num_joints()):
     # print bodies[parentId], bodies[childId]
     _world.CreateRevoluteJoint(bodyA=bodies[parentId], bodyB=bodies[childId],
                                anchor=(position[0], position[1]), collideConnected=False) # type: Box2D.b2RevoluteJoint
-
-
-
 
 
 
