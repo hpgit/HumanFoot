@@ -312,7 +312,6 @@ wcfg.timeStep = frameTime/stepsPerFrame
 pydart.init()
 dartMotionModel = cpm.DartModel(wcfg, motion_ori[0], mcfg) # type: cpm.DartModel
 
-
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
 
 clock = pygame.time.Clock()
@@ -323,7 +322,9 @@ _world = world(gravity=(0, -9.8), doSleep=True) # type: Box2D.b2World
 
 
 # And a static body to hold the ground shape
-ground_body = _world.CreateStaticBody(position=(0., -1.), shapes=polygonShape(box=(100., 1.)), )
+# ground_body = _world.CreateStaticBody(position=(0., -1.), shapes=polygonShape(box=(100., 1.)), )
+ground_body = _world.CreateStaticBody(position=(0., -1.))  # type:Box2D.b2Body
+ground_body.CreatePolygonFixture(box=(100., 1.), categoryBits=4, maskBits=2)
 
 '''
 # Create a dynamic body
@@ -340,8 +341,9 @@ joint = _world.CreateRevoluteJoint(bodyA=dynamic_body, bodyB=dynamic_body2, anch
 # joint.motorEnabled = True
 # joint.motorSpeed = math.radians(30.)
 '''
-bodies = []
-dartMotionModel.translateByOffset(np.array((0., 0.5, 0.)))
+bodies = []  # type: list[Box2D.b2Body]
+nameToBody = dict()  #type:  dict[str, Box2D.b2Body]
+dartMotionModel.translateByOffset(np.array((0., 0.2, 0.)))
 
 for i in range(dartMotionModel.getBodyNum()):
 
@@ -362,7 +364,9 @@ for i in range(dartMotionModel.getBodyNum()):
 
     # bodies.append(_world.CreateDynamicBody(position=pos2d, angle=math.radians(1.)))
     bodies.append(_world.CreateDynamicBody(position=pos2d, angle=_angle))
-    geom = bodies[-1].CreatePolygonFixture(box=boxsize2d, density=1., friction=.3)  # type: Box2D.b2Fixture
+    nameToBody[name] = bodies[-1]
+    geom = bodies[-1].CreatePolygonFixture(box=boxsize2d, density=1., friction=.3, categoryBits=2, maskBits=4)  # type: Box2D.b2Fixture
+    geomFilter = geom.filterData  # type: Box2D.b2Filter
 
 
 for j in range(dartMotionModel.skeleton.num_joints()):
@@ -412,6 +416,8 @@ while running:
         for i in range(FRAME_PER_TIME_STEP):
             # dynamic_body.ApplyTorque(-5000.*(math.radians(45.)-joint.angle) + 500.*joint.speed, True)
             # dynamic_body2.ApplyTorque(-400., True)
+            joint = nameToBody['LeftFoot'].joints[0].joint  # type: Box2D.b2RevoluteJoint
+            nameToBody['LeftFoot'].ApplyTorque(1.*(math.radians(45.)-nameToBody['LeftFoot'].joints[0].joint.angle), True)
             _world.Step(WORLD_TIME_STEP, 1, 1)
     pygame.display.flip()
     clock.tick(TARGET_FPS)
