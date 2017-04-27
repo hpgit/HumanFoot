@@ -278,9 +278,9 @@ def buildMcfg():
 
     return mcfg
 
-PPM = 100.
-SCREEN_WIDTH = 640
-SCREEN_HEIGHT = 480
+PPM = 50.
+SCREEN_WIDTH = 1280
+SCREEN_HEIGHT = 240
 TARGET_FPS = 40
 TIME_STEP = 1.0 / TARGET_FPS
 
@@ -343,7 +343,9 @@ joint = _world.CreateRevoluteJoint(bodyA=dynamic_body, bodyB=dynamic_body2, anch
 '''
 bodies = []  # type: list[Box2D.b2Body]
 nameToBody = dict()  #type:  dict[str, Box2D.b2Body]
+joints = []  # type: list[Box2D.b2RevoluteJoint]
 dartMotionModel.translateByOffset(np.array((0., 0.2, 0.)))
+
 
 for i in range(dartMotionModel.getBodyNum()):
 
@@ -351,7 +353,7 @@ for i in range(dartMotionModel.getBodyNum()):
     position = dartMotionModel.getBodyPositionGlobal(i)
     pos2d = np.array((position[0], position[1]))
     boxsize = dartMotionModel.getBody(i).shapenodes[0].shape.size()
-    boxsize2d = np.array((boxsize[0], boxsize[2]))
+    boxsize2d = np.array((.5*boxsize[1], .5*boxsize[2]))
 
     transform = dartMotionModel.getBodyOrientationGlobal(i)
     xaxis = dartMotionModel.getBodyOrientationGlobal(i).dot(np.array((1., 0., 0.)))
@@ -368,17 +370,48 @@ for i in range(dartMotionModel.getBodyNum()):
     geom = bodies[-1].CreatePolygonFixture(box=boxsize2d, density=1., friction=.3, categoryBits=2, maskBits=4)  # type: Box2D.b2Fixture
     geomFilter = geom.filterData  # type: Box2D.b2Filter
 
-
 for j in range(dartMotionModel.skeleton.num_joints()):
     parentId = dartMotionModel.getJoint(j).parent_body_node_id()
     childId = dartMotionModel.getJoint(j).child_body_node_id()
-    position = dartMotionModel.getJoint(j).get_world_frame_after_transform()[:3, 3]
+    position = dartMotionModel.getJointPositionGlobal(j)
+    # position = dartMotionModel.getJoint(j).get_world_frame_after_transform()[:3, 3]
     # print dartMotionModel.getJoint(j).get_world_frame_after_transform()[3][:3]
     # print bodies[parentId], bodies[childId]
-    _world.CreateRevoluteJoint(bodyA=bodies[parentId], bodyB=bodies[childId],
-                               anchor=(position[0], position[1]), collideConnected=False) # type: Box2D.b2RevoluteJoint
+    joints.append(_world.CreateRevoluteJoint(bodyA=bodies[parentId], bodyB=bodies[childId],
+                               anchor=(position[0], position[1]), collideConnected=False))
 
 
+def getAngleDiff(angle1, angle2):
+    '''
+    return angle1 - angle2 in -pi ~ pi
+    :type angle1: float
+    :type angle2: float
+    :return: float
+    '''
+    _angle1 = angle1 - 2.*math.pi * math.floor(.5*angle1/math.pi)
+    _angle2 = angle2 - 2.*math.pi * math.floor(.5*angle2/math.pi)
+
+
+    if _angle1 - _angle2 > math.pi:
+        return _angle1 - _angle2 - 2.*math.pi
+    elif _angle1 - _angle2 < -math.pi:
+        return _angle1 - _angle2 + 2.*math.pi
+    return _angle1 - _angle2
+
+def getJointAngles(_joints):
+    '''
+    :type _joints: list[Box2D.b2RevoluteJoint]
+    :return: list[Box2D.b2RevoluteJoint]
+    '''
+    jointAngles = []
+    for j in _joints:
+        bodyA = j.bodyA  # type: Box2D.b2Body
+        bodyB = j.bodyB  # type: Box2D.b2Body
+        jointAngles.append(getAngleDiff(bodyA.angle, bodyB.angle))
+    return jointAngles
+
+
+print getJointAngles(joints)
 
 colors = {    staticBody: (255, 255, 255, 255),    dynamicBody: (127, 127, 127, 255)}
 
@@ -417,7 +450,7 @@ while running:
             # dynamic_body.ApplyTorque(-5000.*(math.radians(45.)-joint.angle) + 500.*joint.speed, True)
             # dynamic_body2.ApplyTorque(-400., True)
             joint = nameToBody['LeftFoot'].joints[0].joint  # type: Box2D.b2RevoluteJoint
-            nameToBody['LeftFoot'].ApplyTorque(1.*(math.radians(45.)-nameToBody['LeftFoot'].joints[0].joint.angle), True)
+            # nameToBody['LeftFoot'].ApplyTorque(10.*(math.radians(45.)-joint.angle) - 2.*joint.speed, True)
             _world.Step(WORLD_TIME_STEP, 1, 1)
     pygame.display.flip()
     clock.tick(TARGET_FPS)
