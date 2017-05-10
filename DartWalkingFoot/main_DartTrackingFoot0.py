@@ -348,7 +348,7 @@ def walkings(params, isCma=True):
     c_min_contact_time = .7
     c_landing_duration = .2
     c_taking_duration = .3
-    c_swf_mid_offset = .0
+    c_swf_mid_offset = .02
     c_locking_vel = .05
 
     #    c_swf_offset = .0
@@ -442,7 +442,8 @@ def walkings(params, isCma=True):
         c_min_contact_time = .7
         c_landing_duration = .2
         c_taking_duration = .3
-        c_swf_mid_offset = .0
+        # c_swf_mid_offset = .0
+        c_swf_mid_offset = .02
         c_locking_vel = .05
 
         #    c_swf_offset = .0
@@ -787,10 +788,10 @@ def walkings(params, isCma=True):
         viewer.objectInfoWnd.add1DSlider("c_min_contact_time",  0., 5., .000001, .7)
         viewer.objectInfoWnd.add1DSlider("c_landing_duration",  0., 5., .000001, .2)
         viewer.objectInfoWnd.add1DSlider("c_taking_duration",   0., 5., .000001, .3)
-        viewer.objectInfoWnd.add1DSlider("c_swf_mid_offset",    -1., 1., .000001, 0.)
+        viewer.objectInfoWnd.add1DSlider("c_swf_mid_offset",    -1., 1., .000001, c_swf_mid_offset)
         viewer.objectInfoWnd.add1DSlider("c_locking_vel",       0., 1., .000001, .05)
 
-        viewer.objectInfoWnd.add1DSlider("c_swf_offset",        -1., 1., .000001, .01)
+        viewer.objectInfoWnd.add1DSlider("c_swf_offset",        -1., 1., .000001, c_swf_offset)
 
         viewer.objectInfoWnd.add1DSlider("K_stp_pos",           0., 1., .000001, K_stp_pos)
         viewer.objectInfoWnd.add1DSlider("c5",                  0., 5., .000001, c5)
@@ -876,15 +877,17 @@ def walkings(params, isCma=True):
             viewer.onClose(data)
         viewer.callback(viewer_onClose)
 
-    for bodynode in dartModel.skeleton.bodynodes:
-        print(bodynode.name, bodynode.mass())
+    if not isCma:
+        for bodynode in dartModel.skeleton.bodynodes:
+            print(bodynode.name, bodynode.mass())
 
     def simulateCallback(frame):
         # c_min_contact_vel, c_min_contact_time, c_landing_duration, \
         # c_taking_duration, c_swf_mid_offset, c_locking_vel, c_swf_offset, \
         # K_stp_pos, c5, c6, K_stb_vel, K_stb_pos, K_swp_vel_sag, K_swp_vel_cor, \
         # K_swp_pos_sag, K_swp_pos_cor, K_swp_pos_sag_faster = viewer.objectInfoWnd.getVals()
-        if not isCma and params is None:
+        if not isCma:
+        # if not isCma and params is None:
             Ks                    = getParamVal("penalty_grf_gain")
             Ds                    = 2.*(Ks**.5)
             c_min_contact_vel     = getParamVal("c_min_contact_vel")
@@ -913,7 +916,8 @@ def walkings(params, isCma=True):
             c_min_contact_time = .7
             c_landing_duration = .2
             c_taking_duration = .3
-            c_swf_mid_offset = .0
+            # c_swf_mid_offset = .0
+            c_swf_mid_offset = .02
             c_locking_vel = .05
 
             #    c_swf_offset = .0
@@ -1053,6 +1057,7 @@ def walkings(params, isCma=True):
         # P.goToFrame(frame)
 
         # Jacobian Transpose Balance Control
+        '''
         balanceKp = 2000.
         # balanceKd = 1000.
         balanceKd = 0.
@@ -1063,6 +1068,7 @@ def walkings(params, isCma=True):
         balanceTorque = np.dot(dartModel.getBody('RightFoot').world_jacobian()[3:6].T,
                                balanceKp*balanceDiff + balanceKd*balanceVelDiff)
         balanceTorque[:6] = np.array([0.]*6)
+        '''
 
         '''
         # stance foot stabilize
@@ -1407,7 +1413,7 @@ def walkings(params, isCma=True):
             # dartModel.skeleton.set_accelerations(_ddq)
 
 
-            if True:
+            if not isCma:
                 # change foot Kd and Kp
                 LeftFootDofs = dartModel.skeleton.dof_indices(['j_LeftFoot_x','j_LeftFoot_y','j_LeftFoot_z'])
                 for dofs in LeftFootDofs:
@@ -1416,8 +1422,18 @@ def walkings(params, isCma=True):
                 RightFootDofs = dartModel.skeleton.dof_indices(['j_RightFoot_x','j_RightFoot_y','j_RightFoot_z'])
                 for dofs in RightFootDofs:
                     pdController.setKpKd(dofs, getParamVal('RightFootKp'), getParamVal('RightFootKd'))
+            elif True:
+                # change foot Kd and Kp
+                LeftFootDofs = dartModel.skeleton.dof_indices(['j_LeftFoot_x','j_LeftFoot_y','j_LeftFoot_z'])
+                for dofs in LeftFootDofs:
+                    pdController.setKpKd(dofs, 400., 20.)
+
+                RightFootDofs = dartModel.skeleton.dof_indices(['j_RightFoot_x','j_RightFoot_y','j_RightFoot_z'])
+                for dofs in RightFootDofs:
+                    pdController.setKpKd(dofs, 400., 20.)
             else:
                 # change foot Kd and Kp
+                # mistake.... 0.5 same mass case
                 LeftFootDofs = dartModel.skeleton.dof_indices(['j_LeftFoot_x','j_LeftFoot_y','j_LeftFoot_z'])
                 for dofs in LeftFootDofs:
                     pdController.setKpKd(dofs, 80., 10.)
@@ -1427,7 +1443,8 @@ def walkings(params, isCma=True):
                     pdController.setKpKd(dofs, 80., 10.)
 
             if curState == yba.GaitState.STOP:
-                dartModel.skeleton.set_forces(pdController.compute()+balanceTorque)
+                # dartModel.skeleton.set_forces(pdController.compute()+balanceTorque)
+                dartModel.skeleton.set_forces(pdController.compute())
             else:
                 dartModel.skeleton.set_forces(pdController.compute())
             dartModel.step()
@@ -1861,12 +1878,39 @@ if __name__ == '__main__':
 
     params = [ 0.00369795,  0.84529692, -0.13958033,  0.25697756,  0.52204349, -0.33508889,  2.2533399 ,  0.76863784,  0.79264804, -0.65756662]
 
+    # real mass...
+    # 214 frames
+    # params = [ 0.16743054,  1.05984589, -0.72743961,  0.44304908,  0.48537792, -0.24056825,  2.48828589,  0.83581282,  0.77717872, -0.56421671]
 
-    if len(sys.argv) == 1:
+    # handtuning again
+    params = [0., .7, .02, .1, .1, .0, 1.3, 1.2, 1., .05]
+
+    # 153 frames
+    params = [ 0.05678168,  0.18698591, -0.04036124,  0.42292837,  0.27514757, 0.50669227,  1.12195161,  1.44066205,  0.73604038, -0.0792846 ]
+
+    # 132 frames
+    params = [ 0.24117059, -0.29611776,  0.07361502,  0.41092362,  0.85729422, 0.68817921,  0.83304879,  1.39588882,  0.91067374,  0.34832352]
+
+    # 603 frames, c_swf_mid_offset = 0.02
+    params = [-0.00865918, -0.56005348, 0.01134773, 0.43981861, 0.96553876, 0.69103064, 1.44695403, 1.72878752, 1.17163042, 0.49112284]
+
+    # 922 frames, c_swf_mid_offset = 0.02
+    params = [-0.01213649, -0.56523411,  0.00447238,  0.43994454,  1.02797031, 0.70993193,  1.41126541,  1.69617948,  1.11272483,  0.5268186 ]
+
+    # 923 frames, c_swf_mid_offseg = 0.02
+    params = [  1.39283480e-03,  -5.53652623e-01,  -2.09070047e-02, 4.31852628e-01,   1.02532373e+00,   7.12472591e-01, 1.34962599e+00,   1.62407375e+00,   1.11751433e+00, 5.15757774e-01]
+
+    # 1449 frames, c_swf_mid_offset = 0.02
+    params = [ 0.00745384, -0.56053261,  0.00921962,  0.42575388,  1.03165526, 0.69931117,  1.42782163,  1.65119398,  1.1237301 ,  0.5327249 ]
+    # params = [-0.00676365, -0.62036688,  0.00649792,  0.42459192,  1.01903221, 0.70873662,  1.43189683,  1.66743189,  1.07315172,  0.51921036]
+
+    isCma = False
+
+    if len(sys.argv) == 1 and not isCma:
         walkings(params, False)
-    elif len(sys.argv) == 2 and sys.argv[1] == '-view':
+    elif len(sys.argv) == 2 and sys.argv[1] == '-view' and not isCma:
         walkings(params, False)
-    elif len(sys.argv) == 2 and sys.argv[1] == '-cma':
+    elif (len(sys.argv) == 2 and sys.argv[1] == '-cma') or isCma:
         # from PyCommon.modules.Math.Nomalizer import Normalizer
         # normalizer = Normalizer([0.]*10., [1., 5., .2, 1., 1., 3., 3., 3., 3., .5], [1.]*10, [-1.]*10)
         # c6, K_stb_vel, K_swp_vel_sag, K_swp_vel_cor is velocity gain

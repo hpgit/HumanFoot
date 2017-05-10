@@ -350,11 +350,12 @@ def walkings(params, isCma=True):
     c_min_contact_time = .7
     c_landing_duration = .2
     c_taking_duration = .3
+    # c_swf_mid_offset = .02
     c_swf_mid_offset = .0
     c_locking_vel = .05
 
-    #    c_swf_offset = .0
-    c_swf_offset = .01
+    c_swf_offset = .0
+    # c_swf_offset = .01
     #    c_swf_offset = .005
     K_stp_pos = 0.
 
@@ -392,8 +393,8 @@ def walkings(params, isCma=True):
     K_swp_vel_sag = .0; K_swp_vel_cor = .3; K_swp_pos_sag = 1.2; K_swp_pos_cor = .2
     # K_swp_vel_sag = .0; K_swp_vel_cor = 1.3; K_swp_pos_sag = 1.2; K_swp_pos_cor = 1.
     K_swp_pos_sag_faster = .05
-    filename = 'segfoot_wd2_WalkForwardNormal00.bvh'
-    # filename = 'segfoot_wd2_WalkForwardNormal00_REPEATED.bvh'
+    # filename = 'segfoot_wd2_WalkForwardNormal00.bvh'
+    filename = 'segfoot_wd2_WalkForwardNormal00_REPEATED.bvh'
 
     ##    K_swp_vel_sag = .1; K_swp_vel_cor = .4; K_swp_pos_sag = .3; K_swp_pos_cor = 0.
     ##    K_stp_pos = 0.
@@ -445,11 +446,12 @@ def walkings(params, isCma=True):
         c_min_contact_time = .7
         c_landing_duration = .2
         c_taking_duration = .3
+        # c_swf_mid_offset = .02
         c_swf_mid_offset = .0
         c_locking_vel = .05
 
-        #    c_swf_offset = .0
-        c_swf_offset = .01
+        c_swf_offset = .0
+        # c_swf_offset = .01
         #    c_swf_offset = .005
         K_stp_pos             = _params[0]*_params[0]
         c5                    = _params[1]*_params[1]
@@ -759,7 +761,7 @@ def walkings(params, isCma=True):
             # viewer.doc.addRenderer('motion_ori', yr.JointMotionRenderer(motion_ori, (0,100,255), yr.LINK_BONE))
             # viewer.doc.addRenderer('motion_seg_orig', yr.JointMotionRenderer(motion_seg_orig, (0,100,255), yr.LINK_BONE))
             # viewer.doc.addRenderer('motion_seg', yr.JointMotionRenderer(motion_seg, (0,150,255), yr.LINK_BONE))
-            viewer.doc.addRenderer('motion_stitch', yr.JointMotionRenderer(motion_stitch, (0,255,200), yr.LINK_BONE))
+            # viewer.doc.addRenderer('motion_stitch', yr.JointMotionRenderer(motion_stitch, (0,255,200), yr.LINK_BONE))
 
             # viewer.doc.addRenderer('motion_stf_stabilize', yr.JointMotionRenderer(motion_stf_stabilize, (255,0,0), yr.LINK_BONE))
             # viewer.doc.addRenderer('motion_match_stl', yr.JointMotionRenderer(motion_match_stl, (255,200,0), yr.LINK_BONE))
@@ -768,7 +770,7 @@ def walkings(params, isCma=True):
             # viewer.doc.addRenderer('motion_swf_orientation', yr.JointMotionRenderer(motion_swf_orientation, (255,100,0), yr.LINK_BONE))
             # viewer.doc.addRenderer('motion_stf_push', yr.JointMotionRenderer(motion_stf_push, (50,255,200), yr.LINK_BONE))
             # viewer.doc.addRenderer('motion_stf_balancing', yr.JointMotionRenderer(motion_stf_balancing, (255,100,255), yr.LINK_BONE))
-            viewer.doc.addRenderer('motion_control', yr.JointMotionRenderer(motion_control, (255,0,0), yr.LINK_BONE))
+            # viewer.doc.addRenderer('motion_control', yr.JointMotionRenderer(motion_control, (255,0,0), yr.LINK_BONE))
 
             #        viewer.doc.addRenderer('motion_debug1', yr.JointMotionRenderer(motion_debug1, (0,255,0), yr.LINK_BONE))
             #        viewer.doc.addRenderer('motion_debug2', yr.JointMotionRenderer(motion_debug2, (255,0,255), yr.LINK_BONE))
@@ -802,7 +804,7 @@ def walkings(params, isCma=True):
         viewer.objectInfoWnd.add1DSlider("c_min_contact_time",  0., 5., .01, .7)
         viewer.objectInfoWnd.add1DSlider("c_landing_duration",  0., 5., .01, .2)
         viewer.objectInfoWnd.add1DSlider("c_taking_duration",   0., 5., .01, .3)
-        viewer.objectInfoWnd.add1DSlider("c_swf_mid_offset",    -1., 1., .001, 0.)
+        viewer.objectInfoWnd.add1DSlider("c_swf_mid_offset",    -1., 1., .001, c_swf_mid_offset)
         viewer.objectInfoWnd.add1DSlider("c_locking_vel",       0., 1., .001, .05)
 
         viewer.objectInfoWnd.add1DSlider("c_swf_offset",        -1., 1., .001, .01)
@@ -897,8 +899,9 @@ def walkings(params, isCma=True):
             viewer.onClose(data)
         viewer.callback(viewer_onClose)
 
-    for bodynode in dartModel.skeleton.bodynodes:
-        print(bodynode.name, bodynode.mass())
+    if not isCma:
+        for bodynode in dartModel.skeleton.bodynodes:
+            print(bodynode.name, bodynode.mass())
 
 
     def simulateCallback(frame):
@@ -906,7 +909,8 @@ def walkings(params, isCma=True):
         # c_taking_duration, c_swf_mid_offset, c_locking_vel, c_swf_offset, \
         # K_stp_pos, c5, c6, K_stb_vel, K_stb_pos, K_swp_vel_sag, K_swp_vel_cor, \
         # K_swp_pos_sag, K_swp_pos_cor, K_swp_pos_sag_faster = viewer.objectInfoWnd.getVals()
-        if not isCma and params is None:
+        if not isCma:
+        # if not isCma and params is None:
             Ks                    = getParamVal("penalty_grf_gain")
             Ds                    = 2.*(Ks**.5)
             c_min_contact_vel     = getParamVal("c_min_contact_vel")
@@ -935,7 +939,7 @@ def walkings(params, isCma=True):
             c_min_contact_time = .7
             c_landing_duration = .2
             c_taking_duration = .3
-            c_swf_mid_offset = .0
+            c_swf_mid_offset = .02
             c_locking_vel = .05
 
             #    c_swf_offset = .0
@@ -1074,6 +1078,7 @@ def walkings(params, isCma=True):
         # P.append(p_temp)
         # P.goToFrame(frame)
 
+        '''
         # Jacobian Transpose Balance Control
         balanceKp = 100.
         balanceKd = 100.
@@ -1084,6 +1089,7 @@ def walkings(params, isCma=True):
         balanceTorque = np.dot(dartModel.getBody('RightFoot').world_jacobian()[3:6].T,
                                balanceKp*balanceDiff + balanceKd*balanceVelDiff)
         balanceTorque[:6] = np.array([0.]*6)
+        '''
 
         '''
         # stance foot stabilize
@@ -1309,7 +1315,7 @@ def walkings(params, isCma=True):
                             motion_stf_balancing[frame].mulJointOrientationGlobal(swingFoot,
                                                                   mm.slerp(R_swf_current, R_swf_par, swf_par_func(t)))
 
-        '''
+        # '''
         # swing foot heel strike adjustment
         # make heel as flat as possible to ground
         swf_heel_func = yfg.hermite2nd
@@ -1407,7 +1413,7 @@ def walkings(params, isCma=True):
 
         # bodyIDs = [body.index_in_skeleton for body in dartModel.world.collision_result.contacted_bodies]
 
-        if True:
+        if not isCma:
             # change foot Kd and Kp
             for dofs in LeftFootDofs:
                 pdController.setKpKd(dofs, getParamVal('LeftFootKp'), getParamVal('LeftFootKd'))
@@ -1416,7 +1422,18 @@ def walkings(params, isCma=True):
                 pdController.setKpKd(dofs, getParamVal('RightFootKp'), getParamVal('RightFootKd'))
 
             for dofs in footDofs:
-                pdController.setKpKd(dofs, 2000., 20.)
+                pdController.setKpKd(dofs, 500., 20.)
+        elif True:
+            # change foot Kd and Kp
+            for dofs in LeftFootDofs:
+                pdController.setKpKd(dofs, 300., 30.)
+
+            for dofs in RightFootDofs:
+                pdController.setKpKd(dofs, 300., 30.)
+
+            for dofs in footDofs:
+                pdController.setKpKd(dofs, 500., 20.)
+
         else:
             # change foot Kd and Kp
             for dofs in LeftFootDofs:
@@ -1429,95 +1446,96 @@ def walkings(params, isCma=True):
         cForcesControl = []
         cPointsControl = []
 
-        for i in range(stepsPerFrame):
-            # bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
-            bodyIDs = dartModel.skeleton.self_collision_check()
+        if frame > 40:
+            for i in range(stepsPerFrame):
+                # bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+                bodyIDs = dartModel.skeleton.self_collision_check()
 
-            _tau = np.zeros(dartModel.skeleton.q.shape)
-            # bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp = \
-            #     hdls.calcLCPForces(motion_ori, dartModel.world, dartModel, bodyIDsToCheck, 1., _tau)
-            # dartModel.applyPenaltyForce(bodyIDs, contactPositions, contactForces, localForce=False)
-            # print('penalty force sum: ', sum(contactForce for contactForce in contactForces))
+                _tau = np.zeros(dartModel.skeleton.q.shape)
+                # bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp = \
+                #     hdls.calcLCPForces(motion_ori, dartModel.world, dartModel, bodyIDsToCheck, 1., _tau)
+                # dartModel.applyPenaltyForce(bodyIDs, contactPositions, contactForces, localForce=False)
+                # print('penalty force sum: ', sum(contactForce for contactForce in contactForces))
 
-            _ddq = pdController.compute()
-            controlTau = None
-            if False and SEGMENT_FOOT:
                 _ddq = pdController.compute()
-                _ddq0 = _ddq[specifiedDofIdx]
-                temp1, cPointsControl, temp3, cForcesControl, controlTau = hdls.calcLCPbasicControl(
-                    motion_ori, dartModel.world, dartModel, bodyIDsToCheck, mu, np.array([0., 300., 0.]), [1., 1., 1.],
-                    tau0=_ddq, variableDofIdx=footDofs)
-                print('controlTau: ', controlTau)
-            # dartModel.skeleton.set_accelerations(_ddq)
+                controlTau = None
+                if False and SEGMENT_FOOT:
+                    _ddq = pdController.compute()
+                    _ddq0 = _ddq[specifiedDofIdx]
+                    temp1, cPointsControl, temp3, cForcesControl, controlTau = hdls.calcLCPbasicControl(
+                        motion_ori, dartModel.world, dartModel, bodyIDsToCheck, mu, np.array([0., 300., 0.]), [1., 1., 1.],
+                        tau0=_ddq, variableDofIdx=footDofs)
+                    print('controlTau: ', controlTau)
+                # dartModel.skeleton.set_accelerations(_ddq)
 
-            dartModel.skeleton.set_forces(pdController.compute())
-            # dartModel.skeleton.set_forces(pdController.compute()+balanceTorque)
-            dartModel.step()
-            sumForce = sum([(-contact.force if contact.bodynode1.name == 'ground' else contact.force)
-                            for contact in dartModel.world.collision_result.contacts])
-            simulContactForces += sumForce
-            '''
-            if False and i % 5 == 0:
-                # bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
-                bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp \
-                    = hls.calcLCPForcesHD(motion_ori, vpWorld, dartModel, bodyIDsToCheck, 1., ddth_des_flat, ddth_des_flat, solver='qp', hdAccMask=hdAccMask)
+                dartModel.skeleton.set_forces(pdController.compute())
+                # dartModel.skeleton.set_forces(pdController.compute()+balanceTorque)
+                dartModel.step()
+                sumForce = sum([(-contact.force if contact.bodynode1.name == 'ground' else contact.force)
+                                for contact in dartModel.world.collision_result.contacts])
+                simulContactForces += sumForce
+                '''
+                if False and i % 5 == 0:
+                    # bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+                    bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp \
+                        = hls.calcLCPForcesHD(motion_ori, vpWorld, dartModel, bodyIDsToCheck, 1., ddth_des_flat, ddth_des_flat, solver='qp', hdAccMask=hdAccMask)
 
-                if contactForces is not None:
-                    lContactNum = sum([sum([j==i for j in bodyIDs]) for i in lIDs])
-                    rContactNum = sum([sum([j==i for j in bodyIDs]) for i in rIDs])
-                    if 1 <= lContactNum <= 2:
-                        lbodyIDbs = [any([j==i for i in lIDs])for j in bodyIDs]
-                        lbodyIDs = [i for i, x in enumerate(lbodyIDbs) if x]
-                        for i in reversed(lbodyIDs):
-                            bodyIDs.pop(i)
-                            contactPositions.pop(i)
-                            contactPositionLocals.pop(i)
-                            contactForces.pop(i)
+                    if contactForces is not None:
+                        lContactNum = sum([sum([j==i for j in bodyIDs]) for i in lIDs])
+                        rContactNum = sum([sum([j==i for j in bodyIDs]) for i in rIDs])
+                        if 1 <= lContactNum <= 2:
+                            lbodyIDbs = [any([j==i for i in lIDs])for j in bodyIDs]
+                            lbodyIDs = [i for i, x in enumerate(lbodyIDbs) if x]
+                            for i in reversed(lbodyIDs):
+                                bodyIDs.pop(i)
+                                contactPositions.pop(i)
+                                contactPositionLocals.pop(i)
+                                contactForces.pop(i)
 
-                    if 1 <= rContactNum <= 2:
-                        rbodyIDbs = [any([j==i for i in rIDs])for j in bodyIDs]
-                        rbodyIDs = [i for i, x in enumerate(rbodyIDbs) if x]
-                        for i in reversed(rbodyIDs):
-                            bodyIDs.pop(i)
-                            contactPositions.pop(i)
-                            contactPositionLocals.pop(i)
-                            contactForces.pop(i)
+                        if 1 <= rContactNum <= 2:
+                            rbodyIDbs = [any([j==i for i in rIDs])for j in bodyIDs]
+                            rbodyIDs = [i for i, x in enumerate(rbodyIDbs) if x]
+                            for i in reversed(rbodyIDs):
+                                bodyIDs.pop(i)
+                                contactPositions.pop(i)
+                                contactPositionLocals.pop(i)
+                                contactForces.pop(i)
 
-                if contactForces is not None:
-                    vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
+                    if contactForces is not None:
+                        vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
 
-            # print contactForces
+                # print contactForces
 
-            # apply external force
-            for fi in forceInfos:
-                if fi.startFrame <= frame and frame < fi.startFrame + fi.duration*(1/frameTime):
-                    # controlModel.applyBodyForceGlobal(fi.targetBody, fi.force)
-                    dartModel.getBody(fi.targetBody).add_ext_force(fi.force)
+                # apply external force
+                for fi in forceInfos:
+                    if fi.startFrame <= frame and frame < fi.startFrame + fi.duration*(1/frameTime):
+                        # controlModel.applyBodyForceGlobal(fi.targetBody, fi.force)
+                        dartModel.getBody(fi.targetBody).add_ext_force(fi.force)
 
-            # for i in rIDs+lIDs:
-            #     controlModel.setJointTorqueLocal(i, ddth_des[i])
-            # controlModel.setDOFAccelerations(ddth_des)
-            # controlModel.solveHybridDynamics()
+                # for i in rIDs+lIDs:
+                #     controlModel.setJointTorqueLocal(i, ddth_des[i])
+                # controlModel.setDOFAccelerations(ddth_des)
+                # controlModel.solveHybridDynamics()
 
-            # if TORQUE_PLOT:
-            #     rhip_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rUpLeg))
-            #     rknee_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rKnee))
-            #     rankle_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rFoot))
+                # if TORQUE_PLOT:
+                #     rhip_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rUpLeg))
+                #     rknee_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rKnee))
+                #     rankle_torques[frame] += mm.length(controlModel.getJointTorqueLocal(rFoot))
 
-            # rd_torques[:] = [controlModel.getJointTorqueLocal(j)/100. for j in range(1, skeleton.getJointNum())]
-            # rd_joint_positions[:] = controlModel.getJointPositionsGlobal()
+                # rd_torques[:] = [controlModel.getJointTorqueLocal(j)/100. for j in range(1, skeleton.getJointNum())]
+                # rd_joint_positions[:] = controlModel.getJointPositionsGlobal()
 
-            # vpWorld.step()
-            #            yvu.align2D(controlModel)
-            '''
+                # vpWorld.step()
+                #            yvu.align2D(controlModel)
+                '''
 
 
-            '''
-            if contactForces is not None and len(contactForces) > 0:
-                CP += yrp.getCP(contactPositions, contactForces)
-                F += sum(contactForces)
-            avg_dCM[0] += dartModel.getJointVelocityGlobal(0)
-            '''
+                '''
+                if contactForces is not None and len(contactForces) > 0:
+                    CP += yrp.getCP(contactPositions, contactForces)
+                    F += sum(contactForces)
+                avg_dCM[0] += dartModel.getJointVelocityGlobal(0)
+                '''
         #            avg_dCM[0] += yrp.getCM(controlModel.getJointVelocitiesGlobal(), bodyMasses, upperMass, uppers)
         #            avg_dCM[0] += yrp.getCM(controlModel.getJointVelocitiesGlobal(), bodyMasses, totalMass)
 
@@ -1534,8 +1552,9 @@ def walkings(params, isCma=True):
 
         sumForce = sum(contactForces)
 
-        # graph calculated force
-        viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame)
+        if not isCma:
+            # graph calculated force
+            viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame)
 
         if not isCma:
             del rd_cForces[:]
@@ -1557,9 +1576,9 @@ def walkings(params, isCma=True):
         #     ground_skeleton = body.skeleton # type: pydart.Skeleton
         #     if ground_skeleton.name == "grount skeleton":
         #         print("hehe")
-        print "COM: ", dartModel.getCOM()
 
-        print "dq: ", dartModel.skeleton.dq
+        # print "COM: ", dartModel.getCOM()
+        # print "dq: ", dartModel.skeleton.dq
 
         if not isCma:
             del rd_point2[:]
@@ -1813,7 +1832,7 @@ def walkings(params, isCma=True):
 
         # objectiveSum = successSum + .3*comSum + velSum
         objectiveSum = successSum + velSum + .3*dirSum
-        print(objectiveSum, successSum, velSum, .3*dirSum, params)
+        # print(objectiveSum, successSum, velSum, .3*dirSum, params)
         del motion_stitch[:]
         del motion_debug1[:]
         del motion_debug2[:]
@@ -1907,11 +1926,18 @@ if __name__ == '__main__':
 
     params = [ 0.23265769,  1.04283873, -0.29465862,  0.3544647, 0.2997252, -0.17338881, 2.08012922, 1.09571025, 0.6792339, -0.35920458]
 
-    if len(sys.argv) == 1:
-        walkings(None, False)
-    elif len(sys.argv) == 2 and sys.argv[1] == '-view':
+    # DartTrackingFoot0 result, c_swf_mid_offset = 0.02
+    params = [ 0.00745384, -0.56053261,  0.00921962,  0.42575388,  1.03165526, 0.69931117,  1.42782163,  1.65119398,  1.1237301 ,  0.5327249 ]
+
+    params = [0., .7, .02, .1, .1, .0, 1.3, 1.2, 1., .05]
+    params = [ 0.52572998,  0.15153905, -0.59859175,  0.93952107,  0.49886098, -0.1271257,  0.7328913,  0.87975694, 1.73943837, -0.97777014]
+    isCma = True
+
+    if len(sys.argv) == 1 and not isCma:
         walkings(params, False)
-    elif len(sys.argv) == 2 and sys.argv[1] == '-cma':
+    elif len(sys.argv) == 2 and sys.argv[1] == '-view' and not isCma:
+        walkings(params, False)
+    elif (len(sys.argv) == 2 and sys.argv[1] == '-cma') or isCma:
         # from PyCommon.modules.Math.Nomalizer import Normalizer
         # normalizer = Normalizer([0.]*10., [1., 5., .2, 1., 1., 3., 3., 3., 3., .5], [1.]*10, [-1.]*10)
         # c6, K_stb_vel, K_swp_vel_sag, K_swp_vel_cor is velocity gain
@@ -1921,12 +1947,17 @@ if __name__ == '__main__':
         # cma.fmin(walkings, params, .1, args=(True,), options=cmaOption)
         # cma.fmin(walkings, params, .1, args=(True,))
 
+        from datetime import datetime
+        filename = datetime.now().strftime('%Y%m%d%H%M')+".opt"
+        fout = open(filename, "w")
+        fout.write(os.path.basename(__file__))
         es = cma.CMAEvolutionStrategy(params, .1,
                                       {'maxiter':100})
         # {'maxiter':2, 'fixed_variables':{2:math.sqrt(.02), 3:math.sqrt(.1), 5:math.sqrt(0.), 6:math.sqrt(1.3)}})
         pool = mp.Pool(es.popsize)
         cmaCount = 0
         while not es.stop():
+            fout = open(filename, "a")
             X = es.ask()
             f_values = pool.map_async(walkings, X).get()
             obj_values = [f_value[0] for f_value in f_values]
@@ -1935,7 +1966,9 @@ if __name__ == '__main__':
             es.logger.add()
 
             print(cmaCount, min(f_values), X[np.argmin(obj_values)])
+            fout.write(str(cmaCount)+' '+str(min(f_values))+' '+str(X[np.argmin(obj_values)])+'\n')
             cmaCount += 1
+            fout.close()
 
         print("------------best-----------")
         print("eval: ", es.best.evals)

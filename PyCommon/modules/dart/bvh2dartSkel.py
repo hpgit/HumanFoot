@@ -213,7 +213,7 @@ class DartModelMaker:
         return jointPairs, bodyToJointTs, jointTypes
 
 
-    def AddDartShapeNode(self, T, size, geom, shapeType='visual'):
+    def AddDartShapeNode(self, T, size, geom, shapeType='visual', name='', number=0):
         geomtext = ""
         if geom == "box":
             geomtext = "box"
@@ -229,6 +229,7 @@ class DartModelMaker:
             typetext = "collision_shape"
 
         etShape = et.Element(typetext)
+        etShape.attrib["name"] = name+' - '+shapeType+' - '+ str(number)
         # et.SubElement(etShape, "transformation").text = SE32veulerXYZstr(T)
         et.SubElement(etShape, "transformation").text = SE32vlogSO3str(T)
         etGeom = et.SubElement(et.SubElement(etShape, "geometry"), geomtext)
@@ -296,6 +297,8 @@ class DartModelMaker:
             if numGeom > 0:
                 for i in range(numGeom):
                     geomType = cfgNode.geoms[i]
+                    visualShapeCount = 0
+                    collisionShapeCount = 0
 
                     if geomType == "MyFoot3" or geomType == "MyFoot4" or geomType == "MyFoot5":
                         # capsule case
@@ -316,19 +319,24 @@ class DartModelMaker:
                         else:
                             print("there is no geom Ts!")
 
-                        etBody.append(self.AddDartShapeNode(geomT, [radius, height-2.*radius], "cylinder"))
+                        etBody.append(self.AddDartShapeNode(geomT, [radius, height-2.*radius], "cylinder", name=name, number=visualShapeCount))
+                        visualShapeCount += 1
 
                         geomSphereT = copy.deepcopy(geomT)
                         geomSphereT.SetPosition(geomT*Vec3(0., 0., -(height/2. - radius)))
                         if geomType == "MyFoot3" or geomType =="MyFoot4":
-                            etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid"))
+                            etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid", name=name, number=visualShapeCount))
+                            visualShapeCount += 1
                         if geomType == "MyFoot3":
-                            etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid", "collision"))
+                            etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid", "collision", name=name, number=collisionShapeCount))
+                            collisionShapeCount += 1
 
                         geomSphereT.SetPosition(geomT*Vec3(0., 0., (height/2. - radius)))
-                        etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid"))
+                        etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid", name=name, number=visualShapeCount))
+                        visualShapeCount += 1
                         if geomType != "MyFoot5":
-                            etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid", "collision"))
+                            etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid", "collision", name=name, number=collisionShapeCount))
+                            collisionShapeCount += 1
 
                         # etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., cylLen_2)), [radius]*3, "ellipsoid"))
                         # etBody.append(self.AddDartShapeNode(SE3(), [radius/2., 2.*cylLen_2], "cylinder"))
@@ -349,6 +357,8 @@ class DartModelMaker:
 
             else:
                 geomType = cfgNode.geom
+                visualShapeCount = 0
+                collisionShapeCount = 0
                 if (geomType == "MyFoot3") or (geomType == "MyFoot4") or geomType == "MyFoot5":
                     radius = .05
                     if cfgNode.width is not None:
@@ -364,14 +374,19 @@ class DartModelMaker:
 
                     etBody.append(self.AddInertia(mass))
 
-                    etBody.append(self.AddDartShapeNode(SE3(), [radius, length-2.*radius], "cylinder"))
+                    etBody.append(self.AddDartShapeNode(SE3(), [radius, length-2.*radius], "cylinder", name=name, number=visualShapeCount))
+                    visualShapeCount += 1
                     if geomType == "MyFoot3" or geomType =="MyFoot4":
-                        etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., -(length/2.-radius))), [radius*2.]*3, "ellipsoid"))
+                        etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., -(length/2.-radius))), [radius*2.]*3, "ellipsoid", name=name, number=visualShapeCount))
+                        visualShapeCount += 1
                     if geomType == "MyFoot3":
-                        etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., -(length/2.-radius))), [radius*2.]*3, "ellipsoid", "collision"))
-                    etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., length/2.-radius)), [radius*2.]*3, "ellipsoid"))
+                        etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., -(length/2.-radius))), [radius*2.]*3, "ellipsoid", "collision", name=name, number=collisionShapeCount))
+                        collisionShapeCount += 1
+                    etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., length/2.-radius)), [radius*2.]*3, "ellipsoid", name=name, number=visualShapeCount))
+                    visualShapeCount += 1
                     if geomType != "MyFoot5":
-                        etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., length/2.-radius)), [radius*2.]*3, "ellipsoid", "collision"))
+                        etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., length/2.-radius)), [radius*2.]*3, "ellipsoid", "collision", name=name, number=collisionShapeCount))
+                        collisionShapeCount += 1
                 else:
                     length = 1.
                     if cfgNode.length is not None:
@@ -510,7 +525,7 @@ class DartModelMaker:
         self.skelname = name
         tree, boneTs = self.posture2dartSkel(posture, config)
         # return prettifyXML(tree.getroot())
-        # print prettifyXML(tree.getroot())
+        print prettifyXML(tree.getroot())
         return et.tostring(tree.getroot(), 'ascii'), boneTs
 
 if __name__ == '__main__':
