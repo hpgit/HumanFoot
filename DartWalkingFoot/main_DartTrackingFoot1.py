@@ -1970,7 +1970,7 @@ if __name__ == '__main__':
 
             print(cmaCount, min(f_values), X[np.argmin(obj_values)])
             fout.write(str(cmaCount)+' '+str(min(f_values)))
-            for x in range(len(X[np.argmin(obj_values)])):
+            for x in X[np.argmin(obj_values)]:
                 fout.write(' '+str(x)+',')
             fout.write('\n')
             cmaCount += 1
