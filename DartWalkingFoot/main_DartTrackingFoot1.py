@@ -471,10 +471,10 @@ def walkings(params, isCma=True):
         # partBvhFilePath = '../PyCommon/modules/samples/simpleJump_long_test2.bvh'
         partBvhFilePath = current_path+'/../PyCommon/modules/samples/simpleJump_long_test2.bvh'
         partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
-        bvh.replaceJointFromBvh('RightFoot', partBvh, .02)
+        bvh.replaceJointFromBvh('RightFoot', partBvh, .03)
         partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
         partBvh.mirror('YZ')
-        bvh.replaceJointFromBvh('LeftFoot', partBvh, .02)
+        bvh.replaceJointFromBvh('LeftFoot', partBvh, .03)
 
     motion_ori = bvh.toJointMotion(1., False)
 
@@ -526,7 +526,7 @@ def walkings(params, isCma=True):
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
     wcfg.lockingVel = c_locking_vel
-    stepsPerFrame = 50
+    stepsPerFrame = 200
     wcfg.timeStep = frameTime/stepsPerFrame
 
     pydart.init()
@@ -956,6 +956,7 @@ def walkings(params, isCma=True):
             K_swp_pos_cor = _params[8] * _params[8]
             K_swp_pos_sag_faster = _params[9] * _params[9]
 
+        print c_swf_mid_offset
 
         # seginfo
         segIndex = seg_index[0]
@@ -1931,7 +1932,8 @@ if __name__ == '__main__':
 
     params = [0., .7, .02, .1, .1, .0, 1.3, 1.2, 1., .05]
     params = [ 0.52572998,  0.15153905, -0.59859175,  0.93952107,  0.49886098, -0.1271257,  0.7328913,  0.87975694, 1.73943837, -0.97777014]
-    isCma = True
+    params = [-0.03373822, 0.21621505, -0.46121163, 0.97844009,  1.26921316,  0.07107696,  1.43362972,  0.10045292, 1.40123327, -0.67596869]
+    isCma = False
 
     if len(sys.argv) == 1 and not isCma:
         walkings(params, False)
@@ -1950,7 +1952,7 @@ if __name__ == '__main__':
         from datetime import datetime
         filename = datetime.now().strftime('%Y%m%d%H%M')+".opt"
         fout = open(filename, "w")
-        fout.write(os.path.basename(__file__))
+        fout.write(os.path.basename(__file__)+'\n')
         es = cma.CMAEvolutionStrategy(params, .1,
                                       {'maxiter':100})
         # {'maxiter':2, 'fixed_variables':{2:math.sqrt(.02), 3:math.sqrt(.1), 5:math.sqrt(0.), 6:math.sqrt(1.3)}})
@@ -1966,7 +1968,10 @@ if __name__ == '__main__':
             es.logger.add()
 
             print(cmaCount, min(f_values), X[np.argmin(obj_values)])
-            fout.write(str(cmaCount)+' '+str(min(f_values))+' '+str(X[np.argmin(obj_values)])+'\n')
+            fout.write(str(cmaCount)+' '+str(min(f_values)))
+            for x in range(len(X[np.argmin(obj_values)])):
+                fout.write(' '+str(x)+',')
+            fout.write('\n')
             cmaCount += 1
             fout.close()
 
