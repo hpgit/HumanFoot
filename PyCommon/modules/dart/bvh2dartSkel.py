@@ -525,7 +525,7 @@ class DartModelMaker:
         self.skelname = name
         tree, boneTs = self.posture2dartSkel(posture, config)
         # return prettifyXML(tree.getroot())
-        print prettifyXML(tree.getroot())
+        # print prettifyXML(tree.getroot())
         return et.tostring(tree.getroot(), 'ascii'), boneTs
 
 if __name__ == '__main__':

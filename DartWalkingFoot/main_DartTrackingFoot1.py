@@ -52,6 +52,7 @@ CHARACTER_COLOR = (20, 166, 188)
 MAX_FRAME = 1500
 
 SEGMENT_FOOT = True
+SEGMENT_FOOT_MAG = .03
 
 def buildMassMap():
     massMap = {}
@@ -226,88 +227,102 @@ def buildMcfg():
     if SEGMENT_FOOT:
         footJointType = 'B'
         capsulDensity = 400.
+        capsulRadius = SEGMENT_FOOT_MAG/2.
 
+        # RightFoot_foot_0_0 : outside metatarsals
         capsulize('RightFoot_foot_0_0')
         node = mcfg.getNode('RightFoot_foot_0_0')
-        node.addGeom('MyFoot3', [0.02*np.array([-0.3, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(capsulDensity, .01, 0.02*2.5+0.02))
-        node.addGeom('MyFoot3', [0.02*np.array([-0.3-1.2, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(capsulDensity, .01, 0.02*2.5+0.02))
+        node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([-0.3, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])],
+                     ypc.CapsuleMaterial(capsulDensity, capsulRadius, SEGMENT_FOOT_MAG*2.5 + 2.*capsulRadius))
+        node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([-0.3-1.2, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])],
+                     ypc.CapsuleMaterial(capsulDensity, capsulRadius, SEGMENT_FOOT_MAG*2.5 + 2.*capsulRadius))
         # node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0., 0., 0.])], ypc.CapsuleMaterial(1000., .01, -1))
         node.jointType = footJointType
 
+        # RightFoot_foot_0_0_0 : outside phalanges
         capsulize('RightFoot_foot_0_0_0')
         node = mcfg.getNode('RightFoot_foot_0_0_0')
-        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
-        node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
+        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, capsulRadius, -1))
+        node.addGeom('MyFoot4', [SEGMENT_FOOT_MAG*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, capsulRadius, -1))
         node.jointType = footJointType
 
+        # RightFoot_foot_0_1 : inside metatarsals
         capsulize('RightFoot_foot_0_1')
         node = mcfg.getNode('RightFoot_foot_0_1')
-        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
-        node.addGeom('MyFoot3', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity,.01, -1))
+        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, capsulRadius, -1))
+        node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity,capsulRadius, -1))
         node.jointType = footJointType
 
+        # RightFoot_foot_0_1_0 : inside phalanges
         capsulize('RightFoot_foot_0_1_0')
         node = mcfg.getNode('RightFoot_foot_0_1_0')
-        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
-        node.addGeom('MyFoot4', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
+        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, capsulRadius, -1))
+        node.addGeom('MyFoot4', [SEGMENT_FOOT_MAG*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, capsulRadius, -1))
         node.jointType = footJointType
 
+        # RightFoot_foot_1_0 : center heel
         capsulize('RightFoot_foot_1_0')
         node = mcfg.getNode('RightFoot_foot_1_0')
-        node.addGeom('MyFoot3', [0.02*np.array([0., 0., .7]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, 0.02*2.0+0.02))
+        node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([0., 0., .7]), mm.exp([0.]*3)],
+                     ypc.CapsuleMaterial(capsulDensity, capsulRadius, SEGMENT_FOOT_MAG*2. + capsulRadius * 2.))
         # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
         node.jointType = footJointType
 
+        # RightFoot_foot_1_1 : inside heel
         capsulize('RightFoot_foot_1_1')
         node = mcfg.getNode('RightFoot_foot_1_1')
-        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
+        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, capsulRadius, -1))
         node.jointType = footJointType
 
+        # RightFoot_foot_1_2 : outside heel
         capsulize('RightFoot_foot_1_2')
         node = mcfg.getNode('RightFoot_foot_1_2')
-        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
+        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, capsulRadius, -1))
         node.jointType = footJointType
 
 
         capsulize('LeftFoot_foot_0_0')
         node = mcfg.getNode('LeftFoot_foot_0_0')
-        node.addGeom('MyFoot3', [0.02*np.array([0.3, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(capsulDensity, .01, 0.02*2.5+0.02))
-        node.addGeom('MyFoot3', [0.02*np.array([0.3+1.2, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(capsulDensity, .01, 0.02*2.5+0.02))
+        node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([0.3, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])],
+                     ypc.CapsuleMaterial(capsulDensity, capsulRadius, SEGMENT_FOOT_MAG*2.5+2.*capsulRadius))
+        node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([0.3+1.2, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])],
+                     ypc.CapsuleMaterial(capsulDensity, capsulRadius, SEGMENT_FOOT_MAG*2.5+2.*capsulRadius))
         # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
         node.jointType = footJointType
 
         capsulize('LeftFoot_foot_0_0_0')
         node = mcfg.getNode('LeftFoot_foot_0_0_0')
-        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
-        node.addGeom('MyFoot4', [0.02*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
+        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, capsulRadius, -1))
+        node.addGeom('MyFoot4', [SEGMENT_FOOT_MAG*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, capsulRadius, -1))
         node.jointType = footJointType
 
         capsulize('LeftFoot_foot_0_1')
         node = mcfg.getNode('LeftFoot_foot_0_1')
-        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
-        node.addGeom('MyFoot3', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
+        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, capsulRadius, -1))
+        node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, capsulRadius, -1))
         node.jointType = footJointType
 
         capsulize('LeftFoot_foot_0_1_0')
         node = mcfg.getNode('LeftFoot_foot_0_1_0')
-        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
-        node.addGeom('MyFoot4', [0.02*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
+        node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, capsulRadius, -1))
+        node.addGeom('MyFoot4', [SEGMENT_FOOT_MAG*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, capsulRadius, -1))
         node.jointType = footJointType
 
         capsulize('LeftFoot_foot_1_0')
         node = mcfg.getNode('LeftFoot_foot_1_0')
-        node.addGeom('MyFoot3', [0.02*np.array([0., 0., .7]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, 0.02*2.0+0.02))
+        node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([0., 0., .7]), mm.exp([0.]*3)],
+                     ypc.CapsuleMaterial(capsulDensity, capsulRadius, SEGMENT_FOOT_MAG*2.0+2.*capsulRadius))
         # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
         node.jointType = footJointType
 
         capsulize('LeftFoot_foot_1_1')
         node = mcfg.getNode('LeftFoot_foot_1_1')
-        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
+        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, capsulRadius, -1))
         node.jointType = footJointType
 
         capsulize('LeftFoot_foot_1_2')
         node = mcfg.getNode('LeftFoot_foot_1_2')
-        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, .01, -1))
+        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, capsulRadius, -1))
         node.jointType = footJointType
 
 
@@ -446,8 +461,8 @@ def walkings(params, isCma=True):
         c_min_contact_time = .7
         c_landing_duration = .2
         c_taking_duration = .3
-        # c_swf_mid_offset = .02
-        c_swf_mid_offset = .0
+        c_swf_mid_offset = .02
+        # c_swf_mid_offset = .0
         c_locking_vel = .05
 
         c_swf_offset = .0
@@ -471,10 +486,10 @@ def walkings(params, isCma=True):
         # partBvhFilePath = '../PyCommon/modules/samples/simpleJump_long_test2.bvh'
         partBvhFilePath = current_path+'/../PyCommon/modules/samples/simpleJump_long_test2.bvh'
         partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
-        bvh.replaceJointFromBvh('RightFoot', partBvh, .03)
+        bvh.replaceJointFromBvh('RightFoot', partBvh, SEGMENT_FOOT_MAG)
         partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
         partBvh.mirror('YZ')
-        bvh.replaceJointFromBvh('LeftFoot', partBvh, .03)
+        bvh.replaceJointFromBvh('LeftFoot', partBvh, SEGMENT_FOOT_MAG)
 
     motion_ori = bvh.toJointMotion(1., False)
 
@@ -526,7 +541,7 @@ def walkings(params, isCma=True):
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
     wcfg.lockingVel = c_locking_vel
-    stepsPerFrame = 200
+    stepsPerFrame = 50
     wcfg.timeStep = frameTime/stepsPerFrame
 
     pydart.init()
@@ -758,7 +773,7 @@ def walkings(params, isCma=True):
             viewer.doc.addRenderer('controlModel', yr.DartModelRenderer(dartModel, (50, 200, 200)))
 
             viewer.doc.addObject('motion_ori', motion_ori)
-            # viewer.doc.addRenderer('motion_ori', yr.JointMotionRenderer(motion_ori, (0,100,255), yr.LINK_BONE))
+            viewer.doc.addRenderer('motion_ori', yr.JointMotionRenderer(motion_ori, (0,100,255), yr.LINK_BONE))
             # viewer.doc.addRenderer('motion_seg_orig', yr.JointMotionRenderer(motion_seg_orig, (0,100,255), yr.LINK_BONE))
             # viewer.doc.addRenderer('motion_seg', yr.JointMotionRenderer(motion_seg, (0,150,255), yr.LINK_BONE))
             # viewer.doc.addRenderer('motion_stitch', yr.JointMotionRenderer(motion_stitch, (0,255,200), yr.LINK_BONE))
@@ -956,7 +971,7 @@ def walkings(params, isCma=True):
             K_swp_pos_cor = _params[8] * _params[8]
             K_swp_pos_sag_faster = _params[9] * _params[9]
 
-        print c_swf_mid_offset
+        # print c_swf_mid_offset
 
         # seginfo
         segIndex = seg_index[0]
@@ -1932,7 +1947,11 @@ if __name__ == '__main__':
 
     params = [0., .7, .02, .1, .1, .0, 1.3, 1.2, 1., .05]
     params = [ 0.52572998,  0.15153905, -0.59859175,  0.93952107,  0.49886098, -0.1271257,  0.7328913,  0.87975694, 1.73943837, -0.97777014]
+
+    # 120 frames success
     params = [-0.03373822, 0.21621505, -0.46121163, 0.97844009,  1.26921316,  0.07107696,  1.43362972,  0.10045292, 1.40123327, -0.67596869]
+
+    # 195 frames success
     params = [-0.156885745146, 0.224351871531, -0.651388957459, 0.803834992348, 1.05714177435, 0.00542880291931, 1.56462249867, -0.111631227361, 1.37037255808, -1.00517210154]
     isCma = False
 
