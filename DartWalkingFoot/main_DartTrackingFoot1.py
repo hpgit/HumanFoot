@@ -1331,7 +1331,7 @@ def walkings(params, isCma=True):
                             motion_stf_balancing[frame].mulJointOrientationGlobal(swingFoot,
                                                                   mm.slerp(R_swf_current, R_swf_par, swf_par_func(t)))
 
-        # '''
+        '''
         # swing foot heel strike adjustment
         # make heel as flat as possible to ground
         swf_heel_func = yfg.hermite2nd
@@ -1346,7 +1346,7 @@ def walkings(params, isCma=True):
         stf_ankle_func = lambda x: -2*(x**2)+3*(x**3)
         if len(stanceFoots) == 1:
             for stanceFoot in stanceFoots:
-                R_target_ankle = mm.exp(stf_ankle_func(t)*mm.deg2Rad(20.)*np.array([1., 0., 0.]))
+                R_target_ankle = mm.exp(stf_ankle_func(t)*mm.deg2Rad(30.)*np.array([1., 0., 0.]))
                 motion_stf_balancing[frame].mulJointOrientationLocal(stanceFoot, R_target_ankle)
         # stance foot toe adjustment
         # stf_toe_func = yfg.hermite2nd
