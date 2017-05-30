@@ -495,6 +495,11 @@ def walkings(params, isCma=True):
 
     motion_ori = bvh.toJointMotion(1., False)
 
+    LeftAnkleIdx = motion_ori[0].skeleton.getJointIndex('LeftFoot')
+    oriAnkle = motion_ori[0].getJointOrientationGlobal(LeftAnkleIdx)
+    # motion_ori[0].setJointOrientationGlobal(LeftAnkleIdx, mm.slerp(R_motion, R_character, match_stl_func(t)))
+    motion_ori[0].setJointOrientationGlobal(LeftAnkleIdx, np.dot(mm.rotZ(math.pi/4.), oriAnkle))
+
     # motion_ori = yf.readBvhFile(motionDir+filename)
     frameTime = 1/motion_ori.fps
 
@@ -742,6 +747,7 @@ def walkings(params, isCma=True):
 
     rd_point1 = [None]
     rd_point2 = [None]
+    rd_point3 = [None]
     rd_vec1 = [None];   rd_vecori1 = [None]
     rd_vec2 = [None];   rd_vecori2 = [None]
     rd_frame1 = [None]
@@ -806,12 +812,12 @@ def walkings(params, isCma=True):
 
             viewer.doc.addRenderer('rd_point1', yr.PointsRenderer(rd_point1, (0,255,0)))
             viewer.doc.addRenderer('rd_point2', yr.PointsRenderer(rd_point2, (255,0,0)))
+            viewer.doc.addRenderer('rd_point3', yr.PointsRenderer(rd_point3, (255,255,0)))
         #        viewer.doc.addRenderer('rd_vec1', yr.VectorsRenderer(rd_vec1, rd_vecori1, (255,0,0)))
         #    viewer.doc.addRenderer('rd_vec2', yr.VectorsRenderer(rd_vec2, rd_vecori2, (0,255,0)))
         #    viewer.doc.addRenderer('rd_frame1', yr.FramesRenderer(rd_frame1, (0,200,200)))
         #    viewer.doc.addRenderer('rd_frame2', yr.FramesRenderer(rd_frame2, (200,200,0)))
         #    viewer.setMaxFrame(len(motion_ori)-1)
-
 
 
 
@@ -823,6 +829,8 @@ def walkings(params, isCma=True):
         # viewer.objectInfoWnd.add1DSlider("offset_rx", 0., 2., .001, dartModel.getBody('LeftFoot').world_transform())
         # viewer.objectInfoWnd.add1DSlider("offset_ry", 0., 2., .001, dartModel.getBodyPositionGlobal(0)[0])
         # viewer.objectInfoWnd.add1DSlider("offset_rz", 0., 2., .001, dartModel.getBodyPositionGlobal(0)[0])
+
+        viewer.objectInfoWnd.add1DSlider("debug", 0., 2., .001, 1.)
 
         solver = hik.numIkSolver(dartModel)
 
@@ -839,14 +847,35 @@ def walkings(params, isCma=True):
                 _rootpos = dartModel.getBodyPositionGlobal(0)
                 dartModel.translateByOffset(np.array((slider.value() - _rootpos[0], 0., 0.)))
                 dartMotionModel.translateByOffset(np.array((slider.value() - _rootpos[0], 0., 0.)))
+                motion_ori[0].translateByOffset(np.array((slider.value()- _rootpos[0], 0., 0.)))
             elif slider.label() == 'offset_ty':
                 _rootpos = dartModel.getBodyPositionGlobal(0)
                 dartModel.translateByOffset(np.array((0., slider.value() - _rootpos[1], 0.)))
                 dartMotionModel.translateByOffset(np.array((0., slider.value() - _rootpos[1], 0.)))
+                motion_ori[0].translateByOffset(np.array((0., slider.value()- _rootpos[1], 0.)))
             elif slider.label() == 'offset_tz':
                 _rootpos = dartModel.getBodyPositionGlobal(0)
                 dartModel.translateByOffset(np.array((0., 0., slider.value() - _rootpos[2])))
                 dartMotionModel.translateByOffset(np.array((0., 0., slider.value() - _rootpos[2])))
+                motion_ori[0].translateByOffset(np.array((0., 0., slider.value()- _rootpos[2])))
+            elif slider.label() == 'debug':
+                del rd_point3[:]
+                rd_point3.append(dartMotionModel.getBody('LeftFoot_foot_0_0_0').to_world(np.array((0., 0., slider.value()))))
+                rd_point3.append(dartMotionModel.getBody('LeftFoot_foot_0_0_0').to_world(np.array((0., 0., -slider.value()))))
+                rd_point3.append(dartMotionModel.getBody('LeftFoot_foot_0_0_0').to_world(np.array((slider.value(), 0., slider.value()))))
+
+            footPoint0 = dartMotionModel.getBody('LeftFoot_foot_0_0_0').to_world(np.array((0., 0., -1.)))
+            footPoint1 = dartMotionModel.getBody('LeftFoot_foot_0_0_0').to_world(np.array((0., 0., 1.)))
+            footPoint2 = dartMotionModel.getBody('LeftFoot_foot_0_0_0').to_world(np.array((1., 0., 1.)))
+
+            footVec = np.cross(footPoint1 - footPoint0, footPoint2 - footPoint0)
+            footRot = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
+            footIdx = motion_ori[0].skeleton.getJointIndex('LeftFoot_foot_0_0_0')
+            footOri = motion_ori[0].getJointOrientationGlobal(footIdx)
+            motion_ori[0].setJointOrientationGlobal(footIdx, np.dot(footOri, footRot))
+            dartMotionModel.update(motion_ori[0])
+
+
 
             # solver.clear()
             # solver.addConstraints(dartModel.getBody('LeftFoot_foot_0_0_0').index_in_skeleton(),np.array((0., 0., 0.)),
@@ -854,11 +883,15 @@ def walkings(params, isCma=True):
             #                       (False, True, False, False))
             # solver.solve(np.array((0., 0., 0.)))
 
+
+
             viewer.motionViewWnd.glWindow.redraw()
 
         viewer.objectInfoWnd.getValobject("offset_tx").callback(offsetSliderCallback)
         viewer.objectInfoWnd.getValobject("offset_ty").callback(offsetSliderCallback)
         viewer.objectInfoWnd.getValobject("offset_tz").callback(offsetSliderCallback)
+
+        viewer.objectInfoWnd.getValobject("debug").callback(offsetSliderCallback)
 
 
         if not REPEATED:
