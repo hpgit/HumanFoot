@@ -492,7 +492,7 @@ def walkings(params, isCma=True):
         bvh.replaceJointFromBvh('LeftFoot', partBvh, SEGMENT_FOOT_MAG)
 
     motion_ori = bvh.toJointMotion(1., False)
-
+    print motion_ori[0].skeleton
     LeftAnkleIdx = motion_ori[0].skeleton.getJointIndex('LeftFoot')
     oriAnkle = motion_ori[0].getJointOrientationGlobal(LeftAnkleIdx)
     # motion_ori[0].setJointOrientationGlobal(LeftAnkleIdx, mm.slerp(R_motion, R_character, match_stl_func(t)))
@@ -890,22 +890,29 @@ def walkings(params, isCma=True):
                 # footOri = motion_ori[0].getJointOrientationGlobal(LeftAnkleIdx)
                 motion_ori[0].setJointOrientationGlobal(LeftAnkleIdx, np.dot(mm.rotZ(slider.value() * 4.), currentFootOri[0]))
 
-            elif slider.label() == 'debug':
-                del rd_point3[:]
-                rd_point3.append(dartMotionModel.getBody('LeftFoot_foot_0_0').to_world(np.array((0., 0., slider.value()))))
-                rd_point3.append(dartMotionModel.getBody('LeftFoot_foot_0_0').to_world(np.array((0., 0., -slider.value()))))
-                rd_point3.append(dartMotionModel.getBody('LeftFoot_foot_0_0').to_world(np.array((slider.value(), 0., slider.value()))))
-
             for idx in lIDs:
                 motion_ori[0].setJointOrientationLocal(idx, np.eye(3))
-            dartMotionModel.update(motion_ori[0])
+
+            def getJointEffeoctorPositionGlobal(posture, jointNameOrIdx):
+                """
+
+                :type posture: ym.JointPosture
+                :type jointNameOrIdx: str | int
+                :return: np.array
+                """
+                idx = jointNameOrIdx
+                if type(jointNameOrIdx) == str:
+                    idx = posture.skeleton.getJointIndex(jointNameOrIdx)
+                effectorOffset = posture.skeleton.getJoint(idx).children[0].offset
+                return posture.getJointPositionGlobal(idx) + np.dot(posture.getJointOrientationGlobal(idx), effectorOffset)
 
             # contact detecting
-            if dartMotionModel.getBody('LeftFoot_foot_0_0_0').to_world()[1] < 0.:
-            # if motion_ori[0].getJointPositionGlobal(lIDdic('LeftFoot_foot_0_0_0')).to_world()[1] < 0.:
-                footPoint0 = dartMotionModel.getBody('LeftFoot_foot_0_0_0').to_world(np.array((0., 0., -1.)))
-                footPoint1 = dartMotionModel.getBody('LeftFoot_foot_0_0_0').to_world(np.array((0., 0., 1.)))
-                footPoint2 = dartMotionModel.getBody('LeftFoot_foot_0_0_0').to_world(np.array((1., 0., 1.)))
+            # if dartMotionModel.getBody('LeftFoot_foot_0_0_0').to_world()[1] < 0.:
+            # if motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_0_0'])[1] < SEGMENT_FOOT_MAG/2.:
+            if getJointEffeoctorPositionGlobal(motion_ori[0], 'LeftFoot_foot_0_0_0')[1] < SEGMENT_FOOT_MAG/2.:
+                footPoint0 = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_0_0'], np.array((0., 0., -1.)))
+                footPoint1 = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_0_0'], np.array((0., 0., 1.)))
+                footPoint2 = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_0_0'], np.array((1., 0., 1.)))
 
                 footVec = np.cross(footPoint1 - footPoint0, footPoint2 - footPoint0)
                 footRot = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
@@ -913,13 +920,13 @@ def walkings(params, isCma=True):
                 footOri = motion_ori[0].getJointOrientationGlobal(footIdx)
                 # motion_ori[0].setJointOrientationGlobal(footIdx, np.dot(footOri, footRot))
                 motion_ori[0].setJointOrientationGlobal(footIdx, np.dot(footRot, footOri))
-                dartMotionModel.update(motion_ori[0])
 
-            if dartMotionModel.getBody('LeftFoot_foot_0_1_0').to_world()[1] < 0.:
-                # if motion_ori[0].getJointPositionGlobal(lIDdic('LeftFoot_foot_0_0_0')).to_world()[1] < 0.:
-                footPoint0 = dartMotionModel.getBody('LeftFoot_foot_0_1_0').to_world(np.array((0., 0., -1.)))
-                footPoint1 = dartMotionModel.getBody('LeftFoot_foot_0_1_0').to_world(np.array((0., 0., 1.)))
-                footPoint2 = dartMotionModel.getBody('LeftFoot_foot_0_1_0').to_world(np.array((1., 0., 1.)))
+            # if dartMotionModel.getBody('LeftFoot_foot_0_1_0').to_world()[1] < 0.:
+            # if motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_1_0'])[1] < SEGMENT_FOOT_MAG/2.:
+            if getJointEffeoctorPositionGlobal(motion_ori[0], 'LeftFoot_foot_0_1_0')[1] < SEGMENT_FOOT_MAG/2.:
+                footPoint0 = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_1_0'], np.array((0., 0., -1.)))
+                footPoint1 = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_1_0'], np.array((0., 0., 1.)))
+                footPoint2 = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_1_0'], np.array((1., 0., 1.)))
 
                 footVec = np.cross(footPoint1 - footPoint0, footPoint2 - footPoint0)
                 footRot = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
@@ -927,7 +934,8 @@ def walkings(params, isCma=True):
                 footOri = motion_ori[0].getJointOrientationGlobal(footIdx)
                 # motion_ori[0].setJointOrientationGlobal(footIdx, np.dot(footOri, footRot))
                 motion_ori[0].setJointOrientationGlobal(footIdx, np.dot(footRot, footOri))
-                dartMotionModel.update(motion_ori[0])
+
+            dartMotionModel.update(motion_ori[0])
 
             # solver.clear()
             # solver.addConstraints(dartModel.getBody('LeftFoot_foot_0_0_0').index_in_skeleton(),np.array((0., 0., 0.)),

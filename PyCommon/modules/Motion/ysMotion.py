@@ -614,7 +614,7 @@ class JointSkeleton(Skeleton):
     def getJointNum(self):
         return len(self.jointElementIndexes)
     def getJoint(self, jointIndex):
-        return self.elements[self.jointElementIndexes[jointIndex]]
+        return self.elements[self.jointElementIndexes[jointIndex]] # type: Joint
     def getJointName(self, jointIndex):
         return self.elementNames[self.jointElementIndexes[jointIndex]]
     def getJointIndex(self, name):
@@ -1015,8 +1015,11 @@ class JointPosture(Posture):
         if update:
             self.updateGlobalT(self.skeleton.jointElementIndexes[jointIndex])
 
-    def getJointPositionGlobal(self, jointIndex):
-        return self.getPosition(self.skeleton.jointElementIndexes[jointIndex])
+    def getJointPositionGlobal(self, jointIndex, localOffset=None):
+        jointElementIndex = self.skeleton.jointElementIndexes[jointIndex]
+        if localOffset is not None:
+            return self.getPosition(jointElementIndex) + np.dot(self.getGlobalR(jointElementIndex), localOffset)
+        return self.getPosition(jointElementIndex)
     def getJointOrientationLocal(self, jointIndex):
         return self.localRs[self.skeleton.jointElementIndexes[jointIndex]]
     def getJointOrientationGlobal(self, jointIndex):
