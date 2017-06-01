@@ -155,10 +155,35 @@ class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
         slider.bounds(minVal, maxVal)
         slider.value(initVal)
         slider.step(valStep)
+        slider.label(name)
         slider.name = name
         self.end()
         self.addValObjects(slider)
         self.valObjOffset += 40
+
+    def add1DRoller(self, name):
+        class hpRoller(fltk.Fl_Roller):
+            def handle(self, event):
+                if self.handler is not None:
+                    self.handler(self, event)
+                return super(hpRoller, self).handle(event)
+            def set_handler(self, handler):
+                self.handler = handler
+
+
+        self.begin()
+        roller = hpRoller(10, self.valObjOffset, self.viewer.panelWidth - 30, 18, name)
+        roller.type(fltk.FL_HORIZONTAL)
+        roller.bounds(-1., 1.)
+        roller.value(0.)
+        roller.step(0.001)
+        roller.label(name)
+        roller.handler = None
+        roller.name = name
+        self.end()
+        self.addValObjects(roller)
+        self.valObjOffset += 40
+
 
     def add3DSlider(self, name, minVal, maxVal, valStep, initVal):
         self.begin()
