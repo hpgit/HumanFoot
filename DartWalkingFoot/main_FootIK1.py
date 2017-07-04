@@ -824,9 +824,9 @@ def walkings(params, isCma=True):
 
         leftFootOri = dartModel.getBody('LeftFoot').world_transform() # type: np.ndarray
 
-        viewer.objectInfoWnd.add1DSlider("offset_tx", 0., 2., .001, dartModel.getBodyPositionGlobal(0)[0])
-        viewer.objectInfoWnd.add1DSlider("offset_ty", 0., 2., .001, dartModel.getBodyPositionGlobal(0)[1])
-        viewer.objectInfoWnd.add1DSlider("offset_tz", 0., 2., .001, dartModel.getBodyPositionGlobal(0)[2])
+        viewer.objectInfoWnd.add1DSlider("offset_tx", 1., 1.2, .001, dartModel.getBodyPositionGlobal(0)[0])
+        viewer.objectInfoWnd.add1DSlider("offset_ty", 1., 1.2, .001, dartModel.getBodyPositionGlobal(0)[1])
+        viewer.objectInfoWnd.add1DSlider("offset_tz", 1., 1.2, .001, dartModel.getBodyPositionGlobal(0)[2])
         # viewer.objectInfoWnd.add1DSlider("offset_rx", 0., 2., .001, dartModel.getBody('LeftFoot').world_transform())
         # viewer.objectInfoWnd.add1DSlider("offset_ry", 0., 2., .001, dartModel.getBodyPositionGlobal(0)[0])
         # viewer.objectInfoWnd.add1DSlider("offset_rz", 0., 2., .001, dartModel.getBodyPositionGlobal(0)[0])
@@ -958,16 +958,17 @@ def walkings(params, isCma=True):
                 footRot2 = mm.getSO3FromVectors(outside_new_tmp - inside_new, widthVec)
                 footOri2 = posture.getJointOrientationGlobal(idx)
                 # print footRot2, footOri2
-                posture.setJointOrientationGlobal(idx, np.dot(footRot2, footOri2))
+                newFootOri = np.dot(footRot2, footOri2)
+                # posture.setJointOrientationGlobal(idx, np.dot(footRot2, footOri2))
 
-                return inside_new, outside_new
+                return newFootOri, inside_new, outside_new
 
             def makeFourContactPos(posture, jointNameOrIdx, isLeftFoot=True, isOutside=True):
                 """
 
                 :type posture: ym.JointPosture
                 :type jointNameOrIdx: str | int
-                :return: np.array, np.array
+                :return: np.array, np.array, np.array
                 """
                 idx = jointNameOrIdx
                 if type(jointNameOrIdx) == str:
@@ -1013,9 +1014,14 @@ def walkings(params, isCma=True):
                 posture.setJointOrientationGlobal(idx, np.dot(footRot2, footOri2))
                 return
 
-            collide={'LeftFoot_foot_0_0_0_Effector':False}
+            # get collision info
+            collide = dict()  # type: dict[str, bool]
+            collide['LeftFoot_foot_0_0_0_Effector'] = False
             collide['LeftFoot_foot_0_0_0'] = False
             collide['LeftFoot_foot_0_0'] = False
+            collide['LeftFoot_foot_0_1_0_Effector'] = False
+            collide['LeftFoot_foot_0_1_0'] = False
+            collide['LeftFoot_foot_0_1'] = False
 
             if getJointChildPositionGlobal(motion_ori[0], 'LeftFoot_foot_0_0_0')[1] < SEGMENT_FOOT_MAG/2.:
                 collide['LeftFoot_foot_0_0_0_Effector'] = True
@@ -1030,32 +1036,51 @@ def walkings(params, isCma=True):
             if motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_1'])[1] < SEGMENT_FOOT_MAG/2.:
                 collide['LeftFoot_foot_0_1'] = True
 
+            def getFootSegNormal(posture, jointNameOrIdx, isLeftFoot=True, isOutside=True):
+                """
+
+                :type posture: ym.JointPosture
+                :type jointNameOrIdx: str | int
+                :return: np.array, np.array, np.array
+                """
+                idx = jointNameOrIdx
+                if type(jointNameOrIdx) == str:
+                    idx = posture.skeleton.getJointIndex(jointNameOrIdx)
+
+                origin = posture.getJointPositionGlobal(idx)
+                insideOffset = np.array((0., 0., SEGMENT_FOOT_MAG * 2.5))
+                outsideOffset = np.array((1.2, 0., SEGMENT_FOOT_MAG * 2.5))
+                if isLeftFoot ^ isOutside:
+                    # if it is not outside phalange,
+                    outsideOffset[0] = -1.2
+
+                origin = posture.getJointPositionGlobal(idx)
+                inside = posture.getJointPositionGlobal(idx, insideOffset)
+                outside = posture.getJointPositionGlobal(idx, outsideOffset)
+
+                if isLeftFoot ^ isOutside:
+                    return mm.normalize(-np.cross(inside - origin, outside - origin))
+                else:
+                    return mm.normalize(np.cross(inside - origin, outside - origin))
+
+
 
             if collide['LeftFoot_foot_0_0_0_Effector'] and collide['LeftFoot_foot_0_0_0'] and collide['LeftFoot_foot_0_0']:
-
-                footPoint0 = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_0'], np.array((0., 0., -1.)))
-                footPoint1 = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_0'], np.array((0., 0., 1.)))
-                footPoint2 = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_0'], np.array((1., 0., 1.)))
-
-                footVec = np.cross(footPoint1 - footPoint0, footPoint2 - footPoint0)
+                footVec = getFootSegNormal(motion_ori[0], 'LeftFoot_foot_0_0', isLeftFoot=True, isOutside=True)
                 footRot = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
                 footIdx = motion_ori[0].skeleton.getJointIndex('LeftFoot_foot_0_0')
                 footOri = motion_ori[0].getJointOrientationGlobal(footIdx)
-                # motion_ori[0].setJointOrientationGlobal(footIdx, np.dot(footOri, footRot))
                 motion_ori[0].setJointOrientationGlobal(footIdx, np.dot(footRot, footOri))
 
             elif collide['LeftFoot_foot_0_0_0_Effector'] and collide['LeftFoot_foot_0_0_0']:
-                _inside, _outside = makeTwoContactPos(motion_ori[0], 'LeftFoot_foot_0_0')
-                # makeFourContactPos(motion_ori[0], 'LeftFoot_foot_0_0_0')
-                footPoint0 = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_0_0'], np.array((0., 0., -1.)))
-                footPoint1 = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_0_0'], np.array((0., 0., 1.)))
-                footPoint2 = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_0_0'], np.array((1., 0., 1.)))
+                newFootOri, _inside, _outside = makeTwoContactPos(motion_ori[0], 'LeftFoot_foot_0_0')
+                motion_ori[0].setJointOrientationGlobal(motion_ori[0].skeleton.getJointIndex('LeftFoot_foot_0_0'), newFootOri)
 
-                footVec = np.cross(footPoint1 - footPoint0, footPoint2 - footPoint0)
+                # makeFourContactPos(motion_ori[0], 'LeftFoot_foot_0_0_0')
+                footVec = getFootSegNormal(motion_ori[0], 'LeftFoot_foot_0_0_0', isLeftFoot=True, isOutside=True)
                 footRot = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
                 footIdx = motion_ori[0].skeleton.getJointIndex('LeftFoot_foot_0_0_0')
                 footOri = motion_ori[0].getJointOrientationGlobal(footIdx)
-                # motion_ori[0].setJointOrientationGlobal(footIdx, np.dot(footOri, footRot))
                 motion_ori[0].setJointOrientationGlobal(footIdx, np.dot(footRot, footOri))
 
                 inside_tmp = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_0_0'])
@@ -1066,16 +1091,12 @@ def walkings(params, isCma=True):
             elif collide['LeftFoot_foot_0_0_0_Effector']:
                 footPoint = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_0_0'])
 
-                _inside, _outside = makeTwoContactPos(motion_ori[0], 'LeftFoot_foot_0_0', baseHeight=footPoint[1]-SEGMENT_FOOT_MAG * .5)
-                footPoint0 = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_0_0'], np.array((0., 0., -1.)))
-                footPoint1 = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_0_0'], np.array((0., 0., 1.)))
-                footPoint2 = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_0_0'], np.array((1., 0., 1.)))
-
-                footVec = np.cross(footPoint1 - footPoint0, footPoint2 - footPoint0)
+                newFootOri, _inside, _outside = makeTwoContactPos(motion_ori[0], 'LeftFoot_foot_0_0', baseHeight=footPoint[1]-SEGMENT_FOOT_MAG * .5)
+                motion_ori[0].setJointOrientationGlobal(motion_ori[0].skeleton.getJointIndex('LeftFoot_foot_0_0'), newFootOri)
+                footVec = getFootSegNormal(motion_ori[0], 'LeftFoot_foot_0_0_0', isLeftFoot=True, isOutside=True)
                 footRot = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
                 footIdx = motion_ori[0].skeleton.getJointIndex('LeftFoot_foot_0_0_0')
                 footOri = motion_ori[0].getJointOrientationGlobal(footIdx)
-                # motion_ori[0].setJointOrientationGlobal(footIdx, np.dot(footOri, footRot))
                 motion_ori[0].setJointOrientationGlobal(footIdx, np.dot(footRot, footOri))
 
                 inside_tmp = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_0_0'])
@@ -1083,7 +1104,93 @@ def walkings(params, isCma=True):
                 footRot2 = mm.getSO3FromVectors(outside_tmp - inside_tmp, _outside - _inside)
                 motion_ori[0].setJointOrientationGlobal(footIdx, np.dot(footRot2, np.dot(footRot, footOri)))
 
+            elif getJointChildPositionGlobal(motion_ori[0], 'LeftFoot_foot_0_0_0')[1] < SEGMENT_FOOT_MAG*.75:
+                # In case of posibility of contact
+                # if 1 radius <  toe height < 3/2 radius, this routine is working.
+                toeHeight = getJointChildPositionGlobal(motion_ori[0], 'LeftFoot_foot_0_0_0')[1]
+                ratio = (SEGMENT_FOOT_MAG*.75 - toeHeight)/SEGMENT_FOOT_MAG * 4.
 
+                footPoint = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_0_0'])
+                newFootOri, _inside, _outside = makeTwoContactPos(motion_ori[0], 'LeftFoot_foot_0_0', baseHeight=footPoint[1]-SEGMENT_FOOT_MAG * .5)
+
+                oldFootOri = motion_ori[0].getJointOrientationGlobal(lIDdic['LeftFoot_foot_0_0'])
+                motion_ori[0].setJointOrientationGlobal(lIDdic['LeftFoot_foot_0_0'], mm.slerp(oldFootOri, newFootOri, ratio))
+
+                oldFootOri2 = motion_ori[0].getJointOrientationGlobal(lIDdic['LeftFoot_foot_0_0_0'])
+                footVec = getFootSegNormal(motion_ori[0], 'LeftFoot_foot_0_0_0', isLeftFoot=True, isOutside=True)
+                footRot = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
+                footIdx = motion_ori[0].skeleton.getJointIndex('LeftFoot_foot_0_0_0')
+                footOri = motion_ori[0].getJointOrientationGlobal(footIdx)
+                motion_ori[0].setJointOrientationGlobal(footIdx, np.dot(footRot, footOri))
+
+                inside_tmp = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_0_0'])
+                outside_tmp = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_0_0'], np.array((1., 0., 0.)))
+                footRot2 = mm.getSO3FromVectors(outside_tmp - inside_tmp, _outside - _inside)
+                motion_ori[0].setJointOrientationGlobal(footIdx, mm.slerp(oldFootOri2, np.dot(footRot2, np.dot(footRot, footOri)), ratio))
+
+
+            if collide['LeftFoot_foot_0_1_0_Effector'] and collide['LeftFoot_foot_0_1_0'] and collide['LeftFoot_foot_0_1']:
+                footIdx = motion_ori[0].skeleton.getJointIndex('LeftFoot_foot_0_1')
+                footVec = getFootSegNormal(motion_ori[0], footIdx, isLeftFoot=True, isOutside=True)
+                footRot = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
+                footOri = motion_ori[0].getJointOrientationGlobal(footIdx)
+                motion_ori[0].setJointOrientationGlobal(footIdx, np.dot(footRot, footOri))
+
+            elif collide['LeftFoot_foot_0_1_0_Effector'] and collide['LeftFoot_foot_0_1_0']:
+                newFootOri, _inside, _outside = makeTwoContactPos(motion_ori[0], 'LeftFoot_foot_0_1')
+                motion_ori[0].setJointOrientationGlobal(motion_ori[0].skeleton.getJointIndex('LeftFoot_foot_0_1'), newFootOri)
+
+                # makeFourContactPos(motion_ori[0], 'LeftFoot_foot_0_0_0')
+                footVec = getFootSegNormal(motion_ori[0], 'LeftFoot_foot_0_1_0', isLeftFoot=True, isOutside=True)
+                footRot = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
+                footIdx = motion_ori[0].skeleton.getJointIndex('LeftFoot_foot_0_1_0')
+                footOri = motion_ori[0].getJointOrientationGlobal(footIdx)
+                motion_ori[0].setJointOrientationGlobal(footIdx, np.dot(footRot, footOri))
+
+                inside_tmp = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_1_0'])
+                outside_tmp = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_1_0'], np.array((1., 0., 0.)))
+                footRot2 = mm.getSO3FromVectors(outside_tmp - inside_tmp, _outside - _inside)
+                motion_ori[0].setJointOrientationGlobal(footIdx, np.dot(footRot2, np.dot(footRot, footOri)))
+
+            elif collide['LeftFoot_foot_0_1_0_Effector']:
+                footPoint = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_1_0'])
+
+                newFootOri, _inside, _outside = makeTwoContactPos(motion_ori[0], 'LeftFoot_foot_0_1', baseHeight=footPoint[1]-SEGMENT_FOOT_MAG * .5)
+                motion_ori[0].setJointOrientationGlobal(motion_ori[0].skeleton.getJointIndex('LeftFoot_foot_0_1'), newFootOri)
+                footVec = getFootSegNormal(motion_ori[0], 'LeftFoot_foot_0_1_0', isLeftFoot=True, isOutside=True)
+                footRot = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
+                footIdx = motion_ori[0].skeleton.getJointIndex('LeftFoot_foot_0_1_0')
+                footOri = motion_ori[0].getJointOrientationGlobal(footIdx)
+                motion_ori[0].setJointOrientationGlobal(footIdx, np.dot(footRot, footOri))
+
+                inside_tmp = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_1_0'])
+                outside_tmp = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_1_0'], np.array((1., 0., 0.)))
+                footRot2 = mm.getSO3FromVectors(outside_tmp - inside_tmp, _outside - _inside)
+                motion_ori[0].setJointOrientationGlobal(footIdx, np.dot(footRot2, np.dot(footRot, footOri)))
+
+            elif getJointChildPositionGlobal(motion_ori[0], 'LeftFoot_foot_0_1_0')[1] < SEGMENT_FOOT_MAG*.75:
+                # In case of posibility of contact
+                # if 1 radius <  toe height < 3/2 radius, this routine is working.
+                toeHeight = getJointChildPositionGlobal(motion_ori[0], 'LeftFoot_foot_0_1_0')[1]
+                ratio = (SEGMENT_FOOT_MAG*.75 - toeHeight)/SEGMENT_FOOT_MAG * 4.
+
+                footPoint = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_1_0'])
+                newFootOri, _inside, _outside = makeTwoContactPos(motion_ori[0], 'LeftFoot_foot_0_1', baseHeight=footPoint[1]-SEGMENT_FOOT_MAG * .5)
+
+                oldFootOri = motion_ori[0].getJointOrientationGlobal(lIDdic['LeftFoot_foot_0_1'])
+                motion_ori[0].setJointOrientationGlobal(lIDdic['LeftFoot_foot_0_1'], mm.slerp(oldFootOri, newFootOri, ratio))
+
+                oldFootOri2 = motion_ori[0].getJointOrientationGlobal(lIDdic['LeftFoot_foot_0_1_0'])
+                footVec = getFootSegNormal(motion_ori[0], 'LeftFoot_foot_0_1_0', isLeftFoot=True, isOutside=True)
+                footRot = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
+                footIdx = motion_ori[0].skeleton.getJointIndex('LeftFoot_foot_0_1_0')
+                footOri = motion_ori[0].getJointOrientationGlobal(footIdx)
+                motion_ori[0].setJointOrientationGlobal(footIdx, np.dot(footRot, footOri))
+
+                inside_tmp = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_1_0'])
+                outside_tmp = motion_ori[0].getJointPositionGlobal(lIDdic['LeftFoot_foot_0_1_0'], np.array((1., 0., 0.)))
+                footRot2 = mm.getSO3FromVectors(outside_tmp - inside_tmp, _outside - _inside)
+                motion_ori[0].setJointOrientationGlobal(footIdx, mm.slerp(oldFootOri2, np.dot(footRot2, np.dot(footRot, footOri)), ratio))
 
 
 
