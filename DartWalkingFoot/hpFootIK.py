@@ -3,7 +3,7 @@ import math
 from PyCommon.modules.Math import mmMath as mm
 
 
-def footAdjust(posture_ori, dartModel, footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, baseHeigth):
+def footAdjust(posture_ori, footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, baseHeight=0.):
     '''
     :return:
     '''
@@ -32,28 +32,27 @@ def footAdjust(posture_ori, dartModel, footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT
         if type(jointNameOrIdx) == str:
             idx = posture.skeleton.getJointIndex(jointNameOrIdx)
 
-        insideOffset = np.array((0., 0., SEGMENT_FOOT_MAG * 2.5))
-        outsideOffset = np.array((1.2, 0., SEGMENT_FOOT_MAG * 2.5))
+        insideOffset = SEGMENT_FOOT_MAG * np.array((0., 0., 2.5))
+        outsideOffset = SEGMENT_FOOT_MAG * np.array((1.2, 0., 2.5))
         if not isOutside:
             # if it is not outside phalange,
-            outsideOffset[0] = -1.2
+            outsideOffset[0] = -1.2 * SEGMENT_FOOT_MAG
 
         origin = posture.getJointPositionGlobal(idx)
         inside = posture.getJointPositionGlobal(idx, insideOffset)
         outside = posture.getJointPositionGlobal(idx, outsideOffset)
 
         length = SEGMENT_FOOT_MAG * 2.5
-        radius = SEGMENT_FOOT_MAG * .5
 
         RotVec1_tmp1 = inside - origin
         RotVec1_tmp2 = inside - origin
         RotVec1_tmp2[1] = 0.
         RotVec1 = np.cross(RotVec1_tmp1, RotVec1_tmp2)
-        inner = (origin[1] - radius)/length
+        inner = (origin[1] - SEGMENT_FOOT_RAD)/length
 
         angle1_1 = math.acos(inner if inner < 1.0 else 1.0)
         if baseHeight is not None:
-            angle1_1 = math.acos((origin[1] - (baseHeight + radius))/length)
+            angle1_1 = math.acos((origin[1] - (baseHeight + SEGMENT_FOOT_RAD))/length)
         angle1_2 = math.acos((origin[1] - inside[1])/length)
         footRot1 = mm.exp(RotVec1, angle1_1-angle1_2)
         footOri1 = posture.getJointOrientationGlobal(idx)
@@ -89,24 +88,23 @@ def footAdjust(posture_ori, dartModel, footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT
         if type(jointNameOrIdx) == str:
             idx = posture.skeleton.getJointIndex(jointNameOrIdx)
 
-        insideOffset = np.array((0., 0., SEGMENT_FOOT_MAG * 2.5))
-        outsideOffset = np.array((1.2, 0., SEGMENT_FOOT_MAG * 2.5))
+        insideOffset = SEGMENT_FOOT_MAG * np.array((0., 0., 2.5))
+        outsideOffset = SEGMENT_FOOT_MAG * np.array((1.2, 0., 2.5))
         if isLeftFoot ^ isOutside:
             # if it is not outside phalange,
-            outsideOffset[0] = -1.2
+            outsideOffset[0] = -1.2 * SEGMENT_FOOT_MAG
 
         origin = posture.getJointPositionGlobal(idx)
         inside = posture.getJointPositionGlobal(idx, insideOffset)
         outside = posture.getJointPositionGlobal(idx, outsideOffset)
 
         length = SEGMENT_FOOT_MAG * 2.5
-        radius = SEGMENT_FOOT_MAG * .5
 
         RotVec1_tmp1 = inside - origin
         RotVec1_tmp2 = inside - origin
         RotVec1_tmp2[1] = 0.
         RotVec1 = np.cross(RotVec1_tmp1, RotVec1_tmp2)
-        angle1_1 = math.acos((origin[1] - radius)/length)
+        angle1_1 = math.acos((origin[1] - SEGMENT_FOOT_RAD)/length)
         angle1_2 = math.acos((origin[1] - inside[1])/length)
         footRot1 = mm.exp(RotVec1, angle1_1-angle1_2)
         footOri1 = posture.getJointOrientationGlobal(idx)
@@ -141,11 +139,11 @@ def footAdjust(posture_ori, dartModel, footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT
             idx = posture.skeleton.getJointIndex(jointNameOrIdx)
 
         origin = posture.getJointPositionGlobal(idx)
-        insideOffset = np.array((0., 0., SEGMENT_FOOT_MAG * 2.5))
-        outsideOffset = np.array((1.2, 0., SEGMENT_FOOT_MAG * 2.5))
+        insideOffset = SEGMENT_FOOT_MAG * np.array((0., 0., 2.5))
+        outsideOffset = SEGMENT_FOOT_MAG * np.array((1.2, 0., 2.5))
         if isLeftFoot ^ isOutside:
             # if it is not outside phalange,
-            outsideOffset[0] = -1.2
+            outsideOffset[0] = -1.2 * SEGMENT_FOOT_MAG
 
         origin = posture.getJointPositionGlobal(idx)
         inside = posture.getJointPositionGlobal(idx, insideOffset)
@@ -174,14 +172,15 @@ def footAdjust(posture_ori, dartModel, footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT
 
     for side in ['Left', 'Right']:
         isLeftFoot = True if side == 'Left' else False
-        if getJointChildPositionGlobal(posture_ori, side+'Foot_foot_0_0_0')[1] < SEGMENT_FOOT_MAG/2.:
+        if getJointChildPositionGlobal(posture_ori, side+'Foot_foot_0_0_0')[1] < SEGMENT_FOOT_RAD + baseHeight:
             collide[side+'Foot_foot_0_0_0_Effector'] = True
-        if posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_0_0'])[1] < SEGMENT_FOOT_MAG/2.:
+        if posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_0_0'])[1] < SEGMENT_FOOT_RAD + baseHeight:
             collide[side+'Foot_foot_0_0_0'] = True
-        if posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_0'])[1] < SEGMENT_FOOT_MAG/2.:
+        if posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_0'])[1] < SEGMENT_FOOT_RAD + baseHeight:
             collide[side+'Foot_foot_0_0'] = True
 
         if collide[side+'Foot_foot_0_0_0_Effector'] and collide[side+'Foot_foot_0_0_0'] and collide[side+'Foot_foot_0_0']:
+            # all segment contact
             footVec = getFootSegNormal(posture_ori, side+'Foot_foot_0_0', isLeftFoot=isLeftFoot, isOutside=True)
             footRot = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
             footIdx = posture_ori.skeleton.getJointIndex(side+'Foot_foot_0_0')
@@ -189,10 +188,10 @@ def footAdjust(posture_ori, dartModel, footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT
             posture_ori.setJointOrientationGlobal(footIdx, np.dot(footRot, footOri))
 
         elif collide[side+'Foot_foot_0_0_0_Effector'] and collide[side+'Foot_foot_0_0_0']:
-            newFootOri, _inside, _outside = makeTwoContactPos(posture_ori, side+'Foot_foot_0_0')
-            posture_ori.setJointOrientationGlobal(posture_ori.skeleton.getJointIndex(side+'Foot_foot_0_0'), newFootOri)
+            # toe fully, phalange partially
+            newFootOri, _inside, _outside = makeTwoContactPos(posture_ori, side+'Foot_foot_0_0', isLeftFoot=isLeftFoot, isOutside=True, baseHeight=baseHeight)
+            posture_ori.setJointOrientationGlobal(footIdDic[side+'Foot_foot_0_0'], newFootOri)
 
-            # makeFourContactPos(motion_ori[0], 'LeftFoot_foot_0_0_0')
             footVec = getFootSegNormal(posture_ori, side+'Foot_foot_0_0_0', isLeftFoot=isLeftFoot, isOutside=True)
             footRot = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
             footIdx = posture_ori.skeleton.getJointIndex(side+'Foot_foot_0_0_0')
@@ -205,9 +204,10 @@ def footAdjust(posture_ori, dartModel, footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT
             posture_ori.setJointOrientationGlobal(footIdx, np.dot(footRot2, np.dot(footRot, footOri)))
 
         elif collide[side+'Foot_foot_0_0_0_Effector']:
+            # toe partially
             footPoint = posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_0_0'])
 
-            newFootOri, _inside, _outside = makeTwoContactPos(posture_ori, side+'Foot_foot_0_0', baseHeight=footPoint[1]-SEGMENT_FOOT_MAG * .5)
+            newFootOri, _inside, _outside = makeTwoContactPos(posture_ori, side+'Foot_foot_0_0', isLeftFoot=isLeftFoot, isOutside=True, baseHeight=footPoint[1]-SEGMENT_FOOT_RAD)
             posture_ori.setJointOrientationGlobal(posture_ori.skeleton.getJointIndex(side+'Foot_foot_0_0'), newFootOri)
             footVec = getFootSegNormal(posture_ori, side+'Foot_foot_0_0_0', isLeftFoot=isLeftFoot, isOutside=True)
             footRot = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
@@ -220,14 +220,14 @@ def footAdjust(posture_ori, dartModel, footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT
             footRot2 = mm.getSO3FromVectors(outside_tmp - inside_tmp, _outside - _inside)
             posture_ori.setJointOrientationGlobal(footIdx, np.dot(footRot2, np.dot(footRot, footOri)))
 
-        elif getJointChildPositionGlobal(posture_ori, side+'Foot_foot_0_0_0')[1] < SEGMENT_FOOT_MAG*.75:
+        elif getJointChildPositionGlobal(posture_ori, side+'Foot_foot_0_0_0')[1] < SEGMENT_FOOT_RAD*1.5 + baseHeight:
             # In case of posibility of contact
             # if 1 radius <  toe height < 3/2 radius, this routine is working.
             toeHeight = getJointChildPositionGlobal(posture_ori, side+'Foot_foot_0_0_0')[1]
-            ratio = (SEGMENT_FOOT_MAG*.75 - toeHeight)/SEGMENT_FOOT_MAG * 4.
+            ratio = (SEGMENT_FOOT_RAD*1.5 - toeHeight)/SEGMENT_FOOT_RAD * 2.
 
             footPoint = posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_0_0'])
-            newFootOri, _inside, _outside = makeTwoContactPos(posture_ori, side+'Foot_foot_0_0', baseHeight=footPoint[1]-SEGMENT_FOOT_MAG * .5)
+            newFootOri, _inside, _outside = makeTwoContactPos(posture_ori, side+'Foot_foot_0_0', isLeftFoot=isLeftFoot, isOutside=True, baseHeight=footPoint[1]-SEGMENT_FOOT_RAD)
 
             oldFootOri = posture_ori.getJointOrientationGlobal(footIdDic[side+'Foot_foot_0_0'])
             posture_ori.setJointOrientationGlobal(footIdDic[side+'Foot_foot_0_0'], mm.slerp(oldFootOri, newFootOri, ratio))
@@ -244,72 +244,71 @@ def footAdjust(posture_ori, dartModel, footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT
             footRot2 = mm.getSO3FromVectors(outside_tmp - inside_tmp, _outside - _inside)
             posture_ori.setJointOrientationGlobal(footIdx, mm.slerp(oldFootOri2, np.dot(footRot2, np.dot(footRot, footOri)), ratio))
 
-        if getJointChildPositionGlobal(posture_ori, side+'Foot_foot_0_1_0')[1] < SEGMENT_FOOT_MAG/2.:
+        if getJointChildPositionGlobal(posture_ori, side+'Foot_foot_0_1_0')[1] < SEGMENT_FOOT_RAD + baseHeight:
             collide[side+'Foot_foot_0_1_0_Effector'] = True
-        if posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_1_0'])[1] < SEGMENT_FOOT_MAG/2.:
+        if posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_1_0'])[1] < SEGMENT_FOOT_RAD + baseHeight:
             collide[side+'Foot_foot_0_1_0'] = True
-        if posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_1'])[1] < SEGMENT_FOOT_MAG/2.:
+        if posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_1'])[1] < SEGMENT_FOOT_RAD + baseHeight:
             collide[side+'Foot_foot_0_1'] = True
 
         if collide[side+'Foot_foot_0_1_0_Effector'] and collide[side+'Foot_foot_0_1_0'] and collide[side+'Foot_foot_0_1']:
             footIdx = posture_ori.skeleton.getJointIndex(side+'Foot_foot_0_1')
-            footVec = getFootSegNormal(posture_ori, footIdx, isLeftFoot=isLeftFoot, isOutside=True)
+            footVec = getFootSegNormal(posture_ori, footIdx, isLeftFoot=isLeftFoot, isOutside=False)
             footRot = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
             footOri = posture_ori.getJointOrientationGlobal(footIdx)
             posture_ori.setJointOrientationGlobal(footIdx, np.dot(footRot, footOri))
 
         elif collide[side+'Foot_foot_0_1_0_Effector'] and collide[side+'Foot_foot_0_1_0']:
-            newFootOri, _inside, _outside = makeTwoContactPos(posture_ori, side+'Foot_foot_0_1')
-            posture_ori.setJointOrientationGlobal(posture_ori.skeleton.getJointIndex(side+'Foot_foot_0_1'), newFootOri)
+            newFootOri, _inside, _outside = makeTwoContactPos(posture_ori, side+'Foot_foot_0_1', isLeftFoot=isLeftFoot, isOutside=False, baseHeight=baseHeight)
+            posture_ori.setJointOrientationGlobal(footIdDic[side+'Foot_foot_0_1'], newFootOri)
 
-            # makeFourContactPos(motion_ori[0], 'LeftFoot_foot_0_0_0')
-            footVec = getFootSegNormal(posture_ori, side+'Foot_foot_0_1_0', isLeftFoot=isLeftFoot, isOutside=True)
+            footVec = getFootSegNormal(posture_ori, side+'Foot_foot_0_1_0', isLeftFoot=isLeftFoot, isOutside=False)
             footRot = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
             footIdx = posture_ori.skeleton.getJointIndex(side+'Foot_foot_0_1_0')
             footOri = posture_ori.getJointOrientationGlobal(footIdx)
             posture_ori.setJointOrientationGlobal(footIdx, np.dot(footRot, footOri))
 
             inside_tmp = posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_1_0'])
-            outside_tmp = posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_1_0'], np.array((1., 0., 0.)))
+            outside_tmp = posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_1_0'], np.array((-1., 0., 0.)))
             footRot2 = mm.getSO3FromVectors(outside_tmp - inside_tmp, _outside - _inside)
             posture_ori.setJointOrientationGlobal(footIdx, np.dot(footRot2, np.dot(footRot, footOri)))
 
         elif collide[side+'Foot_foot_0_1_0_Effector']:
             footPoint = posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_1_0'])
 
-            newFootOri, _inside, _outside = makeTwoContactPos(posture_ori, side+'Foot_foot_0_1', baseHeight=footPoint[1]-SEGMENT_FOOT_MAG * .5)
-            posture_ori.setJointOrientationGlobal(posture_ori.skeleton.getJointIndex(side+'Foot_foot_0_1'), newFootOri)
-            footVec = getFootSegNormal(posture_ori, side+'Foot_foot_0_1_0', isLeftFoot=isLeftFoot, isOutside=True)
+            newFootOri, _inside, _outside = makeTwoContactPos(posture_ori, side+'Foot_foot_0_1', isLeftFoot=isLeftFoot, isOutside=False, baseHeight=footPoint[1]-SEGMENT_FOOT_RAD)
+            posture_ori.setJointOrientationGlobal(footIdDic[side+'Foot_foot_0_1'], newFootOri)
+            footVec = getFootSegNormal(posture_ori, side+'Foot_foot_0_1_0', isLeftFoot=isLeftFoot, isOutside=False)
             footRot = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
             footIdx = posture_ori.skeleton.getJointIndex(side+'Foot_foot_0_1_0')
             footOri = posture_ori.getJointOrientationGlobal(footIdx)
             posture_ori.setJointOrientationGlobal(footIdx, np.dot(footRot, footOri))
 
             inside_tmp = posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_1_0'])
-            outside_tmp = posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_1_0'], np.array((1., 0., 0.)))
+            outside_tmp = posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_1_0'], np.array((-1., 0., 0.)))
             footRot2 = mm.getSO3FromVectors(outside_tmp - inside_tmp, _outside - _inside)
             posture_ori.setJointOrientationGlobal(footIdx, np.dot(footRot2, np.dot(footRot, footOri)))
 
-        elif getJointChildPositionGlobal(posture_ori, side+'Foot_foot_0_1_0')[1] < SEGMENT_FOOT_MAG*.75:
+        elif getJointChildPositionGlobal(posture_ori, side+'Foot_foot_0_1_0')[1] < SEGMENT_FOOT_RAD*1.5 + baseHeight:
             # In case of posibility of contact
             # if 1 radius <  toe height < 3/2 radius, this routine is working.
             toeHeight = getJointChildPositionGlobal(posture_ori, side+'Foot_foot_0_1_0')[1]
-            ratio = (SEGMENT_FOOT_MAG*.75 - toeHeight)/SEGMENT_FOOT_MAG * 4.
+            ratio = (SEGMENT_FOOT_RAD*1.5 - toeHeight)/SEGMENT_FOOT_RAD * 2.
 
             footPoint = posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_1_0'])
-            newFootOri, _inside, _outside = makeTwoContactPos(posture_ori, side+'Foot_foot_0_1', baseHeight=footPoint[1]-SEGMENT_FOOT_MAG * .5)
+            newFootOri, _inside, _outside = makeTwoContactPos(posture_ori, side+'Foot_foot_0_1', isLeftFoot=isLeftFoot, isOutside=False, baseHeight=footPoint[1]-SEGMENT_FOOT_RAD)
 
             oldFootOri = posture_ori.getJointOrientationGlobal(footIdDic[side+'Foot_foot_0_1'])
             posture_ori.setJointOrientationGlobal(footIdDic[side+'Foot_foot_0_1'], mm.slerp(oldFootOri, newFootOri, ratio))
 
             oldFootOri2 = posture_ori.getJointOrientationGlobal(footIdDic[side+'Foot_foot_0_1_0'])
-            footVec = getFootSegNormal(posture_ori, side+'Foot_foot_0_1_0', isLeftFoot=isLeftFoot, isOutside=True)
+            footVec = getFootSegNormal(posture_ori, side+'Foot_foot_0_1_0', isLeftFoot=isLeftFoot, isOutside=False)
             footRot = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
             footIdx = posture_ori.skeleton.getJointIndex(side+'Foot_foot_0_1_0')
             footOri = posture_ori.getJointOrientationGlobal(footIdx)
             posture_ori.setJointOrientationGlobal(footIdx, np.dot(footRot, footOri))
 
             inside_tmp = posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_1_0'])
-            outside_tmp = posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_1_0'], np.array((1., 0., 0.)))
+            outside_tmp = posture_ori.getJointPositionGlobal(footIdDic[side+'Foot_foot_0_1_0'], np.array((-1., 0., 0.)))
             footRot2 = mm.getSO3FromVectors(outside_tmp - inside_tmp, _outside - _inside)
             posture_ori.setJointOrientationGlobal(footIdx, mm.slerp(oldFootOri2, np.dot(footRot2, np.dot(footRot, footOri)), ratio))

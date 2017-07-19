@@ -282,7 +282,7 @@ def getSO3FromVectors(vec1, vec2):
     
     rot_axis = normalize(np.cross(vec1, vec2))
     inner = np.inner(vec1, vec2)
-    theta = math.acos(inner if inner < 1.0 else 1.0)
+    theta = math.acos(inner if -1.0 < inner < 1.0 else math.copysign(1.0, inner))
 #    if np.inner(vec1, vec2) < 0:
 #        theta = math.pi * 2 - theta
 #        rot_axis = - rot_axis

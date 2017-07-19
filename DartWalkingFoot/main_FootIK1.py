@@ -36,6 +36,8 @@ from PyCommon.modules import pydart2 as pydart
 from PyCommon.modules.Simulator import csDartModel as cpm
 from pdcontroller import PDController
 
+import hpFootIK as hfi
+
 import math
 # from matplotlib import collections
 
@@ -494,9 +496,14 @@ def walkings(params, isCma=True):
     motion_ori = bvh.toJointMotion(1., False)
     print motion_ori[0].skeleton
     LeftAnkleIdx = motion_ori[0].skeleton.getJointIndex('LeftFoot')
+    RightAnkleIdx = motion_ori[0].skeleton.getJointIndex('RightFoot')
     oriAnkle = motion_ori[0].getJointOrientationGlobal(LeftAnkleIdx)
     # motion_ori[0].setJointOrientationGlobal(LeftAnkleIdx, mm.slerp(R_motion, R_character, match_stl_func(t)))
+    oriAnkle = motion_ori[0].getJointOrientationGlobal(LeftAnkleIdx)
     motion_ori[0].setJointOrientationGlobal(LeftAnkleIdx, np.dot(mm.rotZ(math.pi/4.), oriAnkle))
+
+    oriAnkle = motion_ori[0].getJointOrientationGlobal(RightAnkleIdx)
+    motion_ori[0].setJointOrientationGlobal(RightAnkleIdx, np.dot(mm.rotZ(math.pi/4.), oriAnkle))
 
     # motion_ori = yf.readBvhFile(motionDir+filename)
     frameTime = 1/motion_ori.fps
@@ -833,13 +840,18 @@ def walkings(params, isCma=True):
         # viewer.objectInfoWnd.add1DSlider("offset_ry", 0., 2., .001, dartModel.getBodyPositionGlobal(0)[0])
         # viewer.objectInfoWnd.add1DSlider("offset_rz", 0., 2., .001, dartModel.getBodyPositionGlobal(0)[0])
 
-        viewer.objectInfoWnd.add1DRoller("rotate_x")
-        viewer.objectInfoWnd.add1DRoller("rotate_y")
-        viewer.objectInfoWnd.add1DRoller("rotate_z")
+        viewer.objectInfoWnd.add1DRoller("l_rotate_x")
+        viewer.objectInfoWnd.add1DRoller("l_rotate_y")
+        viewer.objectInfoWnd.add1DRoller("l_rotate_z")
+        viewer.objectInfoWnd.add1DRoller("r_rotate_x")
+        viewer.objectInfoWnd.add1DRoller("r_rotate_y")
+        viewer.objectInfoWnd.add1DRoller("r_rotate_z")
 
         viewer.objectInfoWnd.add1DSlider("debug", 0., 2., .001, 1.)
 
-        currentFootOri = [motion_ori[0].getJointOrientationGlobal(LeftAnkleIdx)]
+        currentFootOri = {'Left':motion_ori[0].getJointOrientationGlobal(LeftAnkleIdx),
+                          'Right':motion_ori[0].getJointOrientationGlobal(RightAnkleIdx)
+                          }
 
         def offsetSliderHandler(slider, event):
             '''
@@ -847,19 +859,74 @@ def walkings(params, isCma=True):
             :return: 
             '''
             if event == FL_RELEASE:
-                if slider.label() == 'rotate_x':
-                    currentFootOri[0] = np.dot(mm.rotX(slider.value() * 4.), currentFootOri[0])
-                elif slider.label() == 'rotate_y':
-                    currentFootOri[0] = np.dot(mm.rotY(slider.value() * 4.), currentFootOri[0])
-                elif slider.label() == 'rotate_z':
-                    currentFootOri[0] = np.dot(mm.rotZ(slider.value() * 4.), currentFootOri[0])
+                if slider.label() == 'l_rotate_x':
+                    currentFootOri['Left'] = np.dot(mm.rotX(slider.value() * 4.), currentFootOri['Left'])
+                elif slider.label() == 'l_rotate_y':
+                    currentFootOri['Left'] = np.dot(mm.rotY(slider.value() * 4.), currentFootOri['Left'])
+                elif slider.label() == 'l_rotate_z':
+                    currentFootOri['Left'] = np.dot(mm.rotZ(slider.value() * 4.), currentFootOri['Left'])
+                elif slider.label() == 'r_rotate_x':
+                    currentFootOri['Right'] = np.dot(mm.rotX(slider.value() * 4.), currentFootOri['Right'])
+                elif slider.label() == 'r_rotate_y':
+                    currentFootOri['Right'] = np.dot(mm.rotY(slider.value() * 4.), currentFootOri['Right'])
+                elif slider.label() == 'r_rotate_z':
+                    currentFootOri['Right'] = np.dot(mm.rotZ(slider.value() * 4.), currentFootOri['Right'])
                 slider.value(0.)
 
-        viewer.objectInfoWnd.getValobject('rotate_x').set_handler(offsetSliderHandler)
-        viewer.objectInfoWnd.getValobject('rotate_y').set_handler(offsetSliderHandler)
-        viewer.objectInfoWnd.getValobject('rotate_z').set_handler(offsetSliderHandler)
+        viewer.objectInfoWnd.getValobject('l_rotate_x').set_handler(offsetSliderHandler)
+        viewer.objectInfoWnd.getValobject('l_rotate_y').set_handler(offsetSliderHandler)
+        viewer.objectInfoWnd.getValobject('l_rotate_z').set_handler(offsetSliderHandler)
+        viewer.objectInfoWnd.getValobject('r_rotate_x').set_handler(offsetSliderHandler)
+        viewer.objectInfoWnd.getValobject('r_rotate_y').set_handler(offsetSliderHandler)
+        viewer.objectInfoWnd.getValobject('r_rotate_z').set_handler(offsetSliderHandler)
 
         def offsetSliderCallback(slider):
+            '''
+            :type slider: Fl_Hor_Value_Slider | Fl_Roller
+            :return:
+            '''
+
+            # trigger part
+            if slider.label() == 'offset_tx':
+                _rootpos = dartModel.getBodyPositionGlobal(0)
+                dartModel.translateByOffset(np.array((slider.value() - _rootpos[0], 0., 0.)))
+                dartMotionModel.translateByOffset(np.array((slider.value() - _rootpos[0], 0., 0.)))
+                motion_ori[0].translateByOffset(np.array((slider.value()- _rootpos[0], 0., 0.)))
+            elif slider.label() == 'offset_ty':
+                _rootpos = dartModel.getBodyPositionGlobal(0)
+                dartModel.translateByOffset(np.array((0., slider.value() - _rootpos[1], 0.)))
+                dartMotionModel.translateByOffset(np.array((0., slider.value() - _rootpos[1], 0.)))
+                motion_ori[0].translateByOffset(np.array((0., slider.value()- _rootpos[1], 0.)))
+            elif slider.label() == 'offset_tz':
+                _rootpos = dartModel.getBodyPositionGlobal(0)
+                dartModel.translateByOffset(np.array((0., 0., slider.value() - _rootpos[2])))
+                dartMotionModel.translateByOffset(np.array((0., 0., slider.value() - _rootpos[2])))
+                motion_ori[0].translateByOffset(np.array((0., 0., slider.value()- _rootpos[2])))
+
+            elif slider.label() == 'l_rotate_x':
+                motion_ori[0].setJointOrientationGlobal(LeftAnkleIdx, np.dot(mm.rotX(slider.value() * 4.), currentFootOri['Left']))
+            elif slider.label() == 'l_rotate_y':
+                motion_ori[0].setJointOrientationGlobal(LeftAnkleIdx, np.dot(mm.rotY(slider.value() * 4.), currentFootOri['Left']))
+            elif slider.label() == 'l_rotate_z':
+                motion_ori[0].setJointOrientationGlobal(LeftAnkleIdx, np.dot(mm.rotZ(slider.value() * 4.), currentFootOri['Left']))
+            elif slider.label() == 'r_rotate_x':
+                motion_ori[0].setJointOrientationGlobal(RightAnkleIdx, np.dot(mm.rotX(slider.value() * 4.), currentFootOri['Right']))
+            elif slider.label() == 'r_rotate_y':
+                motion_ori[0].setJointOrientationGlobal(RightAnkleIdx, np.dot(mm.rotY(slider.value() * 4.), currentFootOri['Right']))
+            elif slider.label() == 'r_rotate_z':
+                motion_ori[0].setJointOrientationGlobal(RightAnkleIdx, np.dot(mm.rotZ(slider.value() * 4.), currentFootOri['Right']))
+
+            for idx in lIDs:
+                motion_ori[0].setJointOrientationLocal(idx, np.eye(3))
+            for idx in rIDs:
+                motion_ori[0].setJointOrientationLocal(idx, np.eye(3))
+
+            hfi.footAdjust(motion_ori[0], footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD)
+
+            dartMotionModel.update(motion_ori[0])
+            viewer.motionViewWnd.glWindow.redraw()
+
+        def _offsetSliderCallback(slider):
             '''
             :type slider: Fl_Hor_Value_Slider | Fl_Roller
             :return: 
@@ -882,15 +949,15 @@ def walkings(params, isCma=True):
                 dartMotionModel.translateByOffset(np.array((0., 0., slider.value() - _rootpos[2])))
                 motion_ori[0].translateByOffset(np.array((0., 0., slider.value()- _rootpos[2])))
 
-            elif slider.label() == 'rotate_x':
+            elif slider.label() == 'l_rotate_x':
                 # footOri = motion_ori[0].getJointOrientationGlobal(LeftAnkleIdx)
-                motion_ori[0].setJointOrientationGlobal(LeftAnkleIdx, np.dot(mm.rotX(slider.value() * 4.), currentFootOri[0]))
-            elif slider.label() == 'rotate_y':
+                motion_ori[0].setJointOrientationGlobal(LeftAnkleIdx, np.dot(mm.rotX(slider.value() * 4.), currentFootOri['Left']))
+            elif slider.label() == 'l_rotate_y':
                 # footOri = motion_ori[0].getJointOrientationGlobal(LeftAnkleIdx)
-                motion_ori[0].setJointOrientationGlobal(LeftAnkleIdx, np.dot(mm.rotY(slider.value() * 4.), currentFootOri[0]))
-            elif slider.label() == 'rotate_z':
+                motion_ori[0].setJointOrientationGlobal(LeftAnkleIdx, np.dot(mm.rotY(slider.value() * 4.), currentFootOri['Left']))
+            elif slider.label() == 'l_rotate_z':
                 # footOri = motion_ori[0].getJointOrientationGlobal(LeftAnkleIdx)
-                motion_ori[0].setJointOrientationGlobal(LeftAnkleIdx, np.dot(mm.rotZ(slider.value() * 4.), currentFootOri[0]))
+                motion_ori[0].setJointOrientationGlobal(LeftAnkleIdx, np.dot(mm.rotZ(slider.value() * 4.), currentFootOri['Left']))
 
             for idx in lIDs:
                 motion_ori[0].setJointOrientationLocal(idx, np.eye(3))
@@ -1262,9 +1329,12 @@ def walkings(params, isCma=True):
         viewer.objectInfoWnd.getValobject("offset_ty").callback(offsetSliderCallback)
         viewer.objectInfoWnd.getValobject("offset_tz").callback(offsetSliderCallback)
 
-        viewer.objectInfoWnd.getValobject("rotate_x").callback(offsetSliderCallback)
-        viewer.objectInfoWnd.getValobject("rotate_y").callback(offsetSliderCallback)
-        viewer.objectInfoWnd.getValobject("rotate_z").callback(offsetSliderCallback)
+        viewer.objectInfoWnd.getValobject("l_rotate_x").callback(offsetSliderCallback)
+        viewer.objectInfoWnd.getValobject("l_rotate_y").callback(offsetSliderCallback)
+        viewer.objectInfoWnd.getValobject("l_rotate_z").callback(offsetSliderCallback)
+        viewer.objectInfoWnd.getValobject("r_rotate_x").callback(offsetSliderCallback)
+        viewer.objectInfoWnd.getValobject("r_rotate_y").callback(offsetSliderCallback)
+        viewer.objectInfoWnd.getValobject("r_rotate_z").callback(offsetSliderCallback)
 
         viewer.objectInfoWnd.getValobject("debug").callback(offsetSliderCallback)
 

@@ -765,6 +765,7 @@ def walkings(params, isCma=True):
     def getParamVal(paramname):
         return viewer.objectInfoWnd.getVal(paramname)
 
+    # renderer settings
     if not isCma:
         if MULTI_VIEWER:
             viewer = ymv.MultiViewer(800, 655)
@@ -792,7 +793,7 @@ def walkings(params, isCma=True):
             # viewer.doc.addRenderer('motion_swf_orientation', yr.JointMotionRenderer(motion_swf_orientation, (255,100,0), yr.LINK_BONE))
             # viewer.doc.addRenderer('motion_stf_push', yr.JointMotionRenderer(motion_stf_push, (50,255,200), yr.LINK_BONE))
             # viewer.doc.addRenderer('motion_stf_balancing', yr.JointMotionRenderer(motion_stf_balancing, (255,100,255), yr.LINK_BONE))
-            # viewer.doc.addRenderer('motion_control', yr.JointMotionRenderer(motion_control, (255,0,0), yr.LINK_BONE))
+            viewer.doc.addRenderer('motion_control', yr.JointMotionRenderer(motion_control, (255,0,0), yr.LINK_BONE))
 
             #        viewer.doc.addRenderer('motion_debug1', yr.JointMotionRenderer(motion_debug1, (0,255,0), yr.LINK_BONE))
             #        viewer.doc.addRenderer('motion_debug2', yr.JointMotionRenderer(motion_debug2, (255,0,255), yr.LINK_BONE))
@@ -1372,8 +1373,7 @@ def walkings(params, isCma=True):
         #'''
 
         # foot adjustment
-        hfi.footAdjust(motion_stf_balancing[frame], dartMotionModel, footIdDic,
-                       SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, baseHeight)
+        hfi.footAdjust(motion_stf_balancing[frame], footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, .03)
 
 
         # control trajectory
@@ -1807,7 +1807,8 @@ def walkings(params, isCma=True):
         # rendering
         # motionModel.update(motion_ori[frame])
         if not isCma:
-            dartMotionModel.update(motion_stitch[frame])
+            # dartMotionModel.update(motion_stitch[frame])
+            dartMotionModel.update(motion_stf_balancing[frame])
         #        motionModel.update(motion_seg[frame])
 
         rd_CP[0] = CP
