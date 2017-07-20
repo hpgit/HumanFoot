@@ -781,19 +781,37 @@ def walkings(params, isCma=True):
             viewer.doc.addRenderer('controlModel', yr.DartModelRenderer(dartModel, (50, 200, 200)))
 
             viewer.doc.addObject('motion_ori', motion_ori)
+            viewer.doc.addObject('motion_stf_stabilize', motion_stf_stabilize)
+            viewer.doc.addObject('motion_match_stl', motion_match_stl)
+            viewer.doc.addObject('motion_swf_placement', motion_swf_placement)
+            viewer.doc.addObject('motion_swf_height', motion_swf_height)
+            viewer.doc.addObject('motion_swf_orientation', motion_swf_orientation)
+            viewer.doc.addObject('motion_stf_push', motion_stf_push)
+            viewer.doc.addObject('motion_stf_balancing', motion_stf_balancing)
+            viewer.doc.addObject('motion_control', motion_control)
+
             viewer.doc.addRenderer('motion_ori', yr.JointMotionRenderer(motion_ori, (0,100,255), yr.LINK_BONE))
+            motion_ori.resourceName = 'motion_ori'
             # viewer.doc.addRenderer('motion_seg_orig', yr.JointMotionRenderer(motion_seg_orig, (0,100,255), yr.LINK_BONE))
             # viewer.doc.addRenderer('motion_seg', yr.JointMotionRenderer(motion_seg, (0,150,255), yr.LINK_BONE))
             # viewer.doc.addRenderer('motion_stitch', yr.JointMotionRenderer(motion_stitch, (0,255,200), yr.LINK_BONE))
 
-            # viewer.doc.addRenderer('motion_stf_stabilize', yr.JointMotionRenderer(motion_stf_stabilize, (255,0,0), yr.LINK_BONE))
-            # viewer.doc.addRenderer('motion_match_stl', yr.JointMotionRenderer(motion_match_stl, (255,200,0), yr.LINK_BONE))
-            # viewer.doc.addRenderer('motion_swf_placement', yr.JointMotionRenderer(motion_swf_placement, (255,100,255), yr.LINK_BONE))
-            # viewer.doc.addRenderer('motion_swf_height', yr.JointMotionRenderer(motion_swf_height, (50,255,255), yr.LINK_BONE))
-            # viewer.doc.addRenderer('motion_swf_orientation', yr.JointMotionRenderer(motion_swf_orientation, (255,100,0), yr.LINK_BONE))
-            # viewer.doc.addRenderer('motion_stf_push', yr.JointMotionRenderer(motion_stf_push, (50,255,200), yr.LINK_BONE))
-            # viewer.doc.addRenderer('motion_stf_balancing', yr.JointMotionRenderer(motion_stf_balancing, (255,100,255), yr.LINK_BONE))
+            viewer.doc.addRenderer('motion_stf_stabilize', yr.JointMotionRenderer(motion_stf_stabilize, (255,0,0), yr.LINK_BONE))
+            viewer.doc.addRenderer('motion_match_stl', yr.JointMotionRenderer(motion_match_stl, (255,200,0), yr.LINK_BONE))
+            viewer.doc.addRenderer('motion_swf_placement', yr.JointMotionRenderer(motion_swf_placement, (255,100,255), yr.LINK_BONE))
+            viewer.doc.addRenderer('motion_swf_height', yr.JointMotionRenderer(motion_swf_height, (50,255,255), yr.LINK_BONE))
+            viewer.doc.addRenderer('motion_swf_orientation', yr.JointMotionRenderer(motion_swf_orientation, (255,100,0), yr.LINK_BONE))
+            viewer.doc.addRenderer('motion_stf_push', yr.JointMotionRenderer(motion_stf_push, (50,255,200), yr.LINK_BONE))
+            viewer.doc.addRenderer('motion_stf_balancing', yr.JointMotionRenderer(motion_stf_balancing, (255,100,255), yr.LINK_BONE))
             viewer.doc.addRenderer('motion_control', yr.JointMotionRenderer(motion_control, (255,0,0), yr.LINK_BONE))
+            motion_stf_stabilize.resourceName = 'motion_stf_stabilize'
+            motion_match_stl.resourceName = 'motion_match_stl'
+            motion_swf_placement.resourceName = 'motion_swf_placement'
+            motion_swf_height.resourceName = 'motion_swf_height'
+            motion_swf_orientation.resourceName = 'motion_swf_orientation'
+            motion_stf_push.resourceName = 'motion_stf_push'
+            motion_stf_balancing.resourceName = 'motion_stf_balancing'
+            motion_control.resourceName = 'motion_control'
 
             #        viewer.doc.addRenderer('motion_debug1', yr.JointMotionRenderer(motion_debug1, (0,255,0), yr.LINK_BONE))
             #        viewer.doc.addRenderer('motion_debug2', yr.JointMotionRenderer(motion_debug2, (255,0,255), yr.LINK_BONE))
@@ -1159,6 +1177,8 @@ def walkings(params, isCma=True):
                     #                    motion_match_stl[frame].mulJointOrientationGlobal(stanceLeg, mm.scaleSO3(R_y, t_y))
 
         # swing foot placement
+        # TODO:
+        # in segment foot case, hip has noise slitly
         motion_swf_placement.append(motion_match_stl[frame].copy())
         motion_swf_placement.goToFrame(frame)
         if SWING_FOOT_PLACEMENT:
@@ -1199,6 +1219,8 @@ def walkings(params, isCma=True):
                 prev_R_swp[0] = (R_swp_sag, R_swp_cor)
 
         # swing foot height
+        # TODO:
+        # in segment foot case, hip has noise largely
         motion_swf_height.append(motion_swf_placement[frame].copy())
         motion_swf_height.goToFrame(frame)
         if SWING_FOOT_HEIGHT:
@@ -1373,7 +1395,7 @@ def walkings(params, isCma=True):
         #'''
 
         # foot adjustment
-        hfi.footAdjust(motion_stf_balancing[frame], footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, .03)
+        hfi.footAdjust(motion_stf_balancing[frame], footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, .05)
 
 
         # control trajectory

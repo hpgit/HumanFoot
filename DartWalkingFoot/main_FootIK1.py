@@ -921,10 +921,18 @@ def walkings(params, isCma=True):
             for idx in rIDs:
                 motion_ori[0].setJointOrientationLocal(idx, np.eye(3))
 
-            hfi.footAdjust(motion_ori[0], footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD)
+            hfi.footAdjust(motion_ori[0], footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, 0.03)
 
             dartMotionModel.update(motion_ori[0])
             viewer.motionViewWnd.glWindow.redraw()
+
+        def simulateCallback(frame):
+            hfi.footAdjust(motion_ori[frame], footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, 0.03)
+            dartMotionModel.update(motion_ori[frame])
+
+
+        viewer.setSimulateCallback(simulateCallback)
+
 
         def _offsetSliderCallback(slider):
             '''
