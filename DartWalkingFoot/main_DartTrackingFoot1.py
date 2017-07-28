@@ -946,6 +946,7 @@ def walkings(params, isCma=True):
 
 
     def simulateCallback(frame):
+        print 'frame: ', frame
         # c_min_contact_vel, c_min_contact_time, c_landing_duration, \
         # c_taking_duration, c_swf_mid_offset, c_locking_vel, c_swf_offset, \
         # K_stp_pos, c5, c6, K_stb_vel, K_stb_pos, K_swp_vel_sag, K_swp_vel_cor, \
@@ -1189,6 +1190,10 @@ def walkings(params, isCma=True):
                 R_swp_cor = prev_R_swp[0][1]
             else:
                 R_swp_sag = mm.I_SO3(); R_swp_cor = mm.I_SO3()
+                print 'diff_dCM_sag_axis: ', diff_dCM_sag_axis
+                print 'diff_dCM_cor_axis: ', diff_dCM_cor_axis
+                print 'diff_CMr_sag_axis: ', diff_CMr_sag_axis
+                print 'diff_CMr_cor_axis: ', diff_CMr_cor_axis
                 R_swp_sag = np.dot(R_swp_sag, mm.exp(diff_dCM_sag_axis * K_swp_vel_sag * -t_swing_foot_placement))
                 R_swp_cor = np.dot(R_swp_cor, mm.exp(diff_dCM_cor_axis * K_swp_vel_cor * -t_swing_foot_placement))
                 if np.dot(direction, diff_CMr_sag) < 0:
@@ -1265,6 +1270,13 @@ def walkings(params, isCma=True):
                 offset = 0.
                 offset += offset_height
                 offset += offset_sine
+                print 'offset: ', offset
+                print 'offset_height: ', offset_height
+                print 'offset_height_pos: ', (height_tar-height_cur) * c5
+                print 'offset_height_vel: ', (d_height_tar-d_height_cur) * c6 * swf_height_func(t)
+                print 'offset_height_vel_detail_tar: ', d_height_tar
+                print 'offset_height_vel_detail_cur: ', d_height_cur
+                print 'offset_sine: ', offset_sine
 
                 if offset > 0.:
                     newPosition =  motion_swf_height[frame].getJointPositionGlobal(swingFoot)
@@ -1327,6 +1339,8 @@ def walkings(params, isCma=True):
 
         # stance foot balancing
         # motion_stf_balancing.append(motion_stf_push[frame].copy())
+        # TODO:
+        # in segment foot case, stance foot unstable
         motion_stf_balancing.append(motion_stf_stabilize[frame].copy())
         motion_stf_balancing.goToFrame(frame)
         if STANCE_FOOT_BALANCING:
