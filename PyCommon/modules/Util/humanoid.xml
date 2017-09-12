@@ -1,0 +1,535 @@
+<?xml version="1.0"?>
+<root type="0">
+  <model_info type="0">
+    <dof value="63" type="1" size="1"/>
+    <grav value="0.000000 0.000000 -9.810000" type="4" size="1"/>
+    <nob value="20" type="1" size="1"/>
+    <rqdim value="80" type="1" size="1"/>
+    <type value="abs" type="4" size="1"/>
+    <version value="0.1" type="3" size="1"/>
+    <body_info type="0">
+      <body_0 type="0">
+        <index value="0" type="1" size="1"/>
+        <inertia value="0.352260 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.546359 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.276856 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 22.068469 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 22.068469 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 22.068469" type="4" size="1"/>
+        <mass value="22.0685" type="3" size="1"/>
+        <name value="Hips" type="4" size="1"/>
+        <parent value="-1" type="1" size="1"/>
+        <pos value="0.000000 0.000676 2.110429" type="4" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.357832 0.150000 0.411151" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_0>
+      <body_1 type="0">
+        <index value="1" type="1" size="1"/>
+        <inertia value="0.993715 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.993715 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.067499 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 17.999781 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 17.999781 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 17.999781" type="4" size="1"/>
+        <mass value="17.9998" type="3" size="1"/>
+        <name value="LeftUpLeg" type="4" size="1"/>
+        <parent value="0" type="1" size="1"/>
+        <pos value="0.178916 -0.013728 1.529152" type="4" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 -0.999523 -0.030886 -0.000000 0.030886 -0.999523" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.150000 0.150000 0.799990" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_1>
+      <body_10 type="0">
+        <index value="10" type="1" size="1"/>
+        <inertia value="0.034038 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.034038 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.019778 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 5.274093 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 5.274093 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 5.274093" type="4" size="1"/>
+        <mass value="5.27409" type="3" size="1"/>
+        <name value="Head" type="4" size="1"/>
+        <parent value="7" type="1" size="1"/>
+        <pos value="-0.002900 -0.025888 3.200103" type="4" size="1"/>
+        <rot value="0.999750 -0.002170 -0.022269 -0.002170 0.981187 -0.193047 0.022269 0.193047 0.980937" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.150000 0.150000 0.234404" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_10>
+      <body_11 type="0">
+        <index value="11" type="1" size="1"/>
+        <inertia value="0.218860 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.218860 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.039941 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 10.650887 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 10.650887 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 10.650887" type="4" size="1"/>
+        <mass value="10.6509" type="3" size="1"/>
+        <name value="LeftArm" type="4" size="1"/>
+        <parent value="9" type="1" size="1"/>
+        <pos value="0.648051 0.011679 2.891357" type="4" size="1"/>
+        <rot value="0.006692 -0.053878 0.998525 -0.053878 0.997078 0.054161 -0.998525 -0.054161 0.003770" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.150000 0.150000 0.473373" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_11>
+      <body_12 type="0">
+        <index value="12" type="1" size="1"/>
+        <inertia value="0.135048 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.135048 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.033586 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 8.956170 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 8.956170 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 8.956170" type="4" size="1"/>
+        <mass value="8.95617" type="3" size="1"/>
+        <name value="LeftForeArm" type="4" size="1"/>
+        <parent value="11" type="1" size="1"/>
+        <pos value="1.131550 0.015701 2.893202" type="4" size="1"/>
+        <rot value="0.005988 0.045995 0.998924 0.045995 0.997872 -0.046222 -0.998924 0.046222 0.003860" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.150000 0.150000 0.398052" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_12>
+      <body_13 type="0">
+        <index value="13" type="1" size="1"/>
+        <inertia value="0.037265 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.037265 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.020528 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 5.474071 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 5.474071 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 5.474071" type="4" size="1"/>
+        <mass value="5.47407" type="3" size="1"/>
+        <name value="LeftHand" type="4" size="1"/>
+        <parent value="12" type="1" size="1"/>
+        <pos value="1.486642 -0.009550 2.888055" type="4" size="1"/>
+        <rot value="-0.031453 0.115521 0.992807 0.115521 0.987062 -0.111193 -0.992807 0.111193 -0.044391" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.150000 0.150000 0.243292" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_13>
+      <body_14 type="0">
+        <index value="14" type="1" size="1"/>
+        <inertia value="0.221311 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.221311 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.040099 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 10.693067 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 10.693067 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 10.693067" type="4" size="1"/>
+        <mass value="10.6931" type="3" size="1"/>
+        <name value="RightArm" type="4" size="1"/>
+        <parent value="8" type="1" size="1"/>
+        <pos value="-0.649094 0.011679 2.891357" type="4" size="1"/>
+        <rot value="0.006654 0.053666 -0.998537 0.053666 0.997101 0.053947 0.998537 -0.053947 0.003755" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.150000 0.150000 0.475247" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_14>
+      <body_15 type="0">
+        <index value="15" type="1" size="1"/>
+        <inertia value="0.134080 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.134080 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.033498 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 8.932787 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 8.932787 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 8.932787" type="4" size="1"/>
+        <mass value="8.93279" type="3" size="1"/>
+        <name value="RightForeArm" type="4" size="1"/>
+        <parent value="14" type="1" size="1"/>
+        <pos value="-1.133058 0.015701 2.893202" type="4" size="1"/>
+        <rot value="0.006010 -0.046115 -0.998918 -0.046115 0.997861 -0.046343 0.998918 0.046343 0.003870" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.150000 0.150000 0.397013" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_15>
+      <body_16 type="0">
+        <index value="16" type="1" size="1"/>
+        <inertia value="0.036661 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.036661 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.020391 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 5.437643 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 5.437643 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 5.437643" type="4" size="1"/>
+        <mass value="5.43764" type="3" size="1"/>
+        <name value="RightHand" type="4" size="1"/>
+        <parent value="15" type="1" size="1"/>
+        <pos value="-1.486666 -0.009550 2.888055" type="4" size="1"/>
+        <rot value="-0.031572 -0.116320 -0.992710 -0.116320 0.986884 -0.111938 0.992710 0.111938 -0.044688" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.150000 0.150000 0.241673" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_16>
+      <body_17 type="0">
+        <index value="17" type="1" size="1"/>
+        <inertia value="0.849013 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.849013 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.063967 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 17.057991 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 17.057991 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 17.057991" type="4" size="1"/>
+        <mass value="17.058" type="3" size="1"/>
+        <name value="LeftLeg" type="4" size="1"/>
+        <parent value="1" type="1" size="1"/>
+        <pos value="0.176381 -0.012849 0.664001" type="4" size="1"/>
+        <rot value="0.941512 0.336926 -0.006020 0.336926 -0.940892 0.034678 0.006020 -0.034678 -0.999380" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.150000 0.150000 0.758133" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_17>
+      <body_18 type="0">
+        <index value="18" type="1" size="1"/>
+        <inertia value="0.016880 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.016880 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.014546 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 3.878905 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 3.878905 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 3.878905" type="4" size="1"/>
+        <mass value="3.8789" type="3" size="1"/>
+        <name value="LeftFoot" type="4" size="1"/>
+        <parent value="17" type="1" size="1"/>
+        <pos value="0.173445 -0.083235 0.198926" type="4" size="1"/>
+        <rot value="0.999968 -0.006876 -0.004176 -0.006876 -0.460951 -0.887399 0.004176 0.887399 -0.460984" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.150000 0.150000 0.172396" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_18>
+      <body_19 type="0">
+        <index value="19" type="1" size="1"/>
+        <inertia value="0.017657 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.017657 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.014854 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 3.960994 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 3.960994 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 3.960994" type="4" size="1"/>
+        <mass value="3.96099" type="3" size="1"/>
+        <name value="LeftToes" type="4" size="1"/>
+        <parent value="18" type="1" size="1"/>
+        <pos value="0.173845 -0.266023 0.154300" type="4" size="1"/>
+        <rot value="0.999933 0.008219 0.008180 0.008219 -0.004784 -0.999955 -0.008180 0.999955 -0.004851" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.150000 0.150000 0.176044" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_19>
+      <body_2 type="0">
+        <index value="2" type="1" size="1"/>
+        <inertia value="0.204186 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.204186 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.038968 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 10.391376 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 10.391376 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 10.391376" type="4" size="1"/>
+        <mass value="10.3914" type="3" size="1"/>
+        <name value="Spine" type="4" size="1"/>
+        <parent value="0" type="1" size="1"/>
+        <pos value="0.000000 0.000755 2.641104" type="4" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 0.999988 -0.004976 -0.000000 0.004976 0.999988" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.150000 0.150000 0.461839" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_2>
+      <body_3 type="0">
+        <index value="3" type="1" size="1"/>
+        <inertia value="0.993715 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.993715 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.067499 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 17.999781 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 17.999781 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 17.999781" type="4" size="1"/>
+        <mass value="17.9998" type="3" size="1"/>
+        <name value="RightUpLeg" type="4" size="1"/>
+        <parent value="0" type="1" size="1"/>
+        <pos value="-0.178916 -0.013728 1.529152" type="4" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 -0.999523 -0.030886 -0.000000 0.030886 -0.999523" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.150000 0.150000 0.799990" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_3>
+      <body_4 type="0">
+        <index value="4" type="1" size="1"/>
+        <inertia value="0.849013 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.849013 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.063967 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 17.057991 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 17.057991 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 17.057991" type="4" size="1"/>
+        <mass value="17.058" type="3" size="1"/>
+        <name value="RightLeg" type="4" size="1"/>
+        <parent value="3" type="1" size="1"/>
+        <pos value="-0.176380 -0.012849 0.664001" type="4" size="1"/>
+        <rot value="0.941512 -0.336926 0.006020 -0.336926 -0.940892 0.034678 -0.006020 -0.034678 -0.999380" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.150000 0.150000 0.758133" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_4>
+      <body_5 type="0">
+        <index value="5" type="1" size="1"/>
+        <inertia value="0.016880 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.016880 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.014546 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 3.878905 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 3.878905 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 3.878905" type="4" size="1"/>
+        <mass value="3.8789" type="3" size="1"/>
+        <name value="RightFoot" type="4" size="1"/>
+        <parent value="4" type="1" size="1"/>
+        <pos value="-0.173445 -0.083235 0.198926" type="4" size="1"/>
+        <rot value="0.999968 0.006876 0.004176 0.006876 -0.460951 -0.887399 -0.004176 0.887399 -0.460984" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.150000 0.150000 0.172396" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_5>
+      <body_6 type="0">
+        <index value="6" type="1" size="1"/>
+        <inertia value="0.017660 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.017660 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.014855 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 3.961339 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 3.961339 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 3.961339" type="4" size="1"/>
+        <mass value="3.96134" type="3" size="1"/>
+        <name value="RightToes" type="4" size="1"/>
+        <parent value="5" type="1" size="1"/>
+        <pos value="-0.173845 -0.266023 0.153400" type="4" size="1"/>
+        <rot value="0.999932 -0.008295 -0.008179 -0.008295 -0.013985 -0.999868 0.008179 0.999868 -0.014052" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.150000 0.150000 0.176059" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_6>
+      <body_7 type="0">
+        <index value="7" type="1" size="1"/>
+        <inertia value="0.045466 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.132814 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.124147 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 9.813209 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 9.813209 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 9.813209" type="4" size="1"/>
+        <mass value="9.81321" type="3" size="1"/>
+        <name value="Spine1" type="4" size="1"/>
+        <parent value="2" type="1" size="1"/>
+        <pos value="0.000000 0.002336 2.951076" type="4" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.359600 0.150000 0.181928" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_7>
+      <body_8 type="0">
+        <index value="8" type="1" size="1"/>
+        <inertia value="0.019719 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.019719 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.015625 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 4.166537 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 4.166537 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 4.166537" type="4" size="1"/>
+        <mass value="4.16654" type="3" size="1"/>
+        <name value="RightShoulder" type="4" size="1"/>
+        <parent value="7" type="1" size="1"/>
+        <pos value="-0.282627 0.000657 2.890399" type="4" size="1"/>
+        <rot value="0.000652 -0.031306 -0.999510 -0.031306 0.999019 -0.031311 0.999510 0.031311 -0.000329" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.150000 0.150000 0.185179" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_8>
+      <body_9 type="0">
+        <index value="9" type="1" size="1"/>
+        <inertia value="0.019719 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.019719 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.015625 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 4.166537 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 4.166537 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 4.166537" type="4" size="1"/>
+        <mass value="4.16654" type="3" size="1"/>
+        <name value="LeftShoulder1" type="4" size="1"/>
+        <parent value="7" type="1" size="1"/>
+        <pos value="0.282627 0.000657 2.890399" type="4" size="1"/>
+        <rot value="0.000652 0.031306 0.999510 0.031306 0.999019 -0.031311 -0.999510 0.031311 -0.000329" type="4" size="1"/>
+        <geom_info type="0">
+          <color value="0.200000 0.700000 0.700000 1.000000" type="4" size="1"/>
+          <size value="0.150000 0.150000 0.185179" type="4" size="1"/>
+          <type value="box" type="4" size="1"/>
+        </geom_info>
+      </body_9>
+    </body_info>
+    <joint_info type="0">
+      <joint_0 type="0">
+        <index value="0" type="1" size="1"/>
+        <name value="" type="4" size="1"/>
+        <pos value="0.000000 0.000676 2.110429" type="4" size="1"/>
+        <qdof value="6" type="1" size="1"/>
+        <qidx value="0" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="0" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gfreemotion" type="4" size="1"/>
+      </joint_0>
+      <joint_1 type="0">
+        <index value="1" type="1" size="1"/>
+        <name value="LeftUpLeg" type="4" size="1"/>
+        <pos value="0.178916 -0.000001 1.973379" type="4" size="1"/>
+        <qdof value="3" type="1" size="1"/>
+        <qidx value="6" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="4" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gspherical" type="4" size="1"/>
+      </joint_1>
+      <joint_10 type="0">
+        <index value="10" type="1" size="1"/>
+        <name value="Head" type="4" size="1"/>
+        <pos value="0.000000 -0.000748 3.072361" type="4" size="1"/>
+        <qdof value="3" type="1" size="1"/>
+        <qidx value="33" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="40" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gspherical" type="4" size="1"/>
+      </joint_10>
+      <joint_11 type="0">
+        <index value="11" type="1" size="1"/>
+        <name value="LeftArm" type="4" size="1"/>
+        <pos value="0.385454 -0.002564 2.890365" type="4" size="1"/>
+        <qdof value="3" type="1" size="1"/>
+        <qidx value="36" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="44" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gspherical" type="4" size="1"/>
+      </joint_11>
+      <joint_12 type="0">
+        <index value="12" type="1" size="1"/>
+        <name value="LeftForeArm" type="4" size="1"/>
+        <pos value="0.910648 0.025923 2.892348" type="4" size="1"/>
+        <qdof value="3" type="1" size="1"/>
+        <qidx value="39" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="48" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gspherical" type="4" size="1"/>
+      </joint_12>
+      <joint_13 type="0">
+        <index value="13" type="1" size="1"/>
+        <name value="LeftHand" type="4" size="1"/>
+        <pos value="1.352452 0.005480 2.894055" type="4" size="1"/>
+        <qdof value="3" type="1" size="1"/>
+        <qidx value="42" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="52" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gspherical" type="4" size="1"/>
+      </joint_13>
+      <joint_14 type="0">
+        <index value="14" type="1" size="1"/>
+        <name value="RightArm" type="4" size="1"/>
+        <pos value="-0.385454 -0.002564 2.890365" type="4" size="1"/>
+        <qdof value="3" type="1" size="1"/>
+        <qidx value="45" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="56" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gspherical" type="4" size="1"/>
+      </joint_14>
+      <joint_15 type="0">
+        <index value="15" type="1" size="1"/>
+        <name value="RightForeArm" type="4" size="1"/>
+        <pos value="-0.912734 0.025923 2.892348" type="4" size="1"/>
+        <qdof value="3" type="1" size="1"/>
+        <qidx value="48" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="60" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gspherical" type="4" size="1"/>
+      </joint_15>
+      <joint_16 type="0">
+        <index value="16" type="1" size="1"/>
+        <name value="RightHand" type="4" size="1"/>
+        <pos value="-1.353382 0.005480 2.894055" type="4" size="1"/>
+        <qdof value="3" type="1" size="1"/>
+        <qidx value="51" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="64" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gspherical" type="4" size="1"/>
+      </joint_16>
+      <joint_17 type="0">
+        <index value="17" type="1" size="1"/>
+        <name value="LeftLeg" type="4" size="1"/>
+        <pos value="0.178916 -0.027455 1.084925" type="4" size="1"/>
+        <qdof value="3" type="1" size="1"/>
+        <qidx value="54" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="68" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gspherical" type="4" size="1"/>
+      </joint_17>
+      <joint_18 type="0">
+        <index value="18" type="1" size="1"/>
+        <name value="LeftFoot" type="4" size="1"/>
+        <pos value="0.173845 0.001756 0.243077" type="4" size="1"/>
+        <qdof value="3" type="1" size="1"/>
+        <qidx value="57" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="72" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gspherical" type="4" size="1"/>
+      </joint_18>
+      <joint_19 type="0">
+        <index value="19" type="1" size="1"/>
+        <name value="LeftToes" type="4" size="1"/>
+        <pos value="0.173045 -0.168226 0.154775" type="4" size="1"/>
+        <qdof value="3" type="1" size="1"/>
+        <qidx value="60" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="76" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gspherical" type="4" size="1"/>
+      </joint_19>
+      <joint_2 type="0">
+        <index value="2" type="1" size="1"/>
+        <name value="Spine" type="4" size="1"/>
+        <pos value="0.000000 0.002032 2.384530" type="4" size="1"/>
+        <qdof value="3" type="1" size="1"/>
+        <qidx value="9" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="8" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gspherical" type="4" size="1"/>
+      </joint_2>
+      <joint_3 type="0">
+        <index value="3" type="1" size="1"/>
+        <name value="RightUpLeg" type="4" size="1"/>
+        <pos value="-0.178916 -0.000001 1.973379" type="4" size="1"/>
+        <qdof value="3" type="1" size="1"/>
+        <qidx value="12" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="12" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gspherical" type="4" size="1"/>
+      </joint_3>
+      <joint_4 type="0">
+        <index value="4" type="1" size="1"/>
+        <name value="RightLeg" type="4" size="1"/>
+        <pos value="-0.178916 -0.027455 1.084925" type="4" size="1"/>
+        <qdof value="3" type="1" size="1"/>
+        <qidx value="15" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="16" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gspherical" type="4" size="1"/>
+      </joint_4>
+      <joint_5 type="0">
+        <index value="5" type="1" size="1"/>
+        <name value="RightFoot" type="4" size="1"/>
+        <pos value="-0.173845 0.001756 0.243077" type="4" size="1"/>
+        <qdof value="3" type="1" size="1"/>
+        <qidx value="18" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="20" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gspherical" type="4" size="1"/>
+      </joint_5>
+      <joint_6 type="0">
+        <index value="6" type="1" size="1"/>
+        <name value="RightToes" type="4" size="1"/>
+        <pos value="-0.173045 -0.168226 0.154775" type="4" size="1"/>
+        <qdof value="3" type="1" size="1"/>
+        <qidx value="21" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="24" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gspherical" type="4" size="1"/>
+      </joint_6>
+      <joint_7 type="0">
+        <index value="7" type="1" size="1"/>
+        <name value="Spine1" type="4" size="1"/>
+        <pos value="0.000000 -0.000522 2.897678" type="4" size="1"/>
+        <qdof value="3" type="1" size="1"/>
+        <qidx value="24" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="28" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gspherical" type="4" size="1"/>
+      </joint_7>
+      <joint_8 type="0">
+        <index value="8" type="1" size="1"/>
+        <name value="RightShoulder" type="4" size="1"/>
+        <pos value="-0.179800 0.003878 2.890433" type="4" size="1"/>
+        <qdof value="3" type="1" size="1"/>
+        <qidx value="27" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="32" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gspherical" type="4" size="1"/>
+      </joint_8>
+      <joint_9 type="0">
+        <index value="9" type="1" size="1"/>
+        <name value="LeftShoulder1" type="4" size="1"/>
+        <pos value="0.179800 0.003878 2.890433" type="4" size="1"/>
+        <qdof value="3" type="1" size="1"/>
+        <qidx value="30" type="1" size="1"/>
+        <rot value="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000" type="4" size="1"/>
+        <rqdim value="4" type="1" size="1"/>
+        <rqidx value="36" type="1" size="1"/>
+        <rqtype value="quaternion" type="4" size="1"/>
+        <type value="gspherical" type="4" size="1"/>
+      </joint_9>
+    </joint_info>
+  </model_info>
+</root>

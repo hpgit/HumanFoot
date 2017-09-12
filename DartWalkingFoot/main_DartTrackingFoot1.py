@@ -387,8 +387,8 @@ def walkings(params, isCma=True):
 
     OLD_SWING_HEIGHT = False
     # OLD_SWING_HEIGHT = True
-    # HIGHER_OFFSET = True
-    HIGHER_OFFSET = False
+    HIGHER_OFFSET = True
+    # HIGHER_OFFSET = False
 
     motionDir = current_path+'/ppmotion/'
     # motionDir = './ppmotion/'
@@ -562,6 +562,8 @@ def walkings(params, isCma=True):
     # dartModel.world.set_gravity(np.array((0., 0., 0.)))
     dartModel.initializeHybridDynamics()
     dartModel.initializeForwardDynamics()
+
+    # print(dartModel.skeleton.coriolis_and_gravity_forces())
 
     # dartModel.getJoint('LeftFoot').set_actuator_type(pydart.Joint.FORCE)
     # dartModel.getJoint('RightFoot').set_actuator_type(pydart.Joint.FORCE)

@@ -1194,6 +1194,7 @@ if __name__ == '__main__':
     import Util.ysPythonEx as ype
     import Motion.ysSkeletonEdit as yme
 
+
     def test_motions():
         pointMotion = yf.readTrcFile('../samples/Day7_Session2_Take01_-_walk.trc', .01)
         jointMotion = yf.readBvhFile('../samples/wd2_WalkSameSame00.bvh', .01)

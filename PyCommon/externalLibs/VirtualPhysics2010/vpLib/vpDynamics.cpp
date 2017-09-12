@@ -44,6 +44,8 @@ OF SUCH DAMAGE.
 #include <VP/vpBody.h>
 #include <VP/vpSpring.h>
 
+#include <iostream>
+
 void vpSystem::BuildDynamics(void)
 {	
 	for ( int i = 0; i < m_pJoint.size(); i++ )
@@ -101,6 +103,7 @@ void vpSystem::IDIteration1(void)
 		
 		pCurrent->m_pRightBody->m_sV.Ad(pCurrent->m_sRightBodyFrame, pCurrent->m_sV);
 		pCurrent->m_pRightBody->m_sDV.Ad(pCurrent->m_sRightBodyFrame, pCurrent->m_sDV);
+		std::cout << pCurrent->m_pRightBody->m_sDV << std::endl;
 	}
 }
 
