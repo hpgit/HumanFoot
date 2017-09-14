@@ -160,6 +160,9 @@ def buildMcfg():
         node.mass = massMap[name]
         # totalMass += node.mass
 
+    # width : x axis on body frame
+    # height: y axis on body frame
+    # length: z axis on body frame
     node = mcfg.getNode('Hips')
     node.length = .2
     node.width = .25
@@ -563,6 +566,8 @@ def walkings(params, isCma=True):
     dartModel.initializeHybridDynamics()
     dartModel.initializeForwardDynamics()
 
+    dartModel.skeleton.inv_mass_matrix()
+
     # print(dartModel.skeleton.coriolis_and_gravity_forces())
 
     # dartModel.getJoint('LeftFoot').set_actuator_type(pydart.Joint.FORCE)
@@ -838,7 +843,7 @@ def walkings(params, isCma=True):
         #        viewer.doc.addRenderer('rd_vec1', yr.VectorsRenderer(rd_vec1, rd_vecori1, (255,0,0)))
         #    viewer.doc.addRenderer('rd_vec2', yr.VectorsRenderer(rd_vec2, rd_vecori2, (0,255,0)))
         #    viewer.doc.addRenderer('rd_frame1', yr.FramesRenderer(rd_frame1, (0,200,200)))
-        #    viewer.doc.addRenderer('rd_frame2', yr.FramesRenderer(rd_frame2, (200,200,0)))
+            viewer.doc.addRenderer('rd_frame2', yr.FramesRenderer(rd_frame2, (200,200,0)))
         #    viewer.setMaxFrame(len(motion_ori)-1)
 
 
@@ -1454,6 +1459,10 @@ def walkings(params, isCma=True):
 
         # print dartModel.skeleton.q[:6]
         # print dartModel.getBody(0).com(), dartModel.skeleton.joint(0).position_in_world_frame(), dartModel.skeleton.q[:6]
+
+
+        del rd_frame2[:]
+        rd_frame2.append(dartModel.getBody(0).world_transform())
 
         #=======================================================================
         # simulation

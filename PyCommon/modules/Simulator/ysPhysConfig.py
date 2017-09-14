@@ -28,9 +28,44 @@ class WorldConfig:
         self.CFM = 1E-5
         ##########################################33
 
+def BoxInertia(density, size):
+    mass = 8.0 * density * size[0] * size[1] * size[2]
+    ix = mass * (size[1] * size[1] + size[2] * size[2]) / 3.
+    iy = mass * (size[0] * size[0] + size[2] * size[2]) / 3.
+    iz = mass * (size[0] * size[0] + size[1] * size[1]) / 3.
+
+    I = numpy.zeros((6, 6))
+    I[:3, :3] = numpy.diag(numpy.array((ix, iy, iz)))
+    I[3:, 3:] = mass * numpy.eye(3)
+    return I
+
+def SphereInertia(density, rad):
+    rad_2 = rad * rad
+    mass = density * math.pi * rad_2
+    i = 0.4 * mass * rad_2
+    I = numpy.zeros((6, 6))
+    I[:3, :3] = numpy.diag(numpy.array((i, i, i)))
+    I[3:, 3:] = mass * numpy.eye(3)
+    return I
+
+def CylinderInertia(density, rad, height):
+    rad_2 = rad * rad
+    mass = density * math.pi * rad_2 * height
+    ix = mass * height * height  / 12.0 + .25 * mass * rad_2
+    iy = ix
+    iz = .5* mass * rad_2
+
+    I = numpy.zeros((6, 6))
+    I[:3, :3] = numpy.diag(numpy.array((ix, iy, iz)))
+    I[3:, 3:] = mass * numpy.eye(3)
+    return I
 
 class Material:
     def getMass(self):
+        print("Please Specify Material Type")
+        return -1
+
+    def getInertia(self):
         print("Please Specify Material Type")
         return -1
 
@@ -40,18 +75,26 @@ class BoxMaterial(Material):
         self.length = length
         self.width = width
         self.height = height
+        self.inertia = BoxInertia(self.density, (self.width/2., self.height/2., self.length/2.))
 
     def getMass(self):
         return self.density * self.length * self.width * self.height
+
+    def getInertia(self):
+        return self.inertia
 
 class CapsuleMaterial(Material):
     def __init__(self, density=1000., radius=1., height=1.):
         self.density = density
         self.radius = radius
         self.height = height
+        self.inertia = CylinderInertia(self.density, self.radius, self.height)
 
     def getMass(self):
-        return self.density * self.radius * self.radius * math.pi * self.height
+        return self.density * math.pi * self.radius * self.radius * (self.height + 4.*self.radius/3.)
+
+    def getInertia(self):
+        return self.inertia
 
 
 class Node:

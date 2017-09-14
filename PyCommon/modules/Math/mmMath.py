@@ -235,6 +235,17 @@ def logSO3(SO3):
             cof * (SO3[1][0] - SO3[0][1])]
             , float)
 
+def R2Quat(R):
+    log = logSO3(R)
+    theta = np.linalg.norm(log)
+    if abs(theta) < LIE_EPS:
+        return np.array((1., 0., 0., 0.))
+    unit_log = log/theta
+    quat = np.zeros(4)
+    quat[0] = math.cos(theta*.5)
+    quat[1:4] = math.sin(theta*.5) * unit_log
+    return quat
+
 def logSO3_tuple(SO3):
     cosTheta = 0.5 * (SO3[0,0] + SO3[1,1] + SO3[2,2] - 1.0)
     if math.fabs(cosTheta) > 1.0 - LIE_EPS:
