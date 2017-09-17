@@ -1,5 +1,5 @@
 #pragma once
-#include "../../external_libraries/BaseLib/baselib.h"
+#include "../../externalLibs/BaseLib/baselib.h"
 
 inline numeric::array vectorn_2_pyVec(const vectorn& vecn)
 {

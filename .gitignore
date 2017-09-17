@@ -10,3 +10,6 @@ pyenv
 /PyCommon/modules/modules.vcxproj.user
 *.cache
 *.suo
+/PyCommon/modules/Math/build/lib.windows8.1-x86/Release
+/PyCommon/modules/Math/csMath.lib
+/PyCommon/modules/Math/csMath.exp
