@@ -52,11 +52,12 @@ OF SUCH DAMAGE.
 #include <iomanip>
 #include <string>
 #include <sstream>
+#include <stdio.h>
 
 static std::string numToStr(scalar num)
 {
     char numStr[10];
-    sprintf(numStr, "%6.4lf", num);
+    //sprintf(numStr, "%6.4lf", num);
     return std::string(numStr);
 }
 

@@ -16,10 +16,10 @@ using namespace std;
 #include <Python.h>
 
 #include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
+//#include <boost/python/numpy.hpp>
 using namespace boost::python;
 namespace bp = boost::python;
-namespace np = boost::python::numpy;
+//namespace np = boost::python::numpy;
 
 
 // TODO: reference additional headers your program requires here

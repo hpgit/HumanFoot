@@ -8,11 +8,11 @@
 #include "../../externalLibs/common/VPUtil.h"
 
 namespace bp = boost::python;
-namespace np = boost::python::numpy;
+//namespace np = boost::python::numpy;
 
 BOOST_PYTHON_MODULE(csMath)
 {
-	// numeric::array::set_module_and_type("numpy", "ndarray");
+	numeric::array::set_module_and_type("numpy", "ndarray");
 
 	def("R2zxy_s", R2zxy_s);
 	def("R2xyz_s", R2xyz_s);
@@ -47,10 +47,10 @@ object R2euler(const object& pyR, int order)
 //    printf(" Roll   Pitch  Yaw	  (radians)\n");
 //    printf("%6.3f %6.3f %6.3f\n", outAngs.x, outAngs.y, outAngs.z);
 
-	//static numeric::array O(make_tuple(0.,0.,0.));
+	static numeric::array O(make_tuple(0.,0.,0.));
 	static HMatrix H;
 
-    np::ndarray O = np::array(bp::make_tuple(0., 0., 0.));
+    //np::ndarray O = np::array(bp::make_tuple(0., 0., 0.));
  
 	pyR_2_H(pyR, H);
 	EulerAngles angs  = Eul_FromHMatrix(H, order);
@@ -65,12 +65,12 @@ object R2euler(const object& pyR, int order)
 
 object exp_py( const object& axis_angle_vec )
 {
-	//static numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+	static numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
 	static Vec3 vAxis;
-	np::ndarray I = np::array( bp::make_tuple(
-        bp::make_tuple(1.,0.,0.), 
-        bp::make_tuple(0.,1.,0.), 
-        bp::make_tuple(0.,0.,1.)) );
+	//np::ndarray I = np::array( bp::make_tuple(
+        //bp::make_tuple(1.,0.,0.), 
+        //bp::make_tuple(0.,1.,0.), 
+        //bp::make_tuple(0.,0.,1.)) );
 
 	object pyR = I.copy();
 	pyVec3_2_Vec3(axis_angle_vec, vAxis);
