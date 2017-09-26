@@ -13,61 +13,73 @@ using namespace boost::python;
 // #define MAKE_SE3 numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
 // #define MAKE_VEC3 numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
 
-inline numeric::array transpose_pySO3(numeric::array& pyR)
+inline bp::numeric::array transpose_pySO3(bp::numeric::array& pyR)
 //inline np::ndarray transpose_pySO3(np::ndarray& pyR)
 {
-	//object pyR_copy = pyR.copy();
+	object pyR_copy = pyR.copy();
 
-	//pyR[make_tuple(0,1)] = pyR_copy[make_tuple(1,0)]; pyR[make_tuple(0,2)] = pyR_copy[make_tuple(2,0)]; 
-	//pyR[make_tuple(1,0)] = pyR_copy[make_tuple(0,1)]; pyR[make_tuple(1,2)] = pyR_copy[make_tuple(2,1)];
-	//pyR[make_tuple(2,0)] = pyR_copy[make_tuple(0,2)]; pyR[make_tuple(2,1)] = pyR_copy[make_tuple(1,2)];
+	pyR[make_tuple(0,1)] = pyR_copy[make_tuple(1,0)]; pyR[make_tuple(0,2)] = pyR_copy[make_tuple(2,0)];
+	pyR[make_tuple(1,0)] = pyR_copy[make_tuple(0,1)]; pyR[make_tuple(1,2)] = pyR_copy[make_tuple(2,1)];
+	pyR[make_tuple(2,0)] = pyR_copy[make_tuple(0,2)]; pyR[make_tuple(2,1)] = pyR_copy[make_tuple(1,2)];
 
-	//return pyR;
-    return pyR.transpose();
+	return pyR;
+    //return pyR.transpose();
 }
 
 void make_pyVec3(object &pyV)
 {
-	// numeric::array O( make_tuple(0.,0.,0.) );
-	// pyV = O.copy();
-    np::ndarray O = np::array(bp::make_tuple(0., 0., 0.));
-    pyV = O.copy();
+	boost::numeric::array O( make_tuple(0.,0.,0.) );
+	pyV = O.copy();
+    // np::ndarray O = np::array(bp::make_tuple(0., 0., 0.));
+    // pyV = O.copy();
 }
 
 void make_pyse3(object &pyV)
 {
-    np::ndarray O = np::array(bp::make_tuple(0., 0., 0., 0., 0., 0.));
+	boost::numeric::array O( make_tuple(0.,0.,0.,0.,0.,0.) );
+//    np::ndarray O = np::array(bp::make_tuple(0., 0., 0., 0., 0., 0.));
 	pyV = O.copy();
 }
 
 void make_pydse3(object &pyV)
 {
-    np::ndarray O = np::array(bp::make_tuple(0., 0., 0., 0., 0., 0.));
+	boost::numeric::array O( make_tuple(0.,0.,0.,0.,0.,0.) );
+//    np::ndarray O = np::array(bp::make_tuple(0., 0., 0., 0., 0., 0.));
 	pyV = O.copy();
 }
 
 void make_pyInertia(object &pyV)
 {
-    np::ndarray O = np::array(bp::make_tuple(0., 0., 0., 0., 0., 0., 0., 0., 0., 0.));
+	boost::numeric::array O( make_tuple(0.,0.,0.,0.,0.,0.,0.,0.,0.,0.) );
+//    np::ndarray O = np::array(bp::make_tuple(0., 0., 0., 0., 0., 0., 0., 0., 0., 0.));
 	pyV = O.copy();
 }
 
 void make_pySE3(object &pyT)
 {
-	np::ndarray I = np::array( bp::make_tuple(
-        bp::make_tuple(1.,0.,0.,0.), 
-        bp::make_tuple(0.,1.,0.,0.), 
-        bp::make_tuple(0.,0.,1.,0.), 
+	boost::numeric::array I( bp::make_tuple(
+        bp::make_tuple(1.,0.,0.,0.),
+        bp::make_tuple(0.,1.,0.,0.),
+        bp::make_tuple(0.,0.,1.,0.),
         bp::make_tuple(0.,0.,0.,1.)) );
+//	np::ndarray I = np::array( bp::make_tuple(
+//        bp::make_tuple(1.,0.,0.,0.),
+//        bp::make_tuple(0.,1.,0.,0.),
+//        bp::make_tuple(0.,0.,1.,0.),
+//        bp::make_tuple(0.,0.,0.,1.)) );
 	pyT = I.copy();
 }
 
 void make_pySO3(object &pyR)
 {
-	np::ndarray I = np::array( bp::make_tuple(
-        bp::make_tuple(1.,0.,0.), 
-        bp::make_tuple(0.,1.,0.), 
-        bp::make_tuple(0.,0.,1.)) ); 
+	numeric::array I( bp::make_tuple(
+        bp::make_tuple(1.,0.,0.),
+        bp::make_tuple(0.,1.,0.),
+        bp::make_tuple(0.,0.,1.)) );
+//	np::ndarray I = np::array( bp::make_tuple(
+//        bp::make_tuple(1.,0.,0.),
+//        bp::make_tuple(0.,1.,0.),
+//        bp::make_tuple(0.,0.,1.)) );
     pyR = I.copy();
 }
 
