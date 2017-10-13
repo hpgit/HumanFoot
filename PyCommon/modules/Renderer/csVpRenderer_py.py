@@ -44,7 +44,7 @@ def renderVpNode(pNode):
     _t = _T.GetPosition()
     # print _t
     _r = LogR(_T)
-    print _r
+    print(_r)
 
     glTranslatef(_t[0], _t[1], _t[2])
     # glMultMatrixd(_T)

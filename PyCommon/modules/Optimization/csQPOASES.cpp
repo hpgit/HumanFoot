@@ -1,4 +1,4 @@
-#include <qpOASES/qpOASES.hpp>
+#include <qpOASES.hpp>
 #include "stdafx.h"
 #include "../../../PyCommon/externalLibs/common/boostPythonUtil.h"
 #include <string>

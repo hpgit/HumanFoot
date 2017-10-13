@@ -7,6 +7,9 @@
 #include "EulerAngles.h"
 #include "../../externalLibs/common/VPUtil.h"
 
+namespace bp = boost::python;
+//namespace np = boost::python::numpy;
+
 BOOST_PYTHON_MODULE(csMath)
 {
 	numeric::array::set_module_and_type("numpy", "ndarray");
@@ -46,6 +49,8 @@ object R2euler(const object& pyR, int order)
 
 	static numeric::array O(make_tuple(0.,0.,0.));
 	static HMatrix H;
+
+    //np::ndarray O = np::array(bp::make_tuple(0., 0., 0.));
  
 	pyR_2_H(pyR, H);
 	EulerAngles angs  = Eul_FromHMatrix(H, order);
@@ -62,7 +67,11 @@ object exp_py( const object& axis_angle_vec )
 {
 	static numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
 	static Vec3 vAxis;
-	
+	//np::ndarray I = np::array( bp::make_tuple(
+        //bp::make_tuple(1.,0.,0.), 
+        //bp::make_tuple(0.,1.,0.), 
+        //bp::make_tuple(0.,0.,1.)) );
+
 	object pyR = I.copy();
 	pyVec3_2_Vec3(axis_angle_vec, vAxis);
 	SE3_2_pySO3(Exp((Axis)vAxis), pyR);
@@ -78,13 +87,14 @@ object exp_py( const object& axis_angle_vec )
 
 object log_py( const object& rotation_mat )
 {
-	static numeric::array O(make_tuple(0.,0.,0.));
+	//static numeric::array O(make_tuple(0.,0.,0.));
 	static SE3 T;
 	static se3 d;
 
 	pySO3_2_SE3(rotation_mat, T);
 	d = Log(T);
-	object pyV = O.copy();
+	object pyV;
+    make_pyVec3(pyV);
 	pyV[0] = d[0];
 	pyV[1] = d[1];
 	pyV[2] = d[2];
@@ -93,7 +103,7 @@ object log_py( const object& rotation_mat )
 
 object slerp_py( const object& R1, const object& R2, scalar t )
 {
-	static numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+	//static numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
 	static SE3 T1;
 	static SE3 T2;
 	static SE3 T_slerp;
@@ -102,7 +112,8 @@ object slerp_py( const object& R1, const object& R2, scalar t )
 	pySO3_2_SE3(R2, T2);
 	T_slerp = slerp(T1, T2, t);
 
-	object pyR = I.copy();
+    object pyR;
+    make_pySO3(pyR);
 	SE3_2_pySO3(T_slerp, pyR);
 
 	return pyR;
