@@ -774,7 +774,7 @@ class FramesRenderer(Renderer):
         self.axisLength = axisLength
     def render(self, renderType=RENDER_OBJECT):
         for T in self.Ts:
-            if T!=None:
+            if T is not None:
                 glPushMatrix()
                 glMultMatrixf(T.transpose())
                 ygh.drawCoordinate(self.totalColor, self.axisLength)

@@ -25,7 +25,7 @@ from PyCommon.modules.Motion import ysMotionExtend as ymt
 # from PyCommon.modules.Motion import ysSkeletonEdit as yhe
 from PyCommon.modules.Motion import mmAnalyticIK as aik
 # from PyCommon.modules.Util import ysMatplotEx as ymp
-from PyCommon.modules.Resource import ysMotionLoader as yf
+from PyCommon.modules.Resource import ysMotionLoadr as yf
 from PyCommon.modules.Simulator import ysPhysConfig as ypc
 
 from PyCommon.modules.Simulator import hpDartLCPSimulator as hdls
@@ -390,8 +390,8 @@ def walkings(params, isCma=True):
 
     OLD_SWING_HEIGHT = False
     # OLD_SWING_HEIGHT = True
-    HIGHER_OFFSET = True
-    # HIGHER_OFFSET = False
+    # HIGHER_OFFSET = True
+    HIGHER_OFFSET = False
 
     motionDir = current_path+'/ppmotion/'
     # motionDir = './ppmotion/'
@@ -519,12 +519,13 @@ def walkings(params, isCma=True):
     SWING_FOOT_ORIENTATION =    False
 
     STANCE_FOOT_PUSH =          True
-    STANCE_FOOT_BALANCING =     True
+    STANCE_FOOT_BALANCING =     False
 
     stitch_func = lambda x : 1. - yfg.hermite2nd(x)
     stf_stabilize_func = yfg.concatenate([yfg.hermite2nd, yfg.one], [c_landing_duration])
     match_stl_func = yfg.hermite2nd
     swf_placement_func = yfg.hermite2nd
+    # swf_placement_func = yfg.identity
     swf_height_func = yfg.hermite2nd
     swf_height_sine_func = yfg.sine
     #    stf_balancing_func = yfg.concatenate([yfg.hermite2nd, yfg.one], [c_landing_duration])
@@ -781,7 +782,8 @@ def walkings(params, isCma=True):
             viewer.setRenderers2([yr.DartModelRenderer(dartModel, (200, 200, 0))])
         else:
             # viewer = ysv.SimpleViewer()
-            viewer = hsv.hpSimpleViewer(viewForceWnd=True)
+            # viewer = hsv.hpSimpleViewer(viewForceWnd=True)
+            viewer = hsv.hpSimpleViewer(viewForceWnd=False)
             #    viewer.record(False)
             if not isCma:
                 viewer.doc.addRenderer('motionModel', yr.DartModelRenderer(dartMotionModel, (0,150,255), yr.POLYGON_LINE))
@@ -874,10 +876,11 @@ def walkings(params, isCma=True):
         viewer.objectInfoWnd.add1DSlider("RightFootKp",          0., 500., 10., 300.)
         viewer.objectInfoWnd.add1DSlider("RightFootKd",          0., 100., 1., 30.)
 
-        viewer.cForceWnd.addDataSet('expForce', FL_BLACK)
-        viewer.cForceWnd.addDataSet('desForceMin', FL_RED)
-        viewer.cForceWnd.addDataSet('desForceMax', FL_RED)
-        viewer.cForceWnd.addDataSet('realForce', FL_GREEN)
+        if viewer.cForceWnd is not None:
+            viewer.cForceWnd.addDataSet('expForce', FL_BLACK)
+            viewer.cForceWnd.addDataSet('desForceMin', FL_RED)
+            viewer.cForceWnd.addDataSet('desForceMax', FL_RED)
+            viewer.cForceWnd.addDataSet('realForce', FL_GREEN)
 
 
         if not REPEATED:
@@ -1066,14 +1069,11 @@ def walkings(params, isCma=True):
 
         # dCM : average velocity of root of controlModel over 1 frame
         dCM = avg_dCM[0]
-        # CM = controlModel.getJointPositionGlobal(0)
         CM = dartModel.getBody("Hips").com()
         #        CM = yrp.getCM(controlModel.getJointPositionsGlobal(), bodyMasses, upperMass, uppers)
         #        CM = yrp.getCM(controlModel.getJointPositionsGlobal(), bodyMasses, totalMass)
-        # CMreal = yrp.getCM(controlModel.getJointPositionsGlobal(), bodyMasses, totalMass)
         CMreal = dartModel.getCOM()
         stf = dartModel.getJointPositionGlobal(stanceFoots[0])
-        # stf = controlModel.getJointPositionGlobal(stanceFoots[0])
         CMr = CM - stf
 
         diff_dCM = mm.projectionOnPlane(dCM-dCM_tar, (1,0,0), (0,0,1))
@@ -1196,18 +1196,32 @@ def walkings(params, isCma=True):
                 R_swp_sag = prev_R_swp[0][0]
                 R_swp_cor = prev_R_swp[0][1]
             else:
+                def clampExp(logSO3):
+                    theta = np.linalg.norm(logSO3)
+                    if theta < math.pi/12.:
+                        return mm.exp(logSO3)
+                    else:
+                        return mm.exp(logSO3, math.pi/12.)
+
                 R_swp_sag = mm.I_SO3(); R_swp_cor = mm.I_SO3()
-                print 'diff_dCM_sag_axis: ', diff_dCM_sag_axis
-                print 'diff_dCM_cor_axis: ', diff_dCM_cor_axis
-                print 'diff_CMr_sag_axis: ', diff_CMr_sag_axis
-                print 'diff_CMr_cor_axis: ', diff_CMr_cor_axis
-                R_swp_sag = np.dot(R_swp_sag, mm.exp(diff_dCM_sag_axis * K_swp_vel_sag * -t_swing_foot_placement))
-                R_swp_cor = np.dot(R_swp_cor, mm.exp(diff_dCM_cor_axis * K_swp_vel_cor * -t_swing_foot_placement))
+                # print('diff_dCM_sag_axis: ', diff_dCM_sag_axis)
+                # print('diff_dCM_cor_axis: ', diff_dCM_cor_axis)
+                # print('diff_CMr_sag_axis: ', diff_CMr_sag_axis)
+                # print('diff_CMr_cor_axis: ', diff_CMr_cor_axis)
+                # R_swp_sag = np.dot(R_swp_sag, mm.exp(diff_dCM_sag_axis * K_swp_vel_sag * -t_swing_foot_placement))
+                # R_swp_cor = np.dot(R_swp_cor, mm.exp(diff_dCM_cor_axis * K_swp_vel_cor * -t_swing_foot_placement))
+                # if np.dot(direction, diff_CMr_sag) < 0:
+                #     R_swp_sag = np.dot(R_swp_sag, mm.exp(diff_CMr_sag_axis * K_swp_pos_sag * -t_swing_foot_placement))
+                # else:
+                #     R_swp_sag = np.dot(R_swp_sag, mm.exp(diff_CMr_sag_axis * K_swp_pos_sag_faster * -t_swing_foot_placement))
+                # R_swp_cor = np.dot(R_swp_cor, mm.exp(diff_CMr_cor_axis * K_swp_pos_cor * -t_swing_foot_placement))
+                R_swp_sag = np.dot(R_swp_sag, clampExp(diff_dCM_sag_axis * K_swp_vel_sag * -t_swing_foot_placement))
+                R_swp_cor = np.dot(R_swp_cor, clampExp(diff_dCM_cor_axis * K_swp_vel_cor * -t_swing_foot_placement))
                 if np.dot(direction, diff_CMr_sag) < 0:
-                    R_swp_sag = np.dot(R_swp_sag, mm.exp(diff_CMr_sag_axis * K_swp_pos_sag * -t_swing_foot_placement))
+                    R_swp_sag = np.dot(R_swp_sag, clampExp(diff_CMr_sag_axis * K_swp_pos_sag * -t_swing_foot_placement))
                 else:
-                    R_swp_sag = np.dot(R_swp_sag, mm.exp(diff_CMr_sag_axis * K_swp_pos_sag_faster * -t_swing_foot_placement))
-                R_swp_cor = np.dot(R_swp_cor, mm.exp(diff_CMr_cor_axis * K_swp_pos_cor * -t_swing_foot_placement))
+                    R_swp_sag = np.dot(R_swp_sag, clampExp(diff_CMr_sag_axis * K_swp_pos_sag_faster * -t_swing_foot_placement))
+                R_swp_cor = np.dot(R_swp_cor, clampExp(diff_CMr_cor_axis * K_swp_pos_cor * -t_swing_foot_placement))
 
             for i in range(len(swingLegs)):
                 swingLeg = swingLegs[i]
@@ -1277,17 +1291,17 @@ def walkings(params, isCma=True):
                 offset = 0.
                 offset += offset_height
                 offset += offset_sine
-                print 'offset: ', offset
-                print 'offset_height: ', offset_height
-                print 'offset_height_pos: ', (height_tar-height_cur) * c5
-                print 'offset_height_vel: ', (d_height_tar-d_height_cur) * c6 * swf_height_func(t)
-                print 'offset_height_vel_detail_tar: ', d_height_tar
-                print 'offset_height_vel_detail_cur: ', d_height_cur
-                print 'offset_sine: ', offset_sine
+                # print('offset: ', offset)
+                # print('offset_height: ', offset_height)
+                # print('offset_height_pos: ', (height_tar-height_cur) * c5)
+                # print('offset_height_vel: ', (d_height_tar-d_height_cur) * c6 * swf_height_func(t))
+                # print('offset_height_vel_detail_tar: ', d_height_tar)
+                # print('offset_height_vel_detail_cur: ', d_height_cur)
+                # print('offset_sine: ', offset_sine)
 
                 if offset > 0.:
                     newPosition =  motion_swf_height[frame].getJointPositionGlobal(swingFoot)
-                    newPosition[1] += offset
+                    newPosition[1] += offset * .2
                     aik.ik_analytic(motion_swf_height[frame], swingFoot, newPosition)
                 else:
                     if HIGHER_OFFSET:
@@ -1416,7 +1430,7 @@ def walkings(params, isCma=True):
         #'''
 
         # foot adjustment
-        hfi.footAdjust(motion_stf_balancing[frame], footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, .05)
+        hfi.footAdjust(motion_stf_balancing[frame], footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, -.01)
 
 
         # control trajectory
@@ -1607,8 +1621,8 @@ def walkings(params, isCma=True):
                 if contactForces is not None and len(contactForces) > 0:
                     CP += yrp.getCP(contactPositions, contactForces)
                     F += sum(contactForces)
-                avg_dCM[0] += dartModel.getJointVelocityGlobal(0)
                 '''
+                avg_dCM[0] += dartModel.getJointVelocityGlobal(0)
         #            avg_dCM[0] += yrp.getCM(controlModel.getJointVelocitiesGlobal(), bodyMasses, upperMass, uppers)
         #            avg_dCM[0] += yrp.getCM(controlModel.getJointVelocitiesGlobal(), bodyMasses, totalMass)
 
@@ -1625,7 +1639,7 @@ def walkings(params, isCma=True):
 
         sumForce = sum(contactForces)
 
-        if not isCma:
+        if not isCma and viewer.cForceWnd is not None:
             # graph calculated force
             viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame)
 
