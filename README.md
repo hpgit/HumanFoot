@@ -2,6 +2,8 @@
 
 Simulation system for humanoid walking with segmented foot
 
+It based on python 2.7.
+
 ## How to build and run
 ### In linux,
 
@@ -27,42 +29,54 @@ Simulation system for humanoid walking with segmented foot
 
 ### In MAC OS X,
 
+first, install brew.
+
 in OSX terminal,
 
-    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
     brew update
-    brew install python
-    brew install boost --with-python
-    brew install boost-python
-    brew install fltk
-        in El capitan,
-        brew reinstall --devel https://raw.githubusercontent.com/dpo/homebrew/ec46018128dde5bf466b013a6c7086d0880930a3/Library/Formula/fltk.rb
-    brew install ode
-    brew install bullet
-    brew install suite-sparse
+    brew install wget
+    # brew install python
 
-after make virtual environment,
+    brew install cmake boost@1.59 boost-python@1.59 fltk ode suite-sparse
 
+    wget https://bootstrap.pypa.io/get-pip.py
+    sudo python get-pip.py
+    sudo pip install matplotlib
+
+after make virtual environment with system packages,
     pip install --upgrade pip setuptools
     pip install numpy
     pip install PyOpenGL PyOpenGL-accelerate
     pip install cvxopt
     pip install pyode
     pip install openopt
+    pip install cma
 
-setup pyfltk1.3.3 (google and download)
+setup pyfltk (google and download)
      in python/fltk\_wrap.cpp,
      add void in front of free\_color
 
      python setup.py build
      python setup.py install
 
+install bullet manually,
 
 for dart setup,
-    brew install eigen assimp homebrew/science/libccd dartsim/dart/fcl boost open-scene-graph
-    brew install homebrew/science/nlopt homebrew/science/ipopt tinyxml tinyxml2 ros/deps/urdfdom
-	# brew install homebrew/science/flann  # it seems that it doesn't work.....
+
+    brew install eigen assimp homebrew/science/libccd dartsim/dart/fcl boost open-scene-graph nlopt homebrew/science/ipopt tinyxml tinyxml2 ros/deps/urdfdom doxygen
+    # brew install flann
+    brew install https://raw.githubusercontent.com/Homebrew/homebrew-science/7fb6d735213383488fe2e7518148fa6e486588fc/flann.rb
 
     git clone https://github.com/dartsim/dart
-    cd dart;git checkout tags/v6.0.1;mkdir build;cd build;cmake ..
-    make -j4
+    cd dart;git checkout tags/v6.1.2;mkdir build
+
+    in CMakeLists.txt,
+    ENABLE_OPENMP to OFF
+
+    cd build;cmake ..;make -j;make install
+
+for pydart setup,
+    cd PyCommon/externalLibs/pydart2;make
+
+make install_dependencies_mac
+make

@@ -48,11 +48,11 @@ message(STATUS "SWIG_FOUND = ${SWIG_FOUND}")
 message(STATUS "SWIG_USE_FILE = ${SWIG_USE_FILE}")
 include(${SWIG_USE_FILE})
 ### PythonLibs
-#find_package(PythonLibs REQUIRED)
-SET(PYTHON_INCLUDE_DIR "/usr/local/Frameworks/Python.framework/Versions/2.7/include/python2.7")
+find_package(PythonLibs REQUIRED)
+#SET(PYTHON_INCLUDE_DIR "/usr/local/Frameworks/Python.framework/Versions/2.7/include/python2.7")
 message(STATUS "PYTHON_INCLUDE_DIR = ${PYTHON_INCLUDE_DIR}")
 include_directories(${PYTHON_INCLUDE_DIR})
-SET(PYTHON_LIBRARIES "/usr/local/Frameworks/Python.framework/Versions/2.7/lib/libpython2.7.dylib")
+#SET(PYTHON_LIBRARIES "/usr/local/Frameworks/Python.framework/Versions/2.7/lib/libpython2.7.dylib")
 message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
 
 ### PythonLibs

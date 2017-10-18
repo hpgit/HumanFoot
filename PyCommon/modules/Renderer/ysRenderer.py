@@ -20,7 +20,6 @@ from PyCommon.modules.Mesh import ysMesh as yms
 # import Mesh.ysMesh as yms
 
 # from PyCommon.modules.pyVirtualPhysics import *
-from PyCommon.modules.Simulator import csVpModel_py as pcvm
 from PyCommon.modules.Simulator import csVpUtil as cvu
 from PyCommon.modules.Simulator import csDartModel as cdm
 import PyCommon.modules.pydart2 as pydart
@@ -133,7 +132,7 @@ class OdeModelRenderer(Renderer):
 
 class VpModelRenderer(Renderer):
     """
-    :type model : pcvm.VpModel
+    # :type model : csVpModel_py.VpModel
     """
     def __init__(self, target, color=(255,255,255), polygonStyle=POLYGON_FILL, lineWidth=1.):
         Renderer.__init__(self, target, color)

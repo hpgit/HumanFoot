@@ -13,7 +13,7 @@ all:
 	rm -rf pydart2/pydart2_apiPYTHON_wrap.cxx
 	cd build;cmake ..;make;make install
 	python setup_cmake.py build
-	cp -R build/lib/pydart2 ../../modules/
+	cp -R build/lib*/pydart2 ../../modules/
 	cp -R build/_pydart2_api.so ../../modules/pydart2/
 
 pyonly:

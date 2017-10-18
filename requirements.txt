@@ -1,0 +1,11 @@
+setuptools
+numpy
+PyOpenGL
+PyOpenGL-accelerate
+cvxopt
+pyode
+openopt
+future
+pillow
+colorama
+cma
