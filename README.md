@@ -63,10 +63,12 @@ install bullet manually,
 
 for dart setup,
 
-    brew install eigen assimp homebrew/science/libccd dartsim/dart/fcl boost open-scene-graph nlopt homebrew/science/ipopt tinyxml tinyxml2 ros/deps/urdfdom doxygen
+    brew install eigen assimp homebrew/science/libccd dartsim/dart/fcl open-scene-graph nlopt homebrew/science/ipopt tinyxml tinyxml2 ros/deps/urdfdom doxygen
     # brew install flann
     brew install https://raw.githubusercontent.com/Homebrew/homebrew-science/7fb6d735213383488fe2e7518148fa6e486588fc/flann.rb
-
+    brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/50b94fe634d752985c489243033026a04d74abb6/Formula/boost.rb
+    brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/71e39e8462350492fc69040db18f9a555040880d/Formula/boost-python.rb
+    
     git clone https://github.com/dartsim/dart
     cd dart;git checkout tags/v6.1.2;mkdir build
 
