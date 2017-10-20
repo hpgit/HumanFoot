@@ -39,6 +39,7 @@ in OSX terminal,
     brew install cmake fltk ode suite-sparse
 
 after make virtual environment with system packages and activate virtuanenv,
+
     pip install --upgrade pip setuptools
     pip install numpy
     pip install PyOpenGL PyOpenGL-accelerate
@@ -48,6 +49,7 @@ after make virtual environment with system packages and activate virtuanenv,
     pip install cma
 
 setup pyfltk (google and download)
+
      in python/fltk\_wrap.cpp,
      add void in front of free\_color
 
@@ -73,7 +75,7 @@ for dart setup,
     cd build;cmake ..;make -j;make install
 
 for pydart setup,
-    cd PyCommon/externalLibs/pydart2;make
 
-make install_dependencies_mac
-make
+    cd PyCommon/externalLibs/pydart2;make
+    make install_dependencies_mac
+    make
