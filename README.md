@@ -35,15 +35,11 @@ in OSX terminal,
 
     brew update
     brew install wget
-    # brew install python
+    brew install python
+    brew install cmake fltk ode suite-sparse
 
-    brew install cmake boost@1.59 boost-python@1.59 fltk ode suite-sparse
+after make virtual environment with system packages and activate virtuanenv,
 
-    wget https://bootstrap.pypa.io/get-pip.py
-    sudo python get-pip.py
-    sudo pip install matplotlib
-
-after make virtual environment with system packages,
     pip install --upgrade pip setuptools
     pip install numpy
     pip install PyOpenGL PyOpenGL-accelerate
@@ -53,6 +49,7 @@ after make virtual environment with system packages,
     pip install cma
 
 setup pyfltk (google and download)
+
      in python/fltk\_wrap.cpp,
      add void in front of free\_color
 
@@ -62,12 +59,12 @@ setup pyfltk (google and download)
 install bullet manually,
 
 for dart setup,
-
+    
+    brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/50b94fe634d752985c489243033026a04d74abb6/Formula/boost.rb
+    brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/71e39e8462350492fc69040db18f9a555040880d/Formula/boost-python.rb
     brew install eigen assimp homebrew/science/libccd dartsim/dart/fcl open-scene-graph nlopt homebrew/science/ipopt tinyxml tinyxml2 ros/deps/urdfdom doxygen
     # brew install flann
     brew install https://raw.githubusercontent.com/Homebrew/homebrew-science/7fb6d735213383488fe2e7518148fa6e486588fc/flann.rb
-    brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/50b94fe634d752985c489243033026a04d74abb6/Formula/boost.rb
-    brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/71e39e8462350492fc69040db18f9a555040880d/Formula/boost-python.rb
     
     git clone https://github.com/dartsim/dart
     cd dart;git checkout tags/v6.1.2;mkdir build
@@ -78,7 +75,7 @@ for dart setup,
     cd build;cmake ..;make -j;make install
 
 for pydart setup,
-    cd PyCommon/externalLibs/pydart2;make
 
-make install_dependencies_mac
-make
+    cd PyCommon/externalLibs/pydart2;make
+    make install_dependencies_mac
+    make
