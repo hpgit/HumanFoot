@@ -66,6 +66,8 @@ H1 = lambda t : -2*t*t*t + 3*t*t
 H2 = lambda t : t*t*t - 2*t*t + t
 H3 = lambda t : t*t*t - t*t
 
+hermite5th = lambda  x: -5*x*x*x*x*x*x + 6*x*x*x*x*x
+
 if __name__=='__main__':
     import operator as op
     import Util.ysMatplotEx as ymp

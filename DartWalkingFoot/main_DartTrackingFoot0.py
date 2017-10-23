@@ -1227,10 +1227,8 @@ def walkings(params, isCma=True):
         motion_stf_push.append(motion_swf_height[frame].copy())
         motion_stf_push.goToFrame(frame)
         if STANCE_FOOT_PUSH:
-            # TODO:
-            # swingFoots?????????????????????????
             # for swingFoot in swingFoots:
-            for swingFoot in stanceFoots:
+            for stanceFoot in stanceFoots:
                 #                max_t = (maxStfPushFrame)/float(curInterval[1]-curInterval[0])
                 #                stf_push_func = yfg.concatenate([yfg.sine, yfg.zero], [max_t*2])
                 stf_push_func = yfg.concatenate([yfg.sine, yfg.zero], [c_taking_duration*2])
@@ -1244,7 +1242,7 @@ def walkings(params, isCma=True):
                 #                    R_zero =
                 R_swp_sag = np.dot(R_swp_sag, mm.exp((step_length_tar[0] - step_length_cur[0])*step_axis[0] * K_stp_pos * -stf_push_func(t)))
 
-                motion_stf_push[frame].mulJointOrientationGlobal(swingFoot, R_swp_sag)
+                motion_stf_push[frame].mulJointOrientationGlobal(stanceFoot, R_swp_sag)
 
         # '''
         # stance foot stabilize

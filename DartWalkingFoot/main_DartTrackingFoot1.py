@@ -524,6 +524,10 @@ def walkings(params, isCma=True):
     STANCE_FOOT_BALANCING =     True
     # STANCE_FOOT_BALANCING =     False
 
+    SWING_FOOT_CLEARANCE =      True
+
+    SEGMENT_GAIN_ADJUST =       True
+
     stitch_func = lambda x : 1. - yfg.hermite2nd(x)
     stf_stabilize_func = yfg.concatenate([yfg.hermite2nd, yfg.one], [c_landing_duration])
     match_stl_func = yfg.hermite2nd
@@ -533,6 +537,7 @@ def walkings(params, isCma=True):
     swf_height_sine_func = yfg.sine
     #    stf_balancing_func = yfg.concatenate([yfg.hermite2nd, yfg.one], [c_landing_duration])
     stf_balancing_func = yfg.hermite2nd
+    # stf_balancing_func = yfg.hermite5th
 
     #    forceInfos = [ForceInfo(70, .4, (100,0,0))]
     forceInfos = []
@@ -810,14 +815,14 @@ def walkings(params, isCma=True):
             # viewer.doc.addRenderer('motion_seg', yr.JointMotionRenderer(motion_seg, (0,150,255), yr.LINK_BONE))
             # viewer.doc.addRenderer('motion_stitch', yr.JointMotionRenderer(motion_stitch, (0,255,200), yr.LINK_BONE))
 
-            viewer.doc.addRenderer('motion_stf_stabilize', yr.JointMotionRenderer(motion_stf_stabilize, (255,0,0), yr.LINK_BONE))
             viewer.doc.addRenderer('motion_match_stl', yr.JointMotionRenderer(motion_match_stl, (255,200,0), yr.LINK_BONE))
             viewer.doc.addRenderer('motion_swf_placement', yr.JointMotionRenderer(motion_swf_placement, (255,100,255), yr.LINK_BONE))
             viewer.doc.addRenderer('motion_swf_height', yr.JointMotionRenderer(motion_swf_height, (50,255,255), yr.LINK_BONE))
-            viewer.doc.addRenderer('motion_swf_orientation', yr.JointMotionRenderer(motion_swf_orientation, (255,100,0), yr.LINK_BONE))
             viewer.doc.addRenderer('motion_stf_push', yr.JointMotionRenderer(motion_stf_push, (50,255,200), yr.LINK_BONE))
+            viewer.doc.addRenderer('motion_stf_stabilize', yr.JointMotionRenderer(motion_stf_stabilize, (255,0,0), yr.LINK_BONE))
             viewer.doc.addRenderer('motion_stf_balancing', yr.JointMotionRenderer(motion_stf_balancing, (255,100,255), yr.LINK_BONE))
             viewer.doc.addRenderer('motion_control', yr.JointMotionRenderer(motion_control, (255,0,0), yr.LINK_BONE))
+            # viewer.doc.addRenderer('motion_swf_orientation', yr.JointMotionRenderer(motion_swf_orientation, (255,100,0), yr.LINK_BONE))
             motion_stf_stabilize.resourceName = 'motion_stf_stabilize'
             motion_match_stl.resourceName = 'motion_match_stl'
             motion_swf_placement.resourceName = 'motion_swf_placement'
@@ -1045,6 +1050,18 @@ def walkings(params, isCma=True):
         if skeleton.getJointIndex('RightFoot') in stanceFoots:
             stanceToes.extend(rToes)
 
+        stanceHeels = []
+        if skeleton.getJointIndex('LeftFoot') in stanceFoots:
+            stanceHeels.extend(lHeels)
+        if skeleton.getJointIndex('RightFoot') in stanceFoots:
+            stanceHeels.extend(rHeels)
+
+        swingToes = []
+        if skeleton.getJointIndex('LeftFoot') in swingFoots:
+            swingToes.extend(lToes)
+        if skeleton.getJointIndex('RightFoot') in swingFoots:
+            swingToes.extend(rToes)
+
         swingHeels = []
         if skeleton.getJointIndex('LeftFoot') in swingFoots:
             swingHeels.extend(lHeels)
@@ -1201,14 +1218,16 @@ def walkings(params, isCma=True):
                 swingFoot = swingFoots[i]
 
                 # save swing foot global orientation
-                # R_swf = motion_swf_placement[frame].getJointOrientationGlobal(swingFoot)
+                R_swf = motion_swf_placement[frame].getJointOrientationGlobal(swingFoot)
 
                 # rotate swing leg
-                # motion_swf_placement[frame].mulJointOrientationGlobal(swingLeg, R_swp_sag)
-                # motion_swf_placement[frame].mulJointOrientationGlobal(swingLeg, R_swp_cor)
+                motion_swf_placement[frame].mulJointOrientationGlobal(swingLeg, R_swp_sag)
+                motion_swf_placement[frame].mulJointOrientationGlobal(swingLeg, R_swp_cor)
 
                 # restore swing foot global orientation
-                # motion_swf_placement[frame].setJointOrientationGlobal(swingFoot, R_swf)
+                motion_swf_placement[frame].setJointOrientationGlobal(swingFoot, R_swf)
+
+                # motion_swf_placement[frame].setJointOrientationGlobal(swingFoot, )
 
                 # hwangpil
                 # temporal code.... for heel strike and ankle pushup
@@ -1217,21 +1236,20 @@ def walkings(params, isCma=True):
 
                 # hwangpil
                 # foot placement based on difference
-
-                # CM = dartModel.getBody("Hips").com()
-                swf = dartModel.getJointPositionGlobal(swingFoot)
-                CMr_swf = CM - swf
-
-                # CM_tar = motion_seg.getJointPositionGlobal(0, prev_frame)
-                swf_tar = motion_seg.getJointPositionGlobal(swingFoot, prev_frame)
-                CMr_swf_tar = CM_tar - swf_tar
-
-                diff_CMr_swf = mm.projectionOnPlane(CMr_swf-CMr_swf_tar, (1,0,0), (0,0,1))
-
-                newPosition =  motion_swf_placement[frame].getJointPositionGlobal(swingFoot)
-                # newPosition += (diff_CMr_swf + diff_dCM)*t_swing_foot_placement
-                newPosition += 0.1*diff_CMr_swf * t_swing_foot_placement
-                aik.ik_analytic(motion_swf_placement[frame], swingFoot, newPosition)
+                # # CM = dartModel.getBody("Hips").com()
+                # swf = dartModel.getJointPositionGlobal(swingFoot)
+                # CMr_swf = CM - swf
+                #
+                # # CM_tar = motion_seg.getJointPositionGlobal(0, prev_frame)
+                # swf_tar = motion_seg.getJointPositionGlobal(swingFoot, prev_frame)
+                # CMr_swf_tar = CM_tar - swf_tar
+                #
+                # diff_CMr_swf = mm.projectionOnPlane(CMr_swf-CMr_swf_tar, (1,0,0), (0,0,1))
+                #
+                # newPosition =  motion_swf_placement[frame].getJointPositionGlobal(swingFoot)
+                # # newPosition += (diff_CMr_swf + diff_dCM)*t_swing_foot_placement
+                # newPosition += 0.1*diff_CMr_swf * t_swing_foot_placement
+                # aik.ik_analytic(motion_swf_placement[frame], swingFoot, newPosition)
 
                 prev_R_swp[0] = (R_swp_sag, R_swp_cor)
 
@@ -1344,8 +1362,17 @@ def walkings(params, isCma=True):
             R_stb = np.dot(R_stb, mm.exp(diff_CMr_axis * K_stb_pos * stf_balancing_func(t)))
             for stanceFoot in stanceFoots:
                 if frame < 5: break
+                if t > 0.5: break  #hwangpil
                 motion_stf_balancing[frame].mulJointOrientationGlobal(stanceFoot, R_stb)
 
+
+        # hwangpil
+        if SEGMENT_FOOT:
+            if SWING_FOOT_CLEARANCE:
+                if t>0.5:
+                    for swingToe in swingToes:
+                        toeAngle = -math.pi/6.
+                        motion_stf_balancing[frame].mulJointOrientationGlobal(swingToe, mm.rotZ(toeAngle))
 
         # hwangpil
         # swing foot parallelizing with ground
@@ -1405,8 +1432,8 @@ def walkings(params, isCma=True):
         #'''
 
         # foot adjustment
-        if SEGMENT_FOOT:
-            hfi.footAdjust(motion_stf_balancing[frame], footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, -.01)
+        if SEGMENT_FOOT and False:
+            hfi.footAdjust(motion_stf_balancing[frame], footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, .03)
 
 
         # control trajectory
@@ -1476,17 +1503,43 @@ def walkings(params, isCma=True):
 
         # bodyIDs = [body.index_in_skeleton for body in dartModel.world.collision_result.contacted_bodies]
 
-        if not isCma:
+        if not isCma and not SEGMENT_GAIN_ADJUST:
             # change foot Kd and Kp
+            if SEGMENT_FOOT:
+                for dofs in footDofs:
+                    # pdController.setKpKd(dofs, 500., 20.)
+                    pdController.setKpKd(dofs, 50., 5.)
+
             for dofs in LeftFootDofs:
                 pdController.setKpKd(dofs, getParamVal('LeftFootKp'), getParamVal('LeftFootKd'))
 
             for dofs in RightFootDofs:
                 pdController.setKpKd(dofs, getParamVal('RightFootKp'), getParamVal('RightFootKd'))
 
+        elif not isCma and SEGMENT_GAIN_ADJUST:
+            # change foot Kd and Kp
             if SEGMENT_FOOT:
-                for dofs in footDofs:
-                    pdController.setKpKd(dofs, 500., 20.)
+                print(t)
+                if stanceFoots[0] == rID and t>0.2:
+                    for dof in lIDs:
+                        pdController.setKpKd(dof, 50., 5.)
+                    for dof in rIDs:
+                        pdController.setKpKd(dof, 500., 20.)
+                elif stanceFoots[0] == lID and t > 0.1:
+                    for dof in rIDs:
+                        pdController.setKpKd(dof, 50., 5.)
+                    for dof in lIDs:
+                        pdController.setKpKd(dof, 500., 20.)
+                else:
+                    for dof in footDofs:
+                        pdController.setKpKd(dof, 50., 5.)
+
+            for dofs in LeftFootDofs:
+                pdController.setKpKd(dofs, getParamVal('LeftFootKp'), getParamVal('LeftFootKd'))
+
+            for dofs in RightFootDofs:
+                pdController.setKpKd(dofs, getParamVal('RightFootKp'), getParamVal('RightFootKd'))
+
         elif True:
             # change foot Kd and Kp
             for dofs in LeftFootDofs:
@@ -1699,6 +1752,7 @@ def walkings(params, isCma=True):
                     swingIDs = copy.deepcopy(lIDs) if curState==yba.GaitState.LSWING else copy.deepcopy(rIDs)
 
                     contact = False
+                    contactCount = 0
 
                     for swingID in swingIDs:
                         if swingID in bodyIDs:
@@ -1708,8 +1762,9 @@ def walkings(params, isCma=True):
                                     vel = dartModel.getBodyVelocityGlobal(swingID, contactPositionLocals[i])
                                     vel[1] = 0
                                     contactVel = mm.length(vel)
+                                    contactCount += 1
                                     if contactVel < minContactVel: minContactVel = contactVel
-                            if minContactVel < c_min_contact_vel: contact = True
+                            if minContactVel < c_min_contact_vel and contactCount > 2: contact = True
 
                 extended[0] = False
 
@@ -1846,8 +1901,8 @@ def walkings(params, isCma=True):
         # motionModel.update(motion_ori[frame])
         if not isCma:
             # dartMotionModel.update(motion_stitch[frame])
-            # dartMotionModel.update(motion_stf_balancing[frame])
-            dartMotionModel.update(motion_seg[frame])
+            dartMotionModel.update(motion_stf_balancing[frame])
+            # dartMotionModel.update(motion_seg[frame])
         #        motionModel.update(motion_seg[frame])
 
         rd_CP[0] = CP
@@ -2005,6 +2060,7 @@ if __name__ == '__main__':
     params = [-0.156885745146, 0.224351871531, -0.651388957459, 0.803834992348, 1.05714177435, 0.00542880291931, 1.56462249867, -0.111631227361, 1.37037255808, -1.00517210154]
     isCma = False
 
+    params = [-0.156885745146, 0.224351871531, 0.,  0.803834992348, 1.05714177435, 0.00542880291931, 1.56462249867, -0.111631227361, 1.37037255808, -1.00517210154]
     if len(sys.argv) == 1 and not isCma:
         walkings(params, False)
     elif len(sys.argv) == 2 and sys.argv[1] == '-view' and not isCma:
