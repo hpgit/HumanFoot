@@ -88,8 +88,8 @@ class InteractivePlot(BasePlot):
         self.ly_col = collections.LineCollection([[(0,0),(0,0)]])
         self.ly_col.set_color(['k'])
         self.ax.add_collection(self.ly_col)
-                
-        self.window = get_current_fig_manager().window
+
+        self.window = get_current_fig_manager().canvas
         self.loadSetting(self.window)
         self.registerCallbacks(self.fig, self.window)
         

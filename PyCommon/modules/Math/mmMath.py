@@ -29,7 +29,16 @@ def I_SE3():
 
 def O_Vec3():
     return _O_Vec3.copy()
-    
+
+def unitX():
+    return np.array((1., 0., 0.))
+
+def unitY():
+    return np.array((0., 1., 0.))
+
+def unitZ():
+    return np.array((0., 0., 1.))
+
 def linearInterpol(v0, v1, t):
     return v0 + (v1-v0)*t
 

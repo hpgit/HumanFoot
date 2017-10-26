@@ -24,7 +24,7 @@ from PyCommon.modules.Motion import ysMotionBlend as ymb
 from PyCommon.modules.Motion import ysMotionExtend as ymt
 # from PyCommon.modules.Motion import ysSkeletonEdit as yhe
 from PyCommon.modules.Motion import mmAnalyticIK as aik
-# from PyCommon.modules.Util import ysMatplotEx as ymp
+from PyCommon.modules.Util import ysMatplotEx as ymp
 from PyCommon.modules.Resource import ysMotionLoader as yf
 from PyCommon.modules.Simulator import ysPhysConfig as ypc
 
@@ -413,8 +413,8 @@ def walkings(params, isCma=True):
     K_swp_vel_sag = .0; K_swp_vel_cor = .3; K_swp_pos_sag = 1.2; K_swp_pos_cor = .2
     # K_swp_vel_sag = .0; K_swp_vel_cor = 1.3; K_swp_pos_sag = 1.2; K_swp_pos_cor = 1.
     K_swp_pos_sag_faster = .05
-    filename = 'wd2_WalkForwardNormal00.bvh'
-    # filename = 'wd2_WalkForwardNormal00_REPEATED.bvh'
+    # filename = 'wd2_WalkForwardNormal00.bvh'
+    filename = 'wd2_WalkForwardNormal00_REPEATED.bvh'
     if SEGMENT_FOOT:
         filename = 'segfoot_'+filename
 
@@ -750,6 +750,9 @@ def walkings(params, isCma=True):
     for fi in forceInfos:
         fi.targetBody = spine
 
+    #hwangpil
+    prev_contact_count = [0]
+
     #===========================================================================
     # data collection
     #===========================================================================
@@ -779,6 +782,7 @@ def walkings(params, isCma=True):
 
     viewer = None
     plot = None
+    # plot = ymp.InteractivePlot()
 
     def getParamVal(paramname):
         return viewer.objectInfoWnd.getVal(paramname)
@@ -944,7 +948,6 @@ def walkings(params, isCma=True):
         if not isCma:
             viewer.setPostFrameCallback_Always(postFrameCallback_Always)
 
-        # plot = ymp.InteractivePlot()
         if plot is not None:
             plot.setXlimit(0, len(motion_ori))
             plot.setYlimit(-0.05, .05)
@@ -966,7 +969,7 @@ def walkings(params, isCma=True):
 
 
     def simulateCallback(frame):
-        print 'frame: ', frame
+        print('frame: ', frame)
         # c_min_contact_vel, c_min_contact_time, c_landing_duration, \
         # c_taking_duration, c_swf_mid_offset, c_locking_vel, c_swf_offset, \
         # K_stp_pos, c5, c6, K_stb_vel, K_stb_pos, K_swp_vel_sag, K_swp_vel_cor, \
@@ -1085,7 +1088,9 @@ def walkings(params, isCma=True):
         stf = dartModel.getJointPositionGlobal(stanceFoots[0])
         CMr = CM - stf
 
+        # diff_dCM : diff of velocity of COM between current and desired
         diff_dCM = mm.projectionOnPlane(dCM-dCM_tar, (1,0,0), (0,0,1))
+        # diff_dCM_axis : perpendicular of diff_dCM
         diff_dCM_axis = np.cross((0,1,0), diff_dCM)
         rd_vec1[0] = diff_dCM; rd_vecori1[0] = CM_tar
 
@@ -1303,7 +1308,6 @@ def walkings(params, isCma=True):
 
                 if offset > 0.:
                     newPosition =  motion_swf_height[frame].getJointPositionGlobal(swingFoot)
-                    # newPosition[1] += offset * .2
                     newPosition[1] += offset
                     aik.ik_analytic(motion_swf_height[frame], swingFoot, newPosition)
                 else:
@@ -1312,9 +1316,6 @@ def walkings(params, isCma=True):
                         newPosition[1] -= offset
                         aik.ik_analytic(motion_swf_height[frame], stanceFoot, newPosition)
 
-                        # return
-                        #                motion_debug3[frame] = motion_swf_height[frame].copy()
-                        #                motion_debug3[frame].translateByTarget(controlModel.getJointPositionGlobal(0))
                 motion_swf_height[frame].rotateByTarget(R_root)
 
                 # restore foot global orientation
@@ -1373,6 +1374,21 @@ def walkings(params, isCma=True):
                     for swingToe in swingToes:
                         toeAngle = -math.pi/6.
                         motion_stf_balancing[frame].mulJointOrientationGlobal(swingToe, mm.rotZ(toeAngle))
+                elif t<0.2:
+                    for swingToe in swingToes:
+                        toeAngle = math.pi/6.
+                        motion_stf_balancing[frame].mulJointOrientationGlobal(swingToe, mm.rotZ(toeAngle))
+
+        # hwangpil
+        # stance foot parallelizing with ground when contact is made
+        if 0.1 < t < 0.9:
+            pos_toe = [dartModel.getJointPositionGlobal(stanceToe) for stanceToe in stanceToes]
+            pos_heel = dartModel.getJointPositionGlobal(stanceHeels[0])
+            up_vec = np.cross(pos_toe[1] - pos_heel, pos_toe[0] - pos_heel)
+            R_foot_diff = mm.getSO3FromVectors(mm.unitY(), up_vec)
+            # R_foot_diff = mm.getSO3FromVectors(up_vec, mm.unitY())
+            R_foot = mm.slerp(mm.I_SO3(), R_foot_diff, 0.05)
+            motion_stf_balancing[frame].mulJointOrientationGlobal(stanceFoots[0], R_foot)
 
         # hwangpil
         # swing foot parallelizing with ground
@@ -1519,13 +1535,12 @@ def walkings(params, isCma=True):
         elif not isCma and SEGMENT_GAIN_ADJUST:
             # change foot Kd and Kp
             if SEGMENT_FOOT:
-                print(t)
                 if stanceFoots[0] == rID and t>0.2:
                     for dof in lIDs:
                         pdController.setKpKd(dof, 50., 5.)
                     for dof in rIDs:
                         pdController.setKpKd(dof, 500., 20.)
-                elif stanceFoots[0] == lID and t > 0.1:
+                elif stanceFoots[0] == lID and t > 0.2:
                     for dof in rIDs:
                         pdController.setKpKd(dof, 50., 5.)
                     for dof in lIDs:
@@ -1752,7 +1767,7 @@ def walkings(params, isCma=True):
                     swingIDs = copy.deepcopy(lIDs) if curState==yba.GaitState.LSWING else copy.deepcopy(rIDs)
 
                     contact = False
-                    contactCount = 0
+                    contact_count = 0
 
                     for swingID in swingIDs:
                         if swingID in bodyIDs:
@@ -1762,9 +1777,12 @@ def walkings(params, isCma=True):
                                     vel = dartModel.getBodyVelocityGlobal(swingID, contactPositionLocals[i])
                                     vel[1] = 0
                                     contactVel = mm.length(vel)
-                                    contactCount += 1
+                                    contact_count += 1
                                     if contactVel < minContactVel: minContactVel = contactVel
-                            if minContactVel < c_min_contact_vel and contactCount > 2: contact = True
+                            if minContactVel < c_min_contact_vel and contact_count > 2: contact = True
+                            elif minContactVel < c_min_contact_vel and contact_count > 1 and prev_contact_count[0] > 1 : contact = True
+
+                    prev_contact_count[0] = contact_count
 
                 extended[0] = False
 
