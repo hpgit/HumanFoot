@@ -3,7 +3,9 @@ from PyCommon.modules.Math import mmMath as mm
 from PyCommon.modules.Math import ysFunctionGraph as yfg
 
 stitch_func = lambda xx : 1. - yfg.hermite2nd(xx)
-stf_stabilize_func = yfg.concatenate([yfg.hermite2nd, yfg.one], [c_landing_duration])
+#TODO:
+if False:
+    stf_stabilize_func = yfg.concatenate([yfg.hermite2nd, yfg.one], [c_landing_duration])
 match_stl_func = yfg.hermite2nd
 swf_placement_func = yfg.hermite2nd
 # swf_placement_func = yfg.identity

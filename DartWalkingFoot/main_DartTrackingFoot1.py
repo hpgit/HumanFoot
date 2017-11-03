@@ -1374,7 +1374,8 @@ def walkings(params, isCma=True):
         # hwangpil
         if SEGMENT_FOOT:
             if SWING_FOOT_CLEARANCE:
-                if t>0.5:
+                print(t)
+                if 0.5 < t < 0.8:
                     for swingToe in swingToes:
                         toeAngle = -math.pi/6.
                         motion_stf_balancing[frame].mulJointOrientationGlobal(swingToe, mm.rotZ(toeAngle))
