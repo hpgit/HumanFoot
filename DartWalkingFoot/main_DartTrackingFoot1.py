@@ -9,6 +9,8 @@ import sys
 if ".." not in sys.path:
     sys.path.append("..")
 
+from PyCommon.modules.ArticulatedBody import hpBipedFeedback as hbf
+
 from PyCommon.modules.Math import mmMath as mm
 from PyCommon.modules.Math import ysFunctionGraph as yfg
 from PyCommon.modules.Renderer import ysRenderer as yr
@@ -189,10 +191,10 @@ def buildMcfg():
     node.geom = 'MyFoot1'
 
     def capsulize(node_name):
-        node = mcfg.getNode(node_name)
-        node.geom = 'MyFoot4'
-        node.width = 0.01
-        node.density = 200.
+        node_capsule = mcfg.getNode(node_name)
+        node_capsule.geom = 'MyFoot4'
+        node_capsule.width = 0.01
+        node_capsule.density = 200.
         # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0., math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .2))
         # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0., math.pi/4., 0.])], ypc.CapsuleMaterial(1000., .02, .1))
         # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0., 0., 0.])], ypc.CapsuleMaterial(1000., .01, -1))
@@ -356,7 +358,8 @@ def walkings(params, isCma=True):
     NO_FOOT_SLIDING = True
 
     # global parameters
-    Kt = 50.
+    # Kt = 50.
+    Kt = 300.
     Dt = 2.*(Kt**.5)
     # Dt = Kt/900.
     Ks = 1000.
@@ -528,7 +531,7 @@ def walkings(params, isCma=True):
 
     SEGMENT_GAIN_ADJUST =       True
 
-    stitch_func = lambda x : 1. - yfg.hermite2nd(x)
+    stitch_func = lambda xx : 1. - yfg.hermite2nd(xx)
     stf_stabilize_func = yfg.concatenate([yfg.hermite2nd, yfg.one], [c_landing_duration])
     match_stl_func = yfg.hermite2nd
     swf_placement_func = yfg.hermite2nd
@@ -575,7 +578,7 @@ def walkings(params, isCma=True):
     dartModel.initializeHybridDynamics()
     dartModel.initializeForwardDynamics()
 
-    dartModel.skeleton.inv_mass_matrix()
+    # dartModel.skeleton.inv_mass_matrix()
 
     # print(dartModel.skeleton.coriolis_and_gravity_forces())
 
@@ -969,7 +972,8 @@ def walkings(params, isCma=True):
 
 
     def simulateCallback(frame):
-        print('frame: ', frame)
+        if not isCma:
+            print('frame: ', frame)
         # c_min_contact_vel, c_min_contact_time, c_landing_duration, \
         # c_taking_duration, c_swf_mid_offset, c_locking_vel, c_swf_offset, \
         # K_stp_pos, c5, c6, K_stb_vel, K_stb_pos, K_swp_vel_sag, K_swp_vel_cor, \
@@ -1020,8 +1024,6 @@ def walkings(params, isCma=True):
             K_swp_pos_sag = _params[7] * _params[7]
             K_swp_pos_cor = _params[8] * _params[8]
             K_swp_pos_sag_faster = _params[9] * _params[9]
-
-        # print c_swf_mid_offset
 
         # seginfo
         segIndex = seg_index[0]
@@ -1092,7 +1094,8 @@ def walkings(params, isCma=True):
         diff_dCM = mm.projectionOnPlane(dCM-dCM_tar, (1,0,0), (0,0,1))
         # diff_dCM_axis : perpendicular of diff_dCM
         diff_dCM_axis = np.cross((0,1,0), diff_dCM)
-        rd_vec1[0] = diff_dCM; rd_vecori1[0] = CM_tar
+        rd_vec1[0] = diff_dCM
+        rd_vecori1[0] = CM_tar
 
         diff_CMr = mm.projectionOnPlane(CMr-CMr_tar, (1,0,0), (0,0,1))
         diff_CMr_axis = np.cross((0,1,0), diff_CMr)
@@ -1172,15 +1175,16 @@ def walkings(params, isCma=True):
         motion_match_stl.append(motion_stitch[frame].copy())
         motion_match_stl.goToFrame(frame)
         if MATCH_STANCE_LEG:
-            if curState!=yba.GaitState.STOP:
-                for stanceLegIdx in range(len(stanceLegs)):
-                    stanceLeg = stanceLegs[stanceLegIdx]
-                    # stanceFoot = stanceFoots[stanceLegIdx]
-
-                    # motion stance leg -> character stance leg as time goes
-                    R_motion = motion_match_stl[frame].getJointOrientationGlobal(stanceLeg)
-                    R_character = dartModel.getJointOrientationGlobal(stanceLeg)
-                    motion_match_stl[frame].setJointOrientationGlobal(stanceLeg, mm.slerp(R_motion, R_character, match_stl_func(t)))
+            hbf.match_stance_leg(t, dartModel, motion_match_stl, frame, curState, stanceLegs)
+            # if curState!=yba.GaitState.STOP:
+            #     for stanceLegIdx in range(len(stanceLegs)):
+            #         stanceLeg = stanceLegs[stanceLegIdx]
+            #         # stanceFoot = stanceFoots[stanceLegIdx]
+            #
+            #         # motion stance leg -> character stance leg as time goes
+            #         R_motion = motion_match_stl[frame].getJointOrientationGlobal(stanceLeg)
+            #         R_character = dartModel.getJointOrientationGlobal(stanceLeg)
+            #         motion_match_stl[frame].setJointOrientationGlobal(stanceLeg, mm.slerp(R_motion, R_character, match_stl_func(t)))
 
 
         # swing foot placement
@@ -1195,12 +1199,12 @@ def walkings(params, isCma=True):
                 R_swp_sag = prev_R_swp[0][0]
                 R_swp_cor = prev_R_swp[0][1]
             else:
-                def clampExp(logSO3):
+                def clampExp(logSO3, rad_max):
                     theta = np.linalg.norm(logSO3)
-                    if theta < math.pi/12.:
+                    if theta < rad_max:
                         return mm.exp(logSO3)
                     else:
-                        return mm.exp(logSO3, math.pi/12.)
+                        return mm.exp(logSO3, rad_max)
 
                 R_swp_sag = mm.I_SO3(); R_swp_cor = mm.I_SO3()
                 # R_swp_sag = np.dot(R_swp_sag, mm.exp(diff_dCM_sag_axis * K_swp_vel_sag * -t_swing_foot_placement))
@@ -1210,13 +1214,13 @@ def walkings(params, isCma=True):
                 # else:
                 #     R_swp_sag = np.dot(R_swp_sag, mm.exp(diff_CMr_sag_axis * K_swp_pos_sag_faster * -t_swing_foot_placement))
                 # R_swp_cor = np.dot(R_swp_cor, mm.exp(diff_CMr_cor_axis * K_swp_pos_cor * -t_swing_foot_placement))
-                R_swp_sag = np.dot(R_swp_sag, clampExp(diff_dCM_sag_axis * K_swp_vel_sag * -t_swing_foot_placement))
-                R_swp_cor = np.dot(R_swp_cor, clampExp(diff_dCM_cor_axis * K_swp_vel_cor * -t_swing_foot_placement))
+                R_swp_sag = np.dot(R_swp_sag, clampExp(diff_dCM_sag_axis * K_swp_vel_sag * -t_swing_foot_placement, math.pi/12.))
+                R_swp_cor = np.dot(R_swp_cor, clampExp(diff_dCM_cor_axis * K_swp_vel_cor * -t_swing_foot_placement, math.pi/12.))
                 if np.dot(direction, diff_CMr_sag) < 0:
-                    R_swp_sag = np.dot(R_swp_sag, clampExp(diff_CMr_sag_axis * K_swp_pos_sag * -t_swing_foot_placement))
+                    R_swp_sag = np.dot(R_swp_sag, clampExp(diff_CMr_sag_axis * K_swp_pos_sag * -t_swing_foot_placement, math.pi/12.))
                 else:
-                    R_swp_sag = np.dot(R_swp_sag, clampExp(diff_CMr_sag_axis * K_swp_pos_sag_faster * -t_swing_foot_placement))
-                R_swp_cor = np.dot(R_swp_cor, clampExp(diff_CMr_cor_axis * K_swp_pos_cor * -t_swing_foot_placement))
+                    R_swp_sag = np.dot(R_swp_sag, clampExp(diff_CMr_sag_axis * K_swp_pos_sag_faster * -t_swing_foot_placement, math.pi/12.))
+                R_swp_cor = np.dot(R_swp_cor, clampExp(diff_CMr_cor_axis * K_swp_pos_cor * -t_swing_foot_placement, math.pi/12.))
 
             for i in range(len(swingLegs)):
                 swingLeg = swingLegs[i]
@@ -1261,6 +1265,7 @@ def walkings(params, isCma=True):
         # swing foot height
         # TODO:
         # in segment foot case, hip has noise largely
+        toe_offset = 0.
         motion_swf_height.append(motion_swf_placement[frame].copy())
         motion_swf_height.goToFrame(frame)
         if SWING_FOOT_HEIGHT:
@@ -1278,12 +1283,9 @@ def walkings(params, isCma=True):
                 else:
                     height_tar = motion_swf_height[prev_frame].getJointPositionGlobal(swingFoot)[1] - groundHeight
                     d_height_tar = motion_swf_height.getJointVelocityGlobal(swingFoot, prev_frame)[1]
-                #                motion_debug1[frame] = motion_swf_height[frame].copy()
 
                 # rotate
                 motion_swf_height[frame].rotateByTarget(dartModel.getJointOrientationGlobal(0))
-                #                motion_debug2[frame] = motion_swf_height[frame].copy()
-                #                motion_debug2[frame].translateByTarget(controlModel.getJointPositionGlobal(0))
 
                 d_height_cur = 0
                 if OLD_SWING_HEIGHT:
@@ -1321,6 +1323,8 @@ def walkings(params, isCma=True):
                 # restore foot global orientation
                 motion_swf_height[frame].setJointOrientationGlobal(swingFoot, R_foot)
                 motion_swf_height[frame].setJointOrientationGlobal(stanceFoot, R_stance_foot)
+
+                toe_offset = offset
 
                 if plot is not None:
                     plot.addDataPoint('debug1', frame, offset_height)
@@ -1390,6 +1394,7 @@ def walkings(params, isCma=True):
             R_foot = mm.slerp(mm.I_SO3(), R_foot_diff, 0.05)
             motion_stf_balancing[frame].mulJointOrientationGlobal(stanceFoots[0], R_foot)
 
+
         # hwangpil
         # swing foot parallelizing with ground
         def swf_par_func(_x):
@@ -1409,7 +1414,7 @@ def walkings(params, isCma=True):
                             shape = shapeNode.shape # type: pydart.BoxShape
                             data = shape.size() * .5
                             footVec = np.dot(geomT[:3, :3], np.array((0., 1., 0.)))
-                            R_swf_current = mm._I_SO3
+                            R_swf_current = mm._I_SO3()
                             R_swf_par = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
                             motion_stf_balancing[frame].mulJointOrientationGlobal(swingFoot,
                                                                   mm.slerp(R_swf_current, R_swf_par, swf_par_func(t)))
@@ -1448,8 +1453,9 @@ def walkings(params, isCma=True):
         #'''
 
         # foot adjustment
-        if SEGMENT_FOOT and False:
-            hfi.footAdjust(motion_stf_balancing[frame], footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, .03)
+        if SEGMENT_FOOT:
+            # hfi.footAdjust(motion_stf_balancing[frame], footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, .03)
+            hfi.footAdjust(motion_stf_balancing[frame], footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, toe_offset)
 
 
         # control trajectory
@@ -1476,12 +1482,15 @@ def walkings(params, isCma=True):
 
         th_r = motion_control.getDOFPositions(frame)
         # th_r = motion_stitch.getDOFPositions(frame)
+        # th_r = motion_ori.getDOFPositions(frame)
         th = dartModel.skeleton.q
-        # th = controlModel.getDOFPositions()
+
         dth_r = motion_control.getDOFVelocities(frame)
+        # dth_r = motion_ori.getDOFVelocities(frame)
         dth = dartModel.skeleton.dq
-        # dth = controlModel.getDOFVelocities()
+
         ddth_r = motion_control.getDOFAccelerations(frame)
+        # ddth_r = motion_ori.getDOFAccelerations(frame)
         # ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMap)
 
         totalDOF = dartModel.getTotalDOF()
@@ -1597,7 +1606,8 @@ def walkings(params, isCma=True):
                     temp1, cPointsControl, temp3, cForcesControl, controlTau = hdls.calcLCPbasicControl(
                         motion_ori, dartModel.world, dartModel, bodyIDsToCheck, mu, np.array([0., 300., 0.]), [1., 1., 1.],
                         tau0=_ddq, variableDofIdx=footDofs)
-                    print('controlTau: ', controlTau)
+                    if not isCma:
+                        print('controlTau: ', controlTau)
                 # dartModel.skeleton.set_accelerations(_ddq)
 
                 dartModel.skeleton.set_forces(pdController.compute())
@@ -1691,15 +1701,15 @@ def walkings(params, isCma=True):
         if not isCma:
             del rd_cForces[:]
             del rd_cPositions[:]
-            for i in range(len(contactPoints)):
-                rd_cForces.append(contactForces[i] / 50.)
-                rd_cPositions.append(contactPoints[i])
+            for idx in range(len(contactPoints)):
+                rd_cForces.append(contactForces[idx] / 50.)
+                rd_cPositions.append(contactPoints[idx])
 
             del rd_cForcesControl[:]
             del rd_cPositionsControl[:]
-            for i in range(len(cForcesControl)):
-                rd_cForces.append(cForcesControl[i] / 50.)
-                rd_cPositions.append(cPointsControl[i])
+            for idx in range(len(cForcesControl)):
+                rd_cForces.append(cForcesControl[idx] / 50.)
+                rd_cPositions.append(cPointsControl[idx])
 
         # bodyIDs = [body.index_in_skeleton() for body in contacted_bodies]
         # contacted_bodies = dartModel.world.collision_result.contacted_bodies # type: list[pydart.BodyNode]
@@ -1720,6 +1730,10 @@ def walkings(params, isCma=True):
         if not isCma:
             del rd_point1[:]
             rd_point1.append(dartModel.getCOM())
+
+        if not isCma:
+            del rd_point2[:]
+            rd_point2.append(dartMotionModel.getCOM())
 
 
         CP /= stepsPerFrame
@@ -1745,7 +1759,7 @@ def walkings(params, isCma=True):
                 if frame == len(motion_seg)-1:
                     lastFrame = True
 
-            elif (curState==yba.GaitState.LSWING or curState==yba.GaitState.RSWING) and t>c_min_contact_time:
+            elif (curState==yba.GaitState.LSWING or curState==yba.GaitState.RSWING) and t > c_min_contact_time:
                 contact = False
 
                 if not SEGMENT_FOOT:
@@ -1772,22 +1786,26 @@ def walkings(params, isCma=True):
                     for swingID in swingIDs:
                         if swingID in bodyIDs:
                             minContactVel = 1000.
-                            for i in range(len(bodyIDs)):
-                                if bodyIDs[i]==swingID:
-                                    vel = dartModel.getBodyVelocityGlobal(swingID, contactPositionLocals[i])
+                            for idx in range(len(bodyIDs)):
+                                if bodyIDs[idx] == swingID:
+                                    vel = dartModel.getBodyVelocityGlobal(swingID, contactPositionLocals[idx])
                                     vel[1] = 0
                                     contactVel = mm.length(vel)
                                     contact_count += 1
-                                    if contactVel < minContactVel: minContactVel = contactVel
-                            if minContactVel < c_min_contact_vel and contact_count > 2: contact = True
-                            elif minContactVel < c_min_contact_vel and contact_count > 1 and prev_contact_count[0] > 1 : contact = True
+                                    if contactVel < minContactVel:
+                                        minContactVel = contactVel
+                            if minContactVel < c_min_contact_vel and contact_count > 2:
+                                contact = True
+                            elif minContactVel < c_min_contact_vel and contact_count > 1 and prev_contact_count[0] > 1 :
+                                contact = True
 
                     prev_contact_count[0] = contact_count
 
                 extended[0] = False
 
                 if contact:
-                    #                    print frame, 'foot touch'
+                    if not isCma:
+                        print(frame, 'foot touch')
                     lastFrame = True
                     acc_offset[0] += frame - curInterval[1]
 
@@ -1796,9 +1814,9 @@ def walkings(params, isCma=True):
                         print(frame, 'extend frame', frame+1)
 
                     preserveJoints = []
-                    #                    preserveJoints = [lFoot, rFoot]
-                    #                    preserveJoints = [lFoot, rFoot, lKnee, rKnee]
-                    #                    preserveJoints = [lFoot, rFoot, lKnee, rKnee, lUpLeg, rUpLeg]
+                    # preserveJoints = [lFoot, rFoot]
+                    # preserveJoints = [lFoot, rFoot, lKnee, rKnee]
+                    # preserveJoints = [lFoot, rFoot, lKnee, rKnee, lUpLeg, rUpLeg]
                     stanceKnees = [rKnee] if curState==yba.GaitState.LSWING else [lKnee]
                     preserveJoints = [stanceFoots[0], stanceKnees[0], stanceLegs[0]]
 
@@ -1807,29 +1825,6 @@ def walkings(params, isCma=True):
                     motion_seg.extend(ymt.extendByIntegration_root(motion_seg, 1, diff))
 
                     motion_stitch.extend(ymt.extendByIntegration_constant(motion_stitch, 1, preserveJoints, diff))
-
-                    #                    # extend for swing foot ground speed matching & swing foot height lower
-                    ##                    extendedPostures = ymt.extendByIntegration(motion_stitch, 1, preserveJoints, diff)
-                    ##                    extendedPostures = [motion_stitch[-1]]
-                    ##
-                    #                    extendFrameNum = frame - curInterval[1] + 1
-                    #                    k = 1.-extendFrameNum/5.
-                    #                    if k<0.: k=0.
-                    #                    extendedPostures = ymt.extendByIntegrationAttenuation(motion_stitch, 1, preserveJoints, diff, k)
-                    #
-                    ##                    if len(swingFoots)>0 and np.inner(dCM_tar, dCM)>0.:
-                    ##                        print frame, 'speed matching'
-                    ##                        R_swf = motion_stitch[-1].getJointOrientationGlobal(swingFoots[0])
-                    ##
-                    ##                        p_swf = motion_stitch[-1].getJointPositionGlobal(swingFoots[0])
-                    ##                        v_swf = motion_stitch.getJointVelocityGlobal(swingFoots[0], frame-diff, frame)
-                    ##                        a_swf = motion_stitch.getJointAccelerationGlobal(swingFoots[0], frame-diff, frame)
-                    ##                        p_swf += v_swf * (frameTime) + a_swf * (frameTime)*(frameTime)
-                    ##                        aik.ik_analytic(extendedPostures[0], swingFoots[0], p_swf)
-                    ##
-                    ##                        extendedPostures[0].setJointOrientationGlobal(swingFoots[0], R_swf)
-                    #
-                    #                    motion_stitch.extend(extendedPostures)
 
                     extended[0] = True
         else:
@@ -1843,8 +1838,6 @@ def walkings(params, isCma=True):
                     plot.addDataPoint('diff', frame, (frame-curInterval[1])*.01)
 
                 if len(stanceFoots)>0 and len(swingFoots)>0:
-                    #                    step_cur = controlModel.getJointPositionGlobal(swingFoots[0]) - controlModel.getJointPositionGlobal(stanceFoots[0])
-                    #                    step_tar = motion_seg[curInterval[1]].getJointPositionGlobal(swingFoots[0]) - motion_seg[curInterval[1]].getJointPositionGlobal(stanceFoots[0])
                     step_cur = dartModel.getJointPositionGlobal(0) - dartModel.getJointPositionGlobal(stanceFoots[0])
                     step_tar = motion_seg[curInterval[1]].getJointPositionGlobal(0) - motion_seg[curInterval[1]].getJointPositionGlobal(stanceFoots[0])
 
@@ -1862,11 +1855,6 @@ def walkings(params, isCma=True):
 
                     step_axis[0] = directionAxis
 
-                #                    rd_vec1[0] = step_tar_sag
-                #                    rd_vecori1[0] = motion_seg[curInterval[1]].getJointPositionGlobal(stanceFoots[0])
-                #                    rd_vec2[0] = step_cur_sag
-                #                    rd_vecori2[0] = controlModel.getJointPositionGlobal(stanceFoots[0])
-
                 seg_index[0] += 1
                 curSeg = segments[seg_index[0]]
                 stl_y_limit_num[0] = 0
@@ -1878,9 +1866,6 @@ def walkings(params, isCma=True):
                 del motion_seg[frame+1:]
                 del motion_stitch[frame+1:]
                 transitionLength = len(curSeg)-1
-
-                #                motion_seg.extend(ymb.getAttachedNextMotion(curSeg, motion_seg[-1], False, False))
-                #                motion_stitch.extend(ymb.getStitchedNextMotion(curSeg, motion_control[-1], transitionLength, stitch_func, True, False))
 
                 d = motion_seg[-1] - curSeg[0]
                 d.rootPos[1] = 0.
@@ -1907,8 +1892,6 @@ def walkings(params, isCma=True):
                 d.rootPos[1] = 0.
                 motion_stitch.extend(ymb.getStitchedNextMotion(curSeg, d, transitionLength, stitch_func, True, False))
 
-            #                motion_seg.extend(ymb.getAttachedNextMotion(curSeg, motion_seg[-1], False, True))
-            #                motion_stitch.extend(ymb.getStitchedNextMotion(curSeg, motion_control[-1], transitionLength, stitch_func, True, True))
             else:
                 motion_seg_orig.append(motion_seg_orig[-1])
                 motion_seg.append(motion_seg[-1])
@@ -1919,8 +1902,9 @@ def walkings(params, isCma=True):
         # motionModel.update(motion_ori[frame])
         if not isCma:
             # dartMotionModel.update(motion_stitch[frame])
-            dartMotionModel.update(motion_stf_balancing[frame])
+            # dartMotionModel.update(motion_stf_balancing[frame])
             # dartMotionModel.update(motion_seg[frame])
+            dartMotionModel.update(motion_ori[frame])
         #        motionModel.update(motion_seg[frame])
 
         rd_CP[0] = CP
