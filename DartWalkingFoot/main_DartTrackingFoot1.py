@@ -865,7 +865,6 @@ def walkings(params, isCma=True):
             viewer.doc.addRenderer('rd_frame2', yr.FramesRenderer(rd_frame2, (200,200,0)))
         #    viewer.setMaxFrame(len(motion_ori)-1)
 
-
         viewer.objectInfoWnd.add1DSlider("penalty_grf_gain",    0., 5000., 10., Ks)
         viewer.objectInfoWnd.add1DSlider("c_min_contact_vel",   0., 200., .2, 100.)
         viewer.objectInfoWnd.add1DSlider("c_min_contact_time",  0., 5., .01, .7)
@@ -887,7 +886,6 @@ def walkings(params, isCma=True):
         viewer.objectInfoWnd.add1DSlider("K_swp_pos_cor",       0., 5., .01, K_swp_pos_cor)
         viewer.objectInfoWnd.add1DSlider("K_swp_pos_sag_faster",0., 1., .01, K_swp_pos_sag_faster)
 
-
         viewer.objectInfoWnd.add1DSlider("LeftFootKp",          0., 500., 10., 300.)
         viewer.objectInfoWnd.add1DSlider("LeftFootKd",          0., 100., 1., 30.)
         viewer.objectInfoWnd.add1DSlider("RightFootKp",          0., 500., 10., 300.)
@@ -898,7 +896,6 @@ def walkings(params, isCma=True):
             viewer.cForceWnd.addDataSet('desForceMin', FL_RED)
             viewer.cForceWnd.addDataSet('desForceMax', FL_RED)
             viewer.cForceWnd.addDataSet('realForce', FL_GREEN)
-
 
         if not REPEATED:
             viewer.setMaxFrame(len(motion_ori)-1)
@@ -1025,7 +1022,6 @@ def walkings(params, isCma=True):
             K_swp_pos_sag = _params[7] * _params[7]
             K_swp_pos_cor = _params[8] * _params[8]
             K_swp_pos_sag_faster = _params[9] * _params[9]
-
 
         # feedback.refresh_frame_dyn_information(motion_seg, frame, avg_dCM)
 
@@ -1403,19 +1399,23 @@ def walkings(params, isCma=True):
             for stance_leg in stanceLegs:
                 #TODO:
                 # get hip orientation on coronal plane
-                # hip_ori_cur_x = np.dot(hip_ori_)
-                # hip_ori_cur_z =
-                #
-                # hip_ori_tar_x =
-                # hip_ori_tar_z =
-
-
                 hip_ori_cur = dartModel.getJointOrientationGlobal(0)
                 hip_ori_tar = motion_stf_balancing[frame].getJointOrientationGlobal(0)
 
+                hip_ori_cur_x = np.dot(hip_ori_cur, mm.unitX())
+                hip_ori_cur_z = np.dot(hip_ori_cur, mm.unitZ())
+                hip_ori_cur_xz_2 = (hip_ori_cur_x + hip_ori_cur_z) * .5
+
+                hip_ori_tar_x = np.dot(hip_ori_tar, mm.unitX())
+                hip_ori_tar_z = np.dot(hip_ori_tar, mm.unitZ())
+                hip_ori_tar_xz_2 = (hip_ori_tar_x + hip_ori_tar_z) * .5
+
+                hip_ori_cur_xz_2_projected = mm.projectionOnPlane(hip_ori_cur_xz_2, hip_ori_tar_x, hip_ori_tar_z)
+
+                mm.getAngleFromVectors(hip_ori_cur_xz_2_projected, hip_ori_tar_xz_2)
 
                 leg_ori_cur_motion = motion_stf_balancing[frame].getJointOrientationGlobal(stance_leg)
-                leg_ori_tar =  np.dot(hip_ori_cur, np.dot(hip_ori_tar.T, leg_ori_cur_motion))
+                leg_ori_tar = np.dot(hip_ori_cur, np.dot(hip_ori_tar.T, leg_ori_cur_motion))
 
                 motion_stf_balancing[frame].setJointOrientationGlobal(stance_leg, leg_ori_tar)
                 # motion_stf_balancing[frame].setJointOrientationGlobal(stance_leg, leg_ori_tar)

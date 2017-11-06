@@ -302,7 +302,14 @@ def getLocalAngJacobianForAngleAxis(m_rQ):
         gamma = (1. - math.cos(t)) / t2
     return alpha * getPosDefMatrixForm(m_rQ) + beta*np.eye(3) - gamma * getCrossMatrixForm(m_rQ)
 
-# returns X that X dot vec1 = vec2 
+
+# returns angle between two vectors
+def getAngleFromVectors(vec1, vec2):
+    cos_angle = np.dot(vec1, vec2) / np.linalg.norm(vec1)
+    return math.acos(cos_angle)
+
+
+# returns X that X dot vec1 = vec2
 def getSO3FromVectors(vec1, vec2):
     vec1 = normalize(vec1)
     vec2 = normalize(vec2)
