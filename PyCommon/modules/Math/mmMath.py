@@ -279,6 +279,13 @@ def exp(axis, theta = None):
                        [(1.0-c)*z*x - s*y,    (1.0-c)*z*y + s*x,    c + (1.0-c)*z*z]])  
     return SO3
 
+def clampExp(logSO3, rad_max):
+    theta = np.linalg.norm(logSO3)
+    if theta < rad_max:
+        return exp(logSO3)
+    else:
+        return exp(logSO3, rad_max)
+
 def getLocalAngJacobianForAngleAxis(m_rQ):
     t = np.linalg.norm(m_rQ)
     t2 = t*t
