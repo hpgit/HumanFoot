@@ -1,7 +1,3 @@
-#define MAX_X 1 // 0001
-#define MAX_Y 2 // 0010
-#define MAX_Z 4 // 0100
-
 import sys
 import math
 import numpy as np
@@ -126,7 +122,6 @@ class DartModel:
                             geomPoint.append(positionLocal)
                         self.geomPoints[i] = geomPoint
 
-
     @staticmethod
     def getContactSphere(center, rad, row, col, height_ratio):
         vertices = list()
@@ -138,7 +133,7 @@ class DartModel:
             cp = math.cos(math.pi * t - math.pi/2.)
             sp = math.sin(math.pi * t - math.pi/2.)
 
-            col_real = 1 if i==0 else col
+            col_real = 1 if i == 0 else col
             for j in range(col_real):
                 s = float(j)/float(col_real)
                 ct = math.cos(2.*math.pi*s)
@@ -151,11 +146,7 @@ class DartModel:
         for bodyIdx in range(len(bodyIDs)):
             bodyID = bodyIDs[bodyIdx]
             body = self.getBody(bodyID)
-            body.add_ext_force(forces[bodyIdx],positionLocals[bodyIdx], False, localForce)
-        # for bodyIdx in range(len(bodyIDs)):
-        #     bodyID = bodyIDs[bodyIdx]
-        #     pBody = self._world.GetBody(bodyID)
-        #     pBody.ApplyGlobalForce(pyVec3_2_Vec3(forces[bodyIdx]), pyVec3_2_Vec3(positionLocals[bodyIdx]))
+            body.add_ext_force(forces[bodyIdx], positionLocals[bodyIdx], False, localForce)
 
     def getContactPoints(self, bodyIDsToCheck):
         bodyIDs = []
@@ -202,7 +193,6 @@ class DartModel:
     def calcPenaltyForce(self, bodyIDsToCheck, mus, Ks, Ds):
         def _calcPenaltyForce(pBody, position, velocity, mu, lockingVel):
             """
-
             :type pBody: pydart.BodyNode
             :type position: np.ndarray
             :type velocity: np.ndarray
@@ -314,9 +304,7 @@ class DartModel:
                                 velocities.append(velocity)
                                 forces.append(force)
 
-
         return bodyIDs, positions, positionLocals, forces
-
 
     def build_name2index(self):
         for i in range(len(self._nodes)):
@@ -638,11 +626,10 @@ class DartModel:
         self._recordVelByFiniteDiff = flag
         self._inverseMotionTimeStep = 1./motionTimeStep
 
-
     def __str__(self):
         strstr = "<JOINTS, BODIES>\n"
         for i in range(len(self.skeleton.bodynodes)):
-            strstr += "[" + str(i) + "]" + self.skeleton.joints[i].name + " ," + self.skeleton.bodynodes[i].name+ "\n"
+            strstr += "[" + str(i) + "]" + self.skeleton.joints[i].name + " ," + self.skeleton.bodynodes[i].name + "\n"
         strstr += "\n"
         strstr = "<BODY MASSES>\n"
         for i in range(len(self.skeleton.bodynodes)):
@@ -679,6 +666,7 @@ class DartModel:
         for i in range(len(self._nodes)):
             for j in range(i, len(self._nodes)):
                 self._pWorld.IgnoreCollision(self._nodes[i].body, self._nodes[j].body)
+
 
     def update(self, posture):
         """
@@ -743,7 +731,6 @@ class DartModel:
         raise NotImplementedError
         # return
 
-
     def solveHybridDynamics(self):
         self._nodes[0].body.GetSystem().HybridDynamics()
 
@@ -752,6 +739,15 @@ class DartModel:
 
     def solveInverseDynamics(self):
         self._nodes[0].body.GetSystem().InverseDynamics()
+
+    def get_q(self):
+        return self.skeleton.q
+
+    def get_dq(self):
+        return self.skeleton.dq
+
+    def get_state(self):
+        return np.hstack((self.skeleton.q, self.skeleton.dq))
 
     # Get Joint Local State
     def getJointOrientationLocal(self, index):
@@ -858,7 +854,6 @@ class DartModel:
         # return SE3_2_pySE3(self._nodes[index].body.GetFrame() * Inv(self._boneTs[index]))
         return None
 
-
     def getJointPositionGlobal(self, index):
         if index == 0:
             bodyFrame = self.skeleton.body(index).world_transform()
@@ -868,7 +863,6 @@ class DartModel:
 
     def getJointVelocityGlobal(self, index):
         return self.getBodyVelocityGlobal(index, npl.inv(self._boneTs[index])[:3, 3])
-
 
     def getJointAccelerationGlobal(self, index):
         # pospos = Inv(self._boneTs[index]).GetPosition()
@@ -1297,8 +1291,9 @@ class DartModel:
 
     def SetBodyColor(self, idid, r, g, b, a):
         index = self.id2index(idid)
-        pNode = self._nodes[index]
-        pNode.color[:] = [r, g, b, a]
+        for i in range(len(self.skeleton.body(index).num_shapenodes())):
+            if self.skeleton.body(index).shapenodes[i].has_visual_aspect():
+                self.skeleton.body(index).shapenodes[i].set_visual_aspect_rgba([r, g, b, a])
 
     def setSpring(self, body1Idx, body2Idx, ela, damp, p1, p2, dist):
         spring = vpSpring()
