@@ -1,3 +1,0 @@
-/home/trif/momentum/PyCommon/externalLibs/gear/build_release/CMakeFiles/GEAR.dir
-/home/trif/momentum/PyCommon/externalLibs/gear/build_release/examples/closed4r1p/CMakeFiles/closed4r1p.dir
-/home/trif/momentum/PyCommon/externalLibs/gear/build_release/examples/twolink/CMakeFiles/twolink.dir
