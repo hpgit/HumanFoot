@@ -859,11 +859,11 @@ def walkings(params, isCma=True):
 
             viewer.doc.addRenderer('rd_point1', yr.PointsRenderer(rd_point1, (0,255,0)))
             viewer.doc.addRenderer('rd_point2', yr.PointsRenderer(rd_point2, (255,0,0)))
-        #        viewer.doc.addRenderer('rd_vec1', yr.VectorsRenderer(rd_vec1, rd_vecori1, (255,0,0)))
-        #    viewer.doc.addRenderer('rd_vec2', yr.VectorsRenderer(rd_vec2, rd_vecori2, (0,255,0)))
-        #    viewer.doc.addRenderer('rd_frame1', yr.FramesRenderer(rd_frame1, (0,200,200)))
-            viewer.doc.addRenderer('rd_frame2', yr.FramesRenderer(rd_frame2, (200,200,0)))
-        #    viewer.setMaxFrame(len(motion_ori)-1)
+            # viewer.doc.addRenderer('rd_vec1', yr.VectorsRenderer(rd_vec1, rd_vecori1, (255,0,0)))
+            viewer.doc.addRenderer('rd_vec2', yr.VectorsRenderer(rd_vec2, rd_vecori2, (0,255,0)))
+            # viewer.doc.addRenderer('rd_frame1', yr.FramesRenderer(rd_frame1, (0,200,200)))
+            # viewer.doc.addRenderer('rd_frame2', yr.FramesRenderer(rd_frame2, (200,200,0)))
+            #    viewer.setMaxFrame(len(motion_ori)-1)
 
         viewer.objectInfoWnd.add1DSlider("penalty_grf_gain",    0., 5000., 10., Ks)
         viewer.objectInfoWnd.add1DSlider("c_min_contact_vel",   0., 200., .2, 100.)
@@ -1236,15 +1236,15 @@ def walkings(params, isCma=True):
 
                 # hwangpil
                 # foot placement based on difference
-                # # CM = dartModel.getBody("Hips").com()
-                # swf = dartModel.getJointPositionGlobal(swingFoot)
-                # CMr_swf = CM - swf
-                #
-                # # CM_tar = motion_seg.getJointPositionGlobal(0, prev_frame)
-                # swf_tar = motion_seg.getJointPositionGlobal(swingFoot, prev_frame)
-                # CMr_swf_tar = CM_tar - swf_tar
-                #
-                # diff_CMr_swf = mm.projectionOnPlane(CMr_swf-CMr_swf_tar, (1,0,0), (0,0,1))
+                # CM = dartModel.getBody("Hips").com()
+                swf = dartModel.getJointPositionGlobal(swingFoot)
+                CMr_swf = CM - swf
+
+                # CM_tar = motion_seg.getJointPositionGlobal(0, prev_frame)
+                swf_tar = motion_seg[frame].getJointPositionGlobal(swingFoot)
+                CMr_swf_tar = CM_tar - swf_tar
+
+                diff_CMr_swf = mm.projectionOnPlane(CMr_swf-CMr_swf_tar, (1,0,0), (0,0,1))
                 #
                 # newPosition =  motion_swf_placement[frame].getJointPositionGlobal(swingFoot)
                 # # newPosition += (diff_CMr_swf + diff_dCM)*t_swing_foot_placement
@@ -1393,33 +1393,37 @@ def walkings(params, isCma=True):
                 aik.ik_analytic(motion_stf_balancing[frame], swing_foot, new_position)
 
         # hwangpil
-        #TODO:
         # hip adjustizing
         if True:
             for stance_leg in stanceLegs:
-                #TODO:
                 # get hip orientation on coronal plane
                 hip_ori_cur = dartModel.getJointOrientationGlobal(0)
                 hip_ori_tar = motion_stf_balancing[frame].getJointOrientationGlobal(0)
 
                 hip_ori_cur_x = np.dot(hip_ori_cur, mm.unitX())
-                hip_ori_cur_z = np.dot(hip_ori_cur, mm.unitZ())
-                hip_ori_cur_xz_2 = (hip_ori_cur_x + hip_ori_cur_z) * .5
+                hip_ori_cur_y = np.dot(hip_ori_cur, mm.unitY())
+                hip_ori_cur_xy_2 = (hip_ori_cur_x + hip_ori_cur_y) * .5
 
                 hip_ori_tar_x = np.dot(hip_ori_tar, mm.unitX())
+                hip_ori_tar_y = np.dot(hip_ori_tar, mm.unitY())
                 hip_ori_tar_z = np.dot(hip_ori_tar, mm.unitZ())
-                hip_ori_tar_xz_2 = (hip_ori_tar_x + hip_ori_tar_z) * .5
+                hip_ori_tar_xy_2 = (hip_ori_tar_x + hip_ori_tar_y) * .5
 
-                hip_ori_cur_xz_2_projected = mm.projectionOnPlane(hip_ori_cur_xz_2, hip_ori_tar_x, hip_ori_tar_z)
+                hip_ori_cur_xy_2_projected = mm.projectionOnPlane(hip_ori_cur_xy_2, hip_ori_tar_x, hip_ori_tar_y)
 
-                mm.getAngleFromVectors(hip_ori_cur_xz_2_projected, hip_ori_tar_xz_2)
+                angle = mm.getAngleFromVectors(hip_ori_cur_xy_2_projected, hip_ori_tar_xy_2)
 
-                leg_ori_cur_motion = motion_stf_balancing[frame].getJointOrientationGlobal(stance_leg)
-                leg_ori_tar = np.dot(hip_ori_cur, np.dot(hip_ori_tar.T, leg_ori_cur_motion))
+                if stance_leg == motion_ori[0].skeleton.getJointIndex('LeftUpLeg'):
+                    motion_stf_balancing[frame].mulJointOrientationGlobal(stance_leg, mm.exp(hip_ori_tar_z, angle))
+                else:
+                    motion_stf_balancing[frame].mulJointOrientationGlobal(stance_leg, mm.exp(hip_ori_tar_z, -angle))
 
-                motion_stf_balancing[frame].setJointOrientationGlobal(stance_leg, leg_ori_tar)
-                # motion_stf_balancing[frame].setJointOrientationGlobal(stance_leg, leg_ori_tar)
-
+        # hwangpil
+        # ankle push
+        if True:
+            for swing_foot in swingFoots:
+                if t < 0.1:
+                    motion_stf_balancing[frame].mulJointOrientationGlobal(swing_foot, mm.rotZ(math.pi/12.))
 
 
         # hwangpil

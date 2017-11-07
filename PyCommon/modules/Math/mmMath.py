@@ -305,7 +305,7 @@ def getLocalAngJacobianForAngleAxis(m_rQ):
 
 # returns angle between two vectors
 def getAngleFromVectors(vec1, vec2):
-    cos_angle = np.dot(vec1, vec2) / np.linalg.norm(vec1)
+    cos_angle = np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
     return math.acos(cos_angle)
 
 

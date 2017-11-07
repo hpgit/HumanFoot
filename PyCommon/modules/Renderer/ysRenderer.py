@@ -733,6 +733,7 @@ class VectorsRenderer(Renderer):
             glColor3ubv(self.totalColor)
             vectors = state[0]
             origins = state[1]
+
             for i in range(len(vectors)):
                 if (vectors[i] is not None) and (origins[i] is not None):
                     origin, vector = origins[i], vectors[i]
