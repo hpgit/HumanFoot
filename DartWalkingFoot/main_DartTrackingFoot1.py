@@ -862,7 +862,7 @@ def walkings(params, isCma=True):
             # viewer.doc.addRenderer('rd_vec1', yr.VectorsRenderer(rd_vec1, rd_vecori1, (255,0,0)))
             viewer.doc.addRenderer('rd_vec2', yr.VectorsRenderer(rd_vec2, rd_vecori2, (0,255,0)))
             # viewer.doc.addRenderer('rd_frame1', yr.FramesRenderer(rd_frame1, (0,200,200)))
-            # viewer.doc.addRenderer('rd_frame2', yr.FramesRenderer(rd_frame2, (200,200,0)))
+            viewer.doc.addRenderer('rd_frame2', yr.FramesRenderer(rd_frame2, (200,200,0)))
             #    viewer.setMaxFrame(len(motion_ori)-1)
 
         viewer.objectInfoWnd.add1DSlider("penalty_grf_gain",    0., 5000., 10., Ks)
@@ -1224,11 +1224,6 @@ def walkings(params, isCma=True):
                 motion_swf_placement[frame].mulJointOrientationGlobal(swingLeg, R_swp_sag)
                 motion_swf_placement[frame].mulJointOrientationGlobal(swingLeg, R_swp_cor)
 
-                # restore swing foot global orientation
-                motion_swf_placement[frame].setJointOrientationGlobal(swingFoot, R_swf)
-
-                # motion_swf_placement[frame].setJointOrientationGlobal(swingFoot, )
-
                 # hwangpil
                 # temporal code.... for heel strike and ankle pushup
                 # motion_swf_placement[frame].mulJointOrientationGlobal(swingFoot, mm.exp([0., 0., -0.17*t_swing_foot_placement]))
@@ -1244,12 +1239,22 @@ def walkings(params, isCma=True):
                 swf_tar = motion_seg[frame].getJointPositionGlobal(swingFoot)
                 CMr_swf_tar = CM_tar - swf_tar
 
-                diff_CMr_swf = mm.projectionOnPlane(CMr_swf-CMr_swf_tar, (1,0,0), (0,0,1))
+                CMr_swf_proj = mm.projectionOnPlane(CMr_swf, mm.unitX(), mm.unitY())
+                CMr_swf_tar_proj = mm.projectionOnPlane(CMr_swf_tar, mm.unitX(), mm.unitY())
+
+                angle = mm.getAngleFromVectors(CMr_swf_proj, CMr_swf_tar_proj)
+
+                motion_swf_placement[frame].mulJointOrientationGlobal(swingLeg, mm.exp(mm.unitZ(), -.2*angle))
+
+                # diff_CMr_swf = mm.projectionOnPlane(CMr_swf-CMr_swf_tar, (1,0,0), (0,0,1))
                 #
                 # newPosition =  motion_swf_placement[frame].getJointPositionGlobal(swingFoot)
                 # # newPosition += (diff_CMr_swf + diff_dCM)*t_swing_foot_placement
                 # newPosition += 0.1*diff_CMr_swf * t_swing_foot_placement
                 # aik.ik_analytic(motion_swf_placement[frame], swingFoot, newPosition)
+
+                # restore swing foot global orientation
+                motion_swf_placement[frame].setJointOrientationGlobal(swingFoot, R_swf)
 
                 prev_R_swp[0] = (R_swp_sag, R_swp_cor)
 
@@ -1402,21 +1407,37 @@ def walkings(params, isCma=True):
 
                 hip_ori_cur_x = np.dot(hip_ori_cur, mm.unitX())
                 hip_ori_cur_y = np.dot(hip_ori_cur, mm.unitY())
+                hip_ori_cur_z = np.dot(hip_ori_cur, mm.unitZ())
                 hip_ori_cur_xy_2 = (hip_ori_cur_x + hip_ori_cur_y) * .5
+                hip_ori_cur_yz_2 = (hip_ori_cur_y + hip_ori_cur_z) * .5
+                hip_ori_cur_xz_2 = (hip_ori_cur_x + hip_ori_cur_z) * .5
 
                 hip_ori_tar_x = np.dot(hip_ori_tar, mm.unitX())
                 hip_ori_tar_y = np.dot(hip_ori_tar, mm.unitY())
                 hip_ori_tar_z = np.dot(hip_ori_tar, mm.unitZ())
                 hip_ori_tar_xy_2 = (hip_ori_tar_x + hip_ori_tar_y) * .5
+                hip_ori_tar_yz_2 = (hip_ori_tar_y + hip_ori_tar_z) * .5
+                hip_ori_tar_xz_2 = (hip_ori_tar_x + hip_ori_tar_z) * .5
 
+                # hip_ori_cur_xy_2_projected = mm.projectionOnPlane(hip_ori_cur_xy_2, hip_ori_tar_x, hip_ori_tar_y)
+                # hip_ori_cur_yz_2_projected = mm.projectionOnPlane(hip_ori_cur_yz_2, hip_ori_tar_y, hip_ori_tar_z)
                 hip_ori_cur_xy_2_projected = mm.projectionOnPlane(hip_ori_cur_xy_2, hip_ori_tar_x, hip_ori_tar_y)
+                hip_ori_cur_yz_2_projected = mm.projectionOnPlane(hip_ori_cur_yz_2, hip_ori_tar_y, hip_ori_tar_z)
 
-                angle = mm.getAngleFromVectors(hip_ori_cur_xy_2_projected, hip_ori_tar_xy_2)
+                cor_angle = mm.getAngleFromVectors(hip_ori_cur_xy_2_projected, hip_ori_tar_xy_2)
+                sag_angle = mm.getAngleFromVectors(hip_ori_cur_yz_2_projected, hip_ori_tar_yz_2)
 
                 if stance_leg == motion_ori[0].skeleton.getJointIndex('LeftUpLeg'):
-                    motion_stf_balancing[frame].mulJointOrientationGlobal(stance_leg, mm.exp(hip_ori_tar_z, angle))
+                    motion_stf_balancing[frame].mulJointOrientationGlobal(stance_leg, mm.exp(hip_ori_tar_z, 1.5*cor_angle))
                 else:
-                    motion_stf_balancing[frame].mulJointOrientationGlobal(stance_leg, mm.exp(hip_ori_tar_z, -angle))
+                    motion_stf_balancing[frame].mulJointOrientationGlobal(stance_leg, mm.exp(hip_ori_tar_z, -1.5*cor_angle))
+                # motion_stf_balancing[frame].mulJointOrientationGlobal(stance_leg, mm.exp(hip_ori_tar_x, sag_angle))
+
+        # hwangpil
+        # another version of stance foot push
+        if True:
+            for stance_leg in stanceLegs:
+                pass
 
         # hwangpil
         # ankle push
