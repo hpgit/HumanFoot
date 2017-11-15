@@ -1197,6 +1197,7 @@ def walkings(params, isCma=True):
                 R_swp_sag = prev_R_swp[0][0]
                 R_swp_cor = prev_R_swp[0][1]
             else:
+                clampAngle = math.pi/6.
                 R_swp_sag = mm.I_SO3(); R_swp_cor = mm.I_SO3()
                 # R_swp_sag = np.dot(R_swp_sag, mm.exp(diff_dCM_sag_axis * K_swp_vel_sag * -t_swing_foot_placement))
                 # R_swp_cor = np.dot(R_swp_cor, mm.exp(diff_dCM_cor_axis * K_swp_vel_cor * -t_swing_foot_placement))
@@ -1205,13 +1206,13 @@ def walkings(params, isCma=True):
                 # else:
                 #     R_swp_sag = np.dot(R_swp_sag, mm.exp(diff_CMr_sag_axis * K_swp_pos_sag_faster * -t_swing_foot_placement))
                 # R_swp_cor = np.dot(R_swp_cor, mm.exp(diff_CMr_cor_axis * K_swp_pos_cor * -t_swing_foot_placement))
-                R_swp_sag = np.dot(R_swp_sag, mm.clampExp(diff_dCM_sag_axis * K_swp_vel_sag * -t_swing_foot_placement, math.pi/12.))
-                R_swp_cor = np.dot(R_swp_cor, mm.clampExp(diff_dCM_cor_axis * K_swp_vel_cor * -t_swing_foot_placement, math.pi/12.))
+                R_swp_sag = np.dot(R_swp_sag, mm.clampExp(diff_dCM_sag_axis * K_swp_vel_sag * -t_swing_foot_placement, clampAngle))
+                R_swp_cor = np.dot(R_swp_cor, mm.clampExp(diff_dCM_cor_axis * K_swp_vel_cor * -t_swing_foot_placement, clampAngle))
                 if np.dot(direction, diff_CMr_sag) < 0:
-                    R_swp_sag = np.dot(R_swp_sag, mm.clampExp(diff_CMr_sag_axis * K_swp_pos_sag * -t_swing_foot_placement, math.pi/12.))
+                    R_swp_sag = np.dot(R_swp_sag, mm.clampExp(diff_CMr_sag_axis * K_swp_pos_sag * -t_swing_foot_placement, clampAngle))
                 else:
-                    R_swp_sag = np.dot(R_swp_sag, mm.clampExp(diff_CMr_sag_axis * K_swp_pos_sag_faster * -t_swing_foot_placement, math.pi/12.))
-                R_swp_cor = np.dot(R_swp_cor, mm.clampExp(diff_CMr_cor_axis * K_swp_pos_cor * -t_swing_foot_placement, math.pi/12.))
+                    R_swp_sag = np.dot(R_swp_sag, mm.clampExp(diff_CMr_sag_axis * K_swp_pos_sag_faster * -t_swing_foot_placement, clampAngle))
+                R_swp_cor = np.dot(R_swp_cor, mm.clampExp(diff_CMr_cor_axis * K_swp_pos_cor * -t_swing_foot_placement, clampAngle))
 
             for i in range(len(swingLegs)):
                 swingLeg = swingLegs[i]
@@ -1400,51 +1401,77 @@ def walkings(params, isCma=True):
         # hwangpil
         # hip adjustizing
         if True:
+            # get hip orientation on coronal plane
+            hip_ori_cur = dartModel.getJointOrientationGlobal(0)
+            hip_ori_tar = motion_stf_balancing[frame].getJointOrientationGlobal(0)
+
+            hip_ori_cur_x = np.dot(hip_ori_cur, mm.unitX())
+            hip_ori_cur_y = np.dot(hip_ori_cur, mm.unitY())
+            hip_ori_cur_z = np.dot(hip_ori_cur, mm.unitZ())
+            hip_ori_cur_xy_2 = (hip_ori_cur_x + hip_ori_cur_y) * .5
+            hip_ori_cur_yz_2 = (hip_ori_cur_y + hip_ori_cur_z) * .5
+            hip_ori_cur_xz_2 = (hip_ori_cur_x + hip_ori_cur_z) * .5
+
+            hip_ori_tar_x = np.dot(hip_ori_tar, mm.unitX())
+            hip_ori_tar_y = np.dot(hip_ori_tar, mm.unitY())
+            hip_ori_tar_z = np.dot(hip_ori_tar, mm.unitZ())
+            hip_ori_tar_xy_2 = (hip_ori_tar_x + hip_ori_tar_y) * .5
+            hip_ori_tar_yz_2 = (hip_ori_tar_y + hip_ori_tar_z) * .5
+            hip_ori_tar_xz_2 = (hip_ori_tar_x + hip_ori_tar_z) * .5
+
+            # hip_ori_cur_xy_2_projected = mm.projectionOnPlane(hip_ori_cur_xy_2, hip_ori_tar_x, hip_ori_tar_y)
+            # hip_ori_cur_yz_2_projected = mm.projectionOnPlane(hip_ori_cur_yz_2, hip_ori_tar_y, hip_ori_tar_z)
+            hip_ori_cur_xy_2_projected = mm.projectionOnPlane(hip_ori_cur_xy_2, mm.unitZ(), mm.unitY())
+            hip_ori_cur_yz_2_projected = mm.projectionOnPlane(hip_ori_cur_yz_2, hip_ori_tar_y, hip_ori_tar_z)
+
+            cor_angle = mm.getAngleFromVectors(hip_ori_cur_xy_2_projected, hip_ori_tar_xy_2)
+            sag_angle = mm.getAngleFromVectors(hip_ori_cur_yz_2_projected, hip_ori_tar_yz_2)
+
             for stance_leg in stanceLegs:
-                # get hip orientation on coronal plane
-                hip_ori_cur = dartModel.getJointOrientationGlobal(0)
-                hip_ori_tar = motion_stf_balancing[frame].getJointOrientationGlobal(0)
-
-                hip_ori_cur_x = np.dot(hip_ori_cur, mm.unitX())
-                hip_ori_cur_y = np.dot(hip_ori_cur, mm.unitY())
-                hip_ori_cur_z = np.dot(hip_ori_cur, mm.unitZ())
-                hip_ori_cur_xy_2 = (hip_ori_cur_x + hip_ori_cur_y) * .5
-                hip_ori_cur_yz_2 = (hip_ori_cur_y + hip_ori_cur_z) * .5
-                hip_ori_cur_xz_2 = (hip_ori_cur_x + hip_ori_cur_z) * .5
-
-                hip_ori_tar_x = np.dot(hip_ori_tar, mm.unitX())
-                hip_ori_tar_y = np.dot(hip_ori_tar, mm.unitY())
-                hip_ori_tar_z = np.dot(hip_ori_tar, mm.unitZ())
-                hip_ori_tar_xy_2 = (hip_ori_tar_x + hip_ori_tar_y) * .5
-                hip_ori_tar_yz_2 = (hip_ori_tar_y + hip_ori_tar_z) * .5
-                hip_ori_tar_xz_2 = (hip_ori_tar_x + hip_ori_tar_z) * .5
-
-                # hip_ori_cur_xy_2_projected = mm.projectionOnPlane(hip_ori_cur_xy_2, hip_ori_tar_x, hip_ori_tar_y)
-                # hip_ori_cur_yz_2_projected = mm.projectionOnPlane(hip_ori_cur_yz_2, hip_ori_tar_y, hip_ori_tar_z)
-                hip_ori_cur_xy_2_projected = mm.projectionOnPlane(hip_ori_cur_xy_2, hip_ori_tar_x, hip_ori_tar_y)
-                hip_ori_cur_yz_2_projected = mm.projectionOnPlane(hip_ori_cur_yz_2, hip_ori_tar_y, hip_ori_tar_z)
-
-                cor_angle = mm.getAngleFromVectors(hip_ori_cur_xy_2_projected, hip_ori_tar_xy_2)
-                sag_angle = mm.getAngleFromVectors(hip_ori_cur_yz_2_projected, hip_ori_tar_yz_2)
-
                 if stance_leg == motion_ori[0].skeleton.getJointIndex('LeftUpLeg'):
-                    motion_stf_balancing[frame].mulJointOrientationGlobal(stance_leg, mm.exp(hip_ori_tar_z, 1.5*cor_angle))
+                    motion_stf_balancing[frame].mulJointOrientationGlobal(stance_leg, mm.exp(hip_ori_tar_z, 1.*cor_angle))
+                    # motion_stf_balancing[frame].mulJointOrientationGlobal(stance_leg, mm.exp(hip_ori_tar_z, 1.5*cor_angle))
                 else:
-                    motion_stf_balancing[frame].mulJointOrientationGlobal(stance_leg, mm.exp(hip_ori_tar_z, -1.5*cor_angle))
+                    motion_stf_balancing[frame].mulJointOrientationGlobal(stance_leg, mm.exp(hip_ori_tar_z, -1.*cor_angle))
+                    # motion_stf_balancing[frame].mulJointOrientationGlobal(stance_leg, mm.exp(hip_ori_tar_z, -1.5*cor_angle))
                 # motion_stf_balancing[frame].mulJointOrientationGlobal(stance_leg, mm.exp(hip_ori_tar_x, sag_angle))
 
-        # hwangpil
-        # another version of stance foot push
-        if True:
-            for stance_leg in stanceLegs:
-                pass
+            for swing_leg in swingLegs:
+                if swing_leg == motion_ori[0].skeleton.getJointIndex('LeftUpLeg'):
+                    motion_stf_balancing[frame].mulJointOrientationGlobal(swing_leg, mm.exp(hip_ori_tar_z, 1.*cor_angle))
+                else:
+                    motion_stf_balancing[frame].mulJointOrientationGlobal(swing_leg, mm.exp(hip_ori_tar_z, -1.*cor_angle))
+
+            # ankle push
+            if False:
+                for swing_foot in swingFoots:
+                    if t < 0.2:
+                        if swing_foot == motion_ori[0].skeleton.getJointIndex('LeftFoot'):
+                            motion_stf_balancing[frame].mulJointOrientationGlobal(swing_foot, mm.rotZ((1.-t/.2) * math.pi/6.))
+                            # motion_stf_balancing[frame].mulJointOrientationGlobal(swing_foot, mm.rotZ(math.pi/2.))
 
         # hwangpil
         # ankle push
-        if True:
+        if False:
             for swing_foot in swingFoots:
-                if t < 0.1:
-                    motion_stf_balancing[frame].mulJointOrientationGlobal(swing_foot, mm.rotZ(math.pi/12.))
+                if t < 0.2:
+                    motion_stf_balancing[frame].mulJointOrientationGlobal(swing_foot, mm.rotZ((1.-t/.2) * math.pi/6.))
+                    # motion_stf_balancing[frame].mulJointOrientationGlobal(swing_foot, mm.rotZ(math.pi/2.))
+
+        # hwangpil
+        # stance foot tilting
+        if True:
+            for stance_foot in stanceFoots:
+                if t > 0.5:
+                    R_stf_cur = dartModel.getJointOrientationGlobal(stance_foot)
+                    R_stf_tar = motion_stf_balancing[frame].getJointOrientationGlobal(stance_foot)
+                    diff_stf = mm.logSO3(np.dot(R_stf_tar, R_stf_cur.T))
+                    print('diff_stf: ', diff_stf)
+                    diff_stf[0] = 0.
+                    diff_stf[1] = 0.
+                    R_diff_stf = mm.exp(diff_stf)
+                    # motion_stf_balancing[frame].mulJointOrientationGlobal(stance_foot, R_diff_stf)
+
 
 
         # hwangpil
@@ -1505,7 +1532,7 @@ def walkings(params, isCma=True):
         #'''
 
         # foot adjustment
-        if SEGMENT_FOOT:
+        if SEGMENT_FOOT and False:
             # hfi.footAdjust(motion_stf_balancing[frame], footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, .03)
             hfi.footAdjust(motion_stf_balancing[frame], footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, toe_offset)
 
