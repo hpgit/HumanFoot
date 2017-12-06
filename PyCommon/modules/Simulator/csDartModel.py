@@ -78,8 +78,8 @@ class DartModel:
         #    so additional calculation is needed
 
         # in box case, saves points around in local body frame
-        MULTIPLE_BOX = True
-        MULTIPLE_CAPSULE = True
+        MULTIPLE_BOX = False
+        MULTIPLE_CAPSULE = False
 
         for i in range(self.skeleton.num_bodynodes()):
             body = self.getBody(i)
@@ -221,6 +221,7 @@ class DartModel:
         # rad, gap, row, col, height_ratio = .03, .01, 6, 6, .5
 
         bodyIDs, positions, positionLocals, velocities, forces = [], [], [], [], []
+        MULTIPLE_POINT = False
 
         for i in range(len(bodyIDsToCheck)):
             body = self.getBody(bodyIDsToCheck[i])
@@ -229,7 +230,7 @@ class DartModel:
                 if shapeNode.has_collision_aspect():
                     geomType = shapeNode.shape.shape_type_name()
                     geomT = np.dot(body.world_transform(), shapeNode.relative_transform())
-                    if False and geomType == "ELLIPSOID":
+                    if not MULTIPLE_POINT and geomType == "ELLIPSOID":
                         # single point
                         shape = shapeNode.shape # type: pydart.EllipsoidShape
                         lowestPoint = geomT[:3, 3]
