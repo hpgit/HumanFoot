@@ -26,13 +26,13 @@ class DartModel:
     :type geomPoints : list[list[np.ndarray]]
     """
 
-    def __init__(self, wcfg, posture, mcfg):
+    def __init__(self, wcfg, posture, mcfg, isContainGround=True):
         """
         :type wcfg: ypc.WorldConfig
         :type posture: ym.JointPosture
         :type mcfg: ypc.ModelConfig
         """
-        xmlstr, self._boneTs = DartModelMaker().posture2dartSkelXmlStr("dartModel", posture, mcfg)
+        xmlstr, self._boneTs = DartModelMaker().posture2dartSkelXmlStr("dartModel", posture, mcfg, isContainGround)
         # print xmlstr
 
         self.world = pydart.World(wcfg.timeStep, xmlstr, True)

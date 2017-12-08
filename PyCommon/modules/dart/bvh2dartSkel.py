@@ -432,7 +432,7 @@ class DartModelMaker:
             partBvh.mirror(mirror)
         self.bvh.replaceJointFromBvh(attachPart, partBvh, scale)
 
-    def posture2dartSkel(self, posture, config=None):
+    def posture2dartSkel(self, posture, config=None, isContainGround=True):
         self.config = config
 
         names, Ts, offsets, boneTs = self.createBodies(posture)
@@ -450,7 +450,7 @@ class DartModelMaker:
         et.SubElement(etPhysics, "collision_detector").text = "fcl_mesh"
 
 
-        if True:
+        if isContainGround:
             # add ground body and joint
             etGroundSkeleton = et.SubElement(etWorld, "skeleton", {"name": "grount skeleton"})
             et.SubElement(etGroundSkeleton, "mobile").text = "false"
@@ -521,9 +521,9 @@ class DartModelMaker:
         output.write(prettifyXML(tree.getroot()))
         output.close()
 
-    def posture2dartSkelXmlStr(self, name, posture, config):
+    def posture2dartSkelXmlStr(self, name, posture, config, isContainGround):
         self.skelname = name
-        tree, boneTs = self.posture2dartSkel(posture, config)
+        tree, boneTs = self.posture2dartSkel(posture, config, isContainGround)
         # return prettifyXML(tree.getroot())
         # print prettifyXML(tree.getroot())
         return et.tostring(tree.getroot(), 'ascii'), boneTs
