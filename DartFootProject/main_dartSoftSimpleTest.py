@@ -479,7 +479,7 @@ class Callback:
                 torques = pdController.compute()
                 # cBodyIDs, cPositions, cPositionLocals, velocities = dartModel.getContactPoints(bodyIDsToCheck)
                 cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp= \
-                    hls.calcSoftForces(motion, dartModel.world, dartModel, bodyIDsToCheck, .8, tau=torques)
+                    hls.calcSoftForces(motion, dartModel.world, dartModel, bodyIDsToCheck, 1., tau=torques)
             if (True or i % 5 == 0) and len(cBodyIDs):
                 # apply contact forces
                 if False and not torque_None:
