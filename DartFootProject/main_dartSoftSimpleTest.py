@@ -213,7 +213,8 @@ def init():
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump_long.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump_long.bvh')
-    motion, mcfg, wcfg, stepsPerFrame, config = create_foot('DartFootProject/test2.bvh')
+    motion, mcfg, wcfg, stepsPerFrame, config = create_foot('test2.bvh')
+    # motion, mcfg, wcfg, stepsPerFrame, config = create_foot('DartFootProject/test2.bvh')
 
 
     dartModel = cpm.DartModel(wcfg, motion[0], mcfg, False)

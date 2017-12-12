@@ -1336,11 +1336,85 @@ def calcNlSoftForces(motion, world, model, bodyIDsToCheck, mu, tau=None):
             x0[1::3, 0] *= 0.
             return (0, cvxMatrix(x0))
         elif xx is not None:
-            l_f = .5*np.dot(xx.T, np.dot(A_t, xx)) + np.dot(c_t, xx)
+            mu_2 = mu * mu
+
+            l_f = .5*np.dot(xx.T, np.dot(A_t+R, xx)) + np.dot(c_t, xx)
+            Dl_f = np.dot(A_t + R, xx) + c_t
+            DDl_f = A_t + R
+
             d_f = 0.
+            Dd_f = np.zeros_like(Dl_f)
+            DDd_f = np.zeros_like(A_t)
+            first_const = []
             for i in range(contactNum):
-                d_f += -kk*math.log(mu*mu*xx[3*i+1, 0]*xx[3*i+1, 0] - xx[3*i, 0]*x[3*i, 0] - xx[3*i+2, 0]*xx[3*i+2, 0])
+                first_const.append(mu_2*xx[3*i+1, 0]*xx[3*i+1, 0] - xx[3*i, 0]*x[3*i, 0] - xx[3*i+2, 0]*xx[3*i+2, 0])
+                d_f += -kk*math.log(first_const[-1])
                 d_f += -kk*math.log(xx[3*i+1, 0])
+
+            for i in range(contactNum):
+                Dd_f[3 * i + 0] += 2. * kk * xx[3 * i + 0] * first_const[i]
+                Dd_f[3 * i + 1] += 2. * kk * mu_2  * xx[3 * i + 1] * first_const[i] - kk / xx[3 * i + 1]
+                Dd_f[3 * i + 2] += 2. * kk * xx[3 * i + 2] * first_const[i]
+
+            if zz is not None:
+                for i in range(contactNum):
+                    s = first_const[i]
+                    s_2 = s * s
+                    _xx = xx[3*i:3*i+3]
+                    DDd_f[3*i + 0, 3*i + 0] += 4.*kk/s_2 * _xx[0] * _xx[0] + 2.*kk/s
+                    DDd_f[3*i + 1, 3*i + 1] += 4.*mu_2*mu_2*kk/s_2 * _xx[1] * _xx[1] + 2.*mu_2*kk/s + kk/(_xx[1] * _xx[1])
+                    DDd_f[3*i + 2, 3*i + 2] += 4.*kk/s_2 * _xx[2] * _xx[2] + 2.*kk/s
+
+                    DDd_f[3*i + 0, 3*i + 1] += 4.*mu_2*kk/s_2 * _xx[0] * _xx[1]
+                    DDd_f[3*i + 1, 3*i + 0] += 4.*mu_2*kk/s_2 * _xx[0] * _xx[1]
+
+                    DDd_f[3*i + 0, 3*i + 2] += 4.*kk/s_2 * _xx[0] * _xx[2]
+                    DDd_f[3*i + 2, 3*i + 0] += 4.*kk/s_2 * _xx[0] * _xx[2]
+
+                    DDd_f[3*i + 1, 3*i + 2] += 4.*mu_2*kk/s_2 * _xx[1] * _xx[2]
+                    DDd_f[3*i + 1, 3*i + 2] += 4.*mu_2*kk/s_2 * _xx[1] * _xx[2]
+
+            # check if last constraints meet
+
+            last_const = np.dot(N, np.dot(A_t, np.array(xx)) + c_t) - v_min
+            if np.min(last_const) > 0.:
+                for i in range(contactNum):
+                    d_f += -kk * math.log(last_const[i, 0])
+            else:
+                q = 7.
+                s0 = -kk / q
+                a0 = q * q / (2. * kk)
+                a1 = 2. * q
+                a2 = -kk * math.log(s0) + 1.5 * kk
+                for i in range(contactNum):
+                    s = last_const[i, 0]
+                    if last_const[i, 0] >= s0:
+                        d_f += -kk * math.log(s)
+                    else:
+                        d_f += a0 * s * s + a1 * s + a2
+
+                for i in range(contactNum):
+                    s = last_const[i, 0]
+                    if last_const[i, 0] >= s0:
+                        Dd_f[:, 0] += -kk / s * np.dot(N[i, :], A_t)
+                    else:
+                        Dd_f[:, 0] += (2. * a0 * s + a1) * np.dot(N[i, :], A_t)
+
+                if zz is not None:
+                    for i in range(contactNum):
+                        s = last_const[i, 0]
+                        for j in range(3*contactNum):
+                            for k in range(j+1):
+                                if last_const[i, 0] >= s0:
+                                    DDd_f[j, k] += -kk / s * np.dot(N, A_t)[:, i]
+                                else:
+                                    DDd_f[j, k] += (2. * a0 * s + a1) * np.dot(N, A_t)[:, i]
+
+            if zz is None:
+                return (l_f + d_f, Dl_f + Dd_f)
+            else:
+                return (l_f + d_f, Dl_f + Dd_f, DDl_f + DDd_f)
+
             # return (f, Df) or (f, Df, H)
             return
 
