@@ -562,7 +562,7 @@ def walkings(params, isCma=True):
     wcfg.timeStep = frameTime/stepsPerFrame
 
     pydart.init()
-    dartModel = cpm.DartModel(wcfg, motion_ori[0], mcfg)
+    dartModel = cpm.DartModel(wcfg, motion_ori[0], mcfg, False)
     dartMotionModel = None # type: cpm.DartModel
     if not isCma:
         dartMotionModel = cpm.DartModel(wcfg, motion_ori[0], mcfg)
@@ -1671,9 +1671,10 @@ def walkings(params, isCma=True):
                 # bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
                 bodyIDs = dartModel.skeleton.self_collision_check()
 
-                _tau = np.zeros(dartModel.skeleton.q.shape)
-                # bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp = \
-                #     hdls.calcLCPForces(motion_ori, dartModel.world, dartModel, bodyIDsToCheck, 1., _tau)
+                # _tau = np.zeros(dartModel.skeleton.q.shape)
+                _tau = pdController.compute()
+                bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp = \
+                    hdls.calcLCPForces(motion_ori, dartModel.world, dartModel, bodyIDsToCheck, 1., _tau)
                 # dartModel.applyPenaltyForce(bodyIDs, contactPositions, contactForces, localForce=False)
                 # print('penalty force sum: ', sum(contactForce for contactForce in contactForces))
 

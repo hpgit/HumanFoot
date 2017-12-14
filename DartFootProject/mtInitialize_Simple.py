@@ -6,11 +6,11 @@ if '../PyCommon/modules' not in sys.path:
 # if './modules' not in sys.path:
 #     sys.path.append('./modules')
 
-import Resource.ysMotionLoader as yf
-import Simulator.ysPhysConfig as ypc
-import Math.mmMath as mm
-import Motion.ysHierarchyEdit as yme
-import Motion.ysMotion as ym
+import PyCommon.modules.Resource.ysMotionLoader as yf
+import PyCommon.modules.Simulator.ysPhysConfig as ypc
+import PyCommon.modules.Math.mmMath as mm
+import PyCommon.modules.Motion.ysHierarchyEdit as yme
+import PyCommon.modules.Motion.ysMotion as ym
 import math
 
 # Constant
@@ -427,7 +427,7 @@ def create_foot(motionFile='foot3.bvh'):
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
-    stepsPerFrame = 80
+    stepsPerFrame = 20
     simulSpeedInv = 1.
 
     wcfg.timeStep = (1/30.*simulSpeedInv)/stepsPerFrame

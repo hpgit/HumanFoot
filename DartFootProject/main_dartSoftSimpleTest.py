@@ -24,6 +24,7 @@ import PyCommon.modules.Util.ysPythonEx as ype
 import PyCommon.modules.ArticulatedBody.ysControl as yct
 import PyCommon.modules.GUI.hpSplineEditor as hse
 import PyCommon.modules.ArticulatedBody.hpInvKine as hik
+import mtInitialize_Simple as mit
 
 # import VirtualPhysics.vpBody as vpB
 # import VirtualPhysics.LieGroup as vpL
@@ -178,7 +179,7 @@ def init():
         wcfg = ypc.WorldConfig()
         wcfg.planeHeight = 0.
         wcfg.useDefaultContactModel = False
-        stepsPerFrame = 40
+        stepsPerFrame = 20
         simulSpeedInv = 1.
 
         wcfg.timeStep = (1/30.*simulSpeedInv)/stepsPerFrame
@@ -212,8 +213,8 @@ def init():
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_capsule('simpleJump_onebody.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump_long.bvh')
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump_long.bvh')
-    motion, mcfg, wcfg, stepsPerFrame, config = create_foot('test2.bvh')
+    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('DartFootProject/simpleJump_long.bvh')
+    # motion, mcfg, wcfg, stepsPerFrame, config = create_foot('test2.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = create_foot('DartFootProject/test2.bvh')
 
 
@@ -232,7 +233,7 @@ def init():
     bodyIDsToCheck = range(dartModel.getBodyNum())
 
     # flat data structure
-    ddth_des_flat = ype.makeFlatList(totalDOF)
+    ddth_des_flat = ype.makeFlatList(totalDO0x248D50cf0a3cB5261D8cf0A3d172b15c72D31bfFF)
     dth_flat = ype.makeFlatList(totalDOF)
     ddth_sol = ype.makeNestedList(DOFs)
     torques_nested = ype.makeNestedList(DOFs)
@@ -258,6 +259,7 @@ def init():
     viewer.doc.addRenderer('rd_contactForceControl', yr.VectorsRenderer(rd_ForceControl, rd_Position, (0, 0, 255), .1, 'rd_c3'))
     # viewer.doc.addRenderer('rd_contactForceDes', yr.VectorsRenderer(rd_ForceDes, rd_PositionDes, (255, 0, 255), .1))
     # viewer.doc.addRenderer('rd_jointPos', yr.PointsRenderer(rd_jointPos))
+    viewer.doc.addRenderer('rd_contactPosition', yr.PointsRenderer(rd_cPositions, (255, 0, 0)))
 
     viewer.objectInfoWnd.add1DSlider('PD gain', minVal=0., maxVal=200., initVal=10., valStep=.1)
     viewer.objectInfoWnd.add1DSlider('Joint Damping', minVal=1., maxVal=2000., initVal=35., valStep=1.)
@@ -476,11 +478,13 @@ class Callback:
         torques = np.zeros(totalDOF)
 
         for i in range(int(stepsPerFrame)):
+        # for i in [0]:
+            torques = pdController.compute()
             if True or i%5 ==0:
-                torques = pdController.compute()
                 # cBodyIDs, cPositions, cPositionLocals, velocities = dartModel.getContactPoints(bodyIDsToCheck)
                 cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp= \
-                    hls.calcSoftForces(motion, dartModel.world, dartModel, bodyIDsToCheck, 1., tau=torques)
+                    hls.calcLCPForces(motion, dartModel.world, dartModel, bodyIDsToCheck, 1., tau=torques)
+                    # hls.calcSoftForces(motion, dartModel.world, dartModel, bodyIDsToCheck, 1., tau=torques)
             if (True or i % 5 == 0) and len(cBodyIDs):
                 # apply contact forces
                 if False and not torque_None:
@@ -504,7 +508,7 @@ class Callback:
             sumForce = np.array((0., 0., 0.))
             if len(cBodyIDs) > 0:
                 sumForce = sum(cForces[i][:3] for i in range(len(cForces)))
-            simulContactForces += sumForce
+            simulContactForces += sumForce/stepsPerFrame
 
 
         if False:
@@ -561,7 +565,7 @@ class Callback:
         # print calculated force
 
         for i in range(len(cPositions)):
-            rd_cForces.append(cForces[i].copy()/10.)
+            rd_cForces.append(cForces[i].copy()/20.)
             rd_cPositions.append(cPositions[i].copy())
         # for i in range(len(contactPoints)):
         #     rd_cForces.append(contactForces[i].copy() / 20.)

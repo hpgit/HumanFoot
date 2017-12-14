@@ -5,12 +5,12 @@ import numpy.linalg as npl
 from cvxopt import solvers as cvxSolvers
 from cvxopt import matrix as cvxMatrix
 from copy import deepcopy
+import PyCommon.modules.Optimization.csQPOASES as cqp
 
 from PyCommon.modules.Simulator import csDartModel as cdm
 import PyCommon.modules.pydart2 as pydart
 
 from PyCommon.modules.Motion import ysMotion as ym
-
 
 def setTimeStamp(timeStamp, timeIndex, prevTime):
     if timeIndex == 0:
@@ -48,8 +48,9 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
 
     for idx in range(len(cBodyIds)):
         body = model.getBody(cBodyIds[idx])
-        jacobian = body.world_jacobian(cPositionsLocal[idx])
-        n = np.array([[0., 1., 0., 0., 0., 0.]]).T
+        # jacobian = body.world_jacobian(cPositionsLocal[idx])
+        jacobian = body.linear_jacobian(cPositionsLocal[idx])
+        n = np.array([[0., 1., 0.]]).T
         JTn = np.dot(jacobian.T, n)
         if N is None:
             JTN = JTn.copy()
@@ -61,7 +62,7 @@ def makeFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBases):
         # offsetAngle = math.atan2(cVel[2], cVel[0])
         offsetAngle = 0.
         for i in range(numFrictionBases):
-            d[i] = np.array([[math.cos((2.*math.pi*i)/numFrictionBases), 0., math.sin((2.*math.pi*i)/numFrictionBases), 0., 0., 0.]]).T
+            d[i] = np.array([[math.cos((2.*math.pi*i)/numFrictionBases), 0., math.sin((2.*math.pi*i)/numFrictionBases)]]).T
         for i in range(numFrictionBases):
             JTd = np.dot(jacobian.T, d[i])
             if D is None:
@@ -114,14 +115,14 @@ def getLCPMatrix(world, model, invM, invMc, mu, tau, contactNum, contactPosition
     A21 = h*temp_DM.dot(JTN)
     A22 = h*temp_DM.dot(JTD)
 
-    A = factor * np.concatenate(
+    A = np.concatenate(
         (
-            np.concatenate((A11, A12,  np.zeros((A11.shape[0], E.shape[1]))),  axis=1),
-            np.concatenate((A21, A22,  E),                                     axis=1),
+            factor * np.concatenate((A11, A12,  np.zeros((A11.shape[0], E.shape[1]))),  axis=1),
+            factor * np.concatenate((A21, A22,  E),                                     axis=1),
             h * np.concatenate((mus, -E.T, np.zeros((mus.shape[0], E.shape[1]))),  axis=1),
         ), axis=0
     )
-    # A = A + 0.1*np.eye(A.shape[0])
+    A = A + 0.1*np.eye(A.shape[0])
 
     qdot_0 = np.asarray(model.skeleton.dq)
     if tau is None:
@@ -132,15 +133,16 @@ def getLCPMatrix(world, model, invM, invMc, mu, tau, contactNum, contactPosition
 
     # improved non-penentration condition : add position condition
     penDepth = 0.003
+    # penDepth = 0.005
     bPenDepth = np.zeros(A11.shape[0])
     for i in range(contactNum):
         if abs(contactPositions[i][1]) > penDepth:
             bPenDepth[i] = contactPositions[i][1] + penDepth
 
-    b1 = JTN.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau) + 0.05 * invh * bPenDepth
+    b1 = JTN.T.dot(qdot_0 - h*invMc) + h*temp_NM.dot(tau) + 0.5*invh * bPenDepth
     b2 = JTD.T.dot(qdot_0 - h*invMc) + h*temp_DM.dot(tau)
     b3 = np.zeros(mus.shape[0])
-    b = np.hstack((np.hstack((b1, b2)), b3)) * factor
+    b = np.hstack((np.hstack((factor * b1, factor * b2)), b3))
     return A, b
 
 def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictionBases=8, solver='qp'):
@@ -180,7 +182,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
     #   [ A21,  A22, E]
     #   [ mus, -E.T, 0]
 
-    factor = 1.
+    factor = 100.
     A, b = getLCPMatrix(world, model, invM, invMc, mu, tau, contactNum, contactPositions, JTN, JTD, E, factor)
 
     # lo = np.zeros(A.shape[0])
@@ -225,11 +227,15 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
     for cIdx in range(contactNum):
         force = np.zeros(3)
         force[1] = normalForce[cIdx]
-        # contactTangenForce = tangenForce[8*cIdx:8*(cIdx+1)]
-        contactTangenForceDual = tangenForceDual[8*cIdx:8*(cIdx+1)]
-        for fcIdx in range(numFrictionBases):
-            d = np.array((math.cos(2.*math.pi*fcIdx/numFrictionBases), 0., math.sin(2.*math.pi*fcIdx/numFrictionBases)))
-            force += tangenForce[cIdx*numFrictionBases + fcIdx] * d
+        # contactTangenForce = tangenForce[numFrictionBases*cIdx:numFrictionBases*(cIdx+1)]
+        contactTangenForceDual = tangenForceDual[numFrictionBases*cIdx:numFrictionBases*(cIdx+1)]
+        fcIdx = np.argmax(tangenForce[cIdx*numFrictionBases:(cIdx+1)*numFrictionBases])
+        d = np.array((math.cos(2.*math.pi*fcIdx/numFrictionBases), 0., math.sin(2.*math.pi*fcIdx/numFrictionBases)))
+        force += tangenForce[cIdx*numFrictionBases + fcIdx] * d
+
+        # for fcIdx in range(numFrictionBases):
+        #     d = np.array((math.cos(2.*math.pi*fcIdx/numFrictionBases), 0., math.sin(2.*math.pi*fcIdx/numFrictionBases)))
+        #     force += tangenForce[cIdx*numFrictionBases + fcIdx] * d
 
         # minBasisIdx = np.argmin(contactTangenForceDual)
         # d = np.array((math.cos((2.*math.pi*minBasisIdx)/numFrictionBases), 0., math.sin((2.*math.pi*minBasisIdx)/numFrictionBases)))
@@ -1020,26 +1026,27 @@ def makeSoftFrictionCone(skeleton, world, model, bodyIDsToCheck, numFrictionBase
 
     for idx in range(len(cBodyIds)):
         body = model.getBody(cBodyIds[idx])
-        jacobian = body.world_jacobian(cPositionsLocal[idx])
+        # jacobian = body.world_jacobian(cPositionsLocal[idx])
+        jacobian = body.linear_jacobian(cPositionsLocal[idx])
 
         if J is None:
             J = jacobian.copy()
         else:
             J = np.vstack((J, jacobian))
 
-        n = np.zeros((1, 6*cNum))
-        n[:, 6*idx:6*idx+6] = np.array([[0., 1., 0., 0., 0., 0.]])
+        n = np.zeros((1, 3*cNum))
+        n[:, 3*idx:3*idx+3] = np.array([[0., 1., 0.]])
         if N is None:
             N = n.copy()
         else:
             N = np.vstack((N, n))
 
-        Vi = np.zeros((6, numFrictionBases * cNum))
+        Vi = np.zeros((3, numFrictionBases * cNum))
         for i in range(numFrictionBases):
-            v_temp = np.array([mu * math.cos((2.*math.pi*i)/numFrictionBases), 1., mu * math.sin((2.*math.pi*i)/numFrictionBases), 0., 0., 0.])
+            v_temp = np.array([mu * math.cos((2.*math.pi*i)/numFrictionBases), 1., mu * math.sin((2.*math.pi*i)/numFrictionBases)])
             len_v_temp = npl.norm(v_temp)
             Vi[:, idx*numFrictionBases + i:idx*numFrictionBases + i+1] \
-                = np.array([[v_temp[0]/len_v_temp, v_temp[1]/len_v_temp, v_temp[2]/len_v_temp, 0., 0., 0.]]).T
+                = np.array([[v_temp[0]/len_v_temp, v_temp[1]/len_v_temp, v_temp[2]/len_v_temp]]).T
 
         if V is None:
             V = Vi.copy()
@@ -1089,26 +1096,29 @@ def getSoftMatrix(world, model, invM, mu, tau, contactNum, contactPositions, J, 
 
     # from daseong's source,
     # R : 0.01, epsilon: 0.1, kappa: 0.05, rho: 0.8
-    epsilon = .1
-    kappa = 0.003
+    epsilon = 1.
+    kappa = 0.004
     kp = (1. + epsilon) / (kappa*kappa)
     kd = 2. * (1. + epsilon) / kappa
-    contactVels = np.dot(J[1::6, :], dq0)
-    contactDepths = np.array([-contactPositions[i][1] for i in range(len(contactPositions))])
+    contactVels = np.dot(J[1::3, :], dq0)
+    vels = np.dot(J, dq0)
+    contactDepths = np.array([-contactPositions[i][1]-0.003 for i in range(len(contactPositions))])
 
     # geom_vels[3 * geom_point_idx + 2] + h*(kp * m_contact[i].depth - kd * geom_vels[3*geom_point_idx + 2])
-    v_min = contactVels + h*(kp * contactDepths - kd * contactVels)
+    # v_min = contactVels + h*(kp * contactDepths - kd * contactVels)
     # v_min = contactVels + h*kp * contactDepths
-    # v_min = h*(kp * contactDepths + kd * contactVels)
+    # v_min = h*(kp * contactDepths - kd * contactVels)
     # v_min = h*(kp * contactDepths)
+    v_min = contactVels + invh * contactDepths
     c1 -= v_min
 
     v_star = np.zeros_like(c_t)
-    v_star[2::6] = v_min
+    # v_star = -0.001*  vels
+    v_star[1::3] = np.min(np.vstack((v_min, 0.001*np.ones_like(v_min))), axis=0)
 
-    # return np.dot(V.T, np.dot(A_t+R, V)), np.dot(V.T, c_t-v_star), np.vstack((C0, C1)), np.hstack((c0, c1))
+    return np.dot(V.T, np.dot(A_t, V))+R, np.dot(V.T, c_t-v_star), np.vstack((C0, C1)), np.hstack((c0, c1))
     # return np.dot(V.T, np.dot(A_t+R, V)), np.dot(V.T, c_t), np.vstack((C0, C1)), np.hstack((c0, c1))
-    return np.dot(V.T, np.dot(A_t, V))+R, np.dot(V.T, c_t), np.vstack((C0, C1)), np.hstack((c0, c1))
+    # return factor * np.dot(V.T, np.dot(A_t, V))+R, factor*np.dot(V.T, c_t), np.vstack((C0, C1)), np.hstack((c0, c1))
 
 
 def calcSoftForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictionBases=8, solver='qp'):
@@ -1151,8 +1161,8 @@ def calcSoftForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFricti
     A, b, G, h = getSoftMatrix(world, model, invM, mu, tau, contactNum, contactPositions, J, V, N, factor)
 
     # lo = np.zeros(A.shape[0])
-    lo = 0.*np.ones(A.shape[0])
-    hi = 1000000. * np.ones(A.shape[0])
+    lo = -1000.*np.ones(A.shape[0])
+    hi = 1000. * np.ones(A.shape[0])
     x = 0.*np.ones(A.shape[0])
 
     # normalizeMatrix(A, b)
@@ -1167,7 +1177,7 @@ def calcSoftForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFricti
             Gqp = cvxMatrix(G)
             hqp = cvxMatrix(h)
             timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
-            cvxSolvers.options['show_progress'] = True
+            cvxSolvers.options['show_progress'] = False
             cvxSolvers.options['maxiters'] = 100
             solution = cvxSolvers.qp(Aqp, bqp, Gqp, hqp)
             xqp = np.array(solution['x']).flatten()
@@ -1175,6 +1185,9 @@ def calcSoftForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFricti
         except Exception, e:
             print e
             pass
+    elif solver == 'qpoases':
+        pass
+
 
 
     forceVector = x[:numFrictionBases*contactNum]
@@ -1189,10 +1202,10 @@ def calcSoftForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFricti
     forces_unpack = np.dot(V, forceVector)
     forces = []
     for cIdx in range(contactNum):
-        force = forces_unpack[6*cIdx:6*cIdx+3]
+        force = forces_unpack[3*cIdx:3*cIdx+3]
         forces.append(force)
-    print('forceVector: ', forceVector)
-    print('forces: ', forces)
+    # print('forceVector: ', forceVector)
+    # print('forces: ', forces)
 
     # repairForces(forces, contactPositions)
     # print forces
@@ -1228,6 +1241,245 @@ def calcSoftForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFricti
         print "vv:", vv[:3]
 
 
+
+    return bodyIDs, contactPositions, contactPositionsLocal, forces, timeStamp
+
+
+#soft contact with different axis
+def makeSoftFrictionCone2(skeleton, world, model, bodyIDsToCheck, mu):
+    """
+    a number of basis is numFrictionBases
+
+    :type skeleton: ym.JointSkeleton
+    :type world: pydart.World
+    :type model: cdm.DartModel
+    :type bodyIDsToCheck: list[int]
+    :type numFrictionBases: int
+    :rtype:
+    """
+    cBodyIds, cPositions, cPositionsLocal, cVelocities = model.getContactPoints(bodyIDsToCheck)
+    N = None
+    V = None
+    J = None
+
+    cNum = len(cBodyIds)
+    if cNum == 0:
+        return len(cBodyIds), cBodyIds, cPositions, cPositionsLocal, cVelocities, None, None, None
+
+    DOFs = model.getDOFs()
+
+    for idx in range(len(cBodyIds)):
+        body = model.getBody(cBodyIds[idx])
+        # jacobian = body.world_jacobian(cPositionsLocal[idx])
+        jacobian = body.linear_jacobian(cPositionsLocal[idx])
+
+        if J is None:
+            J = jacobian.copy()
+        else:
+            J = np.vstack((J, jacobian))
+
+        n = np.zeros((1, 3*cNum))
+        n[:, 3*idx:3*idx+3] = np.array([[0., 1., 0.]])
+        if N is None:
+            N = n.copy()
+        else:
+            N = np.vstack((N, n))
+
+        Vi = np.zeros((3, 3 * cNum))
+        for i in range(3):
+            v_temp = np.zeros((1, 3))
+            v_temp[0, i] = 1.
+            Vi[:, idx*3 + i:idx*3 + i+1] = v_temp
+
+        if V is None:
+            V = Vi.copy()
+        else:
+            V = np.vstack((V, Vi))
+
+    return len(cBodyIds), cBodyIds, cPositions, cPositionsLocal, cVelocities, J, V, N
+
+
+def getSoftMatrix2(world, model, invM, mu, tau, contactNum, contactPositions, J, V, N, factor=1.):
+    """
+
+    :type world: pydart.World
+    :type model: cdm.DartModel
+    :type invM: np.ndarray
+    :type mu: float
+    :type tau: np.ndarray
+    :type contactNum: int
+    :type JTN: np.ndarray
+    :type JTD: np.ndarray
+    :type E: np.ndarray
+    :type factor: float
+    :return:
+    """
+    totalDOF = model.getTotalDOF()
+
+    h = model.GetTimeStep()
+    invh = 1./h
+
+    dq0 = np.asarray(model.skeleton.dq)
+    if tau is None:
+        tau = np.zeros(np.shape(dq0))
+
+    reg = 1.
+    # R = reg * np.eye(J.shape[0])
+    R = reg * np.eye(V.shape[1])
+    A_t = h * np.dot(J, np.dot(invM, J.T))
+    ddq_pure = np.dot(invM, tau - model.skeleton.coriolis_and_gravity_forces())
+    c_t = np.dot(J, dq0 + h*ddq_pure)
+
+    # C0 = -np.eye(V.shape[1])
+    C0 = np.zeros((contactNum, 3*contactNum))
+    C0[1::3, :] = np.eye(contactNum)
+    C1_temp = np.dot(N, A_t)
+    C1 = -np.dot(C1_temp, V)
+    C2 = np.zeros((contactNum, 3*contactNum))
+
+    c0 = np.zeros(V.shape[1])
+    c1 = np.dot(N, c_t) # - v_min
+
+    # from daseong's source,
+    # R : 0.01, epsilon: 0.1, kappa: 0.05, rho: 0.8
+    epsilon = .1
+    kappa = 0.003
+    kp = (1. + epsilon) / (kappa*kappa)
+    kd = 2. * (1. + epsilon) / kappa
+    contactVels = np.dot(J[1::3, :], dq0)
+    contactDepths = np.array([-contactPositions[i][1] for i in range(len(contactPositions))])
+
+    # geom_vels[3 * geom_point_idx + 2] + h*(kp * m_contact[i].depth - kd * geom_vels[3*geom_point_idx + 2])
+    v_min = contactVels + h*(kp * contactDepths - kd * contactVels)
+    # v_min = contactVels + h*kp * contactDepths
+    # v_min = h*(kp * contactDepths + kd * contactVels)
+    # v_min = h*(kp * contactDepths)
+    c1 -= v_min
+
+    v_star = np.zeros_like(c_t)
+    v_star[1::3] = v_min
+
+    # return np.dot(V.T, np.dot(A_t+R, V)), np.dot(V.T, c_t-v_star), np.vstack((C0, C1)), np.hstack((c0, c1))
+    # return np.dot(V.T, np.dot(A_t+R, V)), np.dot(V.T, c_t), np.vstack((C0, C1)), np.hstack((c0, c1))
+    return np.dot(V.T, np.dot(A_t, V))+R, np.dot(V.T, c_t), np.vstack((C0, C1)), np.hstack((c0, c1))
+
+
+def calcSoftForces2(motion, world, model, bodyIDsToCheck, mu, tau=None, solver='qp'):
+    """
+
+    :type motion: ym.JointMotion
+    :type world: pydart.World
+    :type model: cdm.DartModel
+    :type bodyIDsToCheck: list[int]
+    :type mu: float
+    :type tau: np.ndarray
+    :type numFrictionBases: int
+    :type solver: str
+    :return:
+    """
+    timeStamp = []
+    timeIndex = 0
+    prevTime = time.time()
+
+    # model = dartModel
+    contactNum, bodyIDs, contactPositions, contactPositionsLocal, contactVelocities, J, V, N \
+        = makeSoftFrictionCone2(motion[0].skeleton, world, model, bodyIDsToCheck, mu)
+
+    if contactNum == 0:
+        return bodyIDs, contactPositions, contactPositionsLocal, None, None
+    timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
+
+    totalDOF = model.getTotalDOF()
+
+    invM = model.skeleton.inv_mass_matrix()
+    # M = model.skeleton.mass_matrix()
+    # Ama = 0.08*np.eye(M.shape[0])
+    # invM = npl.inv(M+Ama)
+
+    timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
+
+    # pdb.set_trace()
+
+    factor = 100.
+    A, b, G, h = getSoftMatrix2(world, model, invM, mu, tau, contactNum, contactPositions, J, V, N, factor)
+
+    # lo = np.zeros(A.shape[0])
+    lo = -1000.*np.ones(A.shape[0])
+    hi = 1000. * np.ones(A.shape[0])
+    x = 0.*np.ones(A.shape[0])
+
+    # normalizeMatrix(A, b)
+    # print A[0]
+
+    if solver == 'qp':
+        # solve using cvxopt QP
+        # if True:
+        try:
+            Aqp = cvxMatrix(A)
+            bqp = cvxMatrix(b)
+            Gqp = cvxMatrix(G)
+            hqp = cvxMatrix(h)
+            timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
+            cvxSolvers.options['show_progress'] = False
+            cvxSolvers.options['maxiters'] = 100
+            solution = cvxSolvers.qp(Aqp, bqp, Gqp, hqp)
+            xqp = np.array(solution['x']).flatten()
+            x = xqp.copy()
+        except Exception, e:
+            print e
+            pass
+    elif solver == 'qpoases':
+        pass
+
+
+
+    forceVector = x[:3*contactNum]
+    # print(forceVector)
+    # print(-np.dot(G, forceVector) + h)
+    # print(.5*np.dot(np.dot(forceVector, A), forceVector) + np.dot(b, forceVector))
+
+    # print "hehe:", (np.dot(A,x)+b)[contactNum:contactNum+numFrictionBases*contactNum]
+    # print "hihi:", tangenForce
+    # print np.dot(tangenForce, tangenForceDual)
+
+    forces = []
+    for cIdx in range(contactNum):
+        forces.append(np.array(forceVector[cIdx*3:cIdx*3+3]))
+    # print('forceVector: ', forceVector)
+    # print('forces: ', forces)
+
+    # repairForces(forces, contactPositions)
+    # print forces
+    timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
+
+
+    # debug
+    __HP__DEBUG__= False
+    if __HP__DEBUG__ and len(bodyIDs) ==4:
+        vpidx = 3
+        DOFs = model.getDOFs()
+        Jic = yjc.makeEmptyJacobian(DOFs, 1)
+
+        qdot_0 = ype.makeFlatList(totalDOF)
+        ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
+
+        jointAxeses = model.getBodyRootDOFAxeses()
+        bodyidx = model.id2index(bodyIDs[vpidx])
+        contactJointMasks = [yjc.getLinkJointMask(motion[0].skeleton, bodyidx)]
+
+        jointPositions = model.getJointPositionsGlobal()
+        jointPositions[0] = model.getBodyPositionGlobal(0)
+        yjc.computeLocalRootJacobian(Jic, DOFs, jointPositions, jointAxeses, [contactPositions[vpidx]], contactJointMasks)
+
+        h = world.GetTimeStep()
+        vv = np.dot(Jic, qdot_0) - h * np.dot(Jic, invMc) + h * np.dot(Jic, np.dot(invM, tau))
+        for vpidxx in range(len(bodyIDs)):
+            bodyidx = model.id2index(bodyIDs[vpidxx])
+            contactJointMasks = [yjc.getLinkJointMask(motion[0].skeleton, bodyidx)]
+            yjc.computeLocalRootJacobian(Jic, DOFs, jointPositions, jointAxeses, [contactPositions[vpidxx]], contactJointMasks)
+            vv += h * np.dot(Jic, np.dot(invM, np.dot(Jic[:3].T, forces[vpidxx])))
+
+        print "vv:", vv[:3]
 
     return bodyIDs, contactPositions, contactPositionsLocal, forces, timeStamp
 
@@ -1268,8 +1520,8 @@ def calcNlSoftForces(motion, world, model, bodyIDsToCheck, mu, tau=None):
         else:
             J = np.vstack((J, jacobian))
 
-        n = np.zeros((1, 6*contactNum))
-        n[:, 6*idx:6*idx+6] = np.array([[0., 1., 0., 0., 0., 0.]])
+        n = np.zeros((1, 3*contactNum))
+        n[:, 3*idx:3*idx+3] = np.array([[0., 1., 0.]])
         if N is None:
             N = n.copy()
         else:
@@ -1325,21 +1577,26 @@ def calcNlSoftForces(motion, world, model, bodyIDsToCheck, mu, tau=None):
     # normalizeMatrix(A, b)
     # print A[0]
 
-    def F(xx=None, zz=None):
+    def F(xxx=None, zz=None):
         kk = 0.1  # for soft inequality smoothness
-        if xx is None and zz is None:
+        q = 7.
+        if xxx is None and zz is None:
             # return (m, x0)
             # where m is # of nonlinear constraints
             # x0 is a point on domain f
-            x0 = 10.*np.ones((contactNum*3, 1))
+            x0 = np.zeros((contactNum*3, 1))
             # x0[1::3, 0] *= 0.1*mu
-            x0[1::3, 0] *= 0.
+            x0[1::3, 0] += 10.
             return (0, cvxMatrix(x0))
-        elif xx is not None:
+        elif xxx is not None:
+            xx = np.asarray(xxx)
+            if xx.min() <0.:
+                return None
+
             mu_2 = mu * mu
 
             l_f = .5*np.dot(xx.T, np.dot(A_t+R, xx)) + np.dot(c_t, xx)
-            Dl_f = np.dot(A_t + R, xx) + c_t
+            Dl_f = (np.dot(A_t + R, xx).flatten() + c_t).reshape((1, 3*contactNum))
             DDl_f = A_t + R
 
             d_f = 0.
@@ -1347,14 +1604,15 @@ def calcNlSoftForces(motion, world, model, bodyIDsToCheck, mu, tau=None):
             DDd_f = np.zeros_like(A_t)
             first_const = []
             for i in range(contactNum):
-                first_const.append(mu_2*xx[3*i+1, 0]*xx[3*i+1, 0] - xx[3*i, 0]*x[3*i, 0] - xx[3*i+2, 0]*xx[3*i+2, 0])
-                d_f += -kk*math.log(first_const[-1])
+                first_const.append(mu_2*xx[3*i+1, 0]*xx[3*i+1, 0] - xx[3*i, 0]*xx[3*i, 0] - xx[3*i+2, 0]*xx[3*i+2, 0])
+                d_f += -kk*math.log(first_const[i])
                 d_f += -kk*math.log(xx[3*i+1, 0])
 
             for i in range(contactNum):
-                Dd_f[3 * i + 0] += 2. * kk * xx[3 * i + 0] * first_const[i]
-                Dd_f[3 * i + 1] += 2. * kk * mu_2  * xx[3 * i + 1] * first_const[i] - kk / xx[3 * i + 1]
-                Dd_f[3 * i + 2] += 2. * kk * xx[3 * i + 2] * first_const[i]
+                Dd_f[0, 3 * i + 0] += 2. * kk * xx[3 * i + 0] * first_const[i]
+                Dd_f[0, 3 * i + 1] += 2. * kk * mu_2  * xx[3 * i + 1] * first_const[i] - kk / xx[3 * i + 1]
+                Dd_f[0, 3 * i + 2] += 2. * kk * xx[3 * i + 2] * first_const[i]
+
 
             if zz is not None:
                 for i in range(contactNum):
@@ -1376,13 +1634,24 @@ def calcNlSoftForces(motion, world, model, bodyIDsToCheck, mu, tau=None):
 
             # check if last constraints meet
 
-            last_const = np.dot(N, np.dot(A_t, np.array(xx)) + c_t) - v_min
+            last_const = (np.dot(N, np.dot(A_t, np.array(xx)).flatten() + c_t) - v_min).reshape((1, contactNum))
+            last_const_matrix = np.dot(N, A_t)
+
+
             if np.min(last_const) > 0.:
                 for i in range(contactNum):
                     d_f += -kk * math.log(last_const[i, 0])
+
+                for i in range(contactNum):
+                    s = last_const[i, 0]
+                    Dd_f[0, :] += -kk / s * last_const_matrix[i, :]
+
+                if zz is not None:
+                    for i in range(contactNum):
+                        s = last_const[i, 0]
+                        DDd_f += kk / (s*s) * np.dot(last_const_matrix[i, :], last_const_matrix[i, :].T)
             else:
-                q = 7.
-                s0 = -kk / q
+                s0 = kk / q
                 a0 = q * q / (2. * kk)
                 a1 = 2. * q
                 a2 = -kk * math.log(s0) + 1.5 * kk
@@ -1396,39 +1665,31 @@ def calcNlSoftForces(motion, world, model, bodyIDsToCheck, mu, tau=None):
                 for i in range(contactNum):
                     s = last_const[i, 0]
                     if last_const[i, 0] >= s0:
-                        Dd_f[:, 0] += -kk / s * np.dot(N[i, :], A_t)
+                        Dd_f[0, :] += -kk / s * last_const_matrix[i, :]
                     else:
-                        Dd_f[:, 0] += (2. * a0 * s + a1) * np.dot(N[i, :], A_t)
+                        Dd_f[0, :] += (2. * a0 * s + a1) * last_const_matrix[i, :]
 
                 if zz is not None:
                     for i in range(contactNum):
                         s = last_const[i, 0]
-                        for j in range(3*contactNum):
-                            for k in range(j+1):
-                                if last_const[i, 0] >= s0:
-                                    DDd_f[j, k] += -kk / s * np.dot(N, A_t)[:, i]
-                                else:
-                                    DDd_f[j, k] += (2. * a0 * s + a1) * np.dot(N, A_t)[:, i]
+                        if last_const[i, 0] >= s0:
+                            DDd_f += kk / (s*s) * np.dot(last_const_matrix[i, :], last_const_matrix[i, :].T)
+                        else:
+                            DDd_f += 2. * a0 * np.dot(last_const_matrix[i, :], last_const_matrix[i, :].T)
 
             if zz is None:
-                return (l_f + d_f, Dl_f + Dd_f)
+                return (cvxMatrix(l_f + d_f), cvxMatrix(Dl_f + Dd_f))
             else:
-                return (l_f + d_f, Dl_f + Dd_f, DDl_f + DDd_f)
-
-            # return (f, Df) or (f, Df, H)
-            return
+                return (cvxMatrix(l_f + d_f), cvxMatrix(Dl_f + Dd_f), cvxMatrix(zz[0] * (DDl_f + DDd_f)))
 
     # solve using cvxopt NLP
     # if True:
     try:
-        Aqp = cvxMatrix(A)
-        bqp = cvxMatrix(b)
-        Gqp = cvxMatrix(G)
-        hqp = cvxMatrix(h)
         timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
         cvxSolvers.options['show_progress'] = True
         cvxSolvers.options['maxiters'] = 100
-        solution = cvxSolvers.qp(Aqp, bqp, Gqp, hqp)
+        solution = cvxSolvers.cp(F)
+        print(solution['x'])
         xqp = np.array(solution['x']).flatten()
         x = xqp.copy()
     except Exception, e:
@@ -1445,10 +1706,9 @@ def calcNlSoftForces(motion, world, model, bodyIDsToCheck, mu, tau=None):
     # print "hihi:", tangenForce
     # print np.dot(tangenForce, tangenForceDual)
 
-    forces_unpack = np.dot(V, forceVector)
     forces = []
     for cIdx in range(contactNum):
-        force = forces_unpack[6*cIdx:6*cIdx+3]
+        force = forceVector[3*cIdx:3*cIdx+3]
         forces.append(force)
     print('forceVector: ', forceVector)
     print('forces: ', forces)

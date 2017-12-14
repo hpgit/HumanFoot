@@ -4,9 +4,8 @@ import math
 import sys
 if '..' not in sys.path:
     sys.path.append('..')
-import Math.mmMath as mm
-
-import Motion.ysMotion as ym
+import PyCommon.modules.Math.mmMath as mm
+import PyCommon.modules.Motion.ysMotion as ym
 
 def removeJoint(motion, joint_name_or_index, update=True):
     if isinstance(joint_name_or_index, int):
