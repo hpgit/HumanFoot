@@ -42,17 +42,7 @@ CHARACTER_COLOR = (20, 166, 188)
 FEATURE_COLOR = (255, 102, 0)
 CHARACTER_COLOR2 = (200, 200, 200)
 
-def getPartJacobian(_Jsys, _jIdx):
-    # warning : only Jsys works.
-    return _Jsys[6 * _jIdx:6 * _jIdx + 6].copy()
-
-
-def getBodyGlobalPos(_model, _motion, _name):
-    return _model.getBodyPositionGlobal(_motion[0].skeleton.getJointIndex(_name))
-
-
-def getBodyGlobalOri(_model, _motion, _name):
-    return _model.getBodyOrientationGlobal(_motion[0].skeleton.getJointIndex(_name))
+DART_CONTACT_ON = True
 
 motion = None # type: ym.JointMotion
 mcfg = None
@@ -212,19 +202,19 @@ def init():
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot_2('simpleJump_2.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_capsule('simpleJump_onebody.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump.bvh')
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump_long.bvh')
-    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('DartFootProject/simpleJump_long.bvh')
+    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('simpleJump_long.bvh')
+    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_foot('DartFootProject/simpleJump_long.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = create_foot('test2.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = create_foot('DartFootProject/test2.bvh')
 
 
-    dartModel = cpm.DartModel(wcfg, motion[0], mcfg, False)
+    dartModel = cpm.DartModel(wcfg, motion[0], mcfg, DART_CONTACT_ON)
     pdController = PDController(dartModel.skeleton, dartModel.world.time_step())
     # dartWorld.skeletons[1].controller = PDController(dartWorld.skeletons[1], dartWorld.dt)
 
     # solver = hik.numIkSolver(wcfg, motion[0], mcfg)
 
-    ModelOffset = np.array([0., 2., 0.])
+    ModelOffset = np.array([0., .1, 0.])
     dartModel.translateByOffset(ModelOffset)
 
     totalDOF = dartModel.getTotalDOF()
@@ -233,7 +223,7 @@ def init():
     bodyIDsToCheck = range(dartModel.getBodyNum())
 
     # flat data structure
-    ddth_des_flat = ype.makeFlatList(totalDO0x248D50cf0a3cB5261D8cf0A3d172b15c72D31bfFF)
+    ddth_des_flat = ype.makeFlatList(totalDOF)
     dth_flat = ype.makeFlatList(totalDOF)
     ddth_sol = ype.makeNestedList(DOFs)
     torques_nested = ype.makeNestedList(DOFs)
@@ -429,12 +419,13 @@ class Callback:
         cPositionLocalsControl = None
         cForcesControl = None
 
-        if False and desForceFrame[0] <= frame <= desForceFrame[1]:
+        if True and desForceFrame[0] <= frame <= desForceFrame[1]:
         # if False:
             # totalForceImpulse = stepsPerFrame * totalForce
             cBodyIDsControl, cPositionsControl, cPositionLocalsControl, cForcesControl, torques \
                 = hls.calcLCPbasicControl(
-                motion, dartModel.world, dartModel, bodyIDsToCheck, 1., totalForce, [wLCP, wTorque, wForce], ddth_des_flat)
+                motion, dartModel.world, dartModel, bodyIDsToCheck, 1., totalForce, [wLCP, wTorque, wForce])
+                # motion, dartModel.world, dartModel, bodyIDsToCheck, 1., totalForce, [wLCP, wTorque, wForce], ddth_des_flat)
             # if cForces is not None:
             #     print "control: ", sum(cForces)
 
@@ -445,7 +436,6 @@ class Callback:
         timeStamp = None
 
         torque_None = False
-        print "torques: ", torques
 
         if not (desForceFrame[0] <= frame <= desForceFrame[1]) or (torques is None):
             torque_None = True
@@ -475,58 +465,57 @@ class Callback:
         #     ype.nested(torques, torques_nested)
         #     controlModel.setDOFTorques(torques_nested[1:])
         #     # vpWorld.step()
-        torques = np.zeros(totalDOF)
+        # torques = np.zeros(totalDOF)
 
         for i in range(int(stepsPerFrame)):
         # for i in [0]:
-            torques = pdController.compute()
-            if True or i%5 ==0:
-                # cBodyIDs, cPositions, cPositionLocals, velocities = dartModel.getContactPoints(bodyIDsToCheck)
-                cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp= \
-                    hls.calcLCPForces(motion, dartModel.world, dartModel, bodyIDsToCheck, 1., tau=torques)
-                    # hls.calcSoftForces(motion, dartModel.world, dartModel, bodyIDsToCheck, 1., tau=torques)
-            if (True or i % 5 == 0) and len(cBodyIDs):
-                # apply contact forces
-                if False and not torque_None:
-                    # dartModel.applyPenaltyForce(cBodyIDs, cPositionLocals, cForcesControl)
-                    simulContactForces += sum(cForcesControl)
-                else:
-                    dartModel.applyPenaltyForce(cBodyIDs, cPositionLocals, cForces)
-                    simulContactForces += sum(cForces)
-                    # simulContactForces += sum(cForces)
+
+            if torque_None:
+                torques = pdController.compute()
+            if not DART_CONTACT_ON:
+                if True or i%5 ==0:
+                    # cBodyIDs, cPositions, cPositionLocals, velocities = dartModel.getContactPoints(bodyIDsToCheck)
+                    cBodyIDs, cPositions, cPositionLocals, cForces, timeStamp= \
+                        hls.calcLCPForces(motion, dartModel.world, dartModel, bodyIDsToCheck, 1., tau=torques)
+                        # hls.calcSoftForces(motion, dartModel.world, dartModel, bodyIDsToCheck, 1., tau=torques)
+                if (True or i % 5 == 0) and len(cBodyIDs):
+                    # apply contact forces
+                    if False and not torque_None:
+                        dartModel.applyPenaltyForce(cBodyIDs, cPositionLocals, cForcesControl)
+                    else:
+                        dartModel.applyPenaltyForce(cBodyIDs, cPositionLocals, cForces)
 
             if False and torque_None:
                 dartModel.skeleton.set_forces(pdController.compute())
             # elif i%5 == 0:
             else:
-                dartModel.skeleton.set_forces(torques)
+                dartModel.skeleton.set_forces(np.array(torques, dtype='float64'))
 
             dartModel.step()
 
-            # sumForce = sum([(-contact.force if contact.bodynode1.name == 'ground' else contact.force)
-            #                 for contact in dartModel.world.collision_result.contacts])
-            sumForce = np.array((0., 0., 0.))
-            if len(cBodyIDs) > 0:
-                sumForce = sum(cForces[i][:3] for i in range(len(cForces)))
-            simulContactForces += sumForce/stepsPerFrame
+            if DART_CONTACT_ON:
+                sumForce = sum([(-contact.force if contact.bodynode1.name == 'ground' else contact.force)
+                                for contact in dartModel.world.collision_result.contacts])
+            else:
+                sumForce = np.array((0., 0., 0.))
+                if len(cBodyIDs) > 0:
+                    sumForce = sum(cForces[i][:3] for i in range(len(cForces)))
+            simulContactForces += sumForce
+            # simulContactForces += sumForce/stepsPerFrame
 
 
-        if False:
-            # debug contact force
-            for contact in dartModel.world.collision_result.contacts:
-                if contact.bodynode2.name == 'ground':
-                    print 'contact info: ', contact.bodynode1.name, contact
-                    print 'contact info: ', contact.bodynode2.name, contact
-                else:
-                    print 'contact info: ', contact.bodynode1.name, contact
-                    print 'contact info: ', contact.bodynode2.name, contact
+        contactPoints = [np.array((0., 0., 0.))]
+        contactForces = [np.array((0., 0., 0.))]
 
-        contactPoints = [contact.point for contact in dartModel.world.collision_result.contacts]
-        contactForces = [(-contact.force if contact.bodynode1.name == 'ground' else contact.force)
-                         for contact in dartModel.world.collision_result.contacts]
+        if DART_CONTACT_ON:
+            contactPoints = [contact.point for contact in dartModel.world.collision_result.contacts]
+            contactForces = [(-contact.force if contact.bodynode1.name == 'ground' else contact.force)
+                             for contact in dartModel.world.collision_result.contacts]
+        else:
+            contactPoints = copy.deepcopy(cPositions)
+            contactForces = copy.deepcopy(cForces)
 
-        sumForce = sum(contactForces)
-
+        sumForce = np.array((0., 0., 0.)) if contactForces is None else sum(contactForces)
 
         self.setTimeStamp()
 
@@ -564,12 +553,14 @@ class Callback:
         del rd_cPositions[:]
         # print calculated force
 
-        for i in range(len(cPositions)):
-            rd_cForces.append(cForces[i].copy()/20.)
-            rd_cPositions.append(cPositions[i].copy())
-        # for i in range(len(contactPoints)):
-        #     rd_cForces.append(contactForces[i].copy() / 20.)
-        #     rd_cPositions.append(contactPoints[i].copy())
+        if DART_CONTACT_ON:
+            for i in range(len(contactPoints)):
+                rd_cForces.append(contactForces[i].copy() / 20.)
+                rd_cPositions.append(contactPoints[i].copy())
+        else:
+            for i in range(len(cPositions)):
+                rd_cForces.append(cForces[i].copy()/20.)
+                rd_cPositions.append(cPositions[i].copy())
 
         # rendering joint position
         del rd_jointPos[:]
@@ -588,6 +579,7 @@ class Callback:
 
         # graph calculated force
         viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1]/stepsPerFrame)
+        # viewer.cForceWnd.insertData('realForce', frame, simulContactForces[1])
 
         # graph desired force
         if desForceFrame[0] <= frame <= desForceFrame[1]:

@@ -353,7 +353,8 @@ def calcLCPbasicControl(
                             wLCP*A3), axis=0) * factor
 
     A = A_ori.copy()
-    # A = A_ori + 0.01 * np.eye(A_ori.shape[0])*factor
+    # A = A_ori + 0.01 * np.diag(np.hstack((np.zeros(A0.shape[0]), np.ones(A1.shape[0]+A2.shape[0]), np.zeros(A3.shape[0]))))
+    # A = A_ori + 0.01 * np.eye(A_ori.shape[0])
 
     # bx= h * (M*qdot_0 + tau - c)
     # b =[N.T * Jc * invM * kx]
@@ -382,7 +383,8 @@ def calcLCPbasicControl(
         invM_tau0 += np.dot(np.delete(invM, variableDof), _tau0)
 
     b0 = np.zeros(A00.shape[0])
-    b1 = JTN.T.dot(qdot_0 - h*invMc + h*invM_tau0)# + 0.5*invh*bPenDepth
+    b1 = JTN.T.dot(qdot_0 - h*invMc + h*invM_tau0) + 0.5*invh*bPenDepth
+    # b1 = JTN.T.dot(qdot_0 - h*invMc + h*invM_tau0) + .1*invh*bPenDepth
     b2 = JTD.T.dot(qdot_0 - h*invMc + h*invM_tau0)
     b3 = np.zeros(mus.shape[0])
     b = np.hstack((wTorque*b0, wLCP*np.hstack((np.hstack((b1, b2)), b3)))) * factor
@@ -1188,16 +1190,7 @@ def calcSoftForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFricti
     elif solver == 'qpoases':
         pass
 
-
-
     forceVector = x[:numFrictionBases*contactNum]
-    # print(forceVector)
-    # print(-np.dot(G, forceVector) + h)
-    # print(.5*np.dot(np.dot(forceVector, A), forceVector) + np.dot(b, forceVector))
-
-    # print "hehe:", (np.dot(A,x)+b)[contactNum:contactNum+numFrictionBases*contactNum]
-    # print "hihi:", tangenForce
-    # print np.dot(tangenForce, tangenForceDual)
 
     forces_unpack = np.dot(V, forceVector)
     forces = []
@@ -1210,37 +1203,6 @@ def calcSoftForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFricti
     # repairForces(forces, contactPositions)
     # print forces
     timeStamp, timeIndex, prevTime = setTimeStamp(timeStamp, timeIndex, prevTime)
-
-
-    # debug
-    __HP__DEBUG__= False
-    if __HP__DEBUG__ and len(bodyIDs) ==4:
-        vpidx = 3
-        DOFs = model.getDOFs()
-        Jic = yjc.makeEmptyJacobian(DOFs, 1)
-
-        qdot_0 = ype.makeFlatList(totalDOF)
-        ype.flatten(model.getBodyRootDOFVelocitiesLocal(), qdot_0)
-
-        jointAxeses = model.getBodyRootDOFAxeses()
-        bodyidx = model.id2index(bodyIDs[vpidx])
-        contactJointMasks = [yjc.getLinkJointMask(motion[0].skeleton, bodyidx)]
-
-        jointPositions = model.getJointPositionsGlobal()
-        jointPositions[0] = model.getBodyPositionGlobal(0)
-        yjc.computeLocalRootJacobian(Jic, DOFs, jointPositions, jointAxeses, [contactPositions[vpidx]], contactJointMasks)
-
-        h = world.GetTimeStep()
-        vv = np.dot(Jic, qdot_0) - h * np.dot(Jic, invMc) + h * np.dot(Jic, np.dot(invM, tau))
-        for vpidxx in range(len(bodyIDs)):
-            bodyidx = model.id2index(bodyIDs[vpidxx])
-            contactJointMasks = [yjc.getLinkJointMask(motion[0].skeleton, bodyidx)]
-            yjc.computeLocalRootJacobian(Jic, DOFs, jointPositions, jointAxeses, [contactPositions[vpidxx]], contactJointMasks)
-            vv += h * np.dot(Jic, np.dot(invM, np.dot(Jic[:3].T, forces[vpidxx])))
-
-        print "vv:", vv[:3]
-
-
 
     return bodyIDs, contactPositions, contactPositionsLocal, forces, timeStamp
 
