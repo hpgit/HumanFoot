@@ -239,6 +239,40 @@ void BODY(getRelativeTransform)(int wid, int skid, int bid, double outv44[4][4])
     write_isometry(body->getRelativeTransform(), outv44);
 }
 
+
+////////////////////////////////////////
+// BodyNode::Velocities and Accelerations
+void BODY(getAngularVelocity)(int wid, int skid, int bid, double outv3[3]) {
+    dart::dynamics::BodyNodePtr body = GET_BODY(wid, skid, bid);
+    write(body->getAngularVelocity(), outv3);
+}
+
+void BODY(getLinearVelocity)(int wid, int skid, int bid, double inv3[3], double outv3[3]) {
+    dart::dynamics::BodyNodePtr body = GET_BODY(wid, skid, bid);
+    write(body->getLinearVelocity(read(inv3, 3)), outv3);
+}
+
+void BODY(getSpatialVelocity)(int wid, int skid, int bid, double inv3[3], double outv6[6]) {
+    dart::dynamics::BodyNodePtr body = GET_BODY(wid, skid, bid);
+    write(body->getSpatialVelocity(read(inv3, 3)), outv6);
+}
+
+void BODY(getAngularAcceleration)(int wid, int skid, int bid, double outv3[3]) {
+    dart::dynamics::BodyNodePtr body = GET_BODY(wid, skid, bid);
+    write(body->getAngularAcceleration(), outv3);
+}
+
+void BODY(getLinearAcceleration)(int wid, int skid, int bid, double inv3[3], double outv3[3]) {
+    dart::dynamics::BodyNodePtr body = GET_BODY(wid, skid, bid);
+    write(body->getLinearAcceleration(read(inv3, 3)), outv3);
+}
+
+void BODY(getSpatialAcceleration)(int wid, int skid, int bid, double inv3[3], double outv6[6]) {
+    dart::dynamics::BodyNodePtr body = GET_BODY(wid, skid, bid);
+    write(body->getSpatialAcceleration(read(inv3, 3)), outv6);
+}
+
+
 ////////////////////////////////////////
 // BodyNode::Ext Force and Torque
 void BODY(addExtForce)(int wid, int skid, int bid, double inv3[3], double inv3_2[3], bool _isForceLocal, bool _isOffsetLocal) {
@@ -297,4 +331,9 @@ void BODY(getLinearJacobianDeriv)(int wid, int skid, int bid, double inv3[3], do
 void BODY(getAngularJacobianDeriv)(int wid, int skid, int bid, double* outm, int nrows, int ncols) {
     dart::dynamics::BodyNodePtr body = GET_BODY(wid, skid, bid);
     write_matrix(body->getAngularJacobianDeriv(), outm);
+}
+
+void BODY(getJacobianClassicDeriv)(int wid, int skid, int bid, double inv3[3], double* outm, int nrows, int ncols) {
+    dart::dynamics::BodyNodePtr body = GET_BODY(wid, skid, bid);
+    write_matrix(body->getJacobianClassicDeriv(read(inv3, 3)), outm);
 }

@@ -36,6 +36,7 @@ class DartModel:
         # print xmlstr
 
         self.world = pydart.World(wcfg.timeStep, xmlstr, True)
+        print('world load done!')
 
         self.config = mcfg
 
@@ -58,11 +59,7 @@ class DartModel:
         self.world.step()
 
     def getBodyNum(self):
-        bodyFrom = 1 if self.hasGround else 0
-        bodynum = 0
-        for i in range(bodyFrom, len(self.world.skeletons)):
-            bodynum += self.world.skeletons[i].num_bodynodes()
-        return bodynum
+        return self.skeleton.num_bodynodes()
 
     def GetTimeStep(self):
         return self.world.time_step()
@@ -408,44 +405,17 @@ class DartModel:
         return ls_point
 
     def getBodyInertiaLocal(self, index):
-        iner = self._nodes[index].body.GetInertia()
-        # Tin = SE3()
-        Tin = np.zeros((3, 3))
-
-        Tin[0, 0] = iner[0]
-        Tin[1, 1] = iner[1]
-        Tin[2, 2] = iner[2]
-        Tin[0, 1] = Tin[1, 0] = iner[3]
-        Tin[0, 2] = Tin[2, 0] = iner[4]
-        Tin[1, 2] = Tin[2, 1] = iner[5]
-
-        return Tin
+        return self.getBody(index).inertia()
 
     def getBodyInertiaGlobal(self, index):
-        Tin = SE3()
-        iner = self._nodes[index].body.GetInertia()
-        Tin[0] = iner[0]
-        Tin[4] = iner[1]
-        Tin[8] = iner[2]
-        Tin[3] = Tin[1] = iner[3]
-        Tin[6] = Tin[2] = iner[4]
-        Tin[7] = Tin[5] = iner[5]
-        bodyFrame = self._nodes.body.GetFrame()
-        return bodyFrame * Tin * Inv(bodyFrame)
+        bodyFrame = self.getBody(index).world_transform()[:3, :3]
+        return np.dot(bodyFrame, np.dot(self.getBody(index).inertia(), bodyFrame.T))
 
     def getBodyInertiasLocal(self):
-        ls = []
-        for i in range(len(self._nodes)):
-            ls.append(self.getBodyInertiaLocal(i))
-
-        return ls
+        return [self.getBodyInertiaLocal(i) for i in range(self.getBodyNum())]
 
     def getBodyInertiasGlobal(self):
-        ls = []
-        for i in range(len(self._nodes)):
-            ls.append(self.getBodyInertiaGlobal(i))
-
-        return ls
+        return [self.getBodyInertiaGlobal(i) for i in range(self.getBodyNum())]
 
     def getCOM(self):
         return self.skeleton.com()
@@ -479,56 +449,22 @@ class DartModel:
         return self.getBody(index).transform()[:3, :3]
 
     def getBodyVelocityGlobal(self, index, positionLocal=None):
-        bodyGenVel = self.skeleton.body(index).com_spatial_velocity()
-        bodyFrame = self.skeleton.body(index).world_transform()
-        # vpBody::GetLinVelocity
-        # return Rotate(m_sFrame, MinusLinearAd(p, m_sV));
-        # Vec3
-        # MinusLinearAd(const
-        # Vec3 & p, const
-        # se3 & s)
-        # {
-        # return Vec3(p[2] * s[1] - p[1] * s[2] + s[3],
-        #             p[0] * s[2] - p[2] * s[0] + s[4],
-        #             p[1] * s[0] - p[0] * s[1] + s[5]);
-        # }
-        if positionLocal is None:
-            return bodyFrame[:3, :3].dot(bodyGenVel[3:])
-        return bodyFrame[:3, :3].dot(np.cross(bodyGenVel[:3], positionLocal)+bodyGenVel[3:])
-
+        return self.getBody(index).world_linear_velocity(positionLocal)
 
     def getBodyVelocitiesGlobal(self):
-        ls = []
-        for i in range(len(self._nodes)):
-            ls.append(self.getBodyVelocityGlobal(i))
-        return ls
+        return [self.getBodyVelocityGlobal(i) for i in range(self.getBodyNum())]
 
     def getBodyAngVelocityGlobal(self, index):
-        # se3 genVel;
-        genVel = self._nodes[index].body.GetGenVelocity()
-        return se3_2_pyVec6(genVel)[:3]
+        return self.getBody(index).world_angular_velocity()
 
     def getBodyAngVelocitiesGlobal(self):
-        ls = []
-        for i in range(len(self._nodes)):
-            ls.append(self.getBodyVelocityGlobal(i))
-        return ls
+        return [self.getBodyAngVelocityGlobal(i) for i in range(self.getBodyNum())]
 
-    def getBodyAccelerationGlobal(self, index, pPositionLocal=None):
-        # se3 genAccLocal, genAccGlobal
-        genAccLocal = self._nodes[index].body.GetGenAccelerationLocal()
-        if pPositionLocal is not None:
-            genAccLocal = MinusLinearAd(pPositionLocal, genAccLocal)
-
-        genAccGlobal = Rotate(self._nodes[index].body.GetFrame(), genAccLocal)
-
-        return Vec3(genAccGlobal[3], genAccGlobal[4], genAccGlobal[5])
+    def getBodyAccelerationGlobal(self, index, positionLocal=None):
+        return self.getBody(index).world_linear_acceleration(positionLocal)
 
     def getBodyAccelerationsGlobal(self):
-        ls = []
-        for i in range(len(self._nodes)):
-            ls.append(self.getBodyAccelerationGlobal(i))
-        return ls
+        return [self.getBodyAccelerationGlobal(i) for i in range(self.getBodyNum())]
 
     def setBodyPositionGlobal(self, index, position):
         # SE3 bodyFrame;
@@ -566,7 +502,7 @@ class DartModel:
         self._nodes[index].body.SetGenAcceleration(_genAcc)
 
     def getBodyPositionsGlobal(self):
-        return [self.getBodyPositionGlobal(i) for i in range(len(self._nodes))]
+        return [self.getBodyPositionGlobal(i) for i in range(self.getBodyNum())]
 
     def getBodyAngAccelerationGlobal(self, index):
         pyV = np.zeros(3)

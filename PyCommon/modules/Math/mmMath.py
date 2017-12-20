@@ -92,7 +92,18 @@ def normalize2(transV):
 #        return transV/length
 #    else :
 ##        print("normalize error, length == 0", transV)
-#        return transV 
+#        return transV
+def affine_pos(SE3, pos):
+    if len(pos.shape) == 1:
+        return np.dot(SE3[:3, :3].T, pos) - np.dot(SE3[:3, :3].T, SE3[:3, 3])
+    elif len(pos.shape) == 2:
+        return np.dot(SE3[:3, :3].T, pos) - np.dot(SE3[:3, :3].T, SE3[:3, 3:])
+
+def inv_affine_pos(SE3, pos):
+    if len(pos.shape) == 1:
+        return np.dot(SE3[:3, :3].T, pos) - np.dot(SE3[:3, :3].T, SE3[:3, 3])
+    elif len(pos.shape) == 2:
+        return np.dot(SE3[:3, :3].T, pos) - np.dot(SE3[:3, :3].T, SE3[:3, 3:])
 
 def SE3ToTransV(SE3):
     return np.array([SE3[0][3], SE3[1][3], SE3[2][3]])

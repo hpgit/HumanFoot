@@ -67,6 +67,15 @@ void BODY(getWorldTransform)(int wid, int skid, int bid, double outv44[4][4]);
 void BODY(getRelativeTransform)(int wid, int skid, int bid, double outv44[4][4]);
 
 ////////////////////////////////////////
+// BodyNode::Velocities and Accelerations
+void BODY(getAngularVelocity)(int wid, int skid, int bid, double outv3[3]);
+void BODY(getLinearVelocity)(int wid, int skid, int bid, double inv3[3], double outv3[3]);
+void BODY(getSpatialVelocity)(int wid, int skid, int bid, double inv3[3], double outv6[6]);
+void BODY(getAngularAcceleration)(int wid, int skid, int bid, double outv3[3]);
+void BODY(getLinearAcceleration)(int wid, int skid, int bid, double inv3[3], double outv3[3]);
+void BODY(getSpatialAcceleration)(int wid, int skid, int bid, double inv3[3], double outv6[6]);
+
+////////////////////////////////////////
 // BodyNode::Ext Force and Torque
 void BODY(addExtForce)(int wid, int skid, int bid, double inv3[3], double inv3_2[3], bool _isForceLocal, bool _isOffsetLocal);
 void BODY(setExtForce)(int wid, int skid, int bid, double inv3[3], double inv3_2[3], bool _isForceLocal, bool _isOffsetLocal);
@@ -81,6 +90,8 @@ void BODY(getAngularJacobian)(int wid, int skid, int bid, double* outm, int nrow
 void BODY(getWorldJacobian)(int wid, int skid, int bid, double inv3[3], double* outm, int nrows, int ncols);
 void BODY(getLinearJacobianDeriv)(int wid, int skid, int bid, double inv3[3], double* outm, int nrows, int ncols);
 void BODY(getAngularJacobianDeriv)(int wid, int skid, int bid, double* outm, int nrows, int ncols);
+
+void BODY(getJacobianClassicDeriv)(int wid, int skid, int bid, double inv3[3], double* outm, int nrows, int ncols);
 
 
 #endif // #ifndef PYDART2_BODYNODE_API_H

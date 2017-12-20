@@ -271,6 +271,58 @@ class BodyNode(object):
                                                    self.id)
 
 ########################################
+# Velocities and Accelerations Functions
+    def world_angular_velocity(self):
+        '''
+        Get angular velocity of this BodyNode expressed world frame
+        :return:
+        '''
+        return papi.bodynode__getAngularVelocity(self.wid, self.skid, self.id)
+
+    def world_linear_velocity(self, offset=None):
+        '''
+        Get angular velocity of this BodyNode expressed world frame
+        :return:
+        '''
+        if offset is None:
+            offset = np.zeros(3)
+        return papi.bodynode__getLinearVelocity(self.wid, self.skid, self.id, offset)
+
+    def world_spatial_velocity(self, offset=None):
+        '''
+        Get angular velocity of this BodyNode expressed world frame
+        :return:
+        '''
+        if offset is None:
+            offset = np.zeros(3)
+        return papi.bodynode__getSpatialVelocity(self.wid, self.skid, self.id, offset)
+
+    def world_angular_acceleration(self):
+        '''
+        Get angular velocity of this BodyNode expressed world frame
+        :return:
+        '''
+        return papi.bodynode__getAngularAcceleration(self.wid, self.skid, self.id)
+
+    def world_linear_acceleration(self, offset=None):
+        '''
+        Get angular velocity of this BodyNode expressed world frame
+        :return:
+        '''
+        if offset is None:
+            offset = np.zeros(3)
+        return papi.bodynode__getLinearAcceleration(self.wid, self.skid, self.id, offset)
+
+    def world_spatial_acceleration(self, offset=None):
+        '''
+        Get angular velocity of this BodyNode expressed world frame
+        :return:
+        '''
+        if offset is None:
+            offset = np.zeros(3)
+        return papi.bodynode__getSpatialAcceleration(self.wid, self.skid, self.id, offset)
+
+########################################
 # Torque Functions
     def add_ext_force(self,
                       _force,
@@ -388,6 +440,16 @@ class BodyNode(object):
     def angular_jacobian_deriv(self, full=True):
         J = np.zeros((3, len(self.dependent_dofs)))
         papi.bodynode__getAngularJacobianDeriv(self.wid, self.skid, self.id, J)
+        return self.expand_jacobian(J) if full else J
+
+    def world_jacobian_classic_deriv(self, offset=None, full=True):
+        offset = np.zeros(3) if offset is None else offset
+        J = np.zeros((3, len(self.dependent_dofs)))
+        papi.bodynode__getJacobianClassicDeriv(self.wid,
+                                               self.skid,
+                                               self.id,
+                                               offset,
+                                               J)
         return self.expand_jacobian(J) if full else J
 
     def expand_jacobian(self, jacobian):
