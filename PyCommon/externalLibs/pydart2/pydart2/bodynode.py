@@ -385,6 +385,7 @@ class BodyNode(object):
     def linear_jacobian(self, offset=None, full=True):
         """
         Return the linear Jacobian targeting an offset within the Frame of this BodyNode.
+        Expressed in the world Frame
         :type offset: np.ndarray
         :type full: bool
         :rtype: np.ndarray
@@ -402,6 +403,7 @@ class BodyNode(object):
         """
         Return the angular Jacobian targeting the origin of this BodyNode
         within the Frame of this BodyNode.
+        Expressed in the worldFrame
         :type full: bool
         :rtype: np.ndarray
         """
@@ -414,6 +416,7 @@ class BodyNode(object):
         Return the generalized Jacobian targeting an offset in this JacobianNode.
 
         The offset is expected in coordinates of this BodyNode Frame. The Jacobian is expressed in the World Frame.
+        angular first, linear followed
         :type offset: np.ndarray
         :type full: bool
         :rtype: np.ndarray
@@ -444,7 +447,7 @@ class BodyNode(object):
 
     def world_jacobian_classic_deriv(self, offset=None, full=True):
         offset = np.zeros(3) if offset is None else offset
-        J = np.zeros((3, len(self.dependent_dofs)))
+        J = np.zeros((6, len(self.dependent_dofs)))
         papi.bodynode__getJacobianClassicDeriv(self.wid,
                                                self.skid,
                                                self.id,

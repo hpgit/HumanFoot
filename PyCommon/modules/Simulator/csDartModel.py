@@ -145,6 +145,26 @@ class DartModel:
             body = self.getBody(bodyID)
             body.add_ext_force(forces[bodyIdx], positionLocals[bodyIdx], False, localForce)
 
+    def get_dart_contact_info(self):
+        bodyIDs = [contact.bodynode2.id if contact.bodynode1.name == 'ground' else contact.bodynode1.id
+                   for contact in self.world.collision_result.contacts]
+        positions = [contact.point for contact in self.world.collision_result.contacts]
+        positionLocals = [self.getBody(bodyIDs[i]).to_local(positions[i]) for i in range(len(bodyIDs))]
+        forces = [(-contact.force if contact.bodynode1.name == 'ground' else contact.force)
+                         for contact in self.world.collision_result.contacts]
+
+        pop_index = []
+        for i in range(len(bodyIDs)-1, -1, -1):
+            if npl.norm(forces[i]) < 0.000001:
+                pop_index.append(i)
+
+        [bodyIDs.pop(i) for i in pop_index]
+        [positions.pop(i) for i in pop_index]
+        [positionLocals.pop(i) for i in pop_index]
+        [forces.pop(i) for i in pop_index]
+
+        return bodyIDs, positions, positionLocals, forces
+
     def getContactPoints(self, bodyIDsToCheck):
         bodyIDs = []
         positions = []
@@ -324,10 +344,7 @@ class DartModel:
         return self.index2id(self.name2index(name))
 
     def getBodyMasses(self):
-        ls = []
-        for body in self.skeleton.bodynodes:
-            ls.append(body.mass())
-        return ls
+        return [body.mass() for body in self.skeleton.bodynodes]
 
     def getTotalMass(self):
         return self.skeleton.mass()
@@ -421,10 +438,12 @@ class DartModel:
         return self.skeleton.com()
 
     def getBoneT(self, index):
-        return [SE3_2_pySO3(self._boneTs[index]), Vec3_2_pyVec3(self._boneTs[index].GetPosition())]
+        bone_T = mm.invertSE3(self.getJoint(index).transform_from_child_body_node())
+        return mm.SE3_to_SO3_vec3(bone_T)
 
     def getInvBoneT(self, index):
-        return [SE3_2_pySO3(Inv(self._boneTs[index])), Vec3_2_pyVec3(Inv(self._boneTs[index]).GetPosition())]
+        inv_bone_T = self.getJoint(index).transform_from_child_body_node()
+        return mm.SE3_to_SO3_vec3(inv_bone_T)
 
     def getBodyGenVelLocal(self, index):
         return se3_2_pyVec6(self._nodes[index].body.GetGenVelocityLocal())

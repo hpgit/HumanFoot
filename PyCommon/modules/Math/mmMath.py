@@ -95,9 +95,9 @@ def normalize2(transV):
 #        return transV
 def affine_pos(SE3, pos):
     if len(pos.shape) == 1:
-        return np.dot(SE3[:3, :3].T, pos) - np.dot(SE3[:3, :3].T, SE3[:3, 3])
+        return np.dot(SE3[:3, :3], pos) + SE3[:3, 3]
     elif len(pos.shape) == 2:
-        return np.dot(SE3[:3, :3].T, pos) - np.dot(SE3[:3, :3].T, SE3[:3, 3:])
+        return np.dot(SE3[:3, :3], pos) + SE3[:3, 3:]
 
 def inv_affine_pos(SE3, pos):
     if len(pos.shape) == 1:
@@ -187,26 +187,14 @@ def SE3ToSO3(SE3):
     return SO3
 
 def invertSE3(SE3):
-    R = np.array(
-            [[SE3[0,0], SE3[0,1], SE3[0,2]],
-            [SE3[1,0], SE3[1,1], SE3[1,2]],
-            [SE3[2,0], SE3[2,1], SE3[2,2]]]
-            , float)
-    p = np.array([SE3[0,3], SE3[1,3], SE3[2,3]])
-    Rt = R.transpose()
-    Rtp = np.dot(Rt, p)
+    SE3inv = np.eye(4)
+    SE3inv[:3, :3] = SE3[:3, :3].T
+    SE3inv[:3, 3:] = -np.dot(SE3[:3, :3].T, SE3[:3, 3:])
 
-    SE3Inv = np.array(
-            [[Rt[0,0], Rt[0,1], Rt[0,2], 0.],
-            [Rt[1,0], Rt[1,1], Rt[1,2], 0.],
-            [Rt[2,0], Rt[2,1], Rt[2,2], 0.],
-            [0., 0., 0., 1.]]
-            , float)
-    SE3Inv[0, 3] = -Rtp[0]
-    SE3Inv[1, 3] = -Rtp[1]
-    SE3Inv[2, 3] = -Rtp[2]
+    return SE3inv
 
-    return SE3Inv
+def SE3_to_SO3_vec3(SE3):
+    return (SE3[:3, :3], SE3[:3, 3])
 
 LIE_EPS = 1E-6
 def logSO3_old(SO3):
@@ -565,22 +553,28 @@ def SO3(nine_scalars):
 
 
 def R2ZYX(R):
-    return v3(math.atan2(R[1,0], R[0,0]), \
-              math.atan2(-R[2,0], math.sqrt(R[0,0]*R[0,0] + R[1,0]*R[1,0]) ),\
+    return v3(math.atan2(R[1,0], R[0,0]),
+              math.atan2(-R[2,0], math.sqrt(R[0,0]*R[0,0] + R[1,0]*R[1,0]) ),
               math.atan2(R[2,1], R[2,2]) )
 
 def ZYX2R(euler):
-    ca = math.cos(euler[0]); sa = math.sin(euler[0]); cb = math.cos(euler[1]); sb = math.sin(euler[1]); cg = math.cos(euler[2]); sg = math.sin(euler[2]);
+    ca = math.cos(euler[0])
+    sa = math.sin(euler[0])
+    cb = math.cos(euler[1])
+    sb = math.sin(euler[1])
+    cg = math.cos(euler[2])
+    sg = math.sin(euler[2])
+
     outSO3 = _I_SO3.copy()
-    outSO3[0][0] = ca * cb;
-    outSO3[1][0] = sa * cb;
-    outSO3[2][0] = -sb;
-    outSO3[0][1] = ca * sb * sg - sa * cg;
-    outSO3[1][1] = sa * sb * sg + ca * cg;
-    outSO3[2][1] = cb * sg;
-    outSO3[0][2] = ca * sb * cg + sa * sg;
-    outSO3[1][2] = sa * sb * cg - ca * sg;
-    outSO3[2][2] = cb * cg;
+    outSO3[0][0] = ca * cb
+    outSO3[1][0] = sa * cb
+    outSO3[2][0] = -sb
+    outSO3[0][1] = ca * sb * sg - sa * cg
+    outSO3[1][1] = sa * sb * sg + ca * cg
+    outSO3[2][1] = cb * sg
+    outSO3[0][2] = ca * sb * cg + sa * sg
+    outSO3[1][2] = sa * sb * cg - ca * sg
+    outSO3[2][2] = cb * cg
     return outSO3
 
 

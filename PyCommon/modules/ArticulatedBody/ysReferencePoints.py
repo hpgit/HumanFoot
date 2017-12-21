@@ -24,7 +24,10 @@ def getCP(contactPositions, contactForces, normal=(0,1,0)):
     for i in range(len(contactPositions)):
         CP += (contactPositions[i] * contactForces[i][1])
         totalNormalForce += contactForces[i][1]
-    
+
+    if totalNormalForce <0.000001:
+        return None
+
     CP /= totalNormalForce
     return CP
 
