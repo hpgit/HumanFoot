@@ -209,15 +209,15 @@ def create_biped():
     #motion.extend([motion[-1]]*5000)
 
     #motion = motion[30:151]
-    # motion = motion[30:]
+    motion = motion[30:]
     #motion = motion[30:31]
     #motion[5:5] = [motion[5]]*30
-    # motion[0:0] = [motion[0]]*2000
-    # motion.extend([motion[-1]]*300)
-
-    motion = motion[37:]
     motion[0:0] = [motion[0]]*2000
     motion.extend([motion[-1]]*300)
+
+    # motion = motion[37:]
+    # motion[0:0] = [motion[0]]*2000
+    # motion.extend([motion[-1]]*300)
 
     #motion = motion[40:41]
     #motion[0:0] = [motion[0]]*5000

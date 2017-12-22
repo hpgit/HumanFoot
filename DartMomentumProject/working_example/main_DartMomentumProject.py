@@ -41,7 +41,7 @@ maxContactChangeCount = 30
 
 preFootCenter = [None]
 
-DART_CONTACT_ON = True
+DART_CONTACT_ON = False
 
 
 def main():

@@ -1493,7 +1493,7 @@ def walkings(params, isCma=True):
                             shape = shapeNode.shape # type: pydart.BoxShape
                             data = shape.size() * .5
                             footVec = np.dot(geomT[:3, :3], np.array((0., 1., 0.)))
-                            R_swf_current = mm._I_SO3()
+                            R_swf_current = np.eye(3)
                             R_swf_par = mm.getSO3FromVectors(footVec, np.array((0., 1., 0.)))
                             motion_stf_balancing[frame].mulJointOrientationGlobal(swingFoot,
                                                                   mm.slerp(R_swf_current, R_swf_par, swf_par_func(t)))

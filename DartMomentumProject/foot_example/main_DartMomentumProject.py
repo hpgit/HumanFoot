@@ -2,6 +2,7 @@ from fltk import *
 import copy
 import numpy as np
 
+import os
 import sys
 if '../PyCommon/modules' not in sys.path:
     sys.path.append('../PyCommon/modules')
@@ -21,6 +22,7 @@ import PyCommon.modules.ArticulatedBody.ysReferencePoints as yrp
 import PyCommon.modules.ArticulatedBody.ysMomentum as ymt
 import PyCommon.modules.ArticulatedBody.ysControl as yct
 from PyCommon.modules.GUI import hpSimpleViewer as hsv
+import PyCommon.modules.Motion.ysHierarchyEdit as yme
 
 import mtOptimize as mot
 import mtInitialize as mit
@@ -43,12 +45,15 @@ preFootCenter = [None]
 
 DART_CONTACT_ON = True
 
+SEGMENT_FOOT = True
+SEGMENT_FOOT_MAG = .03
+SEGMENT_FOOT_RAD = SEGMENT_FOOT_MAG * .5
+
 
 def main():
     np.set_printoptions(precision=4, linewidth=200)
 
-    #motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_5()
-    motion, mcfg, wcfg, stepsPerFrame, config, frame_rate= mit.create_biped()
+    motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped(SEGMENT_FOOT, SEGMENT_FOOT_MAG)
     #motion, mcfg, wcfg, stepsPerFrame, config = mit.create_jump_biped()
 
     frame_step_size = 1./frame_rate
