@@ -9,10 +9,8 @@ import PyCommon.modules.Util.ysPythonEx as ype
 
 def getTrackingWeight(DOFs, skeleton, weightMap, rootPositionWeight=0.):
     weights = [1.]*skeleton.getJointNum()
-    print(skeleton.getJointNum())
     for name, weight in weightMap.items():
         index = skeleton.getJointIndex(name)
-        print(index, name)
 
         weights[index] = weight
 

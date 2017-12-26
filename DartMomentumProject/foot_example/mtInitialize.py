@@ -34,15 +34,15 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
         partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
         partBvh.mirror('YZ')
         bvh.replaceJointFromBvh('LeftFoot', partBvh, SEGMENT_FOOT_MAG)
-    motion = bvh.toJointMotion(1., False)
+    motion = bvh.toJointMotion(.01, False)
     # motion = yf.readBvhFile(motionName, .01)
     # yme.offsetJointLocal(motion, 'RightArm', (.03,-.05,0), False)
     # yme.offsetJointLocal(motion, 'LeftArm', (-.03,-.05,0), False)
     yme.rotateJointLocal(motion, 'Hips', mm.exp(mm.v3(1,0,0), .01), False)
     #yme.rotateJointLocal(motion, 'LeftFoot', mm.exp(mm.v3(1,-0.0,.3), -.5), False)
     #yme.rotateJointLocal(motion, 'RightFoot', mm.exp(mm.v3(1,0.0,-.3), -.5), False)
-    yme.rotateJointLocal(motion, 'LeftFoot', mm.exp(mm.v3(1,-0.5,0), -.6), False)
-    yme.rotateJointLocal(motion, 'RightFoot', mm.exp(mm.v3(1,0.5,0), -.6), False)
+    # yme.rotateJointLocal(motion, 'LeftFoot', mm.exp(mm.v3(1,-0.5,0), -.6), False)
+    # yme.rotateJointLocal(motion, 'RightFoot', mm.exp(mm.v3(1,0.5,0), -.6), False)
   
     yme.updateGlobalT(motion)
     #motion.translateByOffset((0, -0.07, 0))
@@ -298,12 +298,12 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
         config['weightMap']={'RightArm':.2, 'RightForeArm':.2, 'LeftArm':.2, 'LeftForeArm':.2,
                              'Spine':.6, 'Spine1':.6, 'RightFoot':.2, 'LeftFoot':.2, 'Hips':0.5,
                              'RightUpLeg':.1, 'RightLeg':.3, 'LeftUpLeg':.1, 'LeftLeg':.3,
-        'RightFoot_foot_0_0':segfoot_weight, 'RightFoot_foot_0_1':segfoot_weight, 'RightFoot_foot_0_1_Effector':segfoot_weight,
-        'RightFoot_foot_1_0':segfoot_weight, 'RightFoot_foot_1_1':segfoot_weight, 'RightFoot_foot_1_1_Effector':segfoot_weight,
-        'RightFoot_foot_2_0':segfoot_weight, 'RightFoot_foot_2_1':segfoot_weight, 'RightFoot_foot_2_1_Effector':segfoot_weight,
-        'LeftFoot_foot_0_0':segfoot_weight, 'LeftFoot_foot_0_1':segfoot_weight, 'LeftFoot_foot_0_1_Effector':segfoot_weight,
-        'LeftFoot_foot_1_0':segfoot_weight, 'LeftFoot_foot_1_1':segfoot_weight, 'LeftFoot_foot_1_1_Effector':segfoot_weight,
-        'LeftFoot_foot_2_0':segfoot_weight, 'LeftFoot_foot_2_1':segfoot_weight, 'LeftFoot_foot_2_1_Effector':segfoot_weight}
+        'RightFoot_foot_0_0':segfoot_weight, 'RightFoot_foot_0_1':segfoot_weight,
+        'RightFoot_foot_1_0':segfoot_weight, 'RightFoot_foot_1_1':segfoot_weight, 'RightFoot_foot_1_2':segfoot_weight,
+        'RightFoot_foot_0_0_0':segfoot_weight, 'RightFoot_foot_0_1_0':segfoot_weight,
+        'LeftFoot_foot_0_0':segfoot_weight, 'LeftFoot_foot_0_1':segfoot_weight,
+        'LeftFoot_foot_1_0':segfoot_weight, 'LeftFoot_foot_1_1':segfoot_weight, 'LeftFoot_foot_1_2':segfoot_weight,
+        'LeftFoot_foot_0_0_0':segfoot_weight, 'LeftFoot_foot_0_1_0':segfoot_weight}
 
 
     #config['weightMap']={'RightArm':.2, 'RightForeArm':.2, 'LeftArm':.2, 'LeftForeArm':.2,\
@@ -361,12 +361,12 @@ def buildMassMap():
                                 'RightArm', 'RightFoot', 'RightForeArm', 'RightHand', 'RightHand_Effector',
                                 'RightLeg', 'RightShoulder', 'RightUpLeg',
                                 'Spine', 'Spine1',
-                                'RightFoot_foot_0_0', 'RightFoot_foot_0_1', 'RightFoot_foot_0_1_Effector',
-                                'RightFoot_foot_1_0', 'RightFoot_foot_1_1', 'RightFoot_foot_1_1_Effector',
-                                'RightFoot_foot_2_0', 'RightFoot_foot_2_1', 'RightFoot_foot_2_1_Effector',
-                                'LeftFoot_foot_0_0', 'LeftFoot_foot_0_1', 'LeftFoot_foot_0_1_Effector',
-                                'LeftFoot_foot_1_0', 'LeftFoot_foot_1_1', 'LeftFoot_foot_1_1_Effector',
-                                'LeftFoot_foot_2_0', 'LeftFoot_foot_2_1', 'LeftFoot_foot_2_1_Effector',
+                                'RightFoot_foot_0_0', 'RightFoot_foot_0_1',
+                                'RightFoot_foot_1_0', 'RightFoot_foot_1_1', 'RightFoot_foot_1_2',
+                                'RightFoot_foot_0_0_0', 'RightFoot_foot_0_1_0',
+                                'LeftFoot_foot_0_0', 'LeftFoot_foot_0_1',
+                                'LeftFoot_foot_1_0', 'LeftFoot_foot_1_1', 'LeftFoot_foot_1_2',
+                                'LeftFoot_foot_0_0_0', 'LeftFoot_foot_0_1_0',
                                 ], 0.)
 
     # torso : 10
