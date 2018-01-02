@@ -36,7 +36,6 @@ class DartModel:
         # print xmlstr
 
         self.world = pydart.World(wcfg.timeStep, xmlstr, True)
-        print('world load done!')
 
         self.config = mcfg
 

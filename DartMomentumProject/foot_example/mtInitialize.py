@@ -16,6 +16,12 @@ import PyCommon.modules.Motion.ysMotion as ym
 import numpy as np
 import math
 
+def testtest():
+    motionName = 'wd2_n_kick.bvh'
+    motion = yf.readBvhFile(motionName)
+    yf.writeBvhFile()
+
+
 def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
     SEGMENT_FOOT_RAD = SEGMENT_FOOT_MAG * .5
 
@@ -24,17 +30,22 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
     #motionName = 'wd2_jump.bvh'
     #motionName = 'wd2_stand.bvh'
     bvh = yf.readBvhFileAsBvh(motionName)
+    bvh.set_scale(.01)
 
     if SEGMENT_FOOT:
         # partBvhFilePath = '../PyCommon/modules/samples/simpleJump_long_test2.bvh'
         current_path = os.path.dirname(os.path.abspath(__file__))
-        partBvhFilePath = current_path+'/../../PyCommon/modules/samples/simpleJump_long_test2.bvh'
+        partBvhFilePath = current_path+'/../../PyCommon/modules/samples/simpleJump_long_test3.bvh'
         partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
         bvh.replaceJointFromBvh('RightFoot', partBvh, SEGMENT_FOOT_MAG)
         partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
         partBvh.mirror('YZ')
         bvh.replaceJointFromBvh('LeftFoot', partBvh, SEGMENT_FOOT_MAG)
-    motion = bvh.toJointMotion(.01, False)
+
+    motion = bvh.toJointMotion(1., False)
+
+    motion.translateByOffset((0., 0.11, 0.))
+
     # motion = yf.readBvhFile(motionName, .01)
     # yme.offsetJointLocal(motion, 'RightArm', (.03,-.05,0), False)
     # yme.offsetJointLocal(motion, 'LeftArm', (-.03,-.05,0), False)
@@ -43,7 +54,11 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
     #yme.rotateJointLocal(motion, 'RightFoot', mm.exp(mm.v3(1,0.0,-.3), -.5), False)
     # yme.rotateJointLocal(motion, 'LeftFoot', mm.exp(mm.v3(1,-0.5,0), -.6), False)
     # yme.rotateJointLocal(motion, 'RightFoot', mm.exp(mm.v3(1,0.5,0), -.6), False)
-  
+    # yme.removeJoint(motion, 'RightFoot_foot_1_1')
+    # yme.removeJoint(motion, 'RightFoot_foot_1_2')
+    # yme.removeJoint(motion, 'LeftFoot_foot_1_1')
+    # yme.removeJoint(motion, 'LeftFoot_foot_1_2')
+
     yme.updateGlobalT(motion)
     #motion.translateByOffset((0, -0.07, 0))
 
@@ -203,22 +218,24 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
         # RightFoot_foot_1_0 : center heel
         capsulize('RightFoot_foot_1_0')
         node = mcfg.getNode('RightFoot_foot_1_0')
-        node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([0., 0., .7]), mm.exp([0.]*3)],
-                     ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*2. + SEGMENT_FOOT_RAD * 2.))
+        node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([-.6, 0., .4]), mm.exp([0.]*3)],
+                     ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*1.2+2.*SEGMENT_FOOT_RAD))
+        node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([+.6, 0., .4]), mm.exp([0.]*3)],
+                     ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*1.2+2.*SEGMENT_FOOT_RAD))
         # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
         node.jointType = footJointType
 
         # RightFoot_foot_1_1 : inside heel
-        capsulize('RightFoot_foot_1_1')
-        node = mcfg.getNode('RightFoot_foot_1_1')
-        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
-        node.jointType = footJointType
+        # capsulize('RightFoot_foot_1_1')
+        # node = mcfg.getNode('RightFoot_foot_1_1')
+        # node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
+        # node.jointType = footJointType
 
         # RightFoot_foot_1_2 : outside heel
-        capsulize('RightFoot_foot_1_2')
-        node = mcfg.getNode('RightFoot_foot_1_2')
-        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
-        node.jointType = footJointType
+        # capsulize('RightFoot_foot_1_2')
+        # node = mcfg.getNode('RightFoot_foot_1_2')
+        # node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
+        # node.jointType = footJointType
 
 
         capsulize('LeftFoot_foot_0_0')
@@ -250,20 +267,22 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
 
         capsulize('LeftFoot_foot_1_0')
         node = mcfg.getNode('LeftFoot_foot_1_0')
-        node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([0., 0., .7]), mm.exp([0.]*3)],
-                     ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*2.0+2.*SEGMENT_FOOT_RAD))
+        node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([-.6, 0., .0]), mm.exp([0.]*3)],
+                     ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*1.2+2.*SEGMENT_FOOT_RAD))
+        node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([+.6, 0., .0]), mm.exp([0.]*3)],
+                     ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*1.2+2.*SEGMENT_FOOT_RAD))
         # node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(1000., .01, -1))
         node.jointType = footJointType
 
-        capsulize('LeftFoot_foot_1_1')
-        node = mcfg.getNode('LeftFoot_foot_1_1')
-        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
-        node.jointType = footJointType
+        # capsulize('LeftFoot_foot_1_1')
+        # node = mcfg.getNode('LeftFoot_foot_1_1')
+        # node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
+        # node.jointType = footJointType
 
-        capsulize('LeftFoot_foot_1_2')
-        node = mcfg.getNode('LeftFoot_foot_1_2')
-        node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
-        node.jointType = footJointType
+        # capsulize('LeftFoot_foot_1_2')
+        # node = mcfg.getNode('LeftFoot_foot_1_2')
+        # node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
+        # node.jointType = footJointType
 
     # parameter
     config = {}
@@ -294,7 +313,7 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
                          'Spine':.6, 'Spine1':.6, 'RightFoot':.2, 'LeftFoot':.2, 'Hips':0.5,
                          'RightUpLeg':.1, 'RightLeg':.3, 'LeftUpLeg':.1, 'LeftLeg':.3}
     if SEGMENT_FOOT:
-        segfoot_weight = .01
+        segfoot_weight = .1
         config['weightMap']={'RightArm':.2, 'RightForeArm':.2, 'LeftArm':.2, 'LeftForeArm':.2,
                              'Spine':.6, 'Spine1':.6, 'RightFoot':.2, 'LeftFoot':.2, 'Hips':0.5,
                              'RightUpLeg':.1, 'RightLeg':.3, 'LeftUpLeg':.1, 'LeftLeg':.3,

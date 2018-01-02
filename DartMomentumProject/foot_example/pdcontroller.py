@@ -19,6 +19,11 @@ class PDController:
         self.Kd = np.diagflat([0.0] * 6 + [Kd] * (ndofs - 6))
         self.preoffset = 0.0
 
+    def set_gain(self, Kp, Kd):
+        ndofs = self.skel.ndofs
+        self.Kp = np.diagflat([0.0] * 6 + [Kp] * (ndofs - 6))
+        self.Kd = np.diagflat([0.0] * 6 + [Kd] * (ndofs - 6))
+
     def compute(self, qhat):
         skel = self.skel
 

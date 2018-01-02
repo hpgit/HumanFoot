@@ -144,10 +144,10 @@ class Bvh:
     class Joint:
         def __init__(self, name):
             self.name = name
-            self.offset = None
-            self.channels = []
-            self.children = []
-            self.jointIndex = None
+            self.offset = None  # type: numpy.array
+            self.channels = []  # type: list[Bvh.Channel]
+            self.children = []  # type: list[Bvh]
+            self.jointIndex = None  # type: int
         def __strHierarchy__(self, depth=0):
             s = ''
             tab1 = '  '*depth
@@ -168,13 +168,13 @@ class Bvh:
 
     class Channel:
         def __init__(self, channelType, channelIndex):
-            self.channelType = channelType
-            self.channelIndex = channelIndex
+            self.channelType = channelType    # type: str
+            self.channelIndex = channelIndex  # type: int
         def __str__(self):
             return self.channelType
         
     def __init__(self):
-        self.joints = []
+        self.joints = []  # type: list[Bvh.Joint]
         self.frameNum = 0
         self.frameTime = 0
         self.motionList = []
@@ -333,7 +333,22 @@ class Bvh:
             for j in range(self.totalChannelCount):
                 file.write('%s '%self.motionList[i][j])
             file.write('\n')
-                
+
+    #===========================================================================
+    # modification functions
+    #===========================================================================
+    def set_scale(self, scale=1.0):
+        # set joint offset scale
+        for joint in self.joints:
+            joint.offset *= scale
+
+        # set channel scale
+        for joint in self.joints:
+            for channel in joint.channels:
+                if 'POSITION' in channel.channelType:
+                    for k in range(self.frameNum):
+                        self.motionList[k][channel.channelIndex] *= scale
+
 
     #===========================================================================
     # conversion functions

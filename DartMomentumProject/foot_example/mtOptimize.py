@@ -11,8 +11,8 @@ def getTrackingWeight(DOFs, skeleton, weightMap, rootPositionWeight=0.):
     weights = [1.]*skeleton.getJointNum()
     for name, weight in weightMap.items():
         index = skeleton.getJointIndex(name)
-
-        weights[index] = weight
+        if index is not None:
+            weights[index] = weight
 
     totalDOF = 0
     for dof in DOFs:

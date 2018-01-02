@@ -36,7 +36,7 @@ from PyCommon.modules import pydart2 as pydart
 from PyCommon.modules.Simulator import csDartModel as cpm
 from pdcontroller import PDController
 
-import hpFootIK as hfi
+from PyCommon.modules.ArticulatedBody import hpFootIK as hfi
 
 import math
 # from matplotlib import collections

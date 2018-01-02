@@ -238,3 +238,32 @@ def footAdjust(posture_ori, footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, baseH
                 outside_tmp = posture_ori.getJointPositionGlobal(footIdDic[side+footPrefix+'_0'], outsideOffset)
                 footRot2 = mm.getSO3FromVectors(outside_tmp - inside_tmp, _outside - _inside)
                 posture_ori.setJointOrientationGlobal(footIdx, mm.slerp(oldFootOri2, np.dot(footRot2, np.dot(footRot, footOri)), ratio))
+
+        if True: # back side
+            isLeftFoot = True if side == 'Left' else False
+            footPrefix = 'Foot_foot_1'
+
+            collide[side+footPrefix+'_0_Effector'] = \
+                getJointChildPositionGlobal(posture_ori, side+footPrefix+'_0')[1] < SEGMENT_FOOT_RAD + baseHeight
+            collide[side+footPrefix+'_0'] = \
+                posture_ori.getJointPositionGlobal(footIdDic[side+footPrefix+'_0'])[1] < SEGMENT_FOOT_RAD + baseHeight
+
+            # if collide[side+footPrefix+'_0_Effector'] and collide[side+footPrefix+'_0']:
+            if collide[side+footPrefix+'_0_Effector']:
+                # heel contact partially or fully
+                heel_idx = footIdDic[side+footPrefix+'_0']
+                R_cur = posture_ori.getJointOrientationGlobal(heel_idx)
+
+                insideOffset = SEGMENT_FOOT_MAG * np.array((-.6, 0., 1.2))
+                outsideOffset = SEGMENT_FOOT_MAG * np.array((.6, 0., 1.2))
+
+                origin = posture_ori.getJointPositionGlobal(heel_idx)
+                inside = posture_ori.getJointPositionGlobal(heel_idx, insideOffset)
+                outside = posture_ori.getJointPositionGlobal(heel_idx, outsideOffset)
+
+                # rot_vec = mm.normalize(np.cross(inside - origin, origin - outside if side == 'Left' else outside - origin))
+                rot_vec = mm.normalize(np.cross(inside - origin, outside - origin))
+
+                rot_to_y = mm.getSO3FromVectors(rot_vec, mm.unitY())
+
+                posture_ori.setJointOrientationGlobal(heel_idx, np.dot(rot_to_y, R_cur))
