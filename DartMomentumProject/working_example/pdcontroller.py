@@ -15,18 +15,25 @@ class PDController:
         self.skel = skel
         ndofs = self.skel.ndofs
         # self.qhat = self.skel.q
-        self.Kp = np.diagflat([0.0] * 6 + [Kp] * (ndofs - 6))
-        self.Kd = np.diagflat([0.0] * 6 + [Kd] * (ndofs - 6))
+        # self.Kp = np.diagflat([0.0] * 6 + [Kp] * (ndofs - 6))
+        # self.Kd = np.diagflat([0.0] * 6 + [Kd] * (ndofs - 6))
+        self.Kp = np.diagflat([Kp] * ndofs)
+        self.Kd = np.diagflat([Kd] * ndofs)
         self.preoffset = 0.0
+
+    def setKpKd(self, Kp, Kd):
+        ndofs = self.skel.ndofs
+        self.Kp = np.diagflat([Kp] * ndofs)
+        self.Kd = np.diagflat([Kd] * ndofs)
 
     def compute(self, qhat):
         skel = self.skel
 
-        invM = inv(skel.M + self.Kd * self.h)
-        p = -self.Kp.dot(skel.q + skel.dq * self.h - qhat)
-        d = -self.Kd.dot(skel.dq)
-        qddot = invM.dot(-skel.c + p + d + skel.constraint_forces())
-        tau = p + d - self.Kd.dot(qddot) * self.h
+        # invM = inv(skel.M + self.Kd * self.h)
+        # p = -self.Kp.dot(skel.q + skel.dq * self.h - qhat)
+        # d = -self.Kd.dot(skel.dq)
+        # qddot = invM.dot(-skel.c + p + d + skel.constraint_forces())
+        # tau = p + d - self.Kd.dot(qddot) * self.h
 
         '''
         # Check the balance
@@ -47,5 +54,5 @@ class PDController:
         p = -self.Kp.dot(skel.q - qhat)
         d = -self.Kd.dot(skel.dq)
         tau = p + d
-        tau[:6] = 0
+        # tau[:6] = 0
         return tau

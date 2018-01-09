@@ -546,9 +546,10 @@ def main():
 
         # foot adjustment
 
-        foot_angle_weight = 0.5
+        foot_angle_weight = 1.
+        foot_dCM_weight = 5.
 
-        foot_center_diff = CM_plane + dCM_plane * frame_step_size - footCenter
+        foot_center_diff = CM_plane + dCM_plane * frame_step_size*foot_dCM_weight - footCenter
         foot_center_diff_norm = np.linalg.norm(foot_center_diff)
 
         foot_left_height = dartModel.getJointPositionGlobal(foot_left_idx)[1]
@@ -570,9 +571,9 @@ def main():
         #TODO:
         # We should consider dCM_ref, shouldn't we?
         # add getBodyPositionGlobal and getBodyPositionsGlobal in csVpModel!
-        # todo that, set joint velocities to vpModel
+        # to do that, set joint velocities to vpModel
         CM_ref_plane = footCenter
-        dL_des_plane = Kl*totalMass*(CM_ref_plane - CM_plane)  - Dl*totalMass*dCM_plane
+        dL_des_plane = Kl*totalMass*(CM_ref_plane - CM_plane) - Dl*totalMass*dCM_plane
         dL_des_plane[1] = 0.
 
         # angular momentum

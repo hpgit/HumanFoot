@@ -1,11 +1,11 @@
 import copy
 import numpy as np
 import numpy.linalg as npl
-from PyCommon.modules.ArticulatedBody import ysJacobian as yjc
-from PyCommon.modules.Util import ysPythonEx as ype
-from PyCommon.modules.ArticulatedBody import ysReferencePoints as yrp
-from PyCommon.modules.ArticulatedBody import ysMomentum as ymt
-from PyCommon.modules.ArticulatedBody import ysControl as yct
+# from PyCommon.modules.ArticulatedBody import ysJacobian as yjc
+# from PyCommon.modules.Util import ysPythonEx as ype
+# from PyCommon.modules.ArticulatedBody import ysReferencePoints as yrp
+# from PyCommon.modules.ArticulatedBody import ysMomentum as ymt
+# from PyCommon.modules.ArticulatedBody import ysControl as yct
 from PyCommon.modules.Math import mmMath as mm
 
 from PyCommon.modules.Simulator import csDartModel as cpm
@@ -55,24 +55,26 @@ class numIkSolver:
         :type _model: cpm.DartModel
         :return: 
         """
-        Jc_IK = np.zeros((0, _model.getTotalDOF()))
+        # Jc_IK = np.zeros((0, _model.getTotalDOF()))
+        Jc_IK = _model.getCOMJacobian()
         for i in range(len(self.bodyIdx)):
             Jc_IK_tmp = _model.getBody(self.bodyIdx[i]).world_jacobian(self.localPos[i])
             for k in range(3):
                 if self.desPosMask[i][k]:
-                    Jc_IK = np.vstack((Jc_IK, Jc_IK_tmp[k, :]))
+                    Jc_IK = np.vstack((Jc_IK, Jc_IK_tmp[k+3:k+4, :]))
+                    # Jc_IK = np.vstack((Jc_IK, Jc_IK_tmp[k:k+1, :]))
+            if self.desPosMask[i][3]:
+                Jc_IK = np.vstack((Jc_IK, Jc_IK_tmp[:3, :]))
             # Jc_IK = np.vstack((Jc_IK, _model.getBody(self.bodyIdx[i]).world_jacobian(self.localPos[i])[:3, :]))
-
 
         # TODO:
         # consider self.desPosMask
 
         return Jc_IK
 
-    def solve(self, desComPos, cmW = 10., posW = 1., oriW = 1.):
+    def solve(self, desComPos, cmW=1., posW=1., oriW=1.):
         """
         
-        :type _model: cpm.DartModel
         :type desComPos: np.array
         :type cmW: float
         :type posW: float
@@ -87,7 +89,7 @@ class numIkSolver:
 
         for i in range(numItr):
             Jc_IK = self.getConstJacobian(self.model)
-            dv_IK = np.zeros(0)
+            dv_IK = cmW * (desComPos - self.model.getCOM())
             for j in range(len(self.bodyIdx)):
                 ori_IK = self.model.getBodyOrientationGlobal(self.bodyIdx[j])
                 pos_IK = self.model.getBody(self.bodyIdx[j]).to_world(self.localPos[j])

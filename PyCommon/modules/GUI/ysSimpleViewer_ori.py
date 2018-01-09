@@ -456,7 +456,7 @@ if __name__=='__main__':
 
     #    test_layout_MeshInfoWnd()
     #    test_ObjectInfoWnd()
-    test_SimpleViewer()
-#    test_Fl_Check_Browser()
-#    test_Fl_Hold_Browser()
-#    test_time_check()
+    # test_SimpleViewer()
+    # test_Fl_Check_Browser()
+    # test_Fl_Hold_Browser()
+    test_time_check()

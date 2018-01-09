@@ -436,6 +436,17 @@ class DartModel:
     def getCOM(self):
         return self.skeleton.com()
 
+    def getCOMJacobian(self):
+        body_num = self.getBodyNum()
+        dof_num = self.getTotalDOF()
+        masses = self.getBodyMasses()
+        total_mass_inv = 1./sum(masses)
+        jacobian = np.zeros((3, dof_num))
+        for i in range(body_num):
+            jacobian += (masses[i] * total_mass_inv) * self.getBody(i).linear_jacobian()
+
+        return jacobian
+
     def getBoneT(self, index):
         bone_T = mm.invertSE3(self.getJoint(index).transform_from_child_body_node())
         return mm.SE3_to_SO3_vec3(bone_T)
@@ -457,11 +468,7 @@ class DartModel:
         return se3_2_pyVec6(self._nodes[index].body.GetGenAccleration())
 
     def getBodyPositionGlobal(self, index, pPositionLocal=None):
-        bodyFrame = self.skeleton.body(index).world_transform()
-        if pPositionLocal is None:
-            return bodyFrame[:3, 3]
-        positionLocal = np.array((pPositionLocal[0], pPositionLocal[1], pPositionLocal[2], 1.))
-        return bodyFrame.dot(positionLocal)[:3]
+        return self.skeleton.body(index).to_world()
 
     def getBodyOrientationGlobal(self, index):
         return self.getBody(index).transform()[:3, :3]
