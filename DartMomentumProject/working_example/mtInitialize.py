@@ -200,16 +200,16 @@ def create_biped():
     yme.updateGlobalT(motion)
     motion.translateByOffset((0, -0.03, 0))
 
-    #motion = motion[40:-58]
-    #motion[0:0] = [motion[0]]*20
+    # motion = motion[40:-58]
+    # motion[0:0] = [motion[0]]*20
     #motion.extend([motion[-1]]*5000)
 
-    motion = motion[40:]
-    #motion[0:0] = [motion[0]]*50
+    # motion = motion[40:]
+    # motion[0:0] = [motion[0]]*50
     #motion.extend([motion[-1]]*5000)
 
     #motion = motion[30:151]
-    # motion = motion[30:]
+    motion = motion[30:]
     #motion = motion[30:31]
     #motion[5:5] = [motion[5]]*30
     motion[0:0] = [motion[0]]*2000

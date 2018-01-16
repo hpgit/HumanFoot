@@ -44,7 +44,8 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
 
     motion = bvh.toJointMotion(1., False)
 
-    motion.translateByOffset((0., 0.15, 0.))
+    # motion.translateByOffset((0., 0.15, 0.))
+    # motion.translateByOffset((0., -0.12, 0.))
     # motion.rotateByOffset(mm.rotZ(math.pi*1./18.))
 
     # motion = yf.readBvhFile(motionName, .01)
@@ -72,13 +73,13 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
     #motion.extend([motion[-1]]*5000)
 
     #motion = motion[30:151]
-    # motion = motion[30:]
+    motion = motion[30:]
     #motion = motion[30:31]
     #motion[5:5] = [motion[5]]*30
     # motion[0:0] = [motion[0]]*2000
     # motion.extend([motion[-1]]*300)
 
-    motion = motion[37:]
+    # motion = motion[37:]
     motion[0:0] = [motion[0]]*2000
     motion.extend([motion[-1]]*300)
 

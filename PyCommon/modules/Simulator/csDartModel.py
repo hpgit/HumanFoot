@@ -60,6 +60,9 @@ class DartModel:
     def getBodyNum(self):
         return self.skeleton.num_bodynodes()
 
+    def getJointNum(self):
+        return self.skeleton.num_joints()
+
     def GetTimeStep(self):
         return self.world.time_step()
 
@@ -368,6 +371,13 @@ class DartModel:
             return self.skeleton.joint(key)
         else:
             raise TypeError
+
+    def getJointDOFIndexes(self, key):
+        joint = self.getJoint(key)
+        dofs= []
+        for joint_dof_idx in range(joint.num_dofs()):
+            dofs.append(joint.dofs[joint_dof_idx].index)
+        return dofs
 
     def setRenderColor(self, color):
         for body in self.skeleton.bodynodes:
@@ -873,34 +883,37 @@ class DartModel:
         return [self.getJointOrientationGlobal(i) for i in range(1, len(self._nodes))]
 
     # get DOF states
+    #TODO:
     def getDOFPositions(self):
         # ls = self.getInternalJointOrientationsLocal()
         # rootFrame = SE3_2_pySE3(self._nodes[0].body.GetFrame() * Inv(self._boneTs[0]))
         # ls.insert(0, rootFrame)
         # return ls
         ls = []
-        jointFrame = self.skeleton.body(0).world_transform().dot(npl.inv(self._boneTs[0]))
+        pyV = self.getJointPositionGlobal(0)
+        pyR = self.getJointOrientationGlobal(0)
+        ls.append((pyV, pyR))
         for i in range(1, len(self.skeleton.joints)):
-            pass
-
-
-        ls = self.getInternalJointOrientationsLocal()
-        rootFrame = self._nodes[0].body.GetFrame() * Inv(self._boneTs[0])
-        pyV = Vec3_2_pyVec3(rootFrame.GetPosition())
-        pyR = SE3_2_pySO3(rootFrame)
-
-        ls.insert(0, (pyV, pyR))
+            joint = self.skeleton.joints[i]
+            ls.append(joint.get_local_transform()[:3, :3])
 
         return ls
 
     def getDOFVelocities(self):
-        rootGenVel = np.zeros(6)
-        rootGenVel[0:3] = self.getJointVelocityGlobal(0)
-        # rootGenVel[3:6] = self.getJointAngVelocityGlobal(0)
-        rootGenVel[3:6] = self.getJointAngVelocityLocal(0)
+        # rootGenVel = np.zeros(6)
+        # rootGenVel[0:3] = self.getJointVelocityGlobal(0)
+        # # rootGenVel[3:6] = self.getJointAngVelocityGlobal(0)
+        # rootGenVel[3:6] = self.getJointAngVelocityLocal(0)
+        #
+        # ls = self.getInternalJointAngVelocitiesLocal()
+        # ls.insert(0, rootGenVel)
 
-        ls = self.getInternalJointAngVelocitiesLocal()
-        ls.insert(0, rootGenVel)
+        ls = []
+        # ls.append(rootGenVel)
+        ls.append(np.asarray(self.skeleton.dq[:6])[range(-3, 3)])
+        for i in range(1, self.getJointNum()):
+            joint = self.getJoint(i)
+            ls.append(np.array([dof.velocity() for dof in joint.dofs]))
 
         return ls
 

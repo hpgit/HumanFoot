@@ -48,6 +48,7 @@ DART_CONTACT_ON = False
 
 def main():
     np.set_printoptions(precision=4, linewidth=200)
+    # np.set_printoptions(precision=4, linewidth=1000, threshold=np.inf)
 
     #motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_5()
     motion, mcfg, wcfg, stepsPerFrame, config, frame_rate= mit.create_biped()
@@ -65,7 +66,6 @@ def main():
     #controlToMotionOffset = (1.5, -0.02, 0)
     controlToMotionOffset = (1.5, 0, 0)
     dartModel.translateByOffset(controlToMotionOffset)
-
 
     totalDOF = dartModel.getTotalDOF()
     DOFs = dartModel.getDOFs()
@@ -235,6 +235,7 @@ def main():
     initBl = .1
     initBh = .13
     initSupKt = 17.
+    # initSupKt = 2.5
 
     initFm = 50.0
 
@@ -299,7 +300,7 @@ def main():
 
     #self.sliderFm = Fl_Hor_Nice_Slider(10, 42+offset*6, 250, 10)
 
-    pdcontroller = PDController(dartModel.skeleton, wcfg.timeStep, Kt, Dt)
+    pdcontroller = PDController(dartModel, dartModel.skeleton, wcfg.timeStep, Kt, Dt)
 
     def getParamVal(paramname):
         return viewer.objectInfoWnd.getVal(paramname)
@@ -308,10 +309,31 @@ def main():
 
     ik_solver = hikd.numIkSolver(dartMotionModel)
 
+    body_num = dartModel.getBodyNum()
+    dJsys = np.zeros((6*body_num, totalDOF))
+    dJsupL = np.zeros((6, totalDOF))
+    dJsupR = np.zeros((6, totalDOF))
+    Jpre = [np.zeros((6*body_num, totalDOF)), np.zeros((6, totalDOF)), np.zeros((6, totalDOF))]
+    print(dartModel._boneTs[0])
+    print()
+    print(dartModel.getBodyOrientationGlobal(0))
+    print()
+    print(dartModel.getJointOrientationGlobal(0))
+    print()
+    print(np.dot(dartModel.getJointOrientationGlobal(0), dartModel._boneTs[0][:3, :3]))
+
+    print(mm.exp(dartModel.skeleton.q[:3]))
+
+    print()
+
     ###################################
     #simulate
     ###################################
     def simulateCallback(frame):
+        # print()
+        # print(dartModel.getJointVelocityGlobal(0))
+        # print(dartModel.getDOFVelocities()[0])
+        # print(dartModel.get_dq()[:6])
         dartMotionModel.update(motion[frame])
 
         global g_initFlag
@@ -322,7 +344,7 @@ def main():
         global contactChangeCount
         global contact
         global contactChangeType
-        print('contactstate:', contact, contactChangeCount)
+        # print('contactstate:', contact, contactChangeCount)
 
         Kt, Kl, Kh, Bl, Bh, kt_sup = getParamVals(['Kt', 'Kl', 'Kh', 'Bl', 'Bh', 'SupKt'])
         Dt = 2.*(Kt**.5)
@@ -335,6 +357,8 @@ def main():
         # dt_sup = .2*(kt_sup**.5)
 
         pdcontroller.setKpKd(Kt, Dt)
+
+        footHeight = dartModel.getBody(supL).shapenodes[0].shape.size()[1]/2.
 
         doubleTosingleOffset = 0.15
         singleTodoubleOffset = 0.30
@@ -361,14 +385,15 @@ def main():
         ik_solver.clear()
 
         # tracking
-        # th_r = motion.getDOFPositions(frame)
-        # th = dartModel.getDOFPositions()
+        th_r = motion.getDOFPositions(frame)
+        th = dartModel.getDOFPositions()
         # dth_r = motion.getDOFVelocities(frame)
         # dth = dartModel.getDOFVelocities()
         # ddth_r = motion.getDOFAccelerations(frame)
         # ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
         dth_flat = dartModel.get_dq()
-        ddth_des_flat = pdcontroller.compute(dartMotionModel.get_q())
+        # ddth_des_flat = pdcontroller.compute(dartMotionModel.get_q())
+        ddth_des_flat = pdcontroller.compute(th_r)
 
         # ype.flatten(ddth_des, ddth_des_flat)
         # ype.flatten(dth, dth_flat)
@@ -378,12 +403,9 @@ def main():
         # jacobian
         #################################################
 
-        #caution!! body orientation and joint orientation of foot are totally different!!
         footOriL = dartModel.getJointOrientationGlobal(supL)
         footOriR = dartModel.getJointOrientationGlobal(supR)
 
-        #desire footCenter[1] = 0.041135
-        #desire footCenter[1] = 0.0197
         footCenterL = dartModel.getBodyPositionGlobal(supL)
         footCenterR = dartModel.getBodyPositionGlobal(supR)
         footBodyOriL = dartModel.getBodyOrientationGlobal(supL)
@@ -422,7 +444,7 @@ def main():
             contactR = 0
         if refFootVelL[1] > 0 and refFootVelL[1]*frame_step_size + refFootL[1] > doubleTosingleOffset:
             contactL = 0
-        contactR = 0
+        # contactR = 0
 
         # contMotionOffset = th[0][0] - th_r[0][0]
         contMotionOffset = dartModel.getBodyPositionGlobal(0) - dartMotionModel.getBodyPositionGlobal(0)
@@ -492,9 +514,13 @@ def main():
             #footToBodyFootRotL = np.dot(np.transpose(footOriL), footBodyOriL)
             #footToBodyFootRotR = np.dot(np.transpose(footOriR), footBodyOriR)
 
-            if refFootR[1] < doubleTosingleOffset:
+            # if refFootR[1] < doubleTosingleOffset:
+            #     contact +=1
+            # if refFootL[1] < doubleTosingleOffset:
+            #     contact +=2
+            if refFootR[1] < footHeight:
                 contact +=1
-            if refFootL[1] < doubleTosingleOffset:
+            if refFootL[1] < footHeight:
                 contact +=2
 
             g_initFlag = 1
@@ -504,22 +530,24 @@ def main():
         Jsys = np.zeros((6*body_num, totalDOF))
         dJsys = np.zeros((6*body_num, totalDOF))
         for i in range(dartModel.getBodyNum()):
-            body_i_jacobian = dartModel.getBody(i).world_jacobian()
-            body_i_jacobian_deriv = dartModel.getBody(i).world_jacobian_classic_deriv()
-            # body_i_jacobian_deriv = np.zeros_like(body_i_jacobian)
-            Jsys[3*i:3*(i+1), :] = body_i_jacobian[3:, :]
-            Jsys[3*(i+body_num):3*(i+body_num+1), :] = body_i_jacobian[:3, :]
-            dJsys[3*i:3*(i+1), :] = body_i_jacobian_deriv[3:, :]
-            dJsys[3*(i+body_num):3*(i+body_num+1), :] = body_i_jacobian_deriv[:3, :]
+            body_i_jacobian = dartModel.getBody(i).world_jacobian()[range(-3, 3), :]
+            body_i_jacobian_deriv = dartModel.getBody(i).world_jacobian_classic_deriv()[range(-3, 3), :]
+            Jsys[6*i:6*i+6, :] = body_i_jacobian
+            dJsys[6*i:6*i+6, :] = body_i_jacobian_deriv
+        # dJsys = (Jsys - Jpre[0])/frame_step_size
+        # Jpre[0] = Jsys.copy()
 
         JsupL = dartModel.getBody(supL).world_jacobian()[range(-3, 3), :]
         dJsupL = dartModel.getBody(supL).world_jacobian_classic_deriv()[range(-3, 3), :]
         # dJsupL = np.zeros_like(JsupL)
+        # dJsupL =  (JsupL - Jpre[1])/frame_step_size
+        # Jpre[1] = JsupL.copy()
 
         JsupR = dartModel.getBody(supR).world_jacobian()[range(-3, 3), :]
         dJsupR = dartModel.getBody(supR).world_jacobian_classic_deriv()[range(-3, 3), :]
         # dJsupR = np.zeros_like(JsupR)
-
+        # dJsupR =  (JsupR - Jpre[2])/frame_step_size
+        # Jpre[2] = JsupR.copy()
 
         #calculate footCenter
         footCenter = .5 * (footCenterL + footCenterR) + footOffset
@@ -573,9 +601,9 @@ def main():
             dCP = (CP - CP_old[0])/frame_step_size
         CP_old[0] = CP
 
-        # CP_des = None
-        if CP_des[0] is None:
-            CP_des[0] = footCenter
+        CP_des[0] = None
+        # if CP_des[0] is None:
+        #     CP_des[0] = footCenter
 
         if CP is not None and dCP is not None:
             ddCP_des = Kh*(CP_ref - CP) - Dh*(dCP)
@@ -634,8 +662,19 @@ def main():
 
         # a_supL = np.append(kt_sup*(refFootL - footCenterL + contMotionOffset) + dt_sup*(refFootVelL - footBodyVelL), kt_sup*a_oriL+dt_sup*(refFootAngVelL-footBodyAngVelL))
         # a_supR = np.append(kt_sup*(refFootR - footCenterR + contMotionOffset) + dt_sup*(refFootVelR - footBodyVelR), kt_sup*a_oriR+dt_sup*(refFootAngVelR-footBodyAngVelR))
-        a_supL = np.append(kt_sup*(refFootL - footCenterL + contMotionOffset) + dt_sup*(refFootVelL - footBodyVelL), kt_sup*a_oriL+dt_sup*(refFootAngVelL-footBodyAngVelL))
-        a_supR = np.append(kt_sup*(refFootR - footCenterR + contMotionOffset) + dt_sup*(refFootVelR - footBodyVelR), kt_sup*a_oriR+dt_sup*(refFootAngVelR-footBodyAngVelR))
+        # print(refFootL, footCenterL, contMotionOffset)
+        footErrorL = refFootL.copy()
+        footErrorL[1] = dartModel.getBody(supL).shapenodes[0].shape.size()[1]/2.
+        footErrorL += -footCenterL + contMotionOffset
+
+        footErrorR = refFootR.copy()
+        footErrorR[1] = dartModel.getBody(supR).shapenodes[0].shape.size()[1]/2.
+        footErrorR += -footCenterR + contMotionOffset
+
+        # a_supL = np.append(kt_sup*(refFootL - footCenterL + contMotionOffset) + dt_sup*(refFootVelL - footBodyVelL), kt_sup*a_oriL+dt_sup*(refFootAngVelL-footBodyAngVelL))
+        # a_supR = np.append(kt_sup*(refFootR - footCenterR + contMotionOffset) + dt_sup*(refFootVelR - footBodyVelR), kt_sup*a_oriR+dt_sup*(refFootAngVelR-footBodyAngVelR))
+        a_supL = np.append(kt_sup*footErrorL + dt_sup*(refFootVelL - footBodyVelL), kt_sup*a_oriL+dt_sup*(refFootAngVelL-footBodyAngVelL))
+        a_supR = np.append(kt_sup*footErrorR + dt_sup*(refFootVelR - footBodyVelR), kt_sup*a_oriR+dt_sup*(refFootAngVelR-footBodyAngVelR))
 
         if contactChangeCount > 0 and contactChangeType == 'DtoS':
             #refFootR += (footCenter-CM_plane)/2.
@@ -732,7 +771,7 @@ def main():
             #mot.setConstraint(problem, totalDOF, Jsup, dJsup, dth_flat, a_sup)
             #mot.addConstraint(problem, totalDOF, Jsup, dJsup, dth_flat, a_sup)
             #if contact & 1 and contactChangeCount == 0:
-            if contact & 1 and False:
+            if contact & 1:
             #if refFootR[1] < doubleTosingleOffset:
                 mot.addConstraint(problem, totalDOF, JsupR, dJsupR, dth_flat, a_supR)
             if contact & 2:
@@ -762,7 +801,7 @@ def main():
             #bodyIDs, contactPositions, contactPositionLocals, contactForces, contactVelocities = vpWorld.calcManyPenaltyForce(0, bodyIDsToCheck, mus, Ks, Ds)
 
             dartModel.skeleton.set_accelerations(ddth_sol)
-            dartModel.skeleton.set_forces(np.zeros(totalDOF))
+            # dartModel.skeleton.set_forces(np.zeros(totalDOF))
 
             if forceShowTime > viewer.objectInfoWnd.labelForceDur.value():
                 forceShowTime = 0
@@ -782,9 +821,9 @@ def main():
             bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
 
         # rendering
-        rightFootVectorX[0] = np.dot(footOriL, np.array([.1,0,0]))
-        rightFootVectorY[0] = np.dot(footOriL, np.array([0,.1,0]))
-        rightFootVectorZ[0] = np.dot(footOriL, np.array([0,0,.1]))
+        rightFootVectorX[0] = np.dot(footOriL, np.array([.1, 0, 0]))
+        rightFootVectorY[0] = np.dot(footOriL, np.array([0, .1, 0]))
+        rightFootVectorZ[0] = np.dot(footOriL, np.array([0,  0,.1]))
         rightFootPos[0] = footCenterL
 
         rightVectorX[0] = np.dot(footBodyOriL, np.array([.1,0,0]))

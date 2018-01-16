@@ -2,6 +2,20 @@ import numpy as np
 import math
 from PyCommon.modules.Math import mmMath as mm
 
+def get_foot_up_vector(posture_ori, footIdDic, foot_state):
+    #TODO:
+    left_origin = posture_ori.getJointPositionGlobal(footIdDic['LeftFoot_foot_0_1'])
+    left_front = posture_ori.getJointPositionGlobal(footIdDic['LeftFoot_foot_0_1'], np.array((0., 0., 1.)))
+    left_side = posture_ori.getJointPositionGlobal(footIdDic['LeftFoot_foot_0_1'], np.array((1., 0., 0.)))
+    left_up_vec = -np.cross(left_side-left_origin, left_front-left_origin)
+
+    right_origin = posture_ori.getJointPositionGlobal(footIdDic['RightFoot_foot_0_1'])
+    right_front = posture_ori.getJointPositionGlobal(footIdDic['RightFoot_foot_0_1'], np.array((0., 0., 1.)))
+    right_side = posture_ori.getJointPositionGlobal(footIdDic['RightFoot_foot_0_1'], np.array((1., 0., 0.)))
+    right_up_vec = -np.cross(right_side-right_origin, right_front-right_origin)
+
+    return left_up_vec, right_up_vec
+
 
 def footAdjust(posture_ori, footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, baseHeight=0.):
     '''

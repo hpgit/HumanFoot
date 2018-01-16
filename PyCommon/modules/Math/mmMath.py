@@ -797,13 +797,26 @@ if __name__ == '__main__':
                    [ 0. ,  1. ,  0. ,  0. ,  1. ,  0. ],
                    [ 0. ,  0. ,  1. ,  0. ,  0. ,  1. ]]) 
         print(matrixrank(A))
+
+    def test1():
+        import random
+        v1 = np.array((random.random(), random.random(), random.random()))/2.
+        v2 = np.array((random.random(), random.random(), random.random()))/2.
+        print(v1, v2)
+        print(v1-v2)
+        print(logSO3(np.dot(exp(v1).T, exp(v2))))
+        print(logSO3(np.dot(exp(v2).T, exp(v1))))
+        print(logSO3(np.dot(exp(v1), exp(v2).T)))
+        print(logSO3(np.dot(exp(v2), exp(v1).T)))
+
+
         
-    pass
 #    test_array_copy()
 #    test_tupleSO3_funcs()
 #    test_getSO3FromVectors()
 #    test_logSO3()
 #    test_slerp()
-    test_projectRotation()
+#    test_projectRotation()
 #    test_diff_orientation()
 #    test_matrixrank()
+    test1()
