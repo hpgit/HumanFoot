@@ -5,6 +5,7 @@ from PyCommon.modules.Math import mmMath as mm
 def get_foot_up_vector(posture_ori, footIdDic, foot_state):
     #TODO:
     left_origin = posture_ori.getJointPositionGlobal(footIdDic['LeftFoot_foot_0_1'])
+    print(posture_ori.getJointPositionGlobal(footIdDic['LeftFoot_foot_0_1'], np.array((0., 0., 1.))))
     left_front = posture_ori.getJointPositionGlobal(footIdDic['LeftFoot_foot_0_1'], np.array((0., 0., 1.)))
     left_side = posture_ori.getJointPositionGlobal(footIdDic['LeftFoot_foot_0_1'], np.array((1., 0., 0.)))
     left_up_vec = -np.cross(left_side-left_origin, left_front-left_origin)

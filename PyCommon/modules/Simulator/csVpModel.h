@@ -23,6 +23,7 @@ public:
 		vpMaterial material;
 		vpBJoint joint;
 		int dof;
+		int dof_start_index;
 		bool use_joint;
 		unsigned char color[4];
 
@@ -75,8 +76,14 @@ public:	// expose to python
 	int getBodyNum() { return _nodes.size(); }
 	bp::list getBodyMasses();
 	scalar getTotalMass();
-	object getBodyShape(int index);
 	bp::list getBodyVerticesPositionGlobal(int index);
+
+	int getBodyGeomNum(int index);
+	bp::list getBodyGeomsType(int index);
+	bp::list getBodyGeomsSize(int index);
+	bp::list getBodyGeomsLocalFrame(int index);
+	bp::list getBodyGeomsGlobalFrame(int index);
+	object getBodyShape(int index);
 
 	pyVpBody &getBodyByIndex(int index){ return *reinterpret_cast<pyVpBody*> (&_nodes[index]->body);}
 	pyVpBody &getBodyByName(std::string name){ return *reinterpret_cast<pyVpBody*> (&_nodes[name2index(name)]->body);}
@@ -105,6 +112,8 @@ public:	// expose to python
 	object getCOM();
 	bp::list getBoneT(int index);
 	bp::list getInvBoneT(int index);
+
+    object getBodyFrame(int index);
 
 	object getBodyGenVelLocal(int index);
 	object getBodyGenVelGlobal(int index);
@@ -186,6 +195,8 @@ public:	// expose to python
 	bp::list getInternalJointDOFs();
 	int getTotalInternalJointDOF();
 
+	bp::list getJointDOFIndexes(int index);
+
 	void update(const object& posture);
 	void fixBody(int index);
 
@@ -246,7 +257,8 @@ public:	// expose to python
 	object getJointAngVelocityLocal( int index );
 	object getJointAngAccelerationLocal( int index );
 
-	object getJointPositionGlobal(int index);
+	object getJointPositionGlobal( int index, const object& positionLocal=object() );
+//	object getJointPositionGlobal(int index);
 	object getJointVelocityGlobal(int index);
 	object getJointAccelerationGlobal(int index);
 	object getJointOrientationGlobal( int index );

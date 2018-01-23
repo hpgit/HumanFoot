@@ -18,6 +18,8 @@
 
 #define QP
 
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(getJointPositionGlobal_py_overloads, getJointPositionGlobal, 1, 2);
+
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(getBodyPositionGlobal_py_overloads, getBodyPositionGlobal_py, 1, 2);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(getBodyVelocityGlobal_py_overloads, getBodyVelocityGlobal_py, 1, 2);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(getBodyAccelerationGlobal_py_overloads, getBodyAccelerationGlobal_py, 1, 2);
@@ -40,8 +42,14 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getBodyNum", &VpModel::getBodyNum)
 		.def("getBodyMasses", &VpModel::getBodyMasses)
 		.def("getTotalMass", &VpModel::getTotalMass)
-		.def("getBodyShape", &VpModel::getBodyShape)
 		.def("getBodyVerticesPositionGlobal", &VpModel::getBodyVerticesPositionGlobal)
+
+		.def("getBodyGeomNum", &VpModel::getBodyGeomNum)
+		.def("getBodyGeomsType", &VpModel::getBodyGeomsType)
+		.def("getBodyGeomsSize", &VpModel::getBodyGeomsSize)
+		.def("getBodyGeomsLocalFrame", &VpModel::getBodyGeomsLocalFrame)
+		.def("getBodyGeomsGlobalFrame", &VpModel::getBodyGeomsGlobalFrame)
+		.def("getBodyShape", &VpModel::getBodyShape)
 
 		.def("getBodyByIndex", &VpModel::getBodyByIndex, return_value_policy<reference_existing_object>())
 		.def("getBodyByName", &VpModel::getBodyByName, return_value_policy<reference_existing_object>())
@@ -72,6 +80,8 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getBodyAccelerationGlobal", &VpModel::getBodyAccelerationGlobal_py, getBodyAccelerationGlobal_py_overloads())
 		.def("getBodyAngVelocityGlobal", &VpModel::getBodyAngVelocityGlobal)
 		.def("getBodyAngAccelerationGlobal", &VpModel::getBodyAngAccelerationGlobal)
+
+		.def("getBodyFrame", &VpModel::getBodyFrame)
 
 		.def("getBodyPositionsGlobal", &VpModel::getBodyPositionsGlobal)
 		.def("getBodyVelocitiesGlobal", &VpModel::getBodyVelocitiesGlobal)
@@ -107,6 +117,8 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getTotalDOF", &VpControlModel::getTotalDOF)
 		.def("getTotalInternalJointDOF", &VpControlModel::getTotalInternalJointDOF)
 
+		.def("getJointDOFIndexes", &VpControlModel::getJointDOFIndexes)
+
 		.def("update", &VpControlModel::update)
 		.def("fixBody", &VpControlModel::fixBody)
 
@@ -138,7 +150,8 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getJointAngVelocityLocal", &VpControlModel::getJointAngVelocityLocal)
 		.def("getJointAngAccelerationLocal", &VpControlModel::getJointAngAccelerationLocal)
 
-		.def("getJointPositionGlobal", &VpControlModel::getJointPositionGlobal)
+		.def("getJointPositionGlobal", &VpControlModel::getJointPositionGlobal, getJointPositionGlobal_py_overloads())
+//		.def("getJointPositionGlobal", &VpControlModel::getJointPositionGlobal)
 		.def("getJointVelocityGlobal", &VpControlModel::getJointVelocityGlobal)
 		.def("getJointAccelerationGlobal", &VpControlModel::getJointAccelerationGlobal)
 		.def("getJointOrientationGlobal", &VpControlModel::getJointOrientationGlobal)
@@ -285,6 +298,7 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 		Vec3 defaultBoneV(0,0,1);
 		SE3 boneR = getSE3FromVectors(defaultBoneV, offset);
 
+
 		// if(joint.attr("parent") != object())
 			boneT = boneT * boneR;
 
@@ -348,8 +362,8 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 					geomT.SetEye();
 					if(cfgNode.attr("geomTs")[i])
 					{
-						geomT = pySO3_2_SE3(cfgNode.attr("geomTs")[i][0]);
-						geomT.SetPosition(pyVec3_2_Vec3(cfgNode.attr("geomTs")[i][1]));
+						geomT = pySO3_2_SE3(cfgNode.attr("geomTs")[i][1]);
+						geomT.SetPosition(pyVec3_2_Vec3(cfgNode.attr("geomTs")[i][0]));
 					}
 
 					pNode->body.AddGeometry(new vpBox(Vec3(width, height, length)), geomT);
@@ -522,6 +536,95 @@ scalar VpModel::getTotalMass()
 		mass += _nodes[i]->body.GetInertia().GetMass();
 	return mass;
 }
+
+int VpModel::getBodyGeomNum(int index)
+{
+    return _nodes[index]->body.GetNumGeometry();
+}
+
+bp::list VpModel::getBodyGeomsType(int index)
+{
+	char type;
+	scalar data[3];
+	bp::list ls;
+	for(int i=0; i<_nodes[index]->body.GetNumGeometry(); ++i)
+	{
+        _nodes[index]->body.GetGeometry(i)->GetShape(&type, data);
+		ls.append(type);
+	}
+	return ls;
+}
+
+bp::list VpModel::getBodyGeomsSize(int index)
+{
+	char type;
+	scalar data[3];
+	bp::list ls;
+
+	for(int i=0; i<_nodes[index]->body.GetNumGeometry(); ++i)
+    {
+        numeric::array O(make_tuple(0.,0.,0.));
+        _nodes[index]->body.GetGeometry(i)->GetShape(&type, data);
+        object pyV = O.copy();
+        pyV[0] = data[0];
+        pyV[1] = data[1];
+        pyV[2] = data[2];
+        ls.append(pyV);
+    }
+
+	return ls;
+}
+
+bp::list VpModel::getBodyGeomsLocalFrame(int index)
+{
+	bp::list ls;
+
+	for(int i=0; i<_nodes[index]->body.GetNumGeometry(); ++i)
+    {
+        numeric::array O(make_tuple(
+                            make_tuple(0.,0.,0.,0.),
+                            make_tuple(0.,0.,0.,0.),
+                            make_tuple(0.,0.,0.,0.),
+                            make_tuple(0.,0.,0.,1.)
+                            )
+                        );
+        const SE3& geomFrame = _nodes[index]->body.GetGeometry(i)->GetLocalFrame();
+        object pyT = O.copy();
+
+        for(int j=0; j<12; j++)
+            pyT[make_tuple(j%3, j/3)] = geomFrame[j];
+
+        ls.append(pyT);
+    }
+
+	return ls;
+}
+
+bp::list VpModel::getBodyGeomsGlobalFrame(int index)
+{
+	bp::list ls;
+
+	for(int i=0; i<_nodes[index]->body.GetNumGeometry(); ++i)
+    {
+        numeric::array O(make_tuple(
+                            make_tuple(0.,0.,0.,0.),
+                            make_tuple(0.,0.,0.,0.),
+                            make_tuple(0.,0.,0.,0.),
+                            make_tuple(0.,0.,0.,1.)
+                            )
+                        );
+        const SE3& geomFrame = _nodes[index]->body.GetGeometry(i)->GetGlobalFrame();
+        object pyT = O.copy();
+
+        for(int j=0; j<12; j++)
+            pyT[make_tuple(j%3, j/3)] = geomFrame[j];
+
+        ls.append(pyT);
+    }
+
+	return ls;
+}
+
 
 object VpModel::getBodyShape(int index)
 {
@@ -869,6 +972,15 @@ void VpModel::setBodyPositionGlobal_py( int index, const object& pos )
 	setBodyPositionGlobal(index, position); 
 }
 
+object VpModel::getBodyFrame(int index)
+{
+    object pyT;
+    make_pySE3(pyT);
+	SE3 bodyFrame = _nodes[index]->body.GetFrame();
+    SE3_2_pySE3(bodyFrame, pyT);
+	return pyT;
+}
+
 void VpModel::setBodyVelocityGlobal_py( int index, const object& vel )
 {
 	se3 genVel;
@@ -1104,6 +1216,13 @@ VpControlModel::VpControlModel( VpWorld* pWorld, const object& createPosture, co
 
 	update(createPosture);
 
+	int dof_start_index = 0;
+	for(int i=0; i<_nodes.size(); i++)
+	{
+	    _nodes[i]->dof_start_index = dof_start_index;
+	    dof_start_index += _nodes[i]->dof;
+	}
+
 //	addBody(true);
 }
 
@@ -1146,6 +1265,7 @@ bp::list VpControlModel::getDOFs()
 		ls.append(3);
 	return ls;
 }
+
 int VpControlModel::getTotalDOF()
 {
 	int dof = 0;
@@ -1156,6 +1276,16 @@ int VpControlModel::getTotalDOF()
 	return dof;
 }
 
+bp::list VpControlModel::getJointDOFIndexes(int index)
+{
+    bp::list ls;
+    int dof_index = _nodes[index]->dof_start_index;
+    for(int i=0; i<_nodes[index]->dof; i++)
+        ls.append(dof_index++);
+    return ls;
+
+}
+
 void VpControlModel::createJoints( const object& posture )
 {
 	object joint = posture.attr("skeleton").attr("root");
@@ -1164,7 +1294,7 @@ void VpControlModel::createJoints( const object& posture )
 
 void VpControlModel::_createJoint( const object& joint, const object& posture )
 {
-	int len_joint_children = len(joint.attr("children")); 
+	int len_joint_children = len(joint.attr("children"));
 	if (len_joint_children == 0 )
 		return;
 
@@ -1206,7 +1336,7 @@ void VpControlModel::_createJoint( const object& joint, const object& posture )
 //			temp_parent_index = XI(posture.attr("skeleton").attr("getElementIndex")(temp_parent_name));
 			temp_parent_index = XI(posture.attr("skeleton").attr("getJointIndex")(temp_parent_name));
 
-			if(_nodes[temp_parent_index] != NULL) 
+			if(_nodes[temp_parent_index] != NULL)
 			{
 				nodeExistParentJoint = temp_joint.attr("parent");
 				break;
@@ -1228,7 +1358,7 @@ void VpControlModel::_createJoint( const object& joint, const object& posture )
 		}
 	}
 
-//	int len_joint_children = len(joint.attr("children")); 
+//	int len_joint_children = len(joint.attr("children"));
 
 //	if ( nodeExistParentJoint!=object() && len_joint_children > 0  &&
 //		_config.attr("hasNode")(joint_name))
@@ -1732,15 +1862,24 @@ boost::python::object VpControlModel::getJointAngAccelerationLocal( int index )
 	return pyV;
 }
 
-object VpControlModel::getJointPositionGlobal( int index )
+//object VpControlModel::getJointPositionGlobal( int index )
+object VpControlModel::getJointPositionGlobal( int index, const object& positionLocal/*=object() */ )
 {
 	numeric::array O(make_tuple(0.,0.,0.));
 	SE3 bodyFrame;
 	object pyV = O.copy();
+	Vec3 positionLocal_;
 
 	// body frame�� Inv(boneT)�� ���� joint ��ġ ã�´�.
 	bodyFrame = _nodes[index]->body.GetFrame();
-	Vec3_2_pyVec3((bodyFrame * Inv(_boneTs[index])).GetPosition(), pyV);
+
+	if(positionLocal.is_none())
+        Vec3_2_pyVec3((bodyFrame * Inv(_boneTs[index])).GetPosition(), pyV);
+	else
+	{
+		pyVec3_2_Vec3(positionLocal, positionLocal_);
+        Vec3_2_pyVec3((bodyFrame * Inv(_boneTs[index])) * positionLocal_, pyV);
+	}
 	return pyV;
 
 //	if(!_nodes[index])	// ������ ��� parent joint frame�� ã�� offset��ŭ transformation ��Ų��.

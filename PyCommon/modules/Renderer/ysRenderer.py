@@ -130,7 +130,7 @@ class OdeModelRenderer(Renderer):
             if geom == self.selectedElement:
                 glColor3ubv(self.totalColor)
 
-class VpModelRenderer(Renderer):
+class VpPyModelRenderer(Renderer):
     """
     # :type model : csVpModel_py.VpModel
     """
@@ -251,6 +251,110 @@ class VpModelRenderer(Renderer):
                         data.append(geom.GetRadius())
                     state.append((geomType, geomT, data, color))
         return state
+
+class VpModelRenderer(Renderer):
+    def __init__(self, target, color, polygonStyle=POLYGON_FILL, lineWidth=1.):
+        Renderer.__init__(self, target, color)
+        self._model = target
+        self._color = color
+        self._polygonStyle = polygonStyle
+        self._lineWidth = lineWidth
+        self.rc.setPolygonStyle(polygonStyle)
+
+    def render(self, renderType=RENDER_OBJECT):
+        if self._polygonStyle == POLYGON_FILL:
+            glPolygonMode(GL_FRONT, GL_FILL)
+        else:
+            glPolygonMode(GL_FRONT, GL_LINE)
+        glLineWidth(self._lineWidth)
+
+        if renderType == RENDER_SHADOW:
+            glColor3ub(90, 90, 90)
+        else:
+            glColor3ubv(self._color)
+            # glEnable(GL_BLEND)
+            # glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+        for i in range(self._model.getBodyNum()):
+            self.renderVpBody(i)
+
+        if renderType != RENDER_SHADOW:
+            glDisable(GL_BLEND)
+
+    def renderVpBody(self, body_idx):
+        # print(body_idx, self._model.index2name(body_idx), self._model.getBodyShape(body_idx))
+        # print(self._model.index2name(body_idx), self._model.getBodyGeomsType(body_idx), self._model.getBodyGeomsSize(body_idx))
+        # print(self._model.index2name(body_idx), self._model.getBodyGeomsGlobalFrame(body_idx))
+
+        geom_types = self._model.getBodyGeomsType(body_idx)
+        geom_sizes = self._model.getBodyGeomsSize(body_idx)
+        geom_frames = self._model.getBodyGeomsGlobalFrame(body_idx)
+
+        for i in range(self._model.getBodyGeomNum(body_idx)):
+            geom_type, _T, geom_size = geom_types[i], geom_frames[i], geom_sizes[i]
+
+            glPushMatrix()
+            glMultMatrixd(_T.T)
+
+            if geom_type == 'B' or geom_type == 'M':
+                data = geom_size
+                glTranslated(-.5*data[0], -.5*data[1], -.5*data[2])
+                self.rc.drawBox(data[0], data[1], data[2])
+            elif geom_type == 'C':
+                data = geom_size
+                # data.append(pGeom.GetRadius())
+                # data.append(pGeom.GetHeight())
+                data[1] -= 2. * data[0]
+                self.rc.drawCapsule(data[0], data[1])
+            elif geom_type == 'S':
+                data = geom_size
+                self.rc.drawSphere(data[0])
+
+            glPopMatrix()
+
+    def renderFrame(self, frame, renderType=RENDER_OBJECT):
+        self.renderState(self.savedState[frame], renderType)
+
+    def getState(self):
+        state = []
+        for body_idx in range(self._model.getBodyNum()):
+            geom_types = self._model.getBodyGeomsType(body_idx)
+            geom_sizes = self._model.getBodyGeomsSize(body_idx)
+            geom_frames = self._model.getBodyGeomsGlobalFrame(body_idx)
+
+            for i in range(self._model.getBodyGeomNum(body_idx)):
+                state.append((geom_types[i], geom_frames[i], geom_sizes[i], self._color))
+        return state
+
+    def renderState(self, state, renderType=RENDER_OBJECT):
+        for elem in state:
+            geom_type, _T, geom_size, color = elem
+
+            if renderType == RENDER_OBJECT:
+                glColor3ubv(color)
+            elif renderType == RENDER_SHADOW:
+                glColor3ub(90, 90, 90)
+
+            glPushMatrix()
+            glMultMatrixd(_T.T)
+
+            if geom_type == 'B' or geom_type == 'M':
+                data = geom_size
+                glTranslated(-.5*data[0], -.5*data[1], -.5*data[2])
+                self.rc.drawBox(data[0], data[1], data[2])
+            elif geom_type == 'C':
+                data = geom_size.copy()
+                # data.append(pGeom.GetRadius())
+                # data.append(pGeom.GetHeight())
+                data[1] -= 2. * data[0]
+                self.rc.drawCapsule(data[0], data[1])
+            elif geom_type == 'S':
+                data = geom_size
+                self.rc.drawSphere(data[0])
+
+            glPopMatrix()
+
+
 
 
 class DartModelRenderer(Renderer):

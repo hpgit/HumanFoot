@@ -196,12 +196,17 @@ SE3 getSE3FromVectors(const Vec3& vec1, const Vec3& vec2)
 	scalar inner = Inner(v1, v2);
 	scalar theta = acos(inner);
 
-	if( rot_axis[0]==0 && rot_axis[1]==0 && rot_axis[2]==0)
+//	if( rot_axis[0]==0 && rot_axis[1]==0 && rot_axis[2]==0)
+//		rot_axis = Vec3(0,1,0);
+	if( Norm(rot_axis) < LIE_EPS )
 		rot_axis = Vec3(0,1,0);
 	else if( inner < -1.0 + LIE_EPS)
 	{
-	    Vec3 rand_vec(rand(), rand(), rand());
-	    rot_axis = Normalize(Cross(v1, Normalize(rand_vec)));
+//	    Vec3 rand_vec(rand(), rand(), rand());
+//	    rot_axis = Normalize(Cross(v1, Normalize(rand_vec)));
+        rot_axis = Vec3(0., 1., 0.);
+        inner = -1.;
+        theta = M_PI;
 	}
 
 

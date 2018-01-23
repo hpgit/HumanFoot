@@ -114,8 +114,8 @@ def main():
     mus = [.5]*len(bodyIDsToCheck)
 
     # flat data structure
-    ddth_des_flat = ype.makeFlatList(totalDOF)
-    dth_flat = ype.makeFlatList(totalDOF)
+    # ddth_des_flat = ype.makeFlatList(totalDOF)
+    # dth_flat = ype.makeFlatList(totalDOF)
     # ddth_sol = ype.makeNestedList(DOFs)
 
     # viewer
@@ -254,21 +254,6 @@ def main():
     viewer.objectInfoWnd.add1DSlider("com Y offset", -1., 1., 0.01, initComY)
     viewer.objectInfoWnd.add1DSlider("com Z offset", -1., 1., 0.01, initComZ)
 
-    # viewer.objectInfoWnd.labelKt.value(initKt)
-    # viewer.objectInfoWnd.labelKl.value(initKl)
-    # viewer.objectInfoWnd.labelKh.value(initKh)
-    # viewer.objectInfoWnd.labelBl.value(initBl)
-    # viewer.objectInfoWnd.labelBh.value(initBh)
-    # viewer.objectInfoWnd.labelSupKt.value(initSupKt)
-    # viewer.objectInfoWnd.labelFm.value(initFm)
-    #
-    # viewer.objectInfoWnd.sliderKt.value(initKt*50)
-    # viewer.objectInfoWnd.sliderKl.value(initKl*10)
-    # viewer.objectInfoWnd.sliderKh.value(initKh*10)
-    # viewer.objectInfoWnd.sliderBl.value(initBl*100)
-    # viewer.objectInfoWnd.sliderBh.value(initBh*100)
-    # viewer.objectInfoWnd.sliderSupKt.value(initSupKt*10)
-    # viewer.objectInfoWnd.sliderFm.value(initFm)
 
     viewer.force_on = False
     def viewer_SetForceState(object):
@@ -310,21 +295,10 @@ def main():
     ik_solver = hikd.numIkSolver(dartMotionModel)
 
     body_num = dartModel.getBodyNum()
-    dJsys = np.zeros((6*body_num, totalDOF))
-    dJsupL = np.zeros((6, totalDOF))
-    dJsupR = np.zeros((6, totalDOF))
-    Jpre = [np.zeros((6*body_num, totalDOF)), np.zeros((6, totalDOF)), np.zeros((6, totalDOF))]
-    print(dartModel._boneTs[0])
-    print()
-    print(dartModel.getBodyOrientationGlobal(0))
-    print()
-    print(dartModel.getJointOrientationGlobal(0))
-    print()
-    print(np.dot(dartModel.getJointOrientationGlobal(0), dartModel._boneTs[0][:3, :3]))
-
-    print(mm.exp(dartModel.skeleton.q[:3]))
-
-    print()
+    # dJsys = np.zeros((6*body_num, totalDOF))
+    # dJsupL = np.zeros((6, totalDOF))
+    # dJsupR = np.zeros((6, totalDOF))
+    # Jpre = [np.zeros((6*body_num, totalDOF)), np.zeros((6, totalDOF)), np.zeros((6, totalDOF))]
 
     ###################################
     #simulate
@@ -348,8 +322,8 @@ def main():
 
         Kt, Kl, Kh, Bl, Bh, kt_sup = getParamVals(['Kt', 'Kl', 'Kh', 'Bl', 'Bh', 'SupKt'])
         Dt = 2.*(Kt**.5)
-        Dl = 2.*(Kl**.5)
-        Dh = 2.*(Kh**.5)
+        Dl = (Kl**.5)
+        Dh = (Kh**.5)
         dt_sup = 2.*(kt_sup**.5)
         # Dt = .2*(Kt**.5)
         # Dl = .2*(Kl**.5)
@@ -385,13 +359,15 @@ def main():
         ik_solver.clear()
 
         # tracking
-        th_r = motion.getDOFPositions(frame)
+        # th_r = motion.getDOFPositions(frame)
+        th_r = dartMotionModel.getDOFPositions()
         th = dartModel.getDOFPositions()
         # dth_r = motion.getDOFVelocities(frame)
-        # dth = dartModel.getDOFVelocities()
+        dth = dartModel.getDOFVelocities()
         # ddth_r = motion.getDOFAccelerations(frame)
         # ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
-        dth_flat = dartModel.get_dq()
+        # dth_flat = dartModel.get_dq()
+        dth_flat =  np.concatenate(dth)
         # ddth_des_flat = pdcontroller.compute(dartMotionModel.get_q())
         ddth_des_flat = pdcontroller.compute(th_r)
 
@@ -610,7 +586,7 @@ def main():
             CP_des[0] = CP + dCP * frame_step_size + .5 * ddCP_des*(frame_step_size**2)
             # dCP_des[0] += ddCP_des * frame_step_size
             # CP_des[0] += dCP_des[0] * frame_step_size + .5 * ddCP_des*(frame_step_size ** 2)
-            dH_des = np.cross(CP_des[0] - CM, (dL_des_plane + totalMass*mm.s2v(wcfg.gravity)))
+            dH_des = np.cross(CP_des[0] - CM, dL_des_plane + totalMass*mm.s2v(wcfg.gravity))
             if contactChangeCount > 0:# and contactChangeType == 'DtoS':
                 #dH_des *= (maxContactChangeCount - contactChangeCount)/(maxContactChangeCount*10)
                 dH_des *= (maxContactChangeCount - contactChangeCount)/(maxContactChangeCount)
@@ -655,14 +631,6 @@ def main():
         a_oriL = mm.logSO3(mm.getSO3FromVectors(np.dot(footBodyOriL, np.array([0,1,0])), np.array([0,1,0])))
         a_oriR = mm.logSO3(mm.getSO3FromVectors(np.dot(footBodyOriR, np.array([0,1,0])), np.array([0,1,0])))
 
-        #if contact == 3 and contactChangeCount < maxContactChangeCount/4 and contactChangeCount >=1:
-            #kt_sup = 30
-            #viewer.objectInfoWnd.labelSupKt.value(kt_sup)
-            #viewer.objectInfoWnd.sliderSupKt.value(initSupKt*10)
-
-        # a_supL = np.append(kt_sup*(refFootL - footCenterL + contMotionOffset) + dt_sup*(refFootVelL - footBodyVelL), kt_sup*a_oriL+dt_sup*(refFootAngVelL-footBodyAngVelL))
-        # a_supR = np.append(kt_sup*(refFootR - footCenterR + contMotionOffset) + dt_sup*(refFootVelR - footBodyVelR), kt_sup*a_oriR+dt_sup*(refFootAngVelR-footBodyAngVelR))
-        # print(refFootL, footCenterL, contMotionOffset)
         footErrorL = refFootL.copy()
         footErrorL[1] = dartModel.getBody(supL).shapenodes[0].shape.size()[1]/2.
         footErrorL += -footCenterL + contMotionOffset
@@ -671,62 +639,19 @@ def main():
         footErrorR[1] = dartModel.getBody(supR).shapenodes[0].shape.size()[1]/2.
         footErrorR += -footCenterR + contMotionOffset
 
-        # a_supL = np.append(kt_sup*(refFootL - footCenterL + contMotionOffset) + dt_sup*(refFootVelL - footBodyVelL), kt_sup*a_oriL+dt_sup*(refFootAngVelL-footBodyAngVelL))
-        # a_supR = np.append(kt_sup*(refFootR - footCenterR + contMotionOffset) + dt_sup*(refFootVelR - footBodyVelR), kt_sup*a_oriR+dt_sup*(refFootAngVelR-footBodyAngVelR))
         a_supL = np.append(kt_sup*footErrorL + dt_sup*(refFootVelL - footBodyVelL), kt_sup*a_oriL+dt_sup*(refFootAngVelL-footBodyAngVelL))
         a_supR = np.append(kt_sup*footErrorR + dt_sup*(refFootVelR - footBodyVelR), kt_sup*a_oriR+dt_sup*(refFootAngVelR-footBodyAngVelR))
 
         if contactChangeCount > 0 and contactChangeType == 'DtoS':
-            #refFootR += (footCenter-CM_plane)/2.
-            #refFootR[1] = 0
-            #pre contact value are needed
-            #if contact == 2:
-                ##refFootR[0] += 0.2
-                ##refFootR[2] -= 0.05
-                #offsetDropR = (footCenter-CM_plane)/2.
-                #refFootR += offsetDropR
-                #refFootR[1] = 0.
-                ##refFootR[2] = footCenterR[2] - contMotionOffset[2]
-                ##refFootR[0] = footCenterR[0] - contMotionOffset[0]
-                #refFootL[0] += 0.05
-                #refFootL[2] -= 0.05
-            #elif contact == 1:
-                #offsetDropL = (footCenter-CM_plane)/2.
-                #refFootL += offsetDropL
-                #refFootL[1] = 0.
-            #a_supL = np.append(kt_sup*(refFootL - footCenterL + contMotionOffset) + dt_sup*(refFootVelL - footBodyVelL), kt_sup*a_oriL+dt_sup*(refFootAngVelL-footBodyAngVelL))
-            #a_supR = np.append(kt_sup*(refFootR - footCenterR + contMotionOffset) + dt_sup*(refFootVelR - footBodyVelR), kt_sup*a_oriR+dt_sup*(refFootAngVelR-footBodyAngVelR))
-            #a_supL = np.append(kt_sup*(refFootL - footCenterL + contMotionOffset) + dt_sup*(refFootVelL - footBodyVelL), 16*kt_sup*a_oriL+4*dt_sup*(refFootAngVelL-footBodyAngVelL))
-            #a_supR = np.append(kt_sup*(refFootR - footCenterR + contMotionOffset) + dt_sup*(refFootVelR - footBodyVelR), 16*kt_sup*a_oriR+4*dt_sup*(refFootAngVelR-footBodyAngVelR))
             a_supL = np.append(kt_sup*(refFootL - footCenterL + contMotionOffset) + dt_sup*(refFootVelL - footBodyVelL), 4*kt_sup*a_oriL+2*dt_sup*(refFootAngVelL-footBodyAngVelL))
             a_supR = np.append(kt_sup*(refFootR - footCenterR + contMotionOffset) + dt_sup*(refFootVelR - footBodyVelR), 4*kt_sup*a_oriR+2*dt_sup*(refFootAngVelR-footBodyAngVelR))
         elif contactChangeCount > 0 and contactChangeType == 'StoD':
-            #refFootR[0] +=0.05
-            #refFootR[2] +=0.05
             linkt = (13.*contactChangeCount)/(maxContactChangeCount)+1.
             lindt = 2*(linkt**.5)
             angkt = (13.*contactChangeCount)/(maxContactChangeCount)+1.
             angdt = 2*(angkt**.5)
-            #a_supL = np.append(4*kt_sup*(refFootL - footCenterL + contMotionOffset) + 2*dt_sup*(refFootVelL - footBodyVelL), 16*kt_sup*a_oriL+4*dt_sup*(refFootAngVelL-footBodyAngVelL))
-            #a_supR = np.append(4*kt_sup*(refFootR - footCenterR + contMotionOffset) + 2*dt_sup*(refFootVelR - footBodyVelR), 16*kt_sup*a_oriR+4*dt_sup*(refFootAngVelR-footBodyAngVelR))
             a_supL = np.append(linkt*kt_sup*(refFootL - footCenterL + contMotionOffset) + lindt*dt_sup*(refFootVelL - footBodyVelL), angkt*kt_sup*a_oriL+angdt*dt_sup*(refFootAngVelL-footBodyAngVelL))
             a_supR = np.append(linkt*kt_sup*(refFootR - footCenterR + contMotionOffset) + lindt*dt_sup*(refFootVelR - footBodyVelR), angkt*kt_sup*a_oriR+angdt*dt_sup*(refFootAngVelR-footBodyAngVelR))
-            #a_supL = np.append(16*kt_sup*(refFootL - footCenterL + contMotionOffset) + 4*dt_sup*(refFootVelL - footBodyVelL), 16*kt_sup*a_oriL+4*dt_sup*(refFootAngVelL-footBodyAngVelL))
-            #a_supR = np.append(16*kt_sup*(refFootR - footCenterR + contMotionOffset) + 4*dt_sup*(refFootVelR - footBodyVelR), 16*kt_sup*a_oriR+4*dt_sup*(refFootAngVelR-footBodyAngVelR))
-            #a_supL = np.append(4*kt_sup*(refFootL - footCenterL + contMotionOffset) + 2*dt_sup*(refFootVelL - footBodyVelL), 32*kt_sup*a_oriL+5.6*dt_sup*(refFootAngVelL-footBodyAngVelL))
-            #a_supR = np.append(4*kt_sup*(refFootR - footCenterR + contMotionOffset) + 2*dt_sup*(refFootVelR - footBodyVelR), 32*kt_sup*a_oriR+5.6*dt_sup*(refFootAngVelR-footBodyAngVelR))
-            #a_supL[1] = kt_sup*(refFootL[1] - footCenterL[1] + contMotionOffset[1]) + dt_sup*(refFootVelL[1] - footBodyVelL[1])
-            #a_supR[1] = kt_sup*(refFootR[1] - footCenterR[1] + contMotionOffset[1]) + dt_sup*(refFootVelR[1] - footBodyVelR[1])
-
-        ##if contact == 2:
-        #if refFootR[1] <doubleTosingleOffset :
-            #Jsup = np.vstack((JsupL, JsupR))
-            #dJsup = np.vstack((dJsupL, dJsupR))
-            #a_sup = np.append(a_supL, a_supR)
-        #else:
-            #Jsup = JsupL.copy()
-            #dJsup = dJsupL.copy()
-            #a_sup = a_supL.copy()
 
         # momentum matrix
         RS = np.dot(P, Jsys)

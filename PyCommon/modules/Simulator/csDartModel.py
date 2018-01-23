@@ -287,8 +287,8 @@ class DartModel:
                         # multiple point
                         shape = shapeNode.shape # type: pydart.BoxShape
                         geomPoint = self.geomPoints[bodyIdx]
-                        # print self.getBody(bodyIdx).name, len(geomPoint)
-                        # print geomPoint
+                        # print(self.getBody(bodyIdx).name, len(geomPoint))
+                        # print(len(geomPoint))
 
                         bodySpatialVel = body.com_spatial_velocity() # type: np.ndarray
                         bodyLinVel = body.com_linear_velocity() # type: np.ndarray
@@ -726,22 +726,26 @@ class DartModel:
         return self.getJoint(index).get_local_transform()[:3, :3]
 
     def getJointVelocityLocal(self, index):
-        pospos = Inv(self._boneTs[index]).GetPosition()
-        jointFrame = self._nodes[index].body.GetFrame() * Inv(self._boneTs[index])
-        return Vec3_2_pyVec3(InvRotate(jointFrame, pyVec3_2_Vec3(self.getBodyVelocityGlobal(index, pospos))))
+        pospos = npl.inv(self._boneTs[index])[:3, 3].flatten()
+        joint_ori = self.getJointOrientationGlobal(index)
+        return np.dot(joint_ori.T, self.getBodyVelocityGlobal(index, pospos))
 
     def getJointAngVelocityLocal(self, index):
-        if index == 0:
-            genVelBodyLocal = self._nodes[index].body.GetGenVelocityLocal()
-            genVelJointLocal = InvAd(Inv(self._boneTs[index]), genVelBodyLocal)
-            # genVelJointLocal = Ad(self._boneTs[index], genVelBodyLocal)
-            pyV = np.zeros(3)
-            pyV[0] = genVelJointLocal[0]
-            pyV[1] = genVelJointLocal[1]
-            pyV[2] = genVelJointLocal[2]
-            return pyV
+        # if index == 0:
+        #     genVelBodyLocal = self._nodes[index].body.GetGenVelocityLocal()
+        #     genVelJointLocal = InvAd(Inv(self._boneTs[index]), genVelBodyLocal)
+        #     # genVelJointLocal = Ad(self._boneTs[index], genVelBodyLocal)
+        #     pyV = np.zeros(3)
+        #     pyV[0] = genVelJointLocal[0]
+        #     pyV[1] = genVelJointLocal[1]
+        #     pyV[2] = genVelJointLocal[2]
+        #     return pyV
+        #
+        # # return Vec3_2_pyVec3(self._nodes[index].joint.GetVelocityLocal())
 
-        return Vec3_2_pyVec3(self._nodes[index].joint.GetVelocityLocal())
+        return np.dot(self.getJointOrientationGlobal(index).T, self.getBodyAngVelocityGlobal(index))
+
+
 
     def getJointAccelerationLocal(self, index):
         pospos = Inv(self._boneTs[index]).GetPosition()
@@ -890,8 +894,10 @@ class DartModel:
         # ls.insert(0, rootFrame)
         # return ls
         ls = []
-        pyV = self.getJointPositionGlobal(0)
-        pyR = self.getJointOrientationGlobal(0)
+        # pyV = self.getJointPositionGlobal(0)
+        # pyR = self.getJointOrientationGlobal(0)
+        pyV = np.asarray(self.skeleton.q[3:6])
+        pyR = mm.exp(np.asarray(self.skeleton.q[:3]))
         ls.append((pyV, pyR))
         for i in range(1, len(self.skeleton.joints)):
             joint = self.skeleton.joints[i]
@@ -900,10 +906,11 @@ class DartModel:
         return ls
 
     def getDOFVelocities(self):
-        # rootGenVel = np.zeros(6)
-        # rootGenVel[0:3] = self.getJointVelocityGlobal(0)
-        # # rootGenVel[3:6] = self.getJointAngVelocityGlobal(0)
-        # rootGenVel[3:6] = self.getJointAngVelocityLocal(0)
+        rootGenVel = np.zeros(6)
+        rootGenVel[0:3] = self.getJointVelocityGlobal(0)
+        # rootGenVel[0:3] = self.getJointVelocityLocal(0)
+        # rootGenVel[3:6] = self.getJointAngVelocityGlobal(0)
+        rootGenVel[3:6] = self.getJointAngVelocityLocal(0)
         #
         # ls = self.getInternalJointAngVelocitiesLocal()
         # ls.insert(0, rootGenVel)
