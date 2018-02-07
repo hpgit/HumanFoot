@@ -5,6 +5,7 @@
 
 #include "csVpModel.h"
 #include "csVpWorld.h"
+#include "myGeom.h"
 
 //#define make_tuple boost::python::make_tuple
 using boost::python::make_tuple;
@@ -186,11 +187,18 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 					}
 				}
 			}
-			else if (type == 'C' || type == 'M')
+			else if (type == 'C' || type == 'D' || type == 'E' || type == 'M' || type == 'N')
 			{
-			    //TODO:
-				const vector<Vec3>& verticesLocal = pGeom->getVerticesLocal();
-				const vector<Vec3>& verticesGlobal = pGeom->getVerticesGlobal();
+				const vector<Vec3>& verticesLocal = type == 'C'? ((MyFoot3*)pGeom)->getVerticesLocal() :
+													type == 'D'? ((MyFoot4*)pGeom)->getVerticesLocal() :
+													type == 'E'? ((MyFoot5*)pGeom)->getVerticesLocal() :
+													type == 'M'? ((MyFoot1*)pGeom)->getVerticesLocal() :
+																 ((MyFoot2*)pGeom)->getVerticesLocal();
+				const vector<Vec3>& verticesGlobal = type == 'C'? ((MyFoot3*)pGeom)->getVerticesGlobal() :
+													type == 'D'? ((MyFoot4*)pGeom)->getVerticesGlobal() :
+													type == 'E'? ((MyFoot5*)pGeom)->getVerticesGlobal() :
+													type == 'M'? ((MyFoot1*)pGeom)->getVerticesGlobal() :
+																 ((MyFoot2*)pGeom)->getVerticesGlobal();
 				for (int k = 0; k < verticesLocal.size(); ++k)
 				{
 
@@ -374,9 +382,12 @@ boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
 			pGeom->GetShape(&type, data);
 			if (type == 'C')
 			{
-			    //TODO: remove getVertices* in vpGeom
-				const vector<Vec3>& verticesLocal = pGeom->getVerticesLocal();
-				const vector<Vec3>& verticesGlobal = pGeom->getVerticesGlobal();
+			    const vector<Vec3>& verticesLocal = type == 'C'? ((MyFoot3*)pGeom)->getVerticesLocal() :
+													type == 'D'? ((MyFoot4*)pGeom)->getVerticesLocal() :
+																 ((MyFoot5*)pGeom)->getVerticesLocal();
+				const vector<Vec3>& verticesGlobal = type == 'C'? ((MyFoot3*)pGeom)->getVerticesGlobal() :
+													 type == 'D'? ((MyFoot4*)pGeom)->getVerticesGlobal() :
+																  ((MyFoot5*)pGeom)->getVerticesGlobal();
 				for (int k = 0; k < verticesLocal.size(); ++k)
 				{
 					position = verticesGlobal[k];

@@ -51,7 +51,7 @@ public:
 	MyFoot2(const Vec3 &size);
 	virtual const vector<Vec3>& getVerticesLocal() { return _verticesLocal; }
 	virtual const vector<Vec3>& getVerticesGlobal() { return _getVerticesGlobal(this, _verticesLocal); }
-	virtual void GetShape(char *type, scalar *data) const { vpBox::GetShape(type, data); type[0] = 'M';}
+	virtual void GetShape(char *type, scalar *data) const { vpBox::GetShape(type, data); type[0] = 'N';}
 };
 
 class MyFoot3 : public vpCapsule
@@ -100,7 +100,7 @@ public:
 	}
 	void getContactVertices(vector<Vec3>& verticesLocal, vector<Vec3>& verticesGlobal);
 	void getContactVerticesGlobal(vector<Vec3>& verticesGlobal);
-	virtual void GetShape(char *type, scalar *data) const { vpCapsule::GetShape(type, data); type[0] = 'C'; }
+	virtual void GetShape(char *type, scalar *data) const { vpCapsule::GetShape(type, data); type[0] = 'D'; }
 };
 
 class MyFoot5 : public MyFoot3
@@ -123,7 +123,7 @@ public:
 	}
 	void getContactVertices(vector<Vec3>& verticesLocal, vector<Vec3>& verticesGlobal);
 	void getContactVerticesGlobal(vector<Vec3>& verticesGlobal);
-	virtual void GetShape(char *type, scalar *data) const { vpCapsule::GetShape(type, data); type[0] = 'C'; }
+	virtual void GetShape(char *type, scalar *data) const { vpCapsule::GetShape(type, data); type[0] = 'E'; }
 };
 
 class MyShin: public vpBox

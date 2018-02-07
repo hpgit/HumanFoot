@@ -1,4 +1,5 @@
-import sys, numpy, ode, math, copy
+import sys, numpy, math, copy
+# import ode
 
 class WorldConfig:
     """
@@ -23,7 +24,8 @@ class WorldConfig:
         # for ODE
         # below values are ODE default values
         self.ContactSurfaceLayer = 0.0
-        self.ContactMaxCorrectingVel = ode.Infinity
+        # self.ContactMaxCorrectingVel = ode.Infinity
+        self.ContactMaxCorrectingVel = numpy.inf
         self.ERP = 0.2
         self.CFM = 1E-5
         ##########################################33
@@ -121,8 +123,10 @@ class Node:
         self.jointType = 'B'
 
         self.jointAxes = []
-        self.jointLoStop = -ode.Infinity
-        self.jointHiStop = ode.Infinity
+        # self.jointLoStop = -ode.Infinity
+        # self.jointHiStop = ode.Infinity
+        self.jointLoStop = -numpy.inf
+        self.jointHiStop = numpy.inf
 
         self.density = 1000 # 1000 kg/m^3 = 1 g/cm^3 : density of liquid water at 4'C
         self.boneRatio = 1.
@@ -132,8 +136,10 @@ class Node:
         ##########################################33
         # for ODE
         # below values are ODE default values
-        self.contactMode = ode.ContactBounce
-        self.contactMu = ode.Infinity
+        # self.contactMode = ode.ContactBounce
+        # self.contactMu = ode.Infinity
+        self.contactMode = None
+        self.contactMu = numpy.inf
         self.contactBounce = 0.1
         self.contactSoftERP = 0.0
         self.contactSoftCFM = 0.0

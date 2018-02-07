@@ -3,9 +3,10 @@ numpy
 PyOpenGL
 PyOpenGL-accelerate
 cvxopt
-pyode
+#pyode
 openopt
 future
 pillow
 colorama
 cma
+six

@@ -99,11 +99,6 @@ public:
 	virtual bool			 DetectCollision(const vpCylinder *, vpCollisionInfoArray &) const = 0;
 	virtual bool			 DetectCollision(const vpTorus *, vpCollisionInfoArray &) const = 0;
 
-	//ys
-	//TODO: remove getVertices*
-	virtual const vector<Vec3>& getVerticesLocal();
-	virtual const vector<Vec3>& getVerticesGlobal();
-
 	virtual void draw(void) const {}
 
 	virtual char GetType() const = 0;

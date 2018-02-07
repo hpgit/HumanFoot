@@ -20,7 +20,7 @@ from PyCommon.modules.Mesh import ysMesh as yms
 # import Mesh.ysMesh as yms
 
 # from PyCommon.modules.pyVirtualPhysics import *
-from PyCommon.modules.Simulator import csVpUtil as cvu
+# from PyCommon.modules.Simulator import csVpUtil as cvu
 from PyCommon.modules.Simulator import csDartModel as cdm
 import PyCommon.modules.pydart2 as pydart
 
@@ -130,6 +130,7 @@ class OdeModelRenderer(Renderer):
             if geom == self.selectedElement:
                 glColor3ubv(self.totalColor)
 
+'''
 class VpPyModelRenderer(Renderer):
     """
     # :type model : csVpModel_py.VpModel
@@ -251,6 +252,7 @@ class VpPyModelRenderer(Renderer):
                         data.append(geom.GetRadius())
                     state.append((geomType, geomT, data, color))
         return state
+'''
 
 class VpModelRenderer(Renderer):
     def __init__(self, target, color, polygonStyle=POLYGON_FILL, lineWidth=1.):
