@@ -298,11 +298,11 @@ class VpModelRenderer(Renderer):
             glPushMatrix()
             glMultMatrixd(_T.T)
 
-            if geom_type == 'B' or geom_type == 'M':
+            if geom_type in ('B', 'M', 'N'):
                 data = geom_size
                 glTranslated(-.5*data[0], -.5*data[1], -.5*data[2])
                 self.rc.drawBox(data[0], data[1], data[2])
-            elif geom_type == 'C':
+            elif geom_type in ('C', 'D', 'E'):
                 data = geom_size
                 # data.append(pGeom.GetRadius())
                 # data.append(pGeom.GetHeight())
@@ -340,11 +340,13 @@ class VpModelRenderer(Renderer):
             glPushMatrix()
             glMultMatrixd(_T.T)
 
-            if geom_type == 'B' or geom_type == 'M':
+            if geom_type in ('B', 'M', 'N'):
+                # box case
                 data = geom_size
                 glTranslated(-.5*data[0], -.5*data[1], -.5*data[2])
                 self.rc.drawBox(data[0], data[1], data[2])
-            elif geom_type == 'C':
+            elif geom_type in ('C', 'D', 'E'):
+                # capsule case
                 data = geom_size.copy()
                 # data.append(pGeom.GetRadius())
                 # data.append(pGeom.GetHeight())
@@ -355,8 +357,6 @@ class VpModelRenderer(Renderer):
                 self.rc.drawSphere(data[0])
 
             glPopMatrix()
-
-
 
 
 class DartModelRenderer(Renderer):

@@ -4,8 +4,8 @@ import copy
 import numpy as np
 
 import sys
-if '../PyCommon/modules' not in sys.path:
-    sys.path.append('../PyCommon/modules')
+if '../..' not in sys.path:
+    sys.path.append('../..')
 from PyCommon.modules.Math import mmMath as mm
 from PyCommon.modules.Resource import ysMotionLoader as yf
 from PyCommon.modules.Renderer import ysRenderer as yr

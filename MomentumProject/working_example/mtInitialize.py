@@ -189,8 +189,8 @@ def create_biped():
 	# yme.removeJoint(motion, 'LeftToes_Effector', False)
 	# yme.removeJoint(motion, 'RightHand_Effector', False)
 	# yme.removeJoint(motion, 'LeftHand_Effector', False)
-	yme.offsetJointLocal(motion, 'RightArm', (.03,-.05,0), False)
-	yme.offsetJointLocal(motion, 'LeftArm', (-.03,-.05,0), False)
+	# yme.offsetJointLocal(motion, 'RightArm', (.03,-.05,0), False)
+	# yme.offsetJointLocal(motion, 'LeftArm', (-.03,-.05,0), False)
 	yme.rotateJointLocal(motion, 'Hips', mm.exp(mm.v3(1,0,0), .01), False)
 	#yme.rotateJointLocal(motion, 'LeftFoot', mm.exp(mm.v3(1,-0.0,.3), -.5), False)
 	#yme.rotateJointLocal(motion, 'RightFoot', mm.exp(mm.v3(1,0.0,-.3), -.5), False)
@@ -316,7 +316,6 @@ def create_biped():
 	#config['end'] = 'Hips'    
 	config['end'] = 'Spine1'
 
-		
 	return motion, mcfg, wcfg, stepsPerFrame, config
 
 
