@@ -632,7 +632,7 @@ def main():
 
         # left_foot_up_vec, right_foot_up_vec = hfi.get_foot_up_vector(motion[frame], footIdDic, None)
         left_foot_up_vec, right_foot_up_vec = hfi.get_foot_up_vector(controlModel, footIdDic, None)
-        print(left_foot_up_vec, right_foot_up_vec)
+        # print(left_foot_up_vec, right_foot_up_vec)
         # a_oriL = mm.logSO3(mm.getSO3FromVectors(np.dot(footBodyOriL, np.array([0,1,0])), np.array([0,1,0])))
         # a_oriR = mm.logSO3(mm.getSO3FromVectors(np.dot(footBodyOriR, np.array([0,1,0])), np.array([0,1,0])))
         a_oriL = mm.logSO3(mm.getSO3FromVectors(left_foot_up_vec, np.array([0,1,0])))
@@ -696,12 +696,15 @@ def main():
             #mot.setConstraint(problem, totalDOF, Jsup, dJsup, dth_flat, a_sup)
             #mot.addConstraint(problem, totalDOF, Jsup, dJsup, dth_flat, a_sup)
             #if contact & 1 and contactChangeCount == 0:
-            if contact & 1 and False:
+            if contact & 1:
             #if refFootR[1] < doubleTosingleOffset:
                 mot.addConstraint(problem, totalDOF, JsupR, dJsupR, dth_flat, a_supR)
-            if contact & 2 and False:
+            if contact & 2:
             #if refFootL[1] < doubleTosingleOffset:
                 mot.addConstraint(problem, totalDOF, JsupL, dJsupL, dth_flat, a_supL)
+            if False:
+                for c_idx in range(len(contact_ids)):
+                    mot.addConstraint(problem, totalDOF, J_contacts[c_idx], dJ_contacts[c_idx], dth_flat, a_sups[c_idx])
 
         if contactChangeCount >0:
             contactChangeCount -= 1
