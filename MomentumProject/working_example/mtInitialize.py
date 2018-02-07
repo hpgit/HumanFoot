@@ -6,11 +6,11 @@ import sys
 if './modules' not in sys.path:
 	sys.path.append('./modules')
 
-import Resource.ysMotionLoader as yf
-import Simulator.ysPhysConfig as ypc
-import Math.mmMath as mm
-import Motion.ysHierarchyEdit as yme
-import Motion.ysMotion as ym
+from PyCommon.modules.Resource import ysMotionLoader as yf
+from PyCommon.modules.Simulator import ysPhysConfig as ypc
+from PyCommon.modules.Math import mmMath as mm
+from PyCommon.modules.Motion import ysHierarchyEdit as yme
+from PyCommon.modules.Motion import ysMotion as ym
 
 def create_vchain_5():
 	# motion
@@ -182,13 +182,13 @@ def create_biped():
 	#motionName = 'wd2_stand.bvh'
 	motion = yf.readBvhFile(motionName, .01)
 	# yme.removeJoint(motion, 'Head', False)
-	yme.removeJoint(motion, 'HEad', False)
-	yme.removeJoint(motion, 'RightShoulder', False)
-	yme.removeJoint(motion, 'LeftShoulder1', False)
-	yme.removeJoint(motion, 'RightToes_Effector', False)
-	yme.removeJoint(motion, 'LeftToes_Effector', False)
-	yme.removeJoint(motion, 'RightHand_Effector', False)
-	yme.removeJoint(motion, 'LeftHand_Effector', False)
+	# yme.removeJoint(motion, 'Head', False)
+	# yme.removeJoint(motion, 'RightShoulder', False)
+	# yme.removeJoint(motion, 'LeftShoulder1', False)
+	# yme.removeJoint(motion, 'RightToes_Effector', False)
+	# yme.removeJoint(motion, 'LeftToes_Effector', False)
+	# yme.removeJoint(motion, 'RightHand_Effector', False)
+	# yme.removeJoint(motion, 'LeftHand_Effector', False)
 	yme.offsetJointLocal(motion, 'RightArm', (.03,-.05,0), False)
 	yme.offsetJointLocal(motion, 'LeftArm', (-.03,-.05,0), False)
 	yme.rotateJointLocal(motion, 'Hips', mm.exp(mm.v3(1,0,0), .01), False)

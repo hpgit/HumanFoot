@@ -6,7 +6,10 @@
 #include "csVpModel.h"
 #include "csVpWorld.h"
 
-#define make_tuple boost::python::make_tuple
+//#define make_tuple boost::python::make_tuple
+using boost::python::make_tuple;
+namespace np = boost::python::numpy;
+using boost::python::numpy::ndarray;
 
 #define MAX_X 1	// 0001
 #define MAX_Y 2	// 0010
@@ -72,6 +75,7 @@ BOOST_PYTHON_MODULE(csVpWorld)
 
 VpWorld::VpWorld(const object& config)
 {
+    boost::python::numpy::initialize();
 	_world.SetTimeStep(XD(config.attr("timeStep")));
 	_world.SetGravity(pyVec3_2_Vec3(config.attr("gravity")));
 	setOpenMP();
@@ -109,9 +113,8 @@ void VpWorld::initialize()
 
 void VpWorld::setOpenMP()
 {
-	int numThreads = 1;
-
 #if !defined(__APPLE__) || defined(__APPLE_OMP__)
+	int numThreads = 1;
 	//#pragma omp parallel
 	std::cout << "OpenMP versions: " << _OPENMP << std::endl;
 	std::cout << "OpenMP max threads: " << omp_get_max_threads() << std::endl;
@@ -130,7 +133,7 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 {
 	bp::list bodyIDs, positions, forces, positionLocals, velocities;
 	int bodyID;
-	numeric::array O_Vec3(make_tuple(0., 0., 0.));
+	ndarray O_Vec3 = np::array(make_tuple(0., 0., 0.));
 	const vpBody* pBody;
 	vpGeom* pGeom;
 	char type;
@@ -185,6 +188,7 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 			}
 			else if (type == 'C' || type == 'M')
 			{
+			    //TODO:
 				const vector<Vec3>& verticesLocal = pGeom->getVerticesLocal();
 				const vector<Vec3>& verticesGlobal = pGeom->getVerticesGlobal();
 				for (int k = 0; k < verticesLocal.size(); ++k)
@@ -348,7 +352,7 @@ boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
 {
 	bp::list bodyIDs, positions, forces, positionLocals, velocities;
 	int bodyID;
-	numeric::array O_Vec3(make_tuple(0., 0., 0.));
+	ndarray O_Vec3 = np::array(make_tuple(0., 0., 0.));
 	const vpBody* pBody;
 	vpGeom* pGeom;
 	char type;
@@ -370,6 +374,7 @@ boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
 			pGeom->GetShape(&type, data);
 			if (type == 'C')
 			{
+			    //TODO: remove getVertices* in vpGeom
 				const vector<Vec3>& verticesLocal = pGeom->getVerticesLocal();
 				const vector<Vec3>& verticesGlobal = pGeom->getVerticesGlobal();
 				for (int k = 0; k < verticesLocal.size(); ++k)

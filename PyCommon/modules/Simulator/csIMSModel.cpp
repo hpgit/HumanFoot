@@ -10,6 +10,8 @@
 
 #include "cImplicit.h"
 
+namespace bp = boost::python;
+
 
 string ParticleConfig::__str__()
 {
@@ -37,7 +39,7 @@ std::string SystemConfig::__str__()
 	return ss.str();
 }
 
-IMSModel::IMSModel( const list& particleConfigs,  const list& springConfigs, const SystemConfig& systemConfig )
+IMSModel::IMSModel( const bp::list& particleConfigs,  const bp::list& springConfigs, const SystemConfig& systemConfig )
 {
 	_pSystem = new Physics_ParticleSystem(len(particleConfigs));
 	_pSystem->m_iIntegrationMethod = INTEGRATE_IMPLICIT;
@@ -53,7 +55,7 @@ IMSModel::IMSModel( const list& particleConfigs,  const list& springConfigs, con
 	Physics_GravityForce *pGravity = new Physics_GravityForce(_tmp_gravity);
 	_pSystem->AddForce( *pGravity );
 }
-void IMSModel::buildModel(const list& particleConfigs, const list& springConfigs)
+void IMSModel::buildModel(const bp::list& particleConfigs, const bp::list& springConfigs)
 {
 	Physics_Vector3 v;
 	for(int i=0; i<_pSystem->m_iParticles; ++i)
@@ -99,7 +101,7 @@ void IMSModel::buildModel(const list& particleConfigs, const list& springConfigs
 //		_pSystem->m_cfg.m_staticFrictionCoef[i].x = XD(staticMuList[i]);
 //	}
 //}
-void IMSModel::setMu(double dynamicMu, double staticMu, const list& vertexIndices)
+void IMSModel::setMu(double dynamicMu, double staticMu, const bp::list& vertexIndices)
 {
 	for(int i=0; i<len(vertexIndices); ++i)
 	{
@@ -132,7 +134,7 @@ void IMSModel::step(double timeStep)
 
 	_pSystem->Update(timeStep);
 }
-void IMSModel::updateSprings(const list& springLengths)
+void IMSModel::updateSprings(const bp::list& springLengths)
 {
 	for(int i=0; i<_springs.size(); ++i)
 		_springs[i]->m_RestDistance = XD(springLengths[i]);
@@ -140,15 +142,15 @@ void IMSModel::updateSprings(const list& springLengths)
 boost::python::tuple IMSModel::getPosition( int index )
 {
 	Physics_Vector3 pos = _pSystem->Position(index);
-	return make_tuple(pos[0], pos[1], pos[2]);
+	return bp::make_tuple(pos[0], pos[1], pos[2]);
 }
-tuple IMSModel::getVelocity(int index)
+bp::tuple IMSModel::getVelocity(int index)
 {
 	Physics_Vector3 vel = _pSystem->Velocity(index);
-	return make_tuple(vel[0], vel[1], vel[2]);
+	return bp::make_tuple(vel[0], vel[1], vel[2]);
 }
 
-list IMSModel::getPositions()
+bp::list IMSModel::getPositions()
 {
 	list ls = list();
 	for(int i=0; i<_pSystem->m_iParticles; ++i)
@@ -156,7 +158,7 @@ list IMSModel::getPositions()
 	return ls;
 }
 
-list IMSModel::getVelocities()
+bp::list IMSModel::getVelocities()
 {
 	list ls = list();
 	for(int i=0; i<_pSystem->m_iParticles; ++i)
@@ -164,7 +166,7 @@ list IMSModel::getVelocities()
 	return ls;
 }
 
-list IMSModel::getContactParticleIndices()
+bp::list IMSModel::getContactParticleIndices()
 {
 	list ls;
 	for(int i=0; i<_pSystem->m_iParticles; ++i)
@@ -184,7 +186,7 @@ int IMSModel::getParticleNum()
 	return _pSystem->m_iParticles;
 }
 
-list IMSModel::getState()
+bp::list IMSModel::getState()
 {
 	list ls = list();
 	for(int i=0; i<_pSystem->m_iParticles; ++i)
@@ -194,7 +196,7 @@ list IMSModel::getState()
 	}
 	return ls;
 }
-void IMSModel::setState(const object& state)
+void IMSModel::setState(const bp::object& state)
 {
 	for(int i=0; i<_pSystem->m_iParticles; ++i)
 	{

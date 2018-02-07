@@ -2,7 +2,7 @@
 #define _BPUTIL_H_
 
 #include <boost/python.hpp>
-//#include <boost/python/numpy.hpp>
+#include <boost/python/numpy.hpp>
 
 #define XD(v)	((extract<double>)(v))
 #define XC(v)	((extract<char*>)(v))

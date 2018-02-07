@@ -7,7 +7,7 @@ import sys
 if '../PyCommon/modules' not in sys.path:
     sys.path.append('../PyCommon/modules')
 from PyCommon.modules.Math import mmMath as mm
-from PyCommon.modules.Resource import ysMotionLoader as yf
+# from PyCommon.modules.Resource import ysMotionLoader as yf
 from PyCommon.modules.Renderer import ysRenderer as yr
 # from PyCommon.modules.Renderer import csVpRenderer as cvr
 from PyCommon.modules.Simulator import csVpWorld as cvw
@@ -166,7 +166,7 @@ def main():
     #viewer.record(False)
     #viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,255,255), yr.LINK_BONE))
     viewer.doc.addObject('motion', motion)
-    viewer.doc.addRenderer('motionModel', yr.VpModelRenderer(motionModel, (150,150,255), yr.POLYGON_FILL))
+    # viewer.doc.addRenderer('motionModel', yr.VpModelRenderer(motionModel, (150,150,255), yr.POLYGON_FILL))
     # viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_LINE))
     viewer.doc.addRenderer('controlModel', yr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_FILL))
     viewer.doc.addRenderer('rd_footCenter', yr.PointsRenderer(rd_footCenter))

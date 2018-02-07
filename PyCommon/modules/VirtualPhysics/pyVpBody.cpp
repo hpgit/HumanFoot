@@ -5,9 +5,11 @@
 #include "../../../PyCommon/externalLibs/common/VPUtil.h"
 #include <VP/vpDataType.h>
 
-#ifndef make_tuple
-#define make_tuple boost::python::make_tuple
-#endif
+using boost::python::make_tuple;
+using boost::python::numpy::ndarray;
+namespace bp = boost::python;
+namespace np = boost::python::numpy;
+
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyVpBody_AddGeometry_py_overloads, AddGeometry_py, 1, 2);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyVpBody_SetJoint_py_overloads, SetJoint_py, 1, 2);
@@ -17,7 +19,7 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyVpBody_SetGround_py_overloads, SetGroun
 
 BOOST_PYTHON_MODULE(vpBody)
 {
-    numeric::array::set_module_and_type("numpy", "ndarray");
+    //ndarray::set_module_and_type("numpy", "ndarray");
 
     class_<pyVpBody, boost::shared_ptr<pyVpBody>, boost::noncopyable>("vpBody") 
     // class_<pyVpBody>("vpBody", init<>())
@@ -200,7 +202,7 @@ void pyVpBody::SetFrame_py(object &pySE3)
 object pyVpBody::GetFrame_py(void)
 {
     SE3 T = GetFrame();
-	numeric::array O(make_tuple(make_tuple(0., 0., 0., 0.),
+	ndarray O = np::array(make_tuple(make_tuple(0., 0., 0., 0.),
 	            make_tuple(0., 0., 0., 0.),
 	            make_tuple(0., 0., 0., 0.),
 	            make_tuple(0.,0.,0.,0.)));
@@ -279,7 +281,7 @@ void pyVpBody::SetGenAccelerationLocal_py(object &pyV)
 object pyVpBody::GetGenVelocity_py(void)
 {
     se3 V = GetGenVelocity();
-    numeric::array O(make_tuple(0., 0., 0., 0., 0., 0.));
+    ndarray O = np::array(make_tuple(0., 0., 0., 0., 0., 0.));
     object pyV = O.copy();
     se3_2_pyVec6(V, pyV);
     return pyV;
@@ -288,7 +290,7 @@ object pyVpBody::GetGenVelocity_py(void)
 object pyVpBody::GetGenVelocityLocal_py(void)
 {
     se3 V = GetGenVelocityLocal();
-    numeric::array O(make_tuple(0., 0., 0., 0., 0., 0.));
+    ndarray O = np::array(make_tuple(0., 0., 0., 0., 0., 0.));
     object pyV = O.copy();
     se3_2_pyVec6(V, pyV);
     return pyV;
@@ -298,7 +300,7 @@ object pyVpBody::GetLinVelocity_py(object &pyP)
 {
     Vec3 p = pyVec3_2_Vec3(pyP);
     Vec3 V = GetLinVelocity(p);
-    numeric::array O(make_tuple(0., 0., 0.));
+    ndarray O = np::array(make_tuple(0., 0., 0.));
     object pyV = O.copy();
     Vec3_2_pyVec3(V, pyV);
     return pyV;
@@ -307,7 +309,7 @@ object pyVpBody::GetLinVelocity_py(object &pyP)
 object pyVpBody::GetAngVelocity_py(void)
 {
     Vec3 V = GetAngVelocity();
-    numeric::array O(make_tuple(0., 0., 0.));
+    ndarray O = np::array(make_tuple(0., 0., 0.));
     object pyV = O.copy();
     Vec3_2_pyVec3(V, pyV);
     object pyVec3Class = import("VirtualPhysics.LieGroup").attr("Vec3");
@@ -317,7 +319,7 @@ object pyVpBody::GetAngVelocity_py(void)
 object pyVpBody::GetGenAcceleration_py(void)
 {
     se3 V = GetGenAcceleration();
-    numeric::array O(make_tuple(0., 0., 0., 0., 0., 0.));
+    ndarray O = np::array(make_tuple(0., 0., 0., 0., 0., 0.));
     object pyV = O.copy();
     se3_2_pyVec6(V, pyV);
     return pyV;
@@ -326,7 +328,7 @@ object pyVpBody::GetGenAcceleration_py(void)
 object pyVpBody::GetGenAccelerationLocal_py(void)
 {
     se3 V = GetGenAccelerationLocal();
-    numeric::array O(make_tuple(0., 0., 0., 0., 0., 0.));
+    ndarray O = np::array(make_tuple(0., 0., 0., 0., 0., 0.));
     object pyV = O.copy();
     se3_2_pyVec6(V, pyV);
     return pyV;
@@ -379,7 +381,7 @@ pyVpMaterial &pyVpBody::GetMaterial_py(void)
 object pyVpBody::GetCenterOfMass_py(void)
 {
     Vec3 V = GetCenterOfMass();
-    numeric::array O(make_tuple(0., 0., 0.));
+    ndarray O = np::array(make_tuple(0., 0., 0.));
     object pyV = O.copy();
     Vec3_2_pyVec3(V, pyV);
     return pyV;
@@ -393,7 +395,7 @@ object pyVpBody::GetCenterOfMass_py(void)
 object pyVpBody::GetForce_py(void)
 {
     dse3 F = GetForce();
-    numeric::array O(make_tuple(0., 0., 0., 0., 0., 0.));
+    ndarray O = np::array(make_tuple(0., 0., 0., 0., 0., 0.));
     object pyV = O.copy();
     dse3_2_pyVec6(F, pyV);
     return pyV;
@@ -402,7 +404,7 @@ object pyVpBody::GetForce_py(void)
 object pyVpBody::GetNetForce_py(void)
 {
     dse3 F = GetNetForce();
-    numeric::array O(make_tuple(0., 0., 0., 0., 0., 0.));
+    ndarray O = np::array(make_tuple(0., 0., 0., 0., 0., 0.));
     object pyV = O.copy();
     dse3_2_pyVec6(F, pyV);
     return pyV;
@@ -411,7 +413,7 @@ object pyVpBody::GetNetForce_py(void)
 object pyVpBody::GetGravityForce_py(void)
 {
     dse3 F = GetGravityForce();
-    numeric::array O(make_tuple(0., 0., 0., 0., 0., 0.));
+    ndarray O = np::array(make_tuple(0., 0., 0., 0., 0., 0.));
     object pyV = O.copy();
     dse3_2_pyVec6(F, pyV);
     return pyV;

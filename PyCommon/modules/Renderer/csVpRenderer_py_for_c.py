@@ -90,7 +90,6 @@ class VpModelRenderer:
         self._polygonStyle = polygonStyle
         self._lineWidth = lineWidth
 
-
     def render(self, renderType):
         if self._polygonStyle == POLYGON_FILL:
             glPolygonMode(GL_FRONT, GL_FILL)
@@ -122,8 +121,11 @@ class VpModelRenderer:
         # print(self._model.index2name(body_idx), self._model.getBodyGeomsGlobalFrame(body_idx))
 
         geom_types = self._model.getBodyGeomsType(body_idx)
+        print('renderVpBody: ', geom_types)
         geom_sizes = self._model.getBodyGeomsSize(body_idx)
+        print('renderVpBody: ', geom_sizes)
         geom_frames = self._model.getBodyGeomsGlobalFrame(body_idx)
+        print('renderVpBody: ', geom_frames)
 
         for i in range(self._model.getBodyGeomNum(body_idx)):
             glPushMatrix()

@@ -5,11 +5,11 @@
 #include <VP/vphysics.h>
 #include "boostPythonUtil.h"
 
-// #define MAKE_SO3 numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
-// #define MAKE_SE3 numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
-// #define MAKE_VEC3 numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+// #define MAKE_SO3 numpy::ndarray I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+// #define MAKE_SE3 numpy::ndarray I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+// #define MAKE_VEC3 numpy::ndarray I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
 
-inline numeric::array transpose_pySO3(numeric::array& pyR)
+inline numpy::ndarray transpose_pySO3(numpy::ndarray& pyR)
 {
 	object pyR_copy = pyR.copy();
 
@@ -22,37 +22,37 @@ inline numeric::array transpose_pySO3(numeric::array& pyR)
 
 void make_pyVec3(object &pyV)
 {
-	numeric::array O( make_tuple(0.,0.,0.) );
+	numpy::ndarray O = numpy::array( make_tuple(0.,0.,0.) );
 	pyV = O.copy();
 }
 
 void make_pyse3(object &pyV)
 {
-	numeric::array O( make_tuple(0., 0., 0., 0.,0.,0.) );
+	numpy::ndarray O = numpy::array( make_tuple(0., 0., 0., 0.,0.,0.) );
 	pyV = O.copy();
 }
 
 void make_pydse3(object &pyV)
 {
-	numeric::array O( make_tuple(0.,0.,0.,0.,0.,0.) );
+	numpy::ndarray O = numpy::array( make_tuple(0.,0.,0.,0.,0.,0.) );
 	pyV = O.copy();
 }
 
 void make_pyInertia(object &pyV)
 {
-	numeric::array O( make_tuple(0., 0., 0., 0., 0., 0., 0., 0.,0.,0.) );
+	numpy::ndarray O = numpy::array( make_tuple(0., 0., 0., 0., 0., 0., 0., 0.,0.,0.) );
 	pyV = O.copy();
 }
 
 void make_pySE3(object &pyT)
 {
-	numeric::array I( make_tuple(make_tuple(1.,0.,0.,0.), make_tuple(0.,1.,0.,0.), make_tuple(0.,0.,1.,0.), make_tuple(0.,0.,0.,1.)) );
+	numpy::ndarray I = numpy::array( make_tuple(make_tuple(1.,0.,0.,0.), make_tuple(0.,1.,0.,0.), make_tuple(0.,0.,1.,0.), make_tuple(0.,0.,0.,1.)) );
 	pyT = I.copy();
 }
 
 void make_pySO3(object &pyR)
 {
-	numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+	numpy::ndarray I = numpy::array( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
 	pyR = I.copy();
 }
 
@@ -84,7 +84,7 @@ inline void pyVec3_2_Vec3(const object& pyV, Vec3& V)
 }
 inline object Vec3_2_pyVec3(const Vec3& V)
 {
-	return numeric::array(make_tuple(V[0], V[1], V[2]));
+	return numpy::array(make_tuple(V[0], V[1], V[2]));
 }
 inline void Vec3_2_pyVec3(const Vec3& V, object& pyV)
 {
@@ -160,9 +160,9 @@ inline void SE3_2_pySO3(const SE3& T, object& pyR)
 	pyR[make_tuple(1,0)] = T[1]; pyR[make_tuple(1,1)] = T[4]; pyR[make_tuple(1,2)] = T[7];
 	pyR[make_tuple(2,0)] = T[2]; pyR[make_tuple(2,1)] = T[5]; pyR[make_tuple(2,2)] = T[8];
 }
-inline numeric::array SE3_2_pySO3(const SE3& T)
+inline numpy::ndarray SE3_2_pySO3(const SE3& T)
 {
-	return numeric::array(make_tuple(
+	return numpy::array(make_tuple(
 							make_tuple(T[0], T[3], T[6]), 
 							make_tuple(T[1], T[4], T[7]),
 							make_tuple(T[2], T[5], T[8])

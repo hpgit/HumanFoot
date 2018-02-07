@@ -4,8 +4,8 @@ import numpy.linalg as npl
 import sys
 if '../PyCommon/modules' not in sys.path:
 	sys.path.append('../PyCommon/modules')
-import Math.mmMath as mm
-import Util.ysPythonEx as ype
+from PyCommon.modules.Math import mmMath as mm
+from PyCommon.modules.Util import ysPythonEx as ype
 
 def getTrackingWeight(DOFs, skeleton, weightMap, rootPositionWeight=0.):
 	weights = [1.]*skeleton.getJointNum()

@@ -33,7 +33,7 @@ modules = []
 
 m = setupmodule('csMath')
 m.include_dirs = ['../usr/include/']
-m.libraries = ['boost_python', 'vpLib', ompLib]
+m.libraries = ['boost_python', 'boost_numpy', 'vpLib', ompLib]
 if isMAC and isOMP:
     m.extra_compile_args = ['-fopenmp', '-D __APPLE_OMP__']
 elif isOMP:

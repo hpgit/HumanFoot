@@ -8,13 +8,16 @@
 #include <sstream>
 
 
-#define make_tuple boost::python::make_tuple
+using boost::python::make_tuple;
+namespace bp = boost::python;
+namespace np = boost::python::numpy;
+using boost::python::numpy::ndarray;
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyVpWorld_EnableCollision_py_overloads, EnableCollision_py, 0, 1);
 
 BOOST_PYTHON_MODULE(vpWorld)
 {
-    numeric::array::set_module_and_type("numpy", "ndarray");
+    //numeric::array::set_module_and_type("numpy", "ndarray");
     
     class_<pyVpWorld, boost::shared_ptr<pyVpWorld>, boost::noncopyable>("vpWorld") 
 	// class_<pyVpWorld>("vpWorld", init<>())
@@ -108,7 +111,7 @@ void pyVpWorld::SetGlobalFrame_py(object &pySE3)
 object pyVpWorld::GetGlobalFrame_py(void)
 {
     SE3 T = GetGlobalFrame();
-	numeric::array O(make_tuple(make_tuple(0., 0., 0., 0.),
+	ndarray O = np::array(make_tuple(make_tuple(0., 0., 0., 0.),
 	            make_tuple(0., 0., 0., 0.),
 	            make_tuple(0., 0., 0., 0.),
 	            make_tuple(0.,0.,0.,0.)));

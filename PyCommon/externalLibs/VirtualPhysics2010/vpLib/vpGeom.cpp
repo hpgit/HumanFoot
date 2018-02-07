@@ -43,8 +43,22 @@ OF SUCH DAMAGE.
 #include <VP/PrimColDet.h>
 #include <VP/vpPrimitiveCollisionDetector.h>
 
+//ys
+static std::vector<Vec3> _dummy;
+
 vpGeom::vpGeom() : m_pBody(NULL)
 {
+}
+
+//ys
+vector<Vec3>& vpGeom::getVerticesLocal() 
+{
+	return _dummy;
+}
+//ys
+vector<Vec3>& vpGeom::getVerticesGlobal()
+{
+	return _dummy;
 }
 
 void vpGeom::UpdateGlobalFrame()

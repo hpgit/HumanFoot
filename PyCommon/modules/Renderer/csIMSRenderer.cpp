@@ -75,11 +75,11 @@ void IMSModelRenderer::render()
 
 	// spring
 	glBegin(GL_LINES);
-	list items = _pModel->_subspringsMap.items();
+	boost::python::list items = _pModel->_subspringsMap.items();
 	for(int i=0; i<len(items); ++i)
 	{
 		string subspringName = XS(items[i][0]);
-		list springIndices = (list)items[i][1];
+		boost::python::list springIndices = (boost::python::list)items[i][1];
 
 		GLubyte color[3];
 		if(_colorMap.has_key(subspringName))

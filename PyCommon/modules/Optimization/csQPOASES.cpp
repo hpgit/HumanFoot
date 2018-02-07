@@ -9,7 +9,7 @@ bp::list qp(const object &H, const object &g, const object &A, const object &lb,
 
 BOOST_PYTHON_MODULE(csQPOASES)
 {
-	numeric::array::set_module_and_type("numpy", "ndarray");
+	//numeric::array::set_module_and_type("numpy", "ndarray");
 	def("example", example);
 	def("qp", qp);
 }
