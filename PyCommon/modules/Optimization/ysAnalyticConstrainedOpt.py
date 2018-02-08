@@ -117,7 +117,7 @@ class LSE:
         b_large = np.hstack((b1,b2))        
         
         #x_large = npl.solve(A_large, b_large)
-        x_large = npl.lstsq(A_large, b_large)
+        x_large = npl.lstsq(A_large, b_large, rcond=None)
         if np.isnan(x_large[0][0]):
             print 'nan!!'
             x_large = npl.lstsq(A11, b1)

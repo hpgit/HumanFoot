@@ -254,6 +254,7 @@ class VpPyModelRenderer(Renderer):
         return state
 '''
 
+
 class VpModelRenderer(Renderer):
     def __init__(self, target, color, polygonStyle=POLYGON_FILL, lineWidth=1.):
         Renderer.__init__(self, target, color)
@@ -262,6 +263,7 @@ class VpModelRenderer(Renderer):
         self._polygonStyle = polygonStyle
         self._lineWidth = lineWidth
         self.rc.setPolygonStyle(polygonStyle)
+        self.body_colors = [color] * self._model.getBodyNum()
 
     def render(self, renderType=RENDER_OBJECT):
         if self._polygonStyle == POLYGON_FILL:
@@ -270,14 +272,14 @@ class VpModelRenderer(Renderer):
             glPolygonMode(GL_FRONT, GL_LINE)
         glLineWidth(self._lineWidth)
 
-        if renderType == RENDER_SHADOW:
-            glColor3ub(90, 90, 90)
-        else:
-            glColor3ubv(self._color)
-            # glEnable(GL_BLEND)
-            # glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        # glEnable(GL_BLEND)
+        # glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         for i in range(self._model.getBodyNum()):
+            if renderType == RENDER_SHADOW:
+                glColor3ub(90, 90, 90)
+            else:
+                glColor3ubv(self.body_colors[i])
             self.renderVpBody(i)
 
         if renderType != RENDER_SHADOW:
@@ -323,9 +325,11 @@ class VpModelRenderer(Renderer):
             geom_types = self._model.getBodyGeomsType(body_idx)
             geom_sizes = self._model.getBodyGeomsSize(body_idx)
             geom_frames = self._model.getBodyGeomsGlobalFrame(body_idx)
+            # geom_colors = self._color
+            geom_colors = self.body_colors[body_idx]
 
             for i in range(self._model.getBodyGeomNum(body_idx)):
-                state.append((geom_types[i], geom_frames[i], geom_sizes[i], self._color))
+                state.append((geom_types[i], geom_frames[i], geom_sizes[i], geom_colors))
         return state
 
     def renderState(self, state, renderType=RENDER_OBJECT):

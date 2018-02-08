@@ -42,8 +42,6 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(VpControlModel_SetJointsDamping_overloads
 
 BOOST_PYTHON_MODULE(csVpModel)
 {
-	//ndarray::set_module_and_type("numpy", "ndarray");
-
 	class_<VpModel>("VpModel", init<VpWorld*, object, object>())
 		.def("__str__", &VpModel::__str__)
 		.def("getBodyNum", &VpModel::getBodyNum)

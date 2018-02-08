@@ -2,30 +2,21 @@
 
 Simulation system for humanoid walking with segmented foot
 
-It based on python 2.7.
+It based on python 2.7, Boost 1.66, dart v6.1.2.
 
 ## How to build and run
 ### In linux,
 
-1. just make! Next lines are deprecated....
+1. just make!
 
-1. download and setup boost
-	
-		$ ./bootstrap.sh
-		$ sudo ./b2 install
-	
-2. setup using apt-get
+        make install_dart_ubuntu
+        make install_dependencies
+        make
 
-        sudo apt-get install python-dev python-numpy freeglut3-dev python-fltk libgle3
+2. Run main_MomentumProject_working.py in MomentumProject/working_example
 
-3. setup using pip
-
-    	pip install --upgrade pip setuptools
-    	pip install PyOpenGL PyOpenGL-accelerate cvxopt pyode future pillow
-
-3. build VirtualPhysics2010 and copy libvpLib.a to PyCommon/modules/usr/lib/
-4. make in PyCommon/modules (if there is a copy error, edit setup.py in Renderer and Simulator)
-5. Run main_MomentumProject.py in MomentumProject/
+        cd MomentumProject/working_example
+        python main_MomentumProject_working.py
 
 ### In MAC OS X,
 
@@ -34,19 +25,13 @@ first, install brew.
 in OSX terminal,
 
     brew update
-    brew install wget
     brew install python
-    brew install cmake fltk ode suite-sparse
+    brew install cmake fltk suite-sparse
 
 after make virtual environment with system packages and activate virtuanenv,
 
     pip install --upgrade pip setuptools
-    pip install numpy
-    pip install PyOpenGL PyOpenGL-accelerate
-    pip install cvxopt
-    pip install pyode
-    pip install openopt
-    pip install cma
+    pip install -r requirements.txt
 
 setup pyfltk (google and download)
 
@@ -56,18 +41,16 @@ setup pyfltk (google and download)
      python setup.py build
      python setup.py install
 
-install bullet manually,
-
 for dart setup,
     
-    brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/50b94fe634d752985c489243033026a04d74abb6/Formula/boost.rb
-    brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/71e39e8462350492fc69040db18f9a555040880d/Formula/boost-python.rb
-    brew install eigen assimp homebrew/science/libccd dartsim/dart/fcl open-scene-graph nlopt homebrew/science/ipopt tinyxml tinyxml2 ros/deps/urdfdom doxygen
-    # brew install flann
-    brew install https://raw.githubusercontent.com/Homebrew/homebrew-science/7fb6d735213383488fe2e7518148fa6e486588fc/flann.rb
+    brew install boost
+    brew install boost-python --with-python3
+    brew install bullet eigen assimp flann libccd dartsim/dart/fcl open-scene-graph nlopt ipopt tinyxml tinyxml2 ros/deps/urdfdom doxygen
     
     git clone https://github.com/dartsim/dart
     cd dart;git checkout tags/v6.1.2;mkdir build
+    
+    copy FindBoost.cmake to dart/cmake 
 
     in CMakeLists.txt,
     ENABLE_OPENMP to OFF
@@ -76,6 +59,5 @@ for dart setup,
 
 for pydart setup,
 
-    cd PyCommon/externalLibs/pydart2;make
     make install_dependencies_mac
     make

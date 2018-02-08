@@ -15,7 +15,7 @@ all:
 
 install_dependencies:
 	sudo apt install build-essential cmake
-	sudo apt install swig python-dev python-opengl freeglut3-dev g++ python-fltk python-numpy python-pyode libgle3 python-pip liblapack-dev libblas-dev libboost-python1.58-dev python-scipy
+	sudo apt install swig python-dev python-opengl freeglut3-dev g++ python-fltk python-numpy python-pyode libgle3 python-pip liblapack-dev libblas-dev libboost-python-dev python-scipy
 	pip install cvxopt future six pillow colorama
 	[ -e $(MODULE_INC_DIR) ] || mkdir -p $(MODULE_INC_DIR)
 	cd $(MODULE_INC_DIR);[ -e VP ] || ln -s ../../../../$(VP_DIR)/usr/include/VP ./ ;[ -e gear ] || ln -s ../../../../$(GEAR_DIR)/include ./gear;[ -e qpOASES ] || ln -s ../../../../$(qpOASES_DIR)/include ./qpOASES

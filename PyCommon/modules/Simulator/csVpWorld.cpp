@@ -7,7 +7,6 @@
 #include "csVpWorld.h"
 #include "myGeom.h"
 
-//#define make_tuple boost::python::make_tuple
 using boost::python::make_tuple;
 namespace np = boost::python::numpy;
 using boost::python::numpy::ndarray;
