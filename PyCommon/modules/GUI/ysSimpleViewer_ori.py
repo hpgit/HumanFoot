@@ -389,10 +389,10 @@ if __name__=='__main__':
         pointMotion = yf.readTrcFile('../samples/Day7_Session2_Take01_-_walk.trc', .01)
         jointMotion = yf.readBvhFile('../samples/wd2_WalkSameSame00.bvh', .01)
 
-        print 'pointSkeleton'
-        print pointMotion[0].skeleton
-        print 'jointSkeleton'
-        print jointMotion[0].skeleton
+        print('pointSkeleton')
+        print(pointMotion[0].skeleton)
+        print('jointSkeleton')
+        print(jointMotion[0].skeleton)
 
         viewer = SimpleViewer()
         viewer.record(False)
@@ -409,7 +409,7 @@ if __name__=='__main__':
 
     def test_Fl_Check_Browser():
         def cb_callback(ptr):
-            print 'test'
+            print('test')
 
         win = Fl_Window(100,100,200,200)
         win.begin()
@@ -424,7 +424,7 @@ if __name__=='__main__':
 
     def test_Fl_Hold_Browser():
         def cb_callback(ptr):
-            print 'test'
+            print('test')
 
         win = Fl_Window(100,100,200,200)
         win.begin()
@@ -445,7 +445,7 @@ if __name__=='__main__':
         pt = [0.]
         def simulateCallback(frame):
             if frame==1: pt[0] = time.time()
-            if frame==31: print 'elapsed time for 30 frames:', time.time()-pt[0]
+            if frame==31: print('elapsed time for 30 frames:', time.time()-pt[0])
         #            time.sleep(0.03)
         viewer.setSimulateCallback(simulateCallback)
 

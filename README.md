@@ -2,7 +2,8 @@
 
 Simulation system for humanoid walking with segmented foot
 
-It based on python 2.7, Boost 1.66, dart v6.1.2.
+It based on python 3.6, Boost 1.66, dart v6.1.2.
+(python 2.7 is supported also, but will be unsupported soon.)
 
 ## How to build and run
 ### In linux,
@@ -25,7 +26,7 @@ first, install brew.
 in OSX terminal,
 
     brew update
-    brew install python
+    brew install python3
     brew install cmake fltk suite-sparse
 
 after make virtual environment with system packages and activate virtuanenv,
@@ -33,7 +34,7 @@ after make virtual environment with system packages and activate virtuanenv,
     pip install --upgrade pip setuptools
     pip install -r requirements.txt
 
-setup pyfltk (google and download)
+setup pyfltk (google and download pyfltk-1.*_py3.tar.gz)
 
      in python/fltk\_wrap.cpp,
      add void in front of free\_color
@@ -44,7 +45,7 @@ setup pyfltk (google and download)
 for dart setup,
     
     brew install boost
-    brew install boost-python --with-python3
+    brew install boost-python3
     brew install bullet eigen assimp flann libccd dartsim/dart/fcl open-scene-graph nlopt ipopt tinyxml tinyxml2 ros/deps/urdfdom doxygen
     
     git clone https://github.com/dartsim/dart

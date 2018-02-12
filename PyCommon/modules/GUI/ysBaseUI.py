@@ -1,4 +1,9 @@
-import cPickle
+try:
+    # for python3
+    import _pickle as cPickle
+except:
+    # for python2.7
+    import cPickle
 from fltk import *
 Fl.scheme('plastic')
 
@@ -6,10 +11,13 @@ Fl.scheme('plastic')
 class Subject:
     def __init__(self):
         self.observers = []
+
     def attach(self, observer):
         self.observers.append(observer)
+
     def detach(self, observer):
         self.observers.remove(observer)
+
     def notify(self, event=None):
         for observer in self.observers:
             observer.update(event, self)
@@ -24,18 +32,26 @@ class BaseSettings:
         self.y = y
         self.w = w
         self.h = h
+
     def load(self, fileName):
         try:
-            self.__dict__.update(cPickle.load(open(fileName, 'r')).__dict__)
+            self.__dict__.update(cPickle.load(open(fileName, 'rb')).__dict__)
         except:
             pass
+
     def save(self, fileName):
-        cPickle.dump(self, open(fileName, 'w'))
+        cPickle.dump(self, open(fileName, 'wb'))
+
     def setToApp(self, window):
         window.position(self.x, self.y)
         # window.size(self.w, self.h)
+
     def getFromApp(self, window):
-        self.x = window.x(); self.y = window.y(); self.w = window.w(); self.h = window.h()
+        self.x = window.x()
+        self.y = window.y()
+        self.w = window.w()
+        self.h = window.h()
+
 
 class BaseWnd(Fl_Window):
     def __init__(self, rect=None, title='BaseWnd', settings=BaseSettings()):
@@ -50,13 +66,15 @@ class BaseWnd(Fl_Window):
 
         self.settings = settings
         self.callback(self.onClose)
+
     def show(self):
-        if len(self.settingsFile)>0:
+        if len(self.settingsFile) > 0:
             self.settings.load(self.settingsFile)
             self.settings.setToApp(self)
         Fl_Window.show(self)
+
     def onClose(self, data):
-        if len(self.settingsFile)>0:
+        if len(self.settingsFile) > 0:
             self.settings.getFromApp(self)
             self.settings.save(self.settingsFile)
         self.default_callback(self, data)

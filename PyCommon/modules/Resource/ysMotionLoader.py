@@ -209,10 +209,10 @@ class Bvh:
 
     def parseBvhHierachy(self, tokens):
         if tokens.pop().upper() != "HIERARCHY":
-            print "HIERARCHY missing"
+            print("HIERARCHY missing")
             return 
         if tokens.pop().upper() != "ROOT":
-            print "ROOT missing"
+            print("ROOT missing")
             return
         self.parseBvhJoint(tokens.pop(), tokens)
         
@@ -221,7 +221,7 @@ class Bvh:
         self.joints.append(bvhJoint)
         
         if tokens.pop()!="{":
-            print "'{' missing"
+            print("'{' missing")
             return None
         
         endDetected = False
@@ -245,24 +245,24 @@ class Bvh:
             elif t == 'END':
                 next = tokens.pop().upper()
                 if next != 'SITE':
-                    print 'END', next, 'is unknown keyword'
+                    print('END', next, 'is unknown keyword')
                 bvhJoint.children.append(self.parseBvhJoint("%s_Effector"%name, tokens))
             else:
-                print "invalid bvhJoint definition"
+                print("invalid bvhJoint definition")
                 return None
         return bvhJoint
 
     def parseBvhMotion(self, tokens):
         if tokens.pop().upper() != 'MOTION':
-            print "MOTION missing"
+            print("MOTION missing")
             return None
         if tokens.pop().upper() != 'FRAMES:':
-            print "FRAMES: missing"
+            print("FRAMES: missing")
             return None
         self.frameNum = int(tokens.pop())
         if tokens.pop().upper() != 'FRAME TIME:':
             if tokens.pop().upper() != 'TIME:':
-                print "FRAME TIME: missing"
+                print("FRAME TIME: missing")
                 return None
         self.frameTime = float(tokens.pop())
         
@@ -285,7 +285,7 @@ class Bvh:
 
         self.writeBvhHierarchy(f)
         self.writeBvhMotion(f)
-        print self
+        print(self)
     
     def writeBvhHierarchy(self, file):
         file.write('HIERARCHY\n')
@@ -630,7 +630,7 @@ if __name__ == "__main__":
 
     def test_readTrcFile():
         trcMotion = readTrcFile('../samples/Day7_Session2_Take01_-_walk.trc', .01)
-        print trcMotion[0].skeleton
+        print(trcMotion[0].skeleton)
         
         viewer = ysv.SimpleViewer()
         viewer.record(False)
@@ -646,13 +646,13 @@ if __name__ == "__main__":
         bvhFilePath = '../samples/wd2_WalkSameSame00.bvh'
         bvh = Bvh()
         bvh.parseBvhFile(bvhFilePath)
-        print bvh
+        print(bvh)
         
     def test_readBvhFile():
         bvhFilePath = '../samples/wd2_WalkSameSame00.bvh'
         motion = readBvhFile(bvhFilePath, .01)
         motion2 = readBvhFile(bvhFilePath, .01, True)
-        print motion[0].skeleton
+        print(motion[0].skeleton)
 
         viewer = ysv.SimpleViewer()
         viewer.record(False)

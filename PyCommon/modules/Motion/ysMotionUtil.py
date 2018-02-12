@@ -56,25 +56,25 @@ if __name__=='__main__':
         motion = yf.readBvhFile(bvhFilePath)
         skeleton = motion[0].skeleton
 
-        print 'getAllParentIndexes'
+        print('getAllParentIndexes')
         masks = getAllParentIndexes(skeleton)
-        print masks
+        print(masks)
         for i in range(len(masks)):
-            print 'parents of', skeleton.getElementName(i), ':',
+            print('parents of', skeleton.getElementName(i), ':')
             for parent in masks[i]:
-                print skeleton.getElementName(parent),
-            print
-        print
+                print(skeleton.getElementName(parent))
+            print()
+        print()
 
-        print 'getAllParentJointIndexes'
+        print('getAllParentJointIndexes')
         masks = getAllParentJointIndexes(skeleton)
-        print masks
+        print(masks)
         for i in range(len(masks)):
-            print 'parents of', skeleton.getJointName(i), ':',
+            print('parents of', skeleton.getJointName(i), ':')
             for parent in masks[i]:
-                print skeleton.getJointName(parent),
-            print
-        print
+                print(skeleton.getJointName(parent))
+            print()
+        print()
 
 
     pass

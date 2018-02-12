@@ -19,9 +19,10 @@ from PyCommon.modules.Mesh import ysMesh as yms
 # import Motion.ysMotion as ym
 # import Mesh.ysMesh as yms
 
+# for hinting
 # from PyCommon.modules.pyVirtualPhysics import *
 # from PyCommon.modules.Simulator import csVpUtil as cvu
-from PyCommon.modules.Simulator import csDartModel as cdm
+# from PyCommon.modules.Simulator import csDartModel as cdm
 import PyCommon.modules.pydart2 as pydart
 
 # RendererContext

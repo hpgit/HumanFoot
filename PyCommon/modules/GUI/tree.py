@@ -484,37 +484,37 @@ def demo():
         """
         def on_select(self, node):
             
-            print "on_select: node=%s" % node.title
+            print("on_select: node=%s" % node.title)
         
-    print "creating window"
+    print("creating window")
     win = fltk.Fl_Window(xWin, yWin, wWin, hWin, "Fl_Tree demo")
 
-    print "adding tree"
+    print("adding tree")
     tree = MyTree(xTree, yTree, wTree, hTree, "something")
     tree.align(fltk.FL_ALIGN_TOP)
 
     def on_promote(ev):
         node = tree.valuenode()
         if node:
-            print "promote: %s" % node.title
+            print("promote: %s" % node.title)
             node.promote()
 
     def on_demote(ev):
         node = tree.valuenode()
         if node:
-            print "demote: %s" % node.title
+            print("demote: %s" % node.title)
             node.demote()
 
     def on_moveup(ev):
         node = tree.valuenode()
         if node:
-            print "moveup: %s" % node.title
+            print("moveup: %s" % node.title)
             node.moveup()
 
     def on_movedown(ev):
         node = tree.valuenode()
         if node:
-            print "movedown: %s" % node.title
+            print("movedown: %s" % node.title)
             node.movedown()
 
     but_promote = fltk.Fl_Button(xButs, 20, 20, 20, "@<-")
@@ -530,10 +530,10 @@ def demo():
     but_movedown.callback(on_movedown)
 
 
-    print "ending window"
+    print("ending window")
     win.end()
 
-    print "showing window"
+    print("showing window")
     win.show()
 
     # add stuff to root node
@@ -548,7 +548,7 @@ def demo():
                             subnode.append("item-%s%s%s" % (i,j,k))
 
     
-    print "entering main loop"
+    print("entering main loop")
     fltk.Fl.run()
 
 if __name__ == '__main__':

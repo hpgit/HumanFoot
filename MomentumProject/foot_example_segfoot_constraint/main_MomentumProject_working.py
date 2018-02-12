@@ -137,16 +137,16 @@ def main():
 
     # optimization
     problem = yac.LSE(totalDOF, 12)
-    #a_sup = (0,0,0, 0,0,0) #ori
-    #a_sup = (0,0,0, 0,0,0) #L
+    # a_sup = (0,0,0, 0,0,0) #ori
+    # a_sup = (0,0,0, 0,0,0) #L
     a_supL = (0,0,0, 0,0,0)
     a_supR = (0,0,0, 0,0,0)
     a_sup_2 = (0,0,0, 0,0,0, 0,0,0, 0,0,0)
     CP_old = [mm.v3(0.,0.,0.)]
 
     # penalty method
-    bodyIDsToCheck = range(vpWorld.getBodyNum())
-    #mus = [1.]*len(bodyIDsToCheck)
+    bodyIDsToCheck = list(range(vpWorld.getBodyNum()))
+    # mus = [1.]*len(bodyIDsToCheck)
     mus = [.5]*len(bodyIDsToCheck)
 
     # flat data structure

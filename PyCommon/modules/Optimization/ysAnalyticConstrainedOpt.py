@@ -22,12 +22,12 @@ class LSE:
     # C: matrix, d: vector
     def addObjective_matrix(self, Ci, di, w=1.): 
         if Ci.shape[1]!=self.varNum:
-            print 'varNum mismatched 1'
+            print('varNum mismatched 1')
             print("Ci.shape[1]", Ci.shape[1])
             print("self.varNum", self.varNum)
             return
         if Ci.shape[0]!=len(di):
-            print 'Ci & di mismatched'
+            print('Ci & di mismatched')
             return
         self.Cs.append(w*Ci)
         self.ds.append(w*di)
@@ -119,7 +119,7 @@ class LSE:
         #x_large = npl.solve(A_large, b_large)
         x_large = npl.lstsq(A_large, b_large, rcond=None)
         if np.isnan(x_large[0][0]):
-            print 'nan!!'
+            print('nan!!')
             x_large = npl.lstsq(A11, b1)
         #x_large = npl.lstsq(A11, b1)
         
@@ -183,7 +183,7 @@ class LSE:
         try:
             x_large = npl.solve(A_large, b_large)
         except:
-            print "exception!"
+            print("exception!")
             x_large = npl.lstsq(A_large, b_large)
         
         result = {}
@@ -292,7 +292,7 @@ if __name__ == '__main__':
         p.addObjective_matrix(np.eye(3), np.zeros(3))
         p.setConstraint_matrix(np.array([[1,1,1]]), [1])
         r = p.solve()
-        print r 
+        print(r )
         
         #    subject to :    x + y = 1
         #                    y + z = 1
@@ -303,7 +303,7 @@ if __name__ == '__main__':
                                          [0,1,1],
                                          [1,0,1]]), [1,1,1])
         r = p.solve()
-        print r 
+        print(r )
         
         #    subject to :    x + y = 1
         #                    y + z = 1
@@ -312,7 +312,7 @@ if __name__ == '__main__':
         p.setConstraint_matrix(np.array([[1,1,0],
                                          [0,1,1]]), [1,1])
         r = p.solve()
-        print r 
+        print(r )
     
         
     test_LSE()

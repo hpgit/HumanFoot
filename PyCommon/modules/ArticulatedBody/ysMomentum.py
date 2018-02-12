@@ -128,10 +128,10 @@ if __name__=='__main__':
         TO = make_TO(linkMasses)
         dTO = make_dTO(len(linkMasses))
         if VERBOSE:
-            print 'TO'
-            print TO
-            print 'dTO'
-            print dTO
+            print('TO')
+            print(TO)
+            print('dTO')
+            print(dTO)
     
         viewer = ysv.SimpleViewer()
         viewer.record(False)
@@ -150,10 +150,10 @@ if __name__=='__main__':
             dP = getPureInertiaMatrixDerivative(dTO, linkMasses, linkVelocities, dCM, controlModel.getBodyAngVelocitiesGlobal(), inertias)
             
             if VERBOSE:
-                print 'P'
-                print P
-                print 'dP'
-                print dP
+                print('P')
+                print(P)
+                print('dP')
+                print(dP)
 
             for i in range(stepsPerFrame):
                 vpWorld.step()

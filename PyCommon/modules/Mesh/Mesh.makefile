@@ -1,5 +1,5 @@
 UNAME := $(shell uname -s)
-PYVER := $(shell python -V | sed "s/Python \([0-9]*\).\([0-9]*\).\([0-9]*\)/\1.\2/")
+PYVER := $(shell python -V 2>&1 | sed "s/Python \([0-9]*\).\([0-9]*\).\([0-9]*\)/\1.\2/")
 ifeq ($(UNAME), Darwin)
 	MACVER := $(shell sw_vers -productVersion | sed "s:.[[:digit:]]*.$$::g")
 	FOLDER := lib.macosx-$(MACVER)-x86_64-$(PYVER)

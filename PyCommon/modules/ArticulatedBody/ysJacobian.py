@@ -28,7 +28,7 @@ def makeEmptyJacobian(jointDOFs, effectorNum, applyOrientation=True):
 
 def computeLocalRootJacobian(J, jointDOFs, jointPositions, jointAxeses, effectorPositions, effectorJointMasks=None, linearFirst=True):
     rowNum, colNum = J.shape
-    dof_per_effector = rowNum / len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
+    dof_per_effector = rowNum // len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
 
     for e in range(len(effectorPositions)):
         col = 0
@@ -86,7 +86,7 @@ def computeLocalRootJacobian(J, jointDOFs, jointPositions, jointAxeses, effector
 # (jointDOFs[0]==6) means joint[0] is 6DOF floating joint, jointAxeses[0] should be [(1,0,0), (0,1,0), (0,0,1), R^t[0], R^t[1], R^t[2]]
 def computeJacobian2(J, jointDOFs, jointPositions, jointAxeses, effectorPositions, effectorJointMasks=None, linearFirst=True):
     rowNum, colNum = J.shape
-    dof_per_effector = rowNum / len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
+    dof_per_effector = rowNum // len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
 
     for e in range(len(effectorPositions)):
         col = 0
@@ -135,7 +135,7 @@ def computeJacobian2(J, jointDOFs, jointPositions, jointAxeses, effectorPosition
 # jointDOFs[0] = 6 means joint[0] is 6DOF floating joint, jointAxeses[0] should be [(1,0,0), (0,1,0), (0,0,1), R^t[0], R^t[1], R^t[2]]
 def computeJacobianDerivative2(dJ, jointDOFs, jointPositions, jointAxeses, linkAngVels, effectorPositions, effectorJointMasks, internalJointsOnly=False, linearFirst=True):
     rowNum, colNum = dJ.shape
-    dof_per_effector = rowNum / len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
+    dof_per_effector = rowNum // len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
     
     for e in range(len(effectorPositions)):
         col = 0
@@ -216,7 +216,7 @@ def get_dP_effector_from_joint2(jointIndex, jointPositions, linkAngVels, effecto
 #     effectorJointMasks == [[1,0,0], [1,1,0]] : 1st effector affected by only 1st joint, 2nd effector affected by 1st & 2nd joints 
 def computeJacobian(J, jointPositions, jointAxes, effectorPositions, effectorJointMasks=None, linearFirst=True):
     rowNum, colNum = J.shape
-    dof_per_effector = rowNum / len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
+    dof_per_effector = rowNum // len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
     
     for j in range(colNum):
         instanteneousAngVelocity_for_j_th_joint = jointAxes[j]
@@ -253,7 +253,7 @@ def computeJacobian(J, jointPositions, jointAxes, effectorPositions, effectorJoi
 # internalJointsOnly = True : link[0](root) - joint[0] - link[1] - joint[1] - ... - joint[n-2] - link[n-1]
 def computeJacobianDerivative(dJ, jointPositions, jointAxes, linkAngVels, effectorPositions, effectorJointMasks, internalJointsOnly=False, linearFirst=True):
     rowNum, colNum = dJ.shape
-    dof_per_effector = rowNum / len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
+    dof_per_effector = rowNum // len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
     
     for j in range(colNum):
         if not internalJointsOnly:
@@ -400,7 +400,7 @@ def getAllLinkInternalJointMasks(skeleton):
     
 def computeAngJacobian2(J, jointDOFs, jointPositions, jointAxeses, effectorPositions, effectorJointMasks=None, linearFirst=True):
     rowNum, colNum = J.shape
-    dof_per_effector = rowNum / len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
+    dof_per_effector = rowNum // len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
 
     for e in range(len(effectorPositions)):
         col = 0
@@ -441,7 +441,7 @@ def computeAngJacobian2(J, jointDOFs, jointPositions, jointAxeses, effectorPosit
 
 def computeAngJacobianDerivative2(dJ, jointDOFs, jointPositions, jointAxeses, linkAngVels, effectorPositions, effectorJointMasks, internalJointsOnly=False, linearFirst=True):
     rowNum, colNum = dJ.shape
-    dof_per_effector = rowNum / len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
+    dof_per_effector = rowNum // len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
     
     for e in range(len(effectorPositions)):
         col = 0
@@ -490,7 +490,7 @@ def computeAngJacobianDerivative2(dJ, jointDOFs, jointPositions, jointAxeses, li
 
 def computePartialJacobian2(J, jointDOFs, jointPositions, jointAxeses, effectorPositions, effectorJointMasks=None, partialDOFIndex = [0,0], linearFirst=True):
     rowNum, colNum = J.shape
-    dof_per_effector = rowNum / len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
+    dof_per_effector = rowNum // len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
 
     for e in range(len(effectorPositions)):
         col = 0
@@ -530,7 +530,7 @@ def computePartialJacobian2(J, jointDOFs, jointPositions, jointAxeses, effectorP
                     
 def computePartialJacobianDerivative2(dJ, jointDOFs, jointPositions, jointAxeses, linkAngVels, effectorPositions, effectorJointMasks, internalJointsOnly=False, partialDOFIndex = [0,0], linearFirst=True):
     rowNum, colNum = dJ.shape
-    dof_per_effector = rowNum / len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
+    dof_per_effector = rowNum // len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
     
     for e in range(len(effectorPositions)):
         col = 0
@@ -590,7 +590,7 @@ def computePartialJacobianDerivative2(dJ, jointDOFs, jointPositions, jointAxeses
 #     effectorJointMasks == [[1,0,0], [1,1,0]] : 1st effector affected by only 1st joint, 2nd effector affected by 1st & 2nd joints
 def computeControlModelJacobian(J, jointDOFs, jointPositions, jointAxeses, effectorPositions, effectorJointMasks, internalJointsOnly=False, partialDOFIndex = [0,0], linearFirst=True):
     rowNum, colNum = J.shape
-    dof_per_effector = rowNum / len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
+    dof_per_effector = rowNum // len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
 
     for e in range(len(effectorPositions)):
         col = 0
@@ -704,15 +704,15 @@ if __name__=='__main__':
             
             iterNum += 1
             if iterNum > iterationLimit:
-                print 'iter'
-                break;
+                print('iter')
+                break
             
             positionDiff = 0.
             for i in range(len(targetPositions)):
                 positionDiff += mm.length(targetPositions[i] - inoutPosture.getPosition( effectorIndex) )
             if positionDiff < positionThreshold:
-                print 'converge'
-                break;
+                print('converge')
+                break
             
     def applyThetas(inoutPosture, axes, deltaThetas):
         if COMPUTE_JACOBIAN2:
@@ -745,7 +745,7 @@ if __name__=='__main__':
 #        bvhFilePath = '../samples/chain_10.bvh'
         bvhFilePath = '../samples/chain_6.bvh'
         motion = yf.readBvhFile(bvhFilePath)
-        print motion[0].skeleton
+        print(motion[0].skeleton)
         
         origPosture = ym.Motion([motion[0]])
         skeleton = motion[0].skeleton
@@ -805,7 +805,7 @@ if __name__=='__main__':
 #        bvhFilePath = '../samples/chain_3_rotate_freely_move.bvh'
         motion = yf.readBvhFile(bvhFilePath)
         skeleton = motion[0].skeleton
-        print skeleton
+        print(skeleton)
         
         internalJointsOnly = False
 #        internalJointsOnly = True
@@ -941,7 +941,7 @@ if __name__=='__main__':
         bvhFilePath = '../samples/chain_3_rotate_freely_move.bvh'
         motion = yf.readBvhFile(bvhFilePath)
         skeleton = motion[0].skeleton
-        print skeleton
+        print(skeleton)
         
         DOFs = skeleton.getDOFs()
         totalDOF = skeleton.getTotalDOF()
@@ -1083,8 +1083,8 @@ if __name__=='__main__':
         jointDOFs = [3]
         effectorJointMasks = [[0],[0],[1]]
         repeatedEffectorJointMasks = getRepeatedEffectorJointMasks(jointDOFs, effectorJointMasks)
-        print repeatedEffectorJointMasks
-        print
+        print(repeatedEffectorJointMasks)
+        print()
         
 #        bvhFilePath = '../samples/chain_2_rotate.bvh'
 #        bvhFilePath = '../samples/chain_3_rotate.bvh'
@@ -1093,75 +1093,75 @@ if __name__=='__main__':
         bvhFilePath = '../samples/wd2_WalkSameSame00.bvh'
         motion = yf.readBvhFile(bvhFilePath)
         skeleton = motion[0].skeleton
-        print skeleton
-        print
+        print(skeleton)
+        print()
         
-        print 'getAllParentIndexes'
+        print('getAllParentIndexes')
         indexes = ymu.getAllParentIndexes(skeleton)
-        print indexes
+        print(indexes)
         
         for i in range(len(indexes)):
-            print 'parents of', skeleton.getElementName(i), ':',
+            print('parents of', skeleton.getElementName(i), ':')
             for parent in indexes[i]:
-                print skeleton.getElementName(parent),
-            print
-        print
+                print(skeleton.getElementName(parent))
+            print()
+        print()
             
-        print 'getAllLinkJointMasks'
+        print('getAllLinkJointMasks')
         masks = getAllLinkJointMasks(skeleton)
-        print masks
+        print(masks)
         for i in range(len(masks)):
-            print 'affecting joint of', skeleton.getJointName(i), ':',
+            print('affecting joint of', skeleton.getJointName(i), ':')
             for j in range(len(masks[i])):
                 if masks[i][j]:
-                    print skeleton.getJointName(j),
-            print
-        print
+                    print(skeleton.getJointName(j))
+            print()
+        print()
         
-        print 'getAllLinkInternalJointMasks'
+        print('getAllLinkInternalJointMasks')
         masks = getAllLinkInternalJointMasks(skeleton)
-        print masks
+        print(masks)
         for i in range(len(masks)):
-            print 'affecting joint of', skeleton.getJointName(i), ':',
+            print('affecting joint of', skeleton.getJointName(i), ':')
             for j in range(len(masks[i])):
                 if masks[i][j]:
-                    print skeleton.getInternalJointName(j),
-            print
-        print
+                    print(skeleton.getInternalJointName(j))
+            print()
+        print()
 
 
         jointIndex = 10
         
-        print 'getLinkJointMask'
+        print('getLinkJointMask')
         masks2 = getLinkJointMask(skeleton, jointIndex)
-        print masks2
-        print 'affecting joint of', skeleton.getJointName(jointIndex), ':',
+        print(masks2)
+        print('affecting joint of', skeleton.getJointName(jointIndex), ':')
         for j in range(len(masks2)):
             if masks2[j]:
-                print skeleton.getJointName(j),
-        print
-        print 'jointMask_2_jointIndexesDownward'
+                print(skeleton.getJointName(j))
+        print()
+        print('jointMask_2_jointIndexesDownward')
         indexes = jointMask_2_jointIndexesDownward(masks2, None) 
-        print indexes
+        print(indexes)
         for i in indexes:
-            print skeleton.getJointName(i),
-        print
-        print
+            print(skeleton.getJointName(i))
+        print()
+        print()
 
-        print 'getLinkInternalJointMask'
+        print('getLinkInternalJointMask')
         masks2 = getLinkInternalJointMask(skeleton, jointIndex)
-        print masks2
-        print 'affecting joint of', skeleton.getJointName(jointIndex), ':',
+        print(masks2)
+        print('affecting joint of', skeleton.getJointName(jointIndex), ':')
         for j in range(len(masks2)):
             if masks2[j]:
-                print skeleton.getInternalJointName(j),
-        print
-        print 'jointMask_2_jointIndexesDownward'
+                print(skeleton.getInternalJointName(j))
+        print()
+        print('jointMask_2_jointIndexesDownward')
         indexes = jointMask_2_jointIndexesDownward(masks2, None) 
-        print indexes
+        print(indexes)
         for i in indexes:
-            print skeleton.getInternalJointName(i),
-        print
+            print(skeleton.getInternalJointName(i))
+        print()
 
         
     def test_get_dP_effector_from_joint():
@@ -1173,7 +1173,7 @@ if __name__=='__main__':
 #        bvhFilePath = '../samples/chain_6_rotate_expt_root.bvh'
         motion = yf.readBvhFile(bvhFilePath)
         skeleton = motion[0].skeleton
-        print skeleton
+        print(skeleton)
         
 #        internalJointsOnly = True
         internalJointsOnly = False
@@ -1219,7 +1219,7 @@ if __name__=='__main__':
 
             if MODE==0:
                 dp = get_dP_effector_from_joint2(joint, jointPositions, linkAngVelocities, linkJointMasks[effector], linkPositions[effector], internalJointsOnly)
-                print joint, dp
+                print(joint, dp)
             elif MODE==1:
                 joint_ext = joint*3
                 
@@ -1229,7 +1229,7 @@ if __name__=='__main__':
                 ype.repeatListElements(linkAngVelocities, linkAngVelocities_ext, [3]*skeleton.getLinkNum())
 
                 dp = get_dP_effector_from_joint(joint_ext, jointPositions_ext, linkAngVelocities_ext, linkJointMasks[effector], linkPositions[effector], internalJointsOnly)
-                print joint_ext, dp
+                print(joint_ext, dp)
             
             
             p[:] = [jointPositions[joint]]
@@ -1271,7 +1271,7 @@ if __name__=='__main__':
         vpWorld = cvw.VpWorld(wcfg)
         cchar = cvm.VpControlModel(vpWorld, motion[0], mcfg)
         vpWorld.initialize()
-        print cchar
+        print(cchar)
     
         DOFs = cchar.getDOFs()
         totalDOF = cchar.getTotalDOF()
@@ -1406,7 +1406,7 @@ if __name__=='__main__':
         vpWorld = cvw.VpWorld(wcfg)
         cchar = cvm.VpControlModel(vpWorld, motion[0], mcfg)
         vpWorld.initialize()
-        print cchar
+        print(cchar)
     
         DOFs = cchar.getDOFs()
         totalDOF = cchar.getTotalDOF()

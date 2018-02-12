@@ -1,7 +1,12 @@
 from . import ysSimpleViewer_ori as ysvOri
 from ..GUI import ysBaseUI as ybu
 import fltk
-import cPickle
+try:
+    # for python3
+    import _pickle as cPickle
+except:
+    # for python2.7
+    import cPickle
 import OpenGL.GL as gl
 from PIL import Image as im
 import numpy as np
@@ -131,8 +136,8 @@ class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
     def getVal(self, name):
         try:
             return self.valObjects[name].value()
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
             return 0
 
     def getNameAndVals(self):
@@ -192,7 +197,7 @@ class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
         pass
 
     def save(self, obj):
-        f = file(self.viewer.title+'.param', 'w')
+        f = open(self.viewer.title+'.param', 'wb')
         cPickle.dump(self.getNameAndVals(), f)
         f.close()
 
@@ -203,7 +208,7 @@ class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
             fltk.Fl.wait()
         if filefile.count() == 1:
             # f = file(self.viewer.title+'param', 'r')
-            f = file(filefile.value(), 'r')
+            f = open(filefile.value(), 'rb')
             objVals = cPickle.load(f)
             f.close()
             for k, v in objVals.iteritems():
@@ -267,10 +272,8 @@ class hpContactForceGraphWnd(fltk.Fl_Widget, ybu.Observer):
             self.data[dataIdx][valIdx] = val
             self.redraw()
         except ValueError:
-            print "error"
+            print("error")
             pass
-
-
 
     def draw(self):
         fltk.fl_draw_box(fltk.FL_FLAT_BOX, 40+self.x(), self.y(), self.w()-40, self.h(), fltk.fl_rgb_color(192, 192, 192))
@@ -284,9 +287,8 @@ class hpContactForceGraphWnd(fltk.Fl_Widget, ybu.Observer):
                     fltk.fl_line(40+self.x()+int(ratio * (valIdx-1)), int(self.y()+self.h() - self.data[dataIdx][valIdx-1]*dataRatio)-3,
                                  40+self.x()+int(ratio * valIdx), int(self.y()+self.h() - self.data[dataIdx][valIdx]*dataRatio)-3)
 
-
         frame = self.viewer.getCurrentFrame()
-        if frame >-1:
+        if frame > -1:
             fltk.fl_color(fltk.FL_BLUE)
             fltk.fl_line(40+self.x()+int(ratio * frame), int(self.y()+self.h())-3,
                          40+self.x()+int(ratio * frame), int(self.y()-3))

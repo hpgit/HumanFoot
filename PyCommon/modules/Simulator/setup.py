@@ -50,7 +50,7 @@ m.sources.append('myGeom.cpp')
 modules.append(m)
 
 m = setupmodule('csVpWorld')
-m.libraries = [boost_lib, 'boost_numpy', 'vpLib', ompLib]
+m.libraries = [boost_lib, numpy_lib, 'vpLib', ompLib]
 if isMAC and isOMP:
     m.extra_compile_args=['-fopenmp', '-D __APPLE_OMP__']
 elif isOMP:

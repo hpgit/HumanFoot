@@ -177,6 +177,7 @@ class Motion():
         p0 = positionFunc(index, frame0)
         p1 = positionFunc(index, frame1)
         return (self.fps/(frame1-frame0)) * subFunc(p1, p0)
+
     def _getDerivatives(self, frame0, frame1, positionsFunc, subFunc):
         if frame0 == frame1 or len(self)==1:
             return [mm.O_Vec3()]*self[0].skeleton.getElementNum()
@@ -185,10 +186,11 @@ class Motion():
             frame0, frame1 = self.getFiniteDifferenceFrames(frame0)
         positions0 = positionsFunc(frame0)
         positions1 = positionsFunc(frame1)
-        return map(lambda p0,p1: (self.fps/(frame1-frame0)) * subFunc(p1, p0), positions0, positions1)
+        return list(map(lambda p0, p1: (self.fps/(frame1-frame0)) * subFunc(p1, p0), positions0, positions1))
 
     def goToFrame(self, frame):
-        if frame > -1 and frame < len(self):
+        # if frame > -1 and frame < len(self):
+        if -1 < frame < len(self):
             self.frame = frame
 
     def translateByOffset(self, offset, update=True):
@@ -228,29 +230,34 @@ class Skeleton:
 #        s += self.elementNames.__str__() + '\n'
         s += '<ELEMENTS>\n'
         for i in range(len(self.elementNames)):
-            s += '[%d]:\'%s\', '%(i, self.elementNames[i])
+            s += '[%d]:\'%s\', ' % (i, self.elementNames[i])
         s += '\n'
         return s
+
     def addElement(self, element, name):
         self.elements.append(element)
-        if name!=None:
+        if name is not None:
             self.elementNames.append(name)
             self.reverseElementNames[name] = len(self.elementNames)-1
         
     def getElement(self, index):
         return self.elements[index]
+
     def getElementNum(self):
         return len(self.elements)
+
     def getElementName(self, index):
         if index < len(self.elementNames):
             return self.elementNames[index]
         else:
             return None
+
     def getElementIndex(self, name):
         if name in self.reverseElementNames:
             return self.reverseElementNames[name]
         else:
             return None
+
     def removeElement(self, index):
         del self.elements[index:index+1]
         del self.elementNames[index:index+1]
@@ -389,7 +396,7 @@ class JointMotion(Motion):
     # [lv_g[0]<hmerge>av_l[0], av_l[1], av_l[2], ... av_l[n-1]]
     def getDOFVelocities(self, frame):
 #        return [np.concatenate( (self.getJointVelocityGlobal(0, frame), self.getJointAngVelocityGlobal(0, frame)) )]\
-#                + self.getInternalJointAngVelocitiesLocal(frame) 
+#                + self.getInternalJointAngVelocitiesLocal(frame)
         return [np.concatenate( (self.getJointVelocityGlobal(0, frame), self.getJointAngVelocityLocal(0, frame)) )]\
                 + self.getInternalJointAngVelocitiesLocal(frame)
                 
