@@ -404,6 +404,7 @@ def main():
         #                motion[0].skeleton.getJointIndex('RightFoot_foot_0_0')]
         # contact_ids = [motion[0].skeleton.getJointIndex('RightFoot_foot_0_0')]
         contact_ids = [motion[0].skeleton.getJointIndex('LeftFoot_foot_0_0')]
+        # contact_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_1_0'))
         # contact_ids = [motion[0].skeleton.getJointIndex('LeftFoot_foot_0_0'),
         #                motion[0].skeleton.getJointIndex('LeftFoot_foot_0_0_0'),
         #                motion[0].skeleton.getJointIndex('LeftFoot_foot_0_1_0'),
