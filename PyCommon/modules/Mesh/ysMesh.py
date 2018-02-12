@@ -189,16 +189,16 @@ if __name__=='__main__':
     def test_Mesh():
         meshFilePath = '../samples/physics2_woody_binding1.mesh.xml'
         mesh = yol.readOgreMeshFileAsMesh(meshFilePath)
-        print mesh
+        print(mesh)
         
     def test_submesh():
         meshFilePath = '../samples/woody2_4.mesh.xml'
         mesh = yol.readOgreMeshFileAsMesh(meshFilePath, .01)
-        print mesh
+        print(mesh)
         
-        print mesh.getSubmeshFaceIndices('woody2_14_FOOT1')
-        print mesh.getSubmeshVertexIndices('woody2_14_FOOT1')
-        print mesh.getSubmeshVertexPositions('woody2_14_FOOT1')
+        print(mesh.getSubmeshFaceIndices('woody2_14_FOOT1'))
+        print(mesh.getSubmeshVertexIndices('woody2_14_FOOT1'))
+        print(mesh.getSubmeshVertexPositions('woody2_14_FOOT1'))
         positions = mesh.getSubmeshVertexPositions('woody2_14_FOOT1')
         
         viewer = ysv.SimpleViewer()

@@ -62,23 +62,23 @@ def format_seq(seq, singleLine=False):
 
 def print_seq(seq, singleLine=False):
     if singleLine:
-        print '[',
+        print('[')
         for i in range(len(seq)):
-            print seq[i],
-        print ']'
+            print(seq[i])
+        print(']')
     else:
         for i in range(len(seq)):
-            print '[%d]'%i, seq[i]
+            print('[%d]'%i, seq[i])
             
 def print_dict(dic, singleLine=False):
     if singleLine:
-        print '{',
+        print('{')
         for key, value in dic.items():
-            print '%s'%repr(key), ':', value, ',' ,
-        print '}'
+            print('%s'%repr(key), ':', value, ',')
+        print('}')
     else:
         for key, value in dic.items():
-            print '[%s]'%repr(key), value
+            print('[%s]'%repr(key), value)
             
 def updateObject(object, otherObject):
     object.__dict__ = otherObject.__dict__
@@ -148,25 +148,25 @@ if __name__ == "__main__" :
     import operator as op
 
     def test_getLogTimeString():
-        print getLogTimeString()
+        print(getLogTimeString())
 
     def test_frange():
         for i in frange(1.2, 5, 1.):
-            print i
+            print(i)
 
     def test_mrange():
         for i in mrange([2,2,1,2]):
-            print i
+            print(i)
 
         #So the rather horrid
         for i in range(1):
             for j in range(2):
                 for k in range(3):
                     for l in range(4):
-                        print i, j, k, l
+                        print(i, j, k, l)
         #reduces to
         for i, j, k, l in mrange([1,2,3,4]):
-            print i, j, k, l
+            print(i, j, k, l)
 
     class A:
         def __init__(self, name):
@@ -178,7 +178,7 @@ if __name__ == "__main__" :
         ls = []
         for i in range(10):
             ls.append(A('name_%s'%str(i)))
-        print ls
+        print(ls)
         print_seq(ls)
 
     def test_print_dict():
@@ -186,15 +186,15 @@ if __name__ == "__main__" :
         for i in range(10):
             dic[str(i)] = A('name_%s'%str(i))
         #            dic[i] = A('name_%s'%str(i))
-        print dic
+        print(dic)
         print_dict(dic)
 
     def test_updateObject():
         a = A('a')
         b = A('b')
-        print a, b
+        print(a, b)
         updateObject(a, b)
-        print a, b
+        print(a, b)
 
     def test_map():
         def AND_list(ls1, ls2):
@@ -208,24 +208,24 @@ if __name__ == "__main__" :
         ls0 = [1,0,1]
         ls1 = [1,1,0]
 
-        print 'list'
-        print map(lambda x, y: x and y, ls0, ls1)
-        print map(op.and_, ls0, ls1)
-        print AND_list(ls0, ls1)
-        print
+        print('list')
+        print(map(lambda x, y: x and y, ls0, ls1))
+        print(map(op.and_, ls0, ls1))
+        print(AND_list(ls0, ls1))
+        print()
 
         dic1 = {0:0, 1:1, 2:2}
         dic2 = {1:1, 2:2, 0:0}
         dic3 = {2:2, 0:0, 'a':4, 1:1}
         del dic3['a']
 
-        print 'dict'
-        print 'dic1', dic1
-        print 'dic2', dic2
-        print 'dic3', dic3
-        print map(lambda x, y: x + y, dic1.values(), dic2.values())
-        print map(lambda x, y: x + y, dic1.values(), dic3.values())
-        print map_dict(lambda x, y: x + y, dic1, dic3)
+        print('dict')
+        print('dic1', dic1)
+        print('dic2', dic2)
+        print('dic3', dic3)
+        print(map(lambda x, y: x + y, dic1.values(), dic2.values()))
+        print(map(lambda x, y: x + y, dic1.values(), dic3.values()))
+        print(map_dict(lambda x, y: x + y, dic1, dic3))
 
     def test_enum():
         class Event:
@@ -237,7 +237,7 @@ if __name__ == "__main__" :
 
             text = getReverseDict(locals())
 
-        print Event.text
+        print(Event.text)
 
     pass
     #    test_getLogTimeString()

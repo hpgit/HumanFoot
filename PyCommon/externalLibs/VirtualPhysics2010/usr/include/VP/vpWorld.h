@@ -143,7 +143,7 @@ public :
 	/*!
 		declare that collision of B0 and B1 will be ignored.
 	*/
-	void								 IgnoreCollision(vpBody *B0, vpBody *B1);
+	void								 IgnoreCollision(vpBody *b0, vpBody *b1);
 
 	/*!
 		get a simulation time.

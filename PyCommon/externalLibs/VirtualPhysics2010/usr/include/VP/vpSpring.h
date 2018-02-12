@@ -63,7 +63,7 @@ public:
 		\param p0 a position of the spring attached to B0. It is represented in a body fixed frame of B0.
 		\param p1 a position of the spring attached to B1. It is represented in a body fixed frame of B1.
 	*/
-	void				 Connect(vpBody *B0, vpBody *B1, const Vec3 &p0, const Vec3 &p1);
+	void				 Connect(vpBody *b0, vpBody *b1, const Vec3 &p0, const Vec3 &p1);
 
 	/*!
 		set an elasticity of the spring.

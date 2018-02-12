@@ -1,5 +1,6 @@
 from distutils.core import setup, Extension
 import sys
+py_major_ver = sys.version_info[0]
 
 
 class setupmodule:
@@ -17,6 +18,8 @@ class setupmodule:
 isMAC = False
 isOMP = True
 ompLib = 'gomp'
+boost_lib = 'boost_python'
+numpy_lib = 'boost_numpy'
 
 if '--with-mac-omp' in sys.argv:
     isMAC = True
@@ -29,10 +32,14 @@ elif '--with-mac' in sys.argv:
     idx = sys.argv.index('--with-mac')
     sys.argv.pop(idx)
 
+if py_major_ver == 3:
+    boost_lib = boost_lib + '3'
+    numpy_lib = numpy_lib + '3'
+
 modules = []
 
 m = setupmodule('csVpModel')
-m.libraries = ['boost_python', 'vpLib', ompLib]
+m.libraries = [boost_lib, numpy_lib, 'vpLib', ompLib]
 if isMAC and isOMP:
     m.extra_compile_args=['-fopenmp', '-D __APPLE_OMP__']
 elif isOMP:
@@ -43,7 +50,7 @@ m.sources.append('myGeom.cpp')
 modules.append(m)
 
 m = setupmodule('csVpWorld')
-m.libraries = ['boost_python', 'vpLib', ompLib]
+m.libraries = [boost_lib, 'boost_numpy', 'vpLib', ompLib]
 if isMAC and isOMP:
     m.extra_compile_args=['-fopenmp', '-D __APPLE_OMP__']
 elif isOMP:

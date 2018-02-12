@@ -1,5 +1,6 @@
 from distutils.core import setup, Extension
 import sys
+py_major_ver = sys.version_info[0]
 
 
 class setupmodule:
@@ -17,6 +18,7 @@ class setupmodule:
 isMAC = False
 isOMP = True
 ompLib = 'gomp'
+boost_lib = 'boost_python'
 
 if '--with-mac-omp' in sys.argv:
     isMAC = True
@@ -28,6 +30,9 @@ elif '--with-mac' in sys.argv:
     isOMP = False
     idx = sys.argv.index('--with-mac')
     sys.argv.pop(idx)
+
+if py_major_ver == 3:
+    boost_lib = boost_lib + '3'
 
 modules = []
 
@@ -65,9 +70,9 @@ modules = []
 
 m = setupmodule('csQPOASES')
 if isMAC:
-    m.libraries = ['boost_python', 'qpOASES', 'clapack', 'cblas', ompLib]
+    m.libraries = [boost_lib, 'qpOASES', 'clapack', 'cblas', ompLib]
 else:
-    m.libraries = ['boost_python', 'qpOASES', 'lapack', 'blas', ompLib]
+    m.libraries = [boost_lib, 'qpOASES', 'lapack', 'blas', ompLib]
 m.include_dirs.append('../usr/include/qpOASES')
 if isMAC and isOMP:
     m.extra_compile_args = ['-fopenmp', '-D __APPLE_OMP__']

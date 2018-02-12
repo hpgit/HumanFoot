@@ -1098,7 +1098,7 @@ class DartModel:
             pospos = Inv(self._boneTs[index]).GetPosition()
             self.setBodyAccelerationGlobal(index, pyVec3_2_Vec3(acc), pospos)
         else:
-            print "setJointAccelerationGlobal() : not completely implemented"
+            print("setJointAccelerationGlobal() : not completely implemented")
 
     def setJointAngAccelerationGlobal(self, index, angacc):
         self.setBodyAngAccelerationGlobal(index, angacc)
