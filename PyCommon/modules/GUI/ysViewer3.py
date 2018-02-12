@@ -1,11 +1,5 @@
 import math
 import numpy
-# try:
-#     # for python3
-#     import _pickle as cPickle
-# except:
-#     # for python2.7
-#     import cPickle
 
 from fltk import *
 #Fl.scheme('plastic')

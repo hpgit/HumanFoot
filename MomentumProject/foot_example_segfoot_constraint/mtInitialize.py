@@ -1,8 +1,8 @@
 import copy
 
 import sys
-#if '../PyCommon/modules' not in sys.path:
-#    sys.path.append('../PyCommon/modules')
+# if '../PyCommon/modules' not in sys.path:
+#     sys.path.append('../PyCommon/modules')
 if './modules' not in sys.path:
     sys.path.append('./modules')
 
@@ -15,6 +15,7 @@ import PyCommon.modules.Motion.ysMotion as ym
 
 import numpy as np
 import math
+
 
 def testtest():
     motionName = 'wd2_n_kick.bvh'

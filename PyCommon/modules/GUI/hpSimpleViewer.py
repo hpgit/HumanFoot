@@ -3,10 +3,10 @@ from ..GUI import ysBaseUI as ybu
 import fltk
 try:
     # for python3
-    import _pickle as cPickle
+    import pickle
 except:
     # for python2.7
-    import cPickle
+    import cPickle as pickle
 import OpenGL.GL as gl
 from PIL import Image as im
 import numpy as np
@@ -198,7 +198,7 @@ class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
 
     def save(self, obj):
         f = open(self.viewer.title+'.param', 'wb')
-        cPickle.dump(self.getNameAndVals(), f)
+        pickle.dump(self.getNameAndVals(), f)
         f.close()
 
     def load(self, obj):
@@ -209,7 +209,7 @@ class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
         if filefile.count() == 1:
             # f = file(self.viewer.title+'param', 'r')
             f = open(filefile.value(), 'rb')
-            objVals = cPickle.load(f)
+            objVals = pickle.load(f)
             f.close()
             for k, v in objVals.iteritems():
                 if k in self.valObjects.keys():

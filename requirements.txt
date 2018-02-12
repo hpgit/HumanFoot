@@ -6,7 +6,7 @@ PyOpenGL-accelerate
 cvxopt
 #pyode
 #openopt
-future
+#future
 pillow
 colorama
 cma

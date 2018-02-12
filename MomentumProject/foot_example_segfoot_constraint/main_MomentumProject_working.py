@@ -46,7 +46,7 @@ def main():
     np.set_printoptions(precision=4, linewidth=200)
 
     motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped()
-    #motion, mcfg, wcfg, stepsPerFrame, config = mit.create_jump_biped()
+    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_jump_biped()
 
     vpWorld = cvw.VpWorld(wcfg)
     motionModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)

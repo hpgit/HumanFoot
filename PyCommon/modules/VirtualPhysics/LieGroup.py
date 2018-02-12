@@ -170,7 +170,7 @@ class SE3(np.ndarray):
             self[1, 3] = vec3[1]
             self[2, 3] = vec3[2]
         else:
-            print "invalid SetPosition"
+            print("invalid SetPosition")
 
     def GetVec3(self):
         return Vec3(self[0:3, 3])

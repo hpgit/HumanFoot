@@ -1,9 +1,9 @@
 try:
     # for python3
-    import _pickle as cPickle
+    import pickle
 except:
     # for python2.7
-    import cPickle
+    import cPickle as pickle
 from fltk import *
 Fl.scheme('plastic')
 
@@ -35,12 +35,12 @@ class BaseSettings:
 
     def load(self, fileName):
         try:
-            self.__dict__.update(cPickle.load(open(fileName, 'rb')).__dict__)
+            self.__dict__.update(pickle.load(open(fileName, 'rb')).__dict__)
         except:
             pass
 
     def save(self, fileName):
-        cPickle.dump(self, open(fileName, 'wb'))
+        pickle.dump(self, open(fileName, 'wb'))
 
     def setToApp(self, window):
         window.position(self.x, self.y)

@@ -16,7 +16,6 @@
 # +-------------------------------------------------------------------------
 
 import math, numpy
-import cPickle
 
 from fltk import *
 #Fl.scheme('plastic')
@@ -1062,10 +1061,7 @@ class ControlPanel(Fl_Window):
       
         
 if __name__=='__main__':
-    import psyco
-    psyco.full()
-    import cPickle
-#    import OpenGL.trackball as ot    
+#    import OpenGL.trackball as ot
 
     def test_layout_ControlPanel():
         p = ControlPanel(100, 500, 800, 55, None)
