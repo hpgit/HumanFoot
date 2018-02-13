@@ -118,7 +118,7 @@ void VpWorld::setOpenMP()
 	//#pragma omp parallel
 	std::cout << "OpenMP versions: " << _OPENMP << std::endl;
 	std::cout << "OpenMP max threads: " << omp_get_max_threads() << std::endl;
-	numThreads = omp_get_max_threads()-1;
+	numThreads = omp_get_max_threads();
 	if (numThreads <= 0) numThreads = 1;
 	_world.SetNumThreads(numThreads);
 	std::cout << "csVpWorld: parallelized with " << numThreads << " cores" << std::endl;

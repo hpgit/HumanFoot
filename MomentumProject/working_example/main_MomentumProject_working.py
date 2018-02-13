@@ -116,7 +116,7 @@ def main():
     CP_old = [mm.v3(0.,0.,0.)]
 
     # penalty method
-    bodyIDsToCheck = range(vpWorld.getBodyNum())
+    bodyIDsToCheck = list(range(vpWorld.getBodyNum()))
     # mus = [1.]*len(bodyIDsToCheck)
     mus = [.5]*len(bodyIDsToCheck)
 

@@ -8,7 +8,6 @@ module_csVpRenderer = Extension('csVpRenderer',
 		library_dirs = ['../usr/lib'],
 		sources = ['csVpRenderer.cpp'])
 	
-print sys.argv
 setup (name = 'csVpRenderer',
 	version = '0.1',
 	description = 'csVpRenderer',

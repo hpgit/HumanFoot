@@ -23,7 +23,7 @@ from PyCommon.modules.Mesh import ysMesh as yms
 # from PyCommon.modules.pyVirtualPhysics import *
 # from PyCommon.modules.Simulator import csVpUtil as cvu
 # from PyCommon.modules.Simulator import csDartModel as cdm
-import PyCommon.modules.pydart2 as pydart
+# import PyCommon.modules.pydart2 as pydart
 
 # RendererContext
 NORMAL_FLAT = 0
@@ -1313,7 +1313,7 @@ class RenderContext:
         # gleSetNumSides(12)
 
     def drawCapsule(self, radius, length_z):
-        _SLICE_SIZE = 16
+        _SLICE_SIZE = 8
         glPushMatrix()
         glTranslatef(0., 0., -length_z/2.)
         gluSphere(self.quad2, radius, _SLICE_SIZE, _SLICE_SIZE)

@@ -22,7 +22,7 @@ boost_lib = 'boost_python'
 
 if '--with-mac-omp' in sys.argv:
     isMAC = True
-    ompLib = 'iomp5'
+    ompLib = 'omp'
     idx = sys.argv.index('--with-mac-omp')
     sys.argv.pop(idx)
 elif '--with-mac' in sys.argv:
@@ -39,7 +39,7 @@ modules = []
 m = setupmodule('csMetric')
 m.libraries = [boost_lib, 'vpLib', ompLib]
 if isMAC and isOMP:
-    m.extra_compile_args = ['-fopenmp', '-D __APPLE_OMP__']
+    m.extra_compile_args = ['-Xpreprocessor', '-fopenmp', '-D __APPLE_OMP__']
 elif isOMP:
     m.extra_compile_args = ['-fopenmp']
 else:

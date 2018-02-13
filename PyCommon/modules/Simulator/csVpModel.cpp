@@ -2325,6 +2325,11 @@ object VpControlModel::getBodyGravityForceLocal( int index )
 	return pyV;
 }
 
+object VpControlModel::computeJacobian2(int index, const object& positionGlobal)
+{
+	//TODO:
+}
+
 
 /////////////////////////////////////////
 // Additional

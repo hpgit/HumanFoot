@@ -26,6 +26,7 @@ public:
 		int dof_start_index;
 		bool use_joint;
 		unsigned char color[4];
+		std::vector<bool> is_ancestor;
 
 		Node(string name_):name(name_), use_joint(false)
 		{
@@ -172,6 +173,7 @@ public:	// expose to python
 class VpControlModel : public VpModel
 {
 public:
+	int m_total_dof;
 //	vector<int> _jointElementIndexes;
 
 	void ignoreCollisionBtwnBodies();
@@ -328,6 +330,10 @@ public:	// expose to python
 	object getBodyForceLocal( int index );
 	object getBodyNetForceLocal( int index );
 	object getBodyGravityForceLocal( int index );
+
+	/////////////////////////////////////////////////////////////////
+	// jacobian
+	object computeJacobian2(int index, const object& positionGlobal);
 
 	/////////////////////////////////////////
 	// Additional

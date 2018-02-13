@@ -1,6 +1,7 @@
 import numpy as np
 
 from ..Math import mmMath as mm
+from ..Math import csMath as cm
 from ..Motion import ysMotionUtil as ymu
 from ..Util import ysPythonEx as ype
 
@@ -97,13 +98,14 @@ def computeJacobian2(J, jointDOFs, jointPositions, jointAxeses, effectorPosition
             jointAxes_jth_joint = jointAxeses[j]
     
             for d in range(jointDOF_jth_joint):
-                if (effectorJointMasks==None or effectorJointMasks[e][j]):
+                if effectorJointMasks is None or effectorJointMasks[e][j]:
                     axis_colth_dof = jointAxes_jth_joint[d]
                     rotationalDOF = False if jointDOF_jth_joint==6 and d<3 else True
                     
                     if rotationalDOF:
                         instanteneousAngVelocity_colth_dof = axis_colth_dof 
-                        instanteneousVelocity_colth_dof = np.cross(axis_colth_dof, effectorPositions[e] - jointPosition_jth_joint)
+                        # instanteneousVelocity_colth_dof = np.cross(axis_colth_dof, effectorPositions[e] - jointPosition_jth_joint)
+                        instanteneousVelocity_colth_dof = cm.cross(axis_colth_dof, effectorPositions[e] - jointPosition_jth_joint)
                     else:   # translationalDOF
                         instanteneousAngVelocity_colth_dof = [0.,0.,0.] 
                         instanteneousVelocity_colth_dof = axis_colth_dof
@@ -157,14 +159,18 @@ def computeJacobianDerivative2(dJ, jointDOFs, jointPositions, jointAxeses, linkA
                     
                     if rotationalDOF:
                         # dZ(i) = w(i)<cross>Z(i)
-                        instanteneousAngAcceleration_colth_dof = np.cross(parentLinkAngVel_jth_joint, axis_colth_dof)
-                        
+                        # instanteneousAngAcceleration_colth_dof = np.cross(parentLinkAngVel_jth_joint, axis_colth_dof)
+                        instanteneousAngAcceleration_colth_dof = cm.cross(parentLinkAngVel_jth_joint, axis_colth_dof)
+
                         # Z(i)<cross>(<sum j=i to n>w(j+1)<cross>P(j+1, j)) + (w(i)<cross>Z(i))<cross>P(n+1, i)
-                        instanteneousAcceleration_colth_dof = np.cross(axis_colth_dof, get_dP_effector_from_joint2(j, jointPositions, linkAngVels, effectorJointMasks[e], effectorPositions[e], internalJointsOnly)) \
-                                                              + np.cross(np.cross(parentLinkAngVel_jth_joint, axis_colth_dof), effectorPositions[e]-jointPosition_jth_joint)
+                        # instanteneousAcceleration_colth_dof = np.cross(axis_colth_dof, get_dP_effector_from_joint2(j, jointPositions, linkAngVels, effectorJointMasks[e], effectorPositions[e], internalJointsOnly)) \
+                        #                                       + np.cross(np.cross(parentLinkAngVel_jth_joint, axis_colth_dof), effectorPositions[e]-jointPosition_jth_joint)
+                        instanteneousAcceleration_colth_dof = cm.cross(axis_colth_dof, get_dP_effector_from_joint2(j, jointPositions, linkAngVels, effectorJointMasks[e], effectorPositions[e], internalJointsOnly)) \
+                                                              + cm.cross(cm.cross(parentLinkAngVel_jth_joint, axis_colth_dof), effectorPositions[e]-jointPosition_jth_joint)
                     else:   # translationalDOF
                         instanteneousAngAcceleration_colth_dof = [0.,0.,0.] 
-                        instanteneousAcceleration_colth_dof = np.cross(parentLinkAngVel_jth_joint, axis_colth_dof)
+                        # instanteneousAcceleration_colth_dof = np.cross(parentLinkAngVel_jth_joint, axis_colth_dof)
+                        instanteneousAcceleration_colth_dof = cm.cross(parentLinkAngVel_jth_joint, axis_colth_dof)
                 else:
                     instanteneousAngAcceleration_colth_dof = [0.,0.,0.] 
                     instanteneousAcceleration_colth_dof = [0.,0.,0.]
@@ -196,9 +202,10 @@ def get_dP_effector_from_joint2(jointIndex, jointPositions, linkAngVels, effecto
         index = jointIndexes[i]
         jointPosition = jointPositions[index]
         childPosition = jointPositions[jointIndexes[i+1]] if i < len(jointIndexes)-1 else effectorPosition
-        linkAngVel = linkAngVels[index] if internalJointsOnly==False else linkAngVels[index+1]
-        dP += np.cross(linkAngVel, childPosition - jointPosition)
-    return dP 
+        linkAngVel = linkAngVels[index] if not internalJointsOnly else linkAngVels[index+1]
+        # dP += np.cross(linkAngVel, childPosition - jointPosition)
+        dP += cm.cross(linkAngVel, childPosition - jointPosition)
+    return dP
 
 
 #===============================================================================

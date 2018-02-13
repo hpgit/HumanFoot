@@ -19,3 +19,4 @@ object R2xyz_r(const object& pyR) { return R2euler(pyR, EulOrdXYZr); }
 object exp_py(const object& axis_angle_vec);
 object log_py(const object& rotation_mat);
 object slerp_py(const object& R1, const object& R2, scalar t);
+object cross_py(const object& vec1, const object& vec2);

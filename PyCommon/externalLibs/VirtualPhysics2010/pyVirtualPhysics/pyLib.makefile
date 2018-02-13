@@ -1,20 +1,11 @@
 UNAME := $(shell uname -s)
 ifeq ($(UNAME), Darwin)
-	MAC_OMP := $(shell clang-omp++ --version 2>/dev/null)
-ifdef MAC_OMP
-        CPP_COMPILER = clang-omp++
-        C_COMPILER = clang-omp++
-        PREPROCESSOR = -D __APPLE_OMP__ -fopenmp
-        CPP_LIB_OMP_FLAG = -liomp5
-        LIB_FLAG = -bundle
-else
+        PREPROCESSOR = -Xprocessor -fopenmp -D __APPLE_OMP__
+        CPP_LIB_OMP_FLAG = -lomp -fopenmp
         CPP_COMPILER = clang++
         C_COMPILER = clang++
         LIB_FLAG = -bundle
-endif
-endif
-
-ifeq ($(UNAME), Linux)
+else ifeq ($(UNAME), Linux)
         CPP_COMPILER = g++
         C_COMPILER = gcc
         PREPROCESSOR = -fopenmp
@@ -22,7 +13,7 @@ ifeq ($(UNAME), Linux)
         LIB_FLAG = -shared
         CPP_LIB_OMP_FLAG = -lgomp -fopenmp
 endif
-NUMPY_INC_DIR := $(shell python -c "import numpy;print numpy.get_include()")
+NUMPY_INC_DIR := $(shell python -c "import numpy;print(numpy.get_include())")
 
 .PHONY: Release
 Release:

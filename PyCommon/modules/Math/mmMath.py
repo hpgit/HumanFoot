@@ -308,6 +308,13 @@ def getAngleFromVectors(vec1, vec2):
     return math.acos(cos_angle)
 
 
+def cross(vec1, vec2):
+    return np.array([
+        vec1[1]*vec2[2] - vec1[2]*vec2[1],
+        vec1[2]*vec2[0] - vec1[0]*vec2[2],
+        vec1[0]*vec2[1] - vec1[1]*vec2[0]
+    ])
+
 # returns X that X dot vec1 = vec2
 def getSO3FromVectors(vec1, vec2):
     vec1 = normalize(vec1)

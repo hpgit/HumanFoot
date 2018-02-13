@@ -573,21 +573,27 @@ def main():
         yjc.computeJacobianDerivative2(dJsys, DOFs, jointPositions, jointAxeses, linkAngVelocities, linkPositions, allLinkJointMasks)
 
         JsupL, supLJointMasks = get_jacobianbase_and_masks(motion[0].skeleton, DOFs, supL)
-        yjc.computeJacobian2(JsupL, DOFs, jointPositions, jointAxeses, [footCenterL], supLJointMasks)
+        # yjc.computeJacobian2(JsupL, DOFs, jointPositions, jointAxeses, [footCenterL], supLJointMasks)
+        # yjc.computeJacobianDerivative2(dJsupL, DOFs, jointPositions, jointAxeses, linkAngVelocities, [footCenterL], supLJointMasks)
         # dJsupL = (JsupL - JsupPreL)/(1/30.)
         # JsupPreL = JsupL.copy()
-        yjc.computeJacobianDerivative2(dJsupL, DOFs, jointPositions, jointAxeses, linkAngVelocities, [footCenterL], supLJointMasks)
+        JsupL = Jsys[6*supL:6*supL + 6, :]
+        dJsupL = dJsys[6*supL:6*supL + 6, :]
 
         JsupR, supRJointMasks = get_jacobianbase_and_masks(motion[0].skeleton, DOFs, supR)
-        yjc.computeJacobian2(JsupR, DOFs, jointPositions, jointAxeses, [footCenterR], supRJointMasks)
+        # yjc.computeJacobian2(JsupR, DOFs, jointPositions, jointAxeses, [footCenterR], supRJointMasks)
+        # yjc.computeJacobianDerivative2(dJsupR, DOFs, jointPositions, jointAxeses, linkAngVelocities, [footCenterR], supRJointMasks)
         # dJsupR = (JsupR - JsupPreR)/(1/30.)
         # JsupPreR = JsupR.copy()
-        yjc.computeJacobianDerivative2(dJsupR, DOFs, jointPositions, jointAxeses, linkAngVelocities, [footCenterR], supRJointMasks)
+        JsupR = Jsys[6*supR:6*supR + 6, :]
+        dJsupR = dJsys[6*supR:6*supR + 6, :]
 
         for i in range(len(J_contacts)):
-            yjc.computeJacobian2(J_contacts[i], DOFs, jointPositions, jointAxeses, [contact_body_pos[i]], [joint_masks[i]])
-            yjc.computeJacobianDerivative2(
-                dJ_contacts[i], DOFs, jointPositions, jointAxeses, linkAngVelocities, [contact_body_pos[i]], [joint_masks[i]])
+            J_contacts[i] = Jsys[6*contact_ids[i]:6*contact_ids[i] + 6, :]
+            dJ_contacts[i] = dJsys[6*contact_ids[i]:6*contact_ids[i] + 6, :]
+            # yjc.computeJacobian2(J_contacts[i], DOFs, jointPositions, jointAxeses, [contact_body_pos[i]], [joint_masks[i]])
+            # yjc.computeJacobianDerivative2(
+            #     dJ_contacts[i], DOFs, jointPositions, jointAxeses, linkAngVelocities, [contact_body_pos[i]], [joint_masks[i]])
 
         # calculate footCenter
         footCenter = sum(contact_body_pos) / len(contact_body_pos)
@@ -787,6 +793,7 @@ def main():
 
     viewer.startTimer(1/30.)
     viewer.show()
+    viewer.play()
 
     Fl.run()
 

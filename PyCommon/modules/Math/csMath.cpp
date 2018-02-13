@@ -17,6 +17,7 @@ BOOST_PYTHON_MODULE(csMath)
 	def("exp", exp_py);
 	def("log", log_py);
 	def("slerp", slerp_py);
+	def("cross", cross_py);
 }
 
 void pyR_2_H(const object& pyR, HMatrix& H)
@@ -113,4 +114,14 @@ object slerp_py( const object& R1, const object& R2, scalar t )
 	SE3_2_pySO3(T_slerp, pyR);
 
 	return pyR;
+}
+
+object cross_py( const object& vec1, const object& vec2 )
+{
+	np::ndarray O = np::array(make_tuple(0.,0.,0.));
+	O[0] = vec1[1]*vec2[2] - vec1[2] * vec2[1];
+	O[1] = vec1[2]*vec2[0] - vec1[0] * vec2[2];
+	O[2] = vec1[0]*vec2[1] - vec1[1] * vec2[0];
+
+	return O;
 }

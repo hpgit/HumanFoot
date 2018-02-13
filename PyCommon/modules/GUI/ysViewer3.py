@@ -485,7 +485,8 @@ class GlWindow(Fl_Gl_Window):
         # self.drawGround()
         self.drawAxis()
         # self.drawCoordinate((0, 0, 0))
-        self.drawGround_color()
+        # self.drawGround_color()
+
         # self.drawGroundFilled()
         # self.drawGround_grey()
 
