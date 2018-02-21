@@ -66,7 +66,7 @@ if __name__ == '__main__':
         # skeleton 1
         bvhFilePath = '../samples/wd2_WalkSameSame00.bvh'
         motion = yf.readBvhFile(bvhFilePath, .01)
-        print motion[0].skeleton
+        print(motion[0].skeleton)
         
         editedMotion = copy.deepcopy(motion)
         removeJoint(editedMotion, 'Head')
@@ -78,7 +78,7 @@ if __name__ == '__main__':
         removeJoint(editedMotion, 'LeftHand_Effector')
         offsetJointLocal(editedMotion, 'RightArm', (.03,-.05,0))
         offsetJointLocal(editedMotion, 'LeftArm', (-.03,-.05,0))
-        print editedMotion[0].skeleton
+        print(editedMotion[0].skeleton)
         
         editedTPose = editedMotion[0].getTPose()
         editedTPose.translateByTarget((0,0,0))
@@ -86,7 +86,7 @@ if __name__ == '__main__':
         # skeleton 2
         bvhFilePath = '../samples/wd2_left_turn.bvh'
         motion = yf.readBvhFile(bvhFilePath, .01 * 2.53999905501)
-        print motion[0].skeleton
+        print(motion[0].skeleton)
         
         editedMotion2 = copy.deepcopy(motion)
         removeJoint(editedMotion2, 'RightUpLegDummy')
@@ -104,7 +104,7 @@ if __name__ == '__main__':
         removeJoint(editedMotion2, 'LeftHand_Effector')
         offsetJointLocal(editedMotion2, 'RightArm', (.03,-.05,0))
         offsetJointLocal(editedMotion2, 'LeftArm', (-.03,-.05,0))
-        print editedMotion2[0].skeleton
+        print(editedMotion2[0].skeleton)
         
         editedTPose2 = editedMotion2[0].getTPose()
         editedTPose2.translateByTarget((0,0,0))
@@ -145,7 +145,7 @@ if __name__ == '__main__':
         
         bvh_tpose = bvh_motion[0].getTPose()
         bvh_tpose.translateByTarget((0,0,0))
-        print bvh_tpose.skeleton
+        print(bvh_tpose.skeleton)
         
         #=======================================================================
         # from amc
@@ -171,7 +171,7 @@ if __name__ == '__main__':
         
         amc_tpose = amc_motion[0].getTPose()
         amc_tpose.translateByTarget((0,0,0))
-        print amc_tpose.skeleton
+        print(amc_tpose.skeleton)
         
         # edited amc
         amc_motion2 = copy.deepcopy(amc_motion)
@@ -202,7 +202,7 @@ if __name__ == '__main__':
     def test_offsetJointLocal():
         bvhFilePath = '../samples/wd2_WalkSameSame00.bvh'
         motion = yf.readBvhFile(bvhFilePath, .01)
-        print motion[0].skeleton
+        print(motion[0].skeleton)
         
         shortLegs = copy.deepcopy(motion)
         offsetJointLocal(shortLegs, 'LeftLeg', (0, .2, 0))

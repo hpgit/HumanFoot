@@ -481,7 +481,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
             # print "El: ", np.dot(E, x[contactNum + numFrictionBases*contactNum:])
             # print "Ep: ", np.dot(E.T, x[contactNum:contactNum + numFrictionBases*contactNum])
             # print "force value: ", np.dot(x, zqp)
-        except Exception, e:
+        except:
             # print e
             pass
 
@@ -499,7 +499,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
         xqpos = qpos.qp(QQ, pp, GG, lb, None, hh, None, 1000, False, "NONE")
         x = np.array(xqpos)
         zqp = np.dot(A,x)+b
-        print np.dot(x, zqp)
+        print(np.dot(x, zqp))
         # print xqpos
         # x = xqpos.copy()
         pass
@@ -565,7 +565,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
             yjc.computeControlModelJacobian(Jic, DOFs, jointPositions, jointAxeses, [contactPositions[vpidxx]], contactJointMasks)
             vv += h * np.dot(Jic, np.dot(invM, np.dot(Jic[:3].T, forces[vpidxx])))
 
-        print "vv:", vv[:3]
+        print("vv:", vv[:3])
 
     return bodyIDs, contactPositions, contactPositionsLocal, forces, timeStamp
 
@@ -680,7 +680,7 @@ def calcLCPForcesHD(motion, world, model, bodyIDsToCheck, mu, ddth, tau, numFric
             # print "El: ", np.dot(E, x[contactNum + numFrictionBases*contactNum:])
             # print "Ep: ", np.dot(E.T, x[contactNum:contactNum + numFrictionBases*contactNum])
             # print "force value: ", np.dot(x, zqp)
-        except Exception, e:
+        except:
             # print e
             pass
 
@@ -698,7 +698,7 @@ def calcLCPForcesHD(motion, world, model, bodyIDsToCheck, mu, ddth, tau, numFric
         xqpos = qpos.qp(QQ, pp, GG, lb, None, hh, None, 1000, False, "NONE")
         x = np.array(xqpos)
         zqp = np.dot(A,x)+b
-        print np.dot(x, zqp)
+        print(np.dot(x, zqp))
         # print xqpos
         # x = xqpos.copy()
         pass
@@ -959,8 +959,8 @@ def calcLCPControl(motion, world, model, bodyIDsToCheck, mu, totalForce, weights
             # print "QP z: ", np.dot(xqp, zqp)
             # if np.dot(xqp, zqp) < np.dot(x, z):
             x = xqp.copy()
-        except Exception, e:
-            print 'LCPControl!!', e
+        except:
+            # print('LCPControl!!', e)
             pass
 
     normalForce = x[:contactNum]
@@ -1293,8 +1293,8 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, we
             '''
 
 
-        except Exception, e:
-            print 'LCPbasicControl!!', e
+        except:
+            # print 'LCPbasicControl!!', e
             pass
 
     def refine(xx):
@@ -1322,10 +1322,10 @@ def calcLCPbasicControl(motion, world, model, bodyIDsToCheck, mu, totalForce, we
     q2dotValue = np.dot(Q2dotqpx, Q2dotqpx)
     Qfqpx = np.dot(Qfqp, x)+pfqp
     forceValue = np.dot(Qfqpx, Qfqpx)
-    print "LCP value: ", wLCP, lcpValue/wLCP, lcpValue
-    print "tau value: ", wTorque, tauValue, wTorque*tauValue
+    print("LCP value: ", wLCP, lcpValue/wLCP, lcpValue)
+    print("tau value: ", wTorque, tauValue, wTorque*tauValue)
     # print "q2dot value: ", wTorque, q2dotValue, wTorque*q2dotValue
-    print "For value: ", wForce, forceValue, wForce*forceValue
+    print("For value: ", wForce, forceValue, wForce*forceValue)
     # print "x: ", x[totalDOF:]
     # print "z: ", zqp[totalDOF:]
     # print "b: ", b[totalDOF:]
@@ -1551,8 +1551,8 @@ def calcLCPbasicControl2(motion, world, model, bodyIDsToCheck, mu, totalForce, w
             # print "QP z: ", np.dot(xqp, zqp)
             # if np.dot(xqp, zqp) < np.dot(x, z):
             x = xqp.copy()
-        except Exception, e:
-            print 'LCPControl!!', e
+        except:
+            # print 'LCPControl!!', e
             pass
 
     tau = x[:totalDOF]

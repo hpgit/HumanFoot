@@ -376,7 +376,7 @@ if __name__=='__main__':
 
         scaledMotion = timescale(jointMotion, 400)
 #        scaledMotion = timescale(jointMotion, 400, None)
-        print len(jointMotion), len(scaledMotion)
+        print(len(jointMotion), len(scaledMotion))
         
         viewer = ysv.SimpleViewer()
         viewer.record(False)
@@ -572,31 +572,31 @@ if __name__=='__main__':
 
         intervals0, states0 = yba.getBipedGaitIntervals(lc0, rc0, 10, .1)
         intervals1, states1 = yba.getBipedGaitIntervals(lc1, rc1, 10, .1)
-        print 'wd2_WalkSameSame00'
-        print intervals0
-        print [yba.GaitState.text[state] for state in states0]
-        print 'wd2_WalkForwardVFast00'
-        print intervals1
-        print [yba.GaitState.text[state] for state in states1]
-        print
+        print('wd2_WalkSameSame00')
+        print(intervals0)
+        print([yba.GaitState.text[state] for state in states0])
+        print('wd2_WalkForwardVFast00')
+        print(intervals1)
+        print([yba.GaitState.text[state] for state in states1])
+        print()
 
         seg = 3
         tlen = 10
         
-        print 'motion0[:%d] + motion1[%d:]' % (intervals0[seg][1], intervals1[seg][1])
-        print 'transition length', tlen
-        print 'stitched_0changed', '%d~%d'%(intervals0[seg][1]-tlen, intervals0[seg][1])
-        print 'stitched_1changed', '%d~%d'%(intervals0[seg][1], intervals0[seg][1]+tlen)
-        print 
+        print('motion0[:%d] + motion1[%d:]' % (intervals0[seg][1], intervals1[seg][1]))
+        print('transition length', tlen)
+        print('stitched_0changed', '%d~%d'%(intervals0[seg][1]-tlen, intervals0[seg][1]))
+        print('stitched_1changed', '%d~%d'%(intervals0[seg][1], intervals0[seg][1]+tlen))
+        print()
         
         just_added = motion0[:intervals0[seg][1]] + motion1[intervals1[seg][1]:]  
-        print 'len(just_added)', len(just_added)
+        print('len(just_added)', len(just_added))
         
         stitched_0changed = stitch(motion0[:intervals0[seg][1]], motion1[intervals1[seg][1]-1:], tlen, yfg.identity, True)
-        print 'len(stitched_0changed)', len(stitched_0changed)
+        print('len(stitched_0changed)', len(stitched_0changed))
         
         stitched_1changed = stitch(motion0[:intervals0[seg][1]], motion1[intervals1[seg][1]-1:], tlen, yfg.identity, False)
-        print 'len(stitched_1changed)', len(stitched_1changed)
+        print('len(stitched_1changed)', len(stitched_1changed))
         
         viewer = ysv.SimpleViewer()
         viewer.record(False)
@@ -628,7 +628,7 @@ if __name__=='__main__':
 
         motion_stitch = stepMotions[0]
         motion_getStitchedNextMotion = stepMotions[0]
-        print len(motion_stitch), len(motion_getStitchedNextMotion)
+        print(len(motion_stitch), len(motion_getStitchedNextMotion))
         
         for i in range(1, len(stepMotions)):
             stepMotions[i] = stepMotions[i][:-5]
@@ -638,7 +638,7 @@ if __name__=='__main__':
             stitched = getStitchedNextMotion(stepMotions[i], motion_getStitchedNextMotion[-1], 5)
             motion_getStitchedNextMotion += stitched 
 
-            print len(motion_stitch), len(motion_getStitchedNextMotion)
+            print(len(motion_stitch), len(motion_getStitchedNextMotion))
             
         viewer = ysv.SimpleViewer()
         viewer.record(False)
@@ -671,9 +671,9 @@ if __name__=='__main__':
         earlyCycle = 2
         howEarly = 5
         
-        print 'steps[%d] :'%earlyCycle
-        print 'motion[%d]~motion[%d] => '%(steps[earlyCycle][0], steps[earlyCycle][1]),
-        print 'motion_earlytouch[%d]~motion_earyltouch[%d]'%(steps[earlyCycle][0], steps[earlyCycle][1]-howEarly)
+        print('steps[%d] :'%earlyCycle)
+        print('motion[%d]~motion[%d] => '%(steps[earlyCycle][0], steps[earlyCycle][1]),)
+        print('motion_earlytouch[%d]~motion_earyltouch[%d]'%(steps[earlyCycle][0], steps[earlyCycle][1]-howEarly))
 
         motion_earlytouch = stepMotions[0]
         for i in range(1, len(stepMotions)):
@@ -713,9 +713,9 @@ if __name__=='__main__':
         lateCycle = 2
         howLate = 5
         
-        print 'steps[%d] :'%lateCycle
-        print 'motion[%d]~motion[%d] => '%(steps[lateCycle][0], steps[lateCycle][1]),
-        print 'motion_latetouch[%d]~motion_earyltouch[%d]'%(steps[lateCycle][0], steps[lateCycle][1]+howLate)
+        print('steps[%d] :'%lateCycle)
+        print('motion[%d]~motion[%d] => '%(steps[lateCycle][0], steps[lateCycle][1]),)
+        print('motion_latetouch[%d]~motion_earyltouch[%d]'%(steps[lateCycle][0], steps[lateCycle][1]+howLate))
 
         motion_latetouch = stepMotions[0]
         for i in range(1, len(stepMotions)):
@@ -751,15 +751,15 @@ if __name__=='__main__':
         
         steps = yba.getWalkingSteps(lc, rc, True)
         stepMotions = yma.splitMotionIntoSegments(motion, steps)
-        print steps
+        print(steps)
         
         earlyCycle = 3
         howEarly = 10
         transitionFunc = lambda x:1.-yfg.hermite2nd(x)
         
-        print 'steps[%d] :'%earlyCycle
-        print 'motion[%d]~motion[%d] => '%(steps[earlyCycle][0], steps[earlyCycle][1]),
-        print 'motion_stitched_trans_rot[%d]~motion_stitched_trans_rot[%d]'%(steps[earlyCycle][0], steps[earlyCycle][1]-howEarly)
+        print('steps[%d] :'%earlyCycle)
+        print('motion[%d]~motion[%d] => '%(steps[earlyCycle][0], steps[earlyCycle][1]),)
+        print('motion_stitched_trans_rot[%d]~motion_stitched_trans_rot[%d]'%(steps[earlyCycle][0], steps[earlyCycle][1]-howEarly))
 
         motion_stitched_trans = stepMotions[0].copy()
         motion_stitched_trans_rot = stepMotions[0].copy()
@@ -812,14 +812,14 @@ if __name__=='__main__':
         
         R_offset_orig_global = mm.rotY(math.pi/2)
         part2.rotateTrajectory(R_offset_orig_global)
-        print 'R_offset_orig_global =\n', R_offset_orig_global
+        print('R_offset_orig_global =\n', R_offset_orig_global)
         
         R_part1 = part1[-1].getJointOrientationLocal(0)
         R_part2 = part2[0].getJointOrientationLocal(0)
-        print 'R_part2 =\n', np.dot(R_offset_orig_global, R_part1)
+        print('R_part2 =\n', np.dot(R_offset_orig_global, R_part1))
         
         R_offset_global = np.dot(part2[0].localRs[0], part1[-1].localRs[0].T)
-        print 'R_offset_global =\n', np.dot(part2[0].localRs[0], part1[-1].localRs[0].T)
+        print('R_offset_global =\n', np.dot(part2[0].localRs[0], part1[-1].localRs[0].T))
         
         part2_attached_global = part2.copy()
         part2_attached_global.translateByOffset((0,0,1))
@@ -832,15 +832,15 @@ if __name__=='__main__':
         
         R_offset_orig_local= mm.rotY(math.pi/2)
         part2.rotateTrajectoryLocal(R_offset_orig_local)
-        print 'R_offset_orig_local =\n', R_offset_orig_local
+        print('R_offset_orig_local =\n', R_offset_orig_local)
         
         R_part1 = part1[-1].getJointOrientationLocal(0)
         R_part2 = part2[0].getJointOrientationLocal(0)
-        print 'R_part2 =\n', np.dot(R_part1, R_offset_orig_local)
+        print('R_part2 =\n', np.dot(R_part1, R_offset_orig_local))
         
         d = part2[0] - part1[-1]    # np.dot(part1[-1].localRs[0].T, part2[0].localRs[0])
         R_offset_local = d.getJointOrientationLocal(0)
-        print 'R_offset_local =\n', R_offset_local
+        print('R_offset_local =\n', R_offset_local)
         
         part2_attached_local = part2.copy()
         part2_attached_local.translateByOffset((0,0,1))

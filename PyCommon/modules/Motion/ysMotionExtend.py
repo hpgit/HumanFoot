@@ -217,7 +217,7 @@ if __name__=='__main__':
         cut = 96
         motion = motion_ref[:cut]
         skeleton = motion[0].skeleton
-        print skeleton
+        print(skeleton)
         
         lFoot = skeleton.getJointIndex('LeftFoot')
         rFoot = skeleton.getJointIndex('RightFoot')

@@ -255,17 +255,17 @@ if __name__ == '__main__':
         t, r_landing = yma.getTakingLandingFrames(rc)
         landing = l_landing + r_landing
         landing.sort()
-        print 'landingFrames', landing
+        print('landingFrames', landing)
         
 #        steps = getWalkingSteps(lc, rc, True)
         steps = getWalkingSteps(lc, rc, True, False)
 #        steps = getWalkingSteps(lc, rc, False)
-        print 'steps', steps
+        print('steps', steps)
         
-        print
+        print()
         stepMotions = yma.splitMotionIntoSegments(motion, steps)
         for i in range(len(steps)):
-            print 'stepMotions[%d]: motion[%d]~motion[%d], len %d'%(i, steps[i][0], steps[i][1], len(stepMotions[i]))
+            print('stepMotions[%d]: motion[%d]~motion[%d], len %d'%(i, steps[i][0], steps[i][1], len(stepMotions[i])))
         
         viewer = ysv.SimpleViewer()
         viewer.record(False)
@@ -292,12 +292,12 @@ if __name__ == '__main__':
         
         intervals, types = yma.states2intervals(cookedStateList)
         for i in range(len(intervals)):
-            print intervals[i], GaitState.text[types[i]]
+            print(intervals[i], GaitState.text[types[i]])
 
-        print
-        print [yma.intIntervalUp(int) for int in intervals]
-        print getWalkingSteps(lc, rc, True)
-        print getBipedGaitIntervals(lc, rc, 10, 1.)
+        print()
+        print([yma.intIntervalUp(int) for int in intervals])
+        print(getWalkingSteps(lc, rc, True))
+        print(getBipedGaitIntervals(lc, rc, 10, 1.))
         
         plot = ymp.SmartPlot()
         plot.setXdata('frame', range(len(motion)))

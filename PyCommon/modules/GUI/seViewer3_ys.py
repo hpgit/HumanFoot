@@ -16,7 +16,12 @@
 # +-------------------------------------------------------------------------
 
 import math, numpy
-import cPickle
+try:
+    # for python3
+    import pickle
+except:
+    # for python2.7
+    import cPickle as pickle
 
 from fltk import *
 #Fl.scheme('plastic')
@@ -1045,7 +1050,7 @@ if __name__=='__main__':
         
     def test_Camera_getUpRightVectors():
         cam = Camera()
-        print cam.getUpRightVectors()
+        print(cam.getUpRightVectors())
     
 
 #    test_layout_ControlPanel()

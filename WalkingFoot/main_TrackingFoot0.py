@@ -1,5 +1,13 @@
 from fltk import *
-import copy, os.path, cPickle, time
+import copy
+import os.path
+try:
+    # for python3
+    import pickle
+except:
+    # for python2.7
+    import cPickle as pickle
+import time
 import numpy as np
 import sys
 if ".." not in sys.path:
@@ -22,11 +30,11 @@ from PyCommon.modules.Motion import ysMotionBlend as ymb
 from PyCommon.modules.Motion import ysMotionExtend as ymt
 from PyCommon.modules.Motion import ysSkeletonEdit as yhe
 from PyCommon.modules.Motion import mmAnalyticIK as aik
-from PyCommon.modules.Util import ysMatplotEx as ymp
+# from PyCommon.modules.Util import ysMatplotEx as ymp
 from PyCommon.modules.Resource import ysMotionLoader as yf
 from PyCommon.modules.Simulator import ysPhysConfig as ypc
 
-from PyCommon.modules.Simulator import hpLCPSimul2 as hls
+# from PyCommon.modules.Simulator import hpLCPSimul2 as hls
 from PyCommon.modules.GUI import hpSimpleViewer as hsv
 from PyCommon.modules.Util import ysPythonEx as ype
 
@@ -488,7 +496,7 @@ def walkings(params=None, isCma=False):
     controlModel = pcvm.VpControlModel(vpWorld, motion_ori[0], mcfg)
     vpWorld.SetIntegrator("IMPLICIT_EULER_FAST")
     vpWorld.initialize()
-    print controlModel
+    print(controlModel)
     # controlModel = None
 
 
@@ -503,20 +511,20 @@ def walkings(params=None, isCma=False):
 
     segname = os.path.splitext(filename)[0]+'.seg'
     segfile = open(dir+segname, 'r')
-    seginfo = cPickle.load(segfile)
+    seginfo = pickle.load(segfile)
     segfile.close()
 
     for i in seginfo:
-        print i
+        print(i)
 
     intervals = [info['interval'] for info in seginfo]
     states = [info['state'] for info in seginfo]
     temp_motion = copy.deepcopy(motion_ori)
     segments = yma.splitMotionIntoSegments(temp_motion, intervals)
-    print len(intervals), 'segments'
+    print(len(intervals), 'segments')
     for i in range(len(intervals)):
-        print '%dth'%i, yba.GaitState.text[states[i]], intervals[i], ',',
-    print ""
+        print('%dth'%i, yba.GaitState.text[states[i]], intervals[i], ',')
+    print()
 
     motion_seg_orig = ym.JointMotion()
     motion_seg_orig += segments[0]
@@ -1295,7 +1303,7 @@ def walkings(params=None, isCma=False):
                     acc_offset[0] += frame - curInterval[1]
 
                 elif frame == len(motion_seg)-1:
-                    print frame, 'extend frame', frame+1
+                    print(frame, 'extend frame', frame+1)
 
                     preserveJoints = []
                     #                    preserveJoints = [lFoot, rFoot]
@@ -1339,7 +1347,7 @@ def walkings(params=None, isCma=False):
 
         if lastFrame:
             if segIndex < len(segments)-1:
-                print '%d (%d): end of %dth seg (%s, %s)'%(frame, frame-curInterval[1],segIndex, yba.GaitState.text[curState], curInterval)
+                print('%d (%d): end of %dth seg (%s, %s)'%(frame, frame-curInterval[1],segIndex, yba.GaitState.text[curState], curInterval))
                 if plot!=None: plot.addDataPoint('diff', frame, (frame-curInterval[1])*.01)
 
                 if len(stanceFoots)>0 and len(swingFoots)>0:

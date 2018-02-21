@@ -15,7 +15,12 @@
 # |    along with DataDrivenBipedController.  If not, see <mit-license.org>.
 # +-------------------------------------------------------------------------
 
-import cPickle
+try:
+    # for python3
+    import pickle
+except:
+    # for python2.7
+    import cPickle as pickle
 
 import matplotlib
 #matplotlib.interactive(True)
@@ -456,7 +461,7 @@ if __name__ == "__main__":
             if frame==0:
                 pt[0] = time.time()
             if frame==50:
-                print time.time()-pt[0]
+                print(time.time()-pt[0])
         
         def preFrameCallback_Always(frame):
             plot.updateVline(frame)
@@ -546,7 +551,7 @@ Fl.run()
             ylim(0,100)
             draw()
             if frame == 90:
-                print time.time() - pt
+                print(time.time() - pt)
 
 ##        # LineCollection
 #        fig = figure()
@@ -609,7 +614,7 @@ Fl.run()
 
         def press(event):
             if event.key == 'escape' or event.key == None:
-                print 'close'
+                print('close')
                 manager.window.do_callback()
                 
         fig = figure(1)
@@ -624,13 +629,13 @@ Fl.run()
         window = Fl_Window(300, 300)
         
         def onClose(widget):
-            print 'onClose'
-            print widget
+            print('onClose')
+            print(widget)
             window.default_callback(widget, None)
         
         def handle(event):
-            print 'handle'
-            print event
+            print('handle')
+            print(event)
             return 0
 
 #        print window.modal()
@@ -644,10 +649,10 @@ Fl.run()
         
     def test_matplot_fltk_window_manipulation():
         manager = get_current_fig_manager()
-        print 'manager: ', manager
+        print('manager: ', manager)
         for key, value in manager.__dict__.items():
-            print key, ':', value
-        print
+            print(key, ':', value)
+        print()
         
         def onClose(widget, data):
 #            print 'onClose'
@@ -666,15 +671,15 @@ Fl.run()
                 manager.window.do_callback()
         fig = figure(1)
         fig.canvas.mpl_connect('key_press_event', press)
-        print 'fig: ', fig
+        print('fig: ', fig)
         for key, value in fig.__dict__.items():
-            print key, ':', value
-        print 
+            print(key, ':', value)
+        print()
         
-        print 'fig.canvas: ', fig.canvas    
+        print('fig.canvas: ', fig.canvas)
         for key, value in fig.canvas.__dict__.items():
-            print key, ':', value
-        print 
+            print(key, ':', value)
+        print()
         
 #        manager.window.set_modal()
 #        print manager.window.modal()
@@ -698,12 +703,12 @@ Fl.run()
         window.geometry('800x300+100+200')
         
         window.update()
-        print window.geometry()
-        print window.winfo_x()
-        print window.winfo_y()
-        print window.winfo_width()
-        print window.winfo_height()
-        print
+        print(window.geometry())
+        print(window.winfo_x())
+        print(window.winfo_y())
+        print(window.winfo_width())
+        print(window.winfo_height())
+        print()
         
         show()
         
@@ -735,7 +740,7 @@ Fl.run()
         for i in arange(1,200):
             line.set_ydata(sin(x+i/10.0))  # update the data
             draw()                         # redraw the canvas
-        print 'FPS:' , 200/(time.time()-tstart)
+        print('FPS:' , 200/(time.time()-tstart))
         
     pass
 #    test_showModeless()

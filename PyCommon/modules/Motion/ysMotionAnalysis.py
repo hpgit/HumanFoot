@@ -452,13 +452,13 @@ if __name__ == '__main__':
             code = code.lstrip()
             if len(code)>0 and code[0] == '#':
                 continue
-            print code,
+            print(code)
             if 'print' in code:
 #                print ':',
-                print ':'
-            exec code
+                print(':')
+            exec(code)
             if 'print' not in code:
-                print
+                print()
         
     def test_distancFuncs():
         bvhFilePath = '../samples/wd2_WalkSameSame00.bvh'
@@ -468,8 +468,8 @@ if __name__ == '__main__':
         
         srcFrame = 100
         searchIntervals = [[0,80], [120,200]]
-        print 'srcFrame', srcFrame
-        print 'searchIntervals', searchIntervals
+        print('srcFrame', srcFrame)
+        print('searchIntervals', searchIntervals)
 
 
         def isIn(i, searchIntervals):
@@ -487,13 +487,13 @@ if __name__ == '__main__':
         sorted = copy.copy(distances)
         sorted.sort()
         
-        print 'rank \t frame \t distance'
+        print('rank \t frame \t distance')
         rankedPostures = [None]*rankNum
         for i in range(1,rankNum):
             for j in range(len(jointMotion)):
                 if sorted[i] == distances[j]:
                     rankedPostures[i] = jointMotion[j]
-                    print '%d \t %d \t %f'%(i, j, distances[j])
+                    print('%d \t %d \t %f'%(i, j, distances[j]))
                     
         viewer = ysv.SimpleViewer()
         viewer.record(False)
