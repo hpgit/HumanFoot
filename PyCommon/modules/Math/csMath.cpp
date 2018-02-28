@@ -8,6 +8,8 @@
 namespace bp = boost::python;
 namespace np = boost::python::numpy;
 
+static bool np_initialized = false;
+
 BOOST_PYTHON_MODULE(csMath)
 {
 	def("R2zxy_s", R2zxy_s);
@@ -30,6 +32,11 @@ void pyR_2_H(const object& pyR, HMatrix& H)
 
 object R2euler(const object& pyR, int order)
 {
+    if (!np_initialized)
+    {
+        np::initialize();
+        np_initialized = true;
+    }
 ///* EulerSample.c - Read angles as quantum mechanics, write as aerospace */
 //#include <stdio.h>
 //#include "EulerAngles.h"
@@ -62,6 +69,12 @@ object R2euler(const object& pyR, int order)
 
 object exp_py( const object& axis_angle_vec )
 {
+    if (!np_initialized)
+    {
+        np::initialize();
+        np_initialized = true;
+    }
+
 	static np::ndarray I = np::array( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
 	static Vec3 vAxis;
 	//np::ndarray I = np::array( bp::make_tuple(
@@ -84,14 +97,22 @@ object exp_py( const object& axis_angle_vec )
 
 object log_py( const object& rotation_mat )
 {
+    if (!np_initialized)
+    {
+        np::initialize();
+        np_initialized = true;
+    }
+
 	//static numeric::array O(make_tuple(0.,0.,0.));
 	static SE3 T;
 	static se3 d;
 
+
 	pySO3_2_SE3(rotation_mat, T);
 	d = Log(T);
-	object pyV;
-    make_pyVec3(pyV);
+	np::ndarray pyV = np::array(make_tuple(0.,0.,0.));
+//	object pyV;
+//  make_pyVec3(pyV);
 	pyV[0] = d[0];
 	pyV[1] = d[1];
 	pyV[2] = d[2];
@@ -104,6 +125,12 @@ object slerp_py( const object& R1, const object& R2, scalar t )
 	static SE3 T1;
 	static SE3 T2;
 	static SE3 T_slerp;
+
+    if (!np_initialized)
+    {
+        np::initialize();
+        np_initialized = true;
+    }
 
 	pySO3_2_SE3(R1, T1);
 	pySO3_2_SE3(R2, T2);
@@ -118,6 +145,11 @@ object slerp_py( const object& R1, const object& R2, scalar t )
 
 object cross_py( const object& vec1, const object& vec2 )
 {
+    if (!np_initialized)
+    {
+        np::initialize();
+        np_initialized = true;
+    }
 	np::ndarray O = np::array(make_tuple(0.,0.,0.));
 	O[0] = vec1[1]*vec2[2] - vec1[2] * vec2[1];
 	O[1] = vec1[2]*vec2[0] - vec1[0] * vec2[2];

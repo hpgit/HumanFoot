@@ -26,10 +26,10 @@ def testtest():
 def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
     SEGMENT_FOOT_RAD = SEGMENT_FOOT_MAG * .5
 
-    #motion
+    # motion
     motionName = 'wd2_n_kick.bvh'
-    #motionName = 'wd2_jump.bvh'
-    #motionName = 'wd2_stand.bvh'
+    # motionName = 'wd2_jump.bvh'
+    # motionName = 'wd2_stand.bvh'
     bvh = yf.readBvhFileAsBvh(motionName)
     bvh.set_scale(.01)
 
@@ -67,33 +67,33 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
     yme.updateGlobalT(motion)
     motion.translateByOffset((0, 0.04, 0))
 
-    #motion = motion[40:-58]
-    #motion[0:0] = [motion[0]]*20
-    #motion.extend([motion[-1]]*5000)
+    # motion = motion[40:-58]
+    # motion[0:0] = [motion[0]]*20
+    # motion.extend([motion[-1]]*5000)
 
     # motion = motion[40:]
-    #motion[0:0] = [motion[0]]*50
-    #motion.extend([motion[-1]]*5000)
+    # motion[0:0] = [motion[0]]*50
+    # motion.extend([motion[-1]]*5000)
 
-    #motion = motion[30:151]
+    # motion = motion[30:151]
     # motion = motion[30:]
-    #motion = motion[30:31]
-    #motion[5:5] = [motion[5]]*30
+    # motion = motion[30:31]
+    # motion[5:5] = [motion[5]]*30
     # motion[0:0] = [motion[0]]*2000
     # motion.extend([motion[-1]]*300)
 
-    motion = motion[37:]
+    # motion = motion[37:]
     motion[0:0] = [motion[0]]*2000
     motion.extend([motion[-1]]*300)
 
-    #motion = motion[40:41]
-    #motion[0:0] = [motion[0]]*5000
+    # motion = motion[40:41]
+    # motion[0:0] = [motion[0]]*5000
 
-    #motion = motion[56:-248]
+    # motion = motion[56:-248]
 
-    #motion = motion[-249:-248]
-    #motion[0:0] = [motion[0]]*10
-    #motion.extend([motion[-1]]*5000)
+    # motion = motion[-249:-248]
+    # motion[0:0] = [motion[0]]*10
+    # motion.extend([motion[-1]]*5000)
 
     # world, model
     mcfg = ypc.ModelConfig()
@@ -104,16 +104,15 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
         node = mcfg.addNode(name)
         node.mass = massMap[name]
 
-
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
     stepsPerFrame = 60
-    #stepsPerFrame = 30
+    # stepsPerFrame = 30
     frame_rate = 30
     wcfg.timeStep = 1./(frame_rate * stepsPerFrame)
     # wcfg.timeStep = (1/30.)/(stepsPerFrame)
-    #wcfg.timeStep = (1/1000.)
+    # wcfg.timeStep = (1/1000.)
 
     # width : x axis on body frame
     # height: y axis on body frame

@@ -100,7 +100,7 @@ def computeJacobian2(J, jointDOFs, jointPositions, jointAxeses, effectorPosition
             for d in range(jointDOF_jth_joint):
                 if effectorJointMasks is None or effectorJointMasks[e][j]:
                     axis_colth_dof = jointAxes_jth_joint[d]
-                    rotationalDOF = False if jointDOF_jth_joint==6 and d<3 else True
+                    rotationalDOF = False if jointDOF_jth_joint == 6 and d < 3 else True
                     
                     if rotationalDOF:
                         instanteneousAngVelocity_colth_dof = axis_colth_dof 
@@ -153,9 +153,9 @@ def computeJacobianDerivative2(dJ, jointDOFs, jointPositions, jointAxeses, linkA
                 parentLinkAngVel_jth_joint = linkAngVels[j-1] if j>0 else (0,0,0)
             
             for d in range(jointDOF_jth_joint):
-                if effectorJointMasks==None or effectorJointMasks[e][j]:
+                if effectorJointMasks is None or effectorJointMasks[e][j]:
                     axis_colth_dof = jointAxes_jth_joint[d]
-                    rotationalDOF = False if jointDOF_jth_joint==6 and d<3 else True
+                    rotationalDOF = False if jointDOF_jth_joint == 6 and d < 3 else True
                     
                     if rotationalDOF:
                         # dZ(i) = w(i)<cross>Z(i)
@@ -316,10 +316,10 @@ def get_dP_effector_from_joint(jointIndex, jointPositions, linkAngVels, effector
 # utility function
 #===============================================================================
 def jointMask_2_jointIndexesDownward(effectorJointMask, startJointIndex=None):
-    if startJointIndex==None:
-        return [i for i in range(len(effectorJointMask)) if effectorJointMask[i]==1]
+    if startJointIndex is None:
+        return [i for i in range(len(effectorJointMask)) if effectorJointMask[i] == 1]
     else:
-        return [i for i in range(startJointIndex, len(effectorJointMask)) if effectorJointMask[i]==1]
+        return [i for i in range(startJointIndex, len(effectorJointMask)) if effectorJointMask[i] == 1]
 
 def getRepeatedEffectorJointMasks(jointDOFs, effectorJointMasks):
     totalDOF = 0

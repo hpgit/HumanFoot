@@ -1206,10 +1206,98 @@ class RenderContext:
     #===============================================================================
     # draw primitives at origin    
     #===============================================================================
+    box_line_point_array = \
+        [
+            -.5, -.5, -.5,
+            -.5, -.5, +.5,
+            +.5, -.5, -.5,
+            +.5, -.5, +.5,
+            -.5, +.5, -.5,
+            -.5, +.5, +.5,
+            +.5, +.5, -.5,
+            +.5, +.5, +.5,
+
+            +.5, -.5, -.5,
+            -.5, -.5, -.5,
+            +.5, +.5, -.5,
+            -.5, +.5, -.5,
+            +.5, -.5, +.5,
+            -.5, -.5, +.5,
+            +.5, +.5, +.5,
+            -.5, +.5, +.5,
+
+            -.5, -.5, -.5,
+            -.5, +.5, -.5,
+            -.5, -.5, +.5,
+            -.5, +.5, +.5,
+            +.5, -.5, +.5,
+            +.5, +.5, +.5,
+            +.5, -.5, -.5,
+            +.5, +.5, -.5,
+        ]
+
+    box_fill_point_array = \
+        [
+            -.5, -.5, -.5,
+            -.5, +.5, -.5,
+            +.5, +.5, -.5,
+            +.5, -.5, -.5,
+            -.5, -.5, +.5,
+            +.5, -.5, +.5,
+            +.5, +.5, +.5,
+            -.5, +.5, +.5,
+            -.5, -.5, -.5,
+            -.5, -.5, +.5,
+            -.5, +.5, +.5,
+            -.5, +.5, -.5,
+            +.5, -.5, -.5,
+            +.5, +.5, -.5,
+            +.5, +.5, +.5,
+            +.5, -.5, +.5,
+            -.5, -.5, -.5,
+            +.5, -.5, -.5,
+            +.5, -.5, +.5,
+            -.5, -.5, +.5,
+            -.5, +.5, -.5,
+            -.5, +.5, +.5,
+            +.5, +.5, +.5,
+            +.5, +.5, -.5
+        ]
+
+    box_fill_normal_array = \
+        [
+            0., 0., -1.,
+            0., 0., -1.,
+            0., 0., -1.,
+            0., 0., -1.,
+            0., 0., +1.,
+            0., 0., +1.,
+            0., 0., +1.,
+            0., 0., +1.,
+            -1., 0., 0.,
+            -1., 0., 0.,
+            -1., 0., 0.,
+            -1., 0., 0.,
+            +1., 0., 0.,
+            +1., 0., 0.,
+            +1., 0., 0.,
+            +1., 0., 0.,
+            0., -1., 0.,
+            0., -1., 0.,
+            0., -1., 0.,
+            0., -1., 0.,
+            0., +1., 0.,
+            0., +1., 0.,
+            0., +1., 0.,
+            0., +1., 0.
+        ]
+
+
     def drawBox(self, lx, ly, lz):
         glPushMatrix()
         glTranslated(lx/2.,ly/2.,lz/2.)
         glScale(lx, ly, lz)
+
         if self.polygonStyle == POLYGON_LINE:
             # glutWireCube(1)
             glBegin(GL_LINES)
@@ -1243,6 +1331,7 @@ class RenderContext:
             glEnd()
         else:
             # glutSolidCube(1)
+            #'''
             glBegin(GL_QUADS)
             glNormal3f(0., 0., -1.)
             glVertex3f(-.5, -.5, -.5)
@@ -1298,7 +1387,19 @@ class RenderContext:
             glNormal3f(0., +1., 0.)
             glVertex3f(+.5, +.5, -.5)
             glEnd()
+            #'''
+            '''
+            vertex_size = int(len(self.box_fill_point_array)//3)
+            glVertexPointer(3, GL_FLOAT, 0, self.box_fill_point_array)
+            glNormalPointer(GL_FLOAT, 0, self.box_fill_normal_array)
+            glEnableClientState(GL_VERTEX_ARRAY)
+            glEnableClientState(GL_NORMAL_ARRAY)
+            glDrawArrays(GL_QUADS, 0, vertex_size)
+            glDisableClientState(GL_NORMAL_ARRAY)
+            glDisableClientState(GL_NORMAL_ARRAY)
+            '''
         glPopMatrix()
+
     def drawCylinder(self, radius, length_z):
         gluCylinder(self.quad, radius, radius, length_z, 16, 1)
         if False:
@@ -1313,7 +1414,7 @@ class RenderContext:
         # gleSetNumSides(12)
 
     def drawCapsule(self, radius, length_z):
-        _SLICE_SIZE = 8
+        _SLICE_SIZE = 4
         glPushMatrix()
         glTranslatef(0., 0., -length_z/2.)
         gluSphere(self.quad2, radius, _SLICE_SIZE, _SLICE_SIZE)

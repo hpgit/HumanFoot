@@ -1,5 +1,9 @@
-# import psyco; psyco.full()
-import cPickle
+try:
+    # for python3
+    import pickle
+except:
+    # for python2.7
+    import cPickle as pickle
 
 import sys
 if '../PyCommon/modules' not in sys.path:
@@ -65,7 +69,7 @@ if __name__=='__main__':
         node = mcfg.addNode(name)
         node.mass = massMap[name]
         totalMass += node.mass
-    print totalMass
+    print(totalMass)
         
     node = mcfg.getNode('Hips')
     node.length = .2
@@ -97,9 +101,9 @@ if __name__=='__main__':
     dir = './ppmotion/'
     # dir = './icmotion_last/'
     outputName = 'mcfg'
-    outputFile = open(dir+outputName, 'w')
-    cPickle.dump(mcfg, outputFile)
+    outputFile = open(dir+outputName, 'wb')
+    pickle.dump(mcfg, outputFile)
     outputFile.close()
      
-    print dir + outputName, 'done'
-    print 'FINISHED'
+    print(dir + outputName, 'done')
+    print('FINISHED')

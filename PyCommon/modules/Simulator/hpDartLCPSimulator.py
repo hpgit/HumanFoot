@@ -207,8 +207,8 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
             solution = cvxSolvers.qp(Aqp, bqp, Gqp, hqp)
             xqp = np.array(solution['x']).flatten()
             x = xqp.copy()
-        except Exception, e:
-            print e
+        except ValueError as e:
+            print(e)
             pass
 
 
@@ -275,7 +275,7 @@ def calcLCPForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFrictio
             yjc.computeLocalRootJacobian(Jic, DOFs, jointPositions, jointAxeses, [contactPositions[vpidxx]], contactJointMasks)
             vv += h * np.dot(Jic, np.dot(invM, np.dot(Jic[:3].T, forces[vpidxx])))
 
-        print "vv:", vv[:3]
+        print("vv:", vv[:3])
 
 
 
@@ -613,8 +613,8 @@ def calcLCPbasicControl(
             '''
 
 
-        except Exception, e:
-            print 'LCPbasicControl!!', e
+        except ValueError as e:
+            print('LCPbasicControl!!', e)
             pass
 
     def refine(xx):
@@ -645,10 +645,10 @@ def calcLCPbasicControl(
     # q2dotValue = np.dot(Q2dotqpx, Q2dotqpx)
     Qfqpx = np.dot(Qfqp, x)+pfqp
     forceValue = np.dot(Qfqpx, Qfqpx)
-    print "LCP value: ", wLCP, lcpValue/wLCP, lcpValue
-    print "tau value: ", wTorque, tauValue, wTorque*tauValue
+    print("LCP value: ", wLCP, lcpValue/wLCP, lcpValue)
+    print("tau value: ", wTorque, tauValue, wTorque*tauValue)
     # print "q2dot value: ", wTorque, q2dotValue, wTorque*q2dotValue
-    print "For value: ", wForce, forceValue, wForce*forceValue
+    print("For value: ", wForce, forceValue, wForce*forceValue)
     # print "x: ", x[totalDOF:]
     # print "z: ", zqp[totalDOF:]
     # print "b: ", b[totalDOF:]
@@ -1184,8 +1184,8 @@ def calcSoftForces(motion, world, model, bodyIDsToCheck, mu, tau=None, numFricti
             solution = cvxSolvers.qp(Aqp, bqp, Gqp, hqp)
             xqp = np.array(solution['x']).flatten()
             x = xqp.copy()
-        except Exception, e:
-            print e
+        except ValueError as e:
+            print(e)
             pass
     elif solver == 'qpoases':
         pass
@@ -1387,8 +1387,8 @@ def calcSoftForces2(motion, world, model, bodyIDsToCheck, mu, tau=None, solver='
             solution = cvxSolvers.qp(Aqp, bqp, Gqp, hqp)
             xqp = np.array(solution['x']).flatten()
             x = xqp.copy()
-        except Exception, e:
-            print e
+        except ValueError as e:
+            print(e)
             pass
     elif solver == 'qpoases':
         pass
@@ -1441,7 +1441,7 @@ def calcSoftForces2(motion, world, model, bodyIDsToCheck, mu, tau=None, solver='
             yjc.computeLocalRootJacobian(Jic, DOFs, jointPositions, jointAxeses, [contactPositions[vpidxx]], contactJointMasks)
             vv += h * np.dot(Jic, np.dot(invM, np.dot(Jic[:3].T, forces[vpidxx])))
 
-        print "vv:", vv[:3]
+        print("vv:", vv[:3])
 
     return bodyIDs, contactPositions, contactPositionsLocal, forces, timeStamp
 
@@ -1654,8 +1654,8 @@ def calcNlSoftForces(motion, world, model, bodyIDsToCheck, mu, tau=None):
         print(solution['x'])
         xqp = np.array(solution['x']).flatten()
         x = xqp.copy()
-    except Exception, e:
-        print e
+    except ValueError as e:
+        print(e)
         pass
 
 

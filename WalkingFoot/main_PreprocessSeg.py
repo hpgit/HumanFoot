@@ -1,5 +1,13 @@
 from fltk import *
-import os.path, glob, cPickle,pprint
+import glob
+import os.path
+try:
+    # for python3
+    import pickle
+except:
+    # for python2.7
+    import cPickle as pickle
+import pprint
 import numpy as np
 
 import sys
@@ -67,8 +75,8 @@ if __name__=='__main__':
         lKnee = skeleton.getJointIndex('LeftLeg');  rKnee = skeleton.getJointIndex('RightLeg')
         lFoot = skeleton.getJointIndex('LeftFoot'); rFoot = skeleton.getJointIndex('RightFoot')
 
-        mcfgfile = open(dir + 'mcfg', 'r')
-        mcfg = cPickle.load(mcfgfile)
+        mcfgfile = open(dir + 'mcfg', 'rb')
+        mcfg = pickle.load(mcfgfile)
         mcfgfile.close()
         wcfg = ypc.WorldConfig()
         vpWorld = cvw.VpWorld(wcfg)
@@ -112,7 +120,7 @@ if __name__=='__main__':
                 seginfos[i]['max_stf_push_frame'] = None
                 if len(swingFoots)>0:
                     pushes = []
-                    for frame in range(start, (start+end)/2 + 1):
+                    for frame in range(start, int((start+end)//2) + 1):
                         dCM_tar = yrp.getCM(motion_ori.getJointVelocitiesGlobal(frame), bodyMasses, None, uppers)
                         direction = mm.normalize2(mm.projectionOnPlane(dCM_tar, (1,0,0), (0,0,1)))
                         directionAxis = np.cross((0,1,0), direction)
@@ -123,11 +131,11 @@ if __name__=='__main__':
         inputName = os.path.basename(path)
         root = os.path.splitext(inputName)[0]
         outputName = root+'.seg'
-        outputFile = open(dir+outputName, 'w')
-        cPickle.dump(seginfos, outputFile)
-        outputFile.close() 
+        outputFile = open(dir+outputName, 'wb')
+        pickle.dump(seginfos, outputFile)
+        outputFile.close()
 
-        print outputName, 'done'
+        print(outputName, 'done')
         pprint.pprint(seginfos)
         
-    print 'FINISHED'            
+    print('FINISHED')

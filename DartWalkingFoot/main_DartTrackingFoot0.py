@@ -1,7 +1,10 @@
 from fltk import *
 import copy
 import os.path
-from cPickle import load
+try:
+    import pickle
+except ImportError:
+    import cPickle as pickle
 # import time
 import numpy as np
 
@@ -551,8 +554,10 @@ def walkings(params, isCma=True):
     skeleton = motion_ori[0].skeleton
 
     segname = os.path.splitext(filename)[0]+'.seg'
-    segfile = open(motionDir+segname, 'r')
-    seginfo = load(segfile)
+    if SEGMENT_FOOT:
+        segname = 'segfoot_' + segname
+    segfile = open(motionDir+segname, 'rb')
+    seginfo = pickle.load(segfile)
     segfile.close()
 
     if not isCma:

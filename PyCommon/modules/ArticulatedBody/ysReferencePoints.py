@@ -1,4 +1,4 @@
-from ..Math import mmMath as mm
+from PyCommon.modules.Math import mmMath as mm
 
 def getCM(pos_or_vels, masses, totalMass=None, validIndexes=None):
     if validIndexes==None:

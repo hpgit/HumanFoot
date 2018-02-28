@@ -1,5 +1,3 @@
-#pragma once
-
 #include "EulerAngles.h"
 #include <VP/vphysics.h>
 

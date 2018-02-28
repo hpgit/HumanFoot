@@ -1,5 +1,13 @@
 from fltk import *
-import os.path, glob, cPickle
+import os.path
+import glob
+try:
+    # for python3
+    import pickle
+except:
+    # for python2.7
+    import cPickle as pickle
+import time
 import numpy as np
 
 import sys
@@ -208,7 +216,7 @@ def preprocess():
             
             outputPath = outputDir + os.path.basename(path)
             yf.writeBvhFile(outputPath, motion)
-            print outputPath, 'done'
+            print(outputPath, 'done')
             
             if 'repeat' in config and config['repeat']:
                 hRef = .1; vRef = .3
@@ -221,7 +229,7 @@ def preprocess():
                 outputName = os.path.splitext(os.path.basename(path))[0]+'_REPEATED.bvh'
                 outputPath = outputDir + outputName
                 yf.writeBvhFile(outputPath, motion)
-                print outputPath, 'done'
+                print(outputPath, 'done')
                 
             if VISUALIZE:
                 viewer = ysv.SimpleViewer()
@@ -233,7 +241,7 @@ def preprocess():
                 viewer.show()
                 Fl.run()
     
-    print 'FINISHED'
+    print('FINISHED')
         
 def simulation_test():
     Kt = 20.;       Dt = 2*(Kt**.5)
@@ -250,8 +258,8 @@ def simulation_test():
     
     motion_ori[0:0] = [motion_ori[0]]*20
 
-    mcfgfile = open(dir + 'mcfg', 'r')
-    mcfg = cPickle.load(mcfgfile)
+    mcfgfile = open(dir + 'mcfg', 'rb')
+    mcfg = pickle.load(mcfgfile)
     mcfgfile.close()
     
     wcfg = ypc.WorldConfig()
@@ -265,7 +273,7 @@ def simulation_test():
     motionModel = cvm.VpMotionModel(vpWorld, motion_ori[0], mcfg)
     controlModel = cvm.VpControlModel(vpWorld, motion_ori[0], mcfg)
     vpWorld.initialize()
-    print controlModel
+    print(controlModel)
     
     controlModel.initializeHybridDynamics()
 
