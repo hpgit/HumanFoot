@@ -58,6 +58,11 @@ VP_INLINE int vpBJoint::GetDOF(void) const
 	return 3;
 }
 
+VP_INLINE Axis vpBJoint::GetDisplacement(void) const
+{
+    return m_rQ;
+}
+
 VP_INLINE SE3 vpBJoint::Transform(void) const
 {
 	return Exp(m_rQ);

@@ -118,6 +118,10 @@ public:
 
 	virtual void			 streamOut(ostream &) const;
 
+
+	//hp
+	Axis                     GetDisplacement(void) const;
+
 protected:
 
 	virtual void			 SwapBody(void);

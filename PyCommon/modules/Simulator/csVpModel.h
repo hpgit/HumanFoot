@@ -214,6 +214,9 @@ public:	// expose to python
 	/////////////////////////////////////////////////////////////////
 	// DOF value
 
+	bp::list get_q();
+	bp::list get_dq();
+
 	// [T_g[0], R_l[1], R_l[2], ... ,R_l[n-1]]
 	bp::list getDOFPositions();
 

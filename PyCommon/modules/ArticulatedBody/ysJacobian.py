@@ -103,39 +103,55 @@ def computeJacobian2(J, jointDOFs, jointPositions, jointAxeses, effectorPosition
                     rotationalDOF = False if jointDOF_jth_joint == 6 and d < 3 else True
                     
                     if rotationalDOF:
-                        instanteneousAngVelocity_colth_dof = axis_colth_dof 
-                        # instanteneousVelocity_colth_dof = np.cross(axis_colth_dof, effectorPositions[e] - jointPosition_jth_joint)
-                        instanteneousVelocity_colth_dof = cm.cross(axis_colth_dof, effectorPositions[e] - jointPosition_jth_joint)
+                        instant_AngVelocity_colth_dof = axis_colth_dof
+                        # instant_Velocity_colth_dof = np.cross(axis_colth_dof, effectorPositions[e] - jointPosition_jth_joint)
+                        instant_Velocity_colth_dof = cm.cross(axis_colth_dof, effectorPositions[e] - jointPosition_jth_joint)
                     else:   # translationalDOF
-                        instanteneousAngVelocity_colth_dof = [0.,0.,0.] 
-                        instanteneousVelocity_colth_dof = axis_colth_dof
+                        instant_AngVelocity_colth_dof = [0., 0., 0.]
+                        instant_Velocity_colth_dof = axis_colth_dof
                 else:
-                    instanteneousAngVelocity_colth_dof = [0.,0.,0.] 
-                    instanteneousVelocity_colth_dof = [0.,0.,0.]
+                    instant_AngVelocity_colth_dof = [0., 0., 0.]
+                    instant_Velocity_colth_dof = [0., 0., 0.]
         
                 for i in range(3):
                     if dof_per_effector == 6:
                         if linearFirst:
-                            J[e*dof_per_effector + i, col] = instanteneousVelocity_colth_dof[i]
-                            J[e*dof_per_effector + 3 + i, col] = instanteneousAngVelocity_colth_dof[i]
+                            J[e*dof_per_effector + i, col] = instant_Velocity_colth_dof[i]
+                            J[e*dof_per_effector + 3 + i, col] = instant_AngVelocity_colth_dof[i]
                         else:
-                            J[e*dof_per_effector + i, col] = instanteneousAngVelocity_colth_dof[i]
-                            J[e*dof_per_effector + 3 + i, col] = instanteneousVelocity_colth_dof[i]
+                            J[e*dof_per_effector + i, col] = instant_AngVelocity_colth_dof[i]
+                            J[e*dof_per_effector + 3 + i, col] = instant_Velocity_colth_dof[i]
                     else:
-                        J[e*dof_per_effector + i, col] = instanteneousVelocity_colth_dof[i]
+                        J[e*dof_per_effector + i, col] = instant_Velocity_colth_dof[i]
                         
                 col += 1
 
     
-# compute dJ that ddx = dJ*dq + J*ddq
-# Treat one 3DOF joint as one 3DOF joint
-#
-# All parameters are given w.r.t. the global coordinate system
-# internalJointsOnly = False: joint[0] - link[0](root) - joint[1] - link[1] - ... - joint[n-1] - link[n-1] 
-# internalJointsOnly = True : link[0](root) - joint[0] - link[1] - joint[1] - ... - joint[n-2] - link[n-1]
-#
-# jointDOFs[0] = 6 means joint[0] is 6DOF floating joint, jointAxeses[0] should be [(1,0,0), (0,1,0), (0,0,1), R^t[0], R^t[1], R^t[2]]
 def computeJacobianDerivative2(dJ, jointDOFs, jointPositions, jointAxeses, linkAngVels, effectorPositions, effectorJointMasks, internalJointsOnly=False, linearFirst=True):
+    '''
+    Compute dJ that ddx = dJ*dq + J*ddq.
+
+    Treat one 3DOF joint as one 3DOF joint.
+
+    All parameters are given w.r.t. the global coordinate system.
+
+    internalJointsOnly = False: joint[0] - link[0](root) - joint[1] - link[1] - ... - joint[n-1] - link[n-1]
+    internalJointsOnly = True : link[0](root) - joint[0] - link[1] - joint[1] - ... - joint[n-2] - link[n-1]
+
+    jointDOFs[0] = 6 means joint[0] is 6DOF floating joint, jointAxeses[0] should be [(1,0,0), (0,1,0), (0,0,1), R^t[0], R^t[1], R^t[2]]
+
+    :param dJ: Jacobian, output
+    :param jointDOFs: DOF of each joint
+    :param jointPositions: positions of each joint
+    :param jointAxeses: axeses of each joint
+    :param linkAngVels: angular velocity of each link
+    :param effectorPositions:
+    :param effectorJointMasks:
+    :param internalJointsOnly:
+    :param linearFirst:
+    :return:
+    '''
+
     rowNum, colNum = dJ.shape
     dof_per_effector = rowNum // len(effectorPositions)   # dof_per_effector = 3 if applyOrientation==False else 6
     
@@ -307,7 +323,7 @@ def get_dP_effector_from_joint(jointIndex, jointPositions, linkAngVels, effector
         index = jointIndexes[i]
         jointPosition = jointPositions[index]
         childPosition = jointPositions[jointIndexes[i+1]] if i < len(jointIndexes)-1 else effectorPosition
-        linkAngVel = linkAngVels[index] if internalJointsOnly==False else linkAngVels[index+3]
+        linkAngVel = linkAngVels[index] if not internalJointsOnly else linkAngVels[index+3]
         dP += np.cross(linkAngVel, childPosition - jointPosition)
     return dP 
 

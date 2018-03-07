@@ -168,8 +168,18 @@ class Motion():
         nextFrame = frame+1 if frame < len(self)-1 else frame
         return prevFrame, nextFrame
 
+    def _getDerivativeBasic(self, frame0, frame1, positionFunc, subFunc):
+        if frame0 == frame1 or len(self) == 1:
+            return mm.O_Vec3()
+
+        if frame1 is None:
+            frame0, frame1 = self.getFiniteDifferenceFrames(frame0)
+        p0 = positionFunc(frame0)
+        p1 = positionFunc(frame1)
+        return (self.fps/(frame1-frame0)) * subFunc(p1, p0)
+
     def _getDerivative(self, index, frame0, frame1, positionFunc, subFunc):
-        if frame0 == frame1 or len(self)==1:
+        if frame0 == frame1 or len(self) == 1:
             return mm.O_Vec3()
         
         if frame1 is None:
@@ -179,7 +189,7 @@ class Motion():
         return (self.fps/(frame1-frame0)) * subFunc(p1, p0)
 
     def _getDerivatives(self, frame0, frame1, positionsFunc, subFunc):
-        if frame0 == frame1 or len(self)==1:
+        if frame0 == frame1 or len(self) == 1:
             return [mm.O_Vec3()]*self[0].skeleton.getElementNum()
         
         if frame1 is None:
@@ -374,10 +384,47 @@ class JointMotion(Motion):
     # p: Vec3(position), R : SO3(orientation)
     # _g : w.r.t. global frame, _l : w.r.t. local frame
     # x[0] : x of joint[0]
-    
-    # [(p_g[0], R_g[0]), R_l[1], R_l[2], ... ,R_l[n-1]]
+
+    def get_q(self, frame):
+        '''
+        get generalized position in joint coordinate
+
+        linear first and linear part is independent on root body
+        :param frame:
+        :return:
+        '''
+        return self[frame].get_q()
+
+    def get_dq(self, frame0, frame1=None):
+        '''
+        get generalized velocity in joint coordinate
+
+        linear first and linear part is independent on root body
+        :param frame0:
+        :param frame1:
+        :return:
+        '''
+        return self._getDerivative(frame0, frame1, self.get_q, lambda x, y: x-y)
+
+    def get_ddq(self, frame0, frame1=None):
+        '''
+        get generalized acceleration in joint coordinate
+
+        linear first and linear part is independent on root body
+        :param frame0:
+        :param frame1:
+        :return:
+        '''
+        return self._getDerivative(frame0, frame1, self.get_dq, lambda x, y: x-y)
+
     def getDOFPositions(self, frame):
-#        return [self[frame].getGlobalT(0)] + self.getInternalJointOrientationsLocal(frame)
+        '''
+        [(p_g[0], R_g[0]), R_l[1], R_l[2], ... ,R_l[n-1]]
+
+        :param frame:
+        :return:
+        '''
+        # return [self[frame].getGlobalT(0)] + self.getInternalJointOrientationsLocal(frame)
         return [(self[frame].rootPos, self[frame].getLocalR(0))] + self.getInternalJointOrientationsLocal(frame)
     
     # [(p_l[0], R_l[0]), R_l[1], R_l[2], ... ,R_l[n-1]]
@@ -388,7 +435,7 @@ class JointMotion(Motion):
     def getDOFPositionsEuler(self, frame):
         positions = self.getDOFPositions(frame)
         positionsEuler = []
-        positionsEuler.append(np.concatenate((positions[0][0],mm.R2ZXY(positions[0][1]))))
+        positionsEuler.append(np.concatenate((positions[0][0], mm.R2ZXY(positions[0][1]))))
         for i in range(1,len(positions)): 
             positionsEuler.append(mm.R2ZXY(positions[i]))
         return positionsEuler
@@ -585,14 +632,16 @@ class JointSkeleton(Skeleton):
         self.rootIndex = None   # root always should be self.elements[0] and self.jointElementIndexes[0]
         self.jointElementIndexes = []
         self.reverseJointElementIndexes = {}
+
     def initialize(self):
         # build jointElementIndexes
         del self.jointElementIndexes[:]
         for i in range(self.getElementNum()):
             joint = self.elements[i]
-            if len(joint.children)>0:
+            if len(joint.children) > 0:
                 self.jointElementIndexes.append(i)
                 self.reverseJointElementIndexes[i] = len(self.jointElementIndexes)-1
+
     def __str__(self):
         s = Skeleton.__str__(self)
         s += '<HIERARCHY>\n'
@@ -612,6 +661,7 @@ class JointSkeleton(Skeleton):
     #===============================================================================
     def getDOFs(self):
         return [6] + [3]*self.getInternalJointNum()
+
     def getTotalDOF(self):
         return 6 + 3*self.getInternalJointNum()
 
@@ -824,7 +874,7 @@ class JointPosture(Posture):
 #        for i in range(self.skeleton.getElementNum()):
 #            self.globalTs[i] = mm.I_SE3()
     def initLocalRs(self, initialRs=None):
-        if initialRs==None:
+        if initialRs is None:
             for i in range(self.skeleton.getElementNum()):
                 self.localRs[i] = mm.I_SO3()
         else:
@@ -848,8 +898,10 @@ class JointPosture(Posture):
     
     def getLocalR(self, index):
         return self.localRs[index]
+
     def setLocalR(self, index, localR):
         self.localRs[index] = localR
+
     def mulLocalR(self, index, R):
         self.localRs[index] = np.dot(self.localRs[index], R)
 
@@ -1074,14 +1126,24 @@ class JointPosture(Posture):
         self.skeleton = skeleton
         self.localRs.append(localR)
         self.globalTs.append(localR)
+
     def getDOFPositions(self):
         return [(self.rootPos, self.getLocalR(0))] + self.getInternalJointOrientationsLocal()
+
     def getDOFAxeses(self):
         return [np.concatenate((mm.I_SO3(), self.getJointOrientationGlobal(0).transpose()))] + [R.transpose() for R in self.getInternalJointOrientationsGlobal()]
+
     def setDOFPositions(self, DOFPositions):
         self.rootPos = DOFPositions[0][0]
         self.setJointOrientationsLocal([DOFPositions[0][1]]+DOFPositions[1:])
 
+    def get_q(self):
+        q = np.zeros(self.skeleton.getTotalDOF())
+        q[:3] = self.rootPos
+        joint_num = self.skeleton.getJointNum()
+        for i in range(joint_num):
+            q[3*i+3:3*i+6] = mm.logSO3(self.getLocalR(self.skeleton.jointElementIndexes[i]))
+        return q
 
     def getJointFrame(self, jointIndex):
         return self.getGlobalT(self.skeleton.jointElementIndexes[jointIndex])
@@ -1090,6 +1152,7 @@ class JointPosture(Posture):
         self.rootPos *= scale
         if update:
             self.updateGlobalT()
+
 
 class JointDisplacement(JointPosture):
     def __init__(self, jointSkeleton):

@@ -68,6 +68,7 @@ def main():
 
     motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_jump_biped()
+    print(motion.get_q(0))
 
     vpWorld = cvw.VpWorld(wcfg)
     motionModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)
@@ -727,7 +728,7 @@ def main():
                     mot.addConstraint(problem, totalDOF, J_contacts[c_idx], dJ_contacts[c_idx], dth_flat, a_sups[c_idx])
 
         if contactChangeCount > 0:
-            contactChangeCount -= 1
+            contactChangeCount = contactChangeCount - 1
             if contactChangeCount == 0:
                 maxContactChangeCount = 30
                 contactChangeType = 0

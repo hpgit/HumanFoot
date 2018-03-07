@@ -134,6 +134,9 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("solveForwardDynamics", &VpControlModel::solveForwardDynamics)
 		.def("solveInverseDynamics", &VpControlModel::solveInverseDynamics)
 
+		.def("get_q", &VpControlModel::get_q)
+		.def("get_dq", &VpControlModel::get_dq)
+
 		.def("getDOFPositions", &VpControlModel::getDOFPositions)
 		.def("getDOFVelocities", &VpControlModel::getDOFVelocities)
 		.def("getDOFAccelerations", &VpControlModel::getDOFAccelerations)
@@ -154,6 +157,7 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getJointOrientationLocal", &VpControlModel::getJointOrientationLocal)
 		.def("getJointAngVelocityLocal", &VpControlModel::getJointAngVelocityLocal)
 		.def("getJointAngAccelerationLocal", &VpControlModel::getJointAngAccelerationLocal)
+
 
 		.def("getJointPositionGlobal", &VpControlModel::getJointPositionGlobal, getJointPositionGlobal_py_overloads())
 //		.def("getJointPositionGlobal", &VpControlModel::getJointPositionGlobal)
@@ -1573,6 +1577,17 @@ void VpControlModel::solveForwardDynamics()
 void VpControlModel::solveInverseDynamics()
 {
 	_nodes[0]->body.GetSystem()->InverseDynamics();
+}
+
+bp::list VpControlModel::get_q()
+{
+    //TODO:
+
+}
+
+bp::list VpControlModel::get_dq()
+{
+    //TODO:
 }
 
 bp::list VpControlModel::getDOFPositions()
