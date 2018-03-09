@@ -1,5 +1,13 @@
 import numpy as np
+import math
 from PyCommon.modules.Math import mmMath as mm
+
+JACOBIAN_EPS = 1e-6
+SCALAR_1 = 1.
+SCALAR_1_2 = .5
+SCALAR_1_6 = 1./6.
+SCALAR_1_24 = 1./24.
+SCALAR_1_120 = 1./120.
 
 
 def compute_jacobian(J, q, joint_dofs, joint_positions, effector_positions, ancestor_mask,
@@ -26,24 +34,35 @@ def compute_jacobian(J, q, joint_dofs, joint_positions, effector_positions, ance
         for joint_idx in range(len(joint_dofs)):
             dof = joint_dofs[joint_idx]
             joint_position = joint_positions[joint_idx]
+            _J = None  # type: np.ndarray
             if dof == 6:
                 _J = compute_joint_jacobian_6dof(q, joint_position, effector_position)
             elif dof == 3:
                 _J = compute_joint_jacobian_3dof(q, joint_position, effector_position)
-                pass
             else:
                 raise NotImplementedError
+            J[6*effector_idx:6*effector_idx+6, dof_offset:dof_offset+dof] = _J
 
             dof_offset = dof_offset + dof
 
 
 def compute_basic_jacobian_3dof(q):
-    # TODO: compute_basic_jacobian_3dof
-    return np.eye(3)
+    t = math.sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2])
+    t2 = t * t
+    alpha, beta, gamma = 0., 0., 0.
+    if t < JACOBIAN_EPS:
+        alpha = SCALAR_1_6 - SCALAR_1_120 * t2
+        beta = SCALAR_1 - SCALAR_1_6 * t2
+        gamma = SCALAR_1_2 - SCALAR_1_24 * t2
+    else:
+        beta = math.sin(t) / t
+        alpha = (SCALAR_1 - beta) / t2
+        gamma = (SCALAR_1 - math.cos(t)) / t2
+
+    return alpha * mm.getDyadMatrixForm(q) + beta * np.eye(3) - gamma * mm.getCrossMatrixForm(q)
 
 
-def compute_joint_jacobian_3dof(q, joint_orientation,
-                                joint_position, effector_position):
+def compute_joint_jacobian_3dof(q, joint_orientation, joint_position, effector_position):
     '''
 
     :rtype: np.ndarray
@@ -62,5 +81,7 @@ def compute_joint_jacobian_3dof(q, joint_orientation,
 
 
 def compute_joint_jacobian_6dof(q, joint_orientation, joint_position, effector_position):
-    pass
+    j = np.eye(6)
+    j[3:, 3:] = compute_joint_jacobian_3dof(q[3:], joint_orientation, joint_position, effector_position)
+    return j
 

@@ -591,6 +591,8 @@ def R2XYZ(R):
                      math.atan2(-R[0, 1], R[0, 0])
                      ))
 
+def getDyadMatrixForm(w):
+    return np.outer(w, w)
 
 def getCrossMatrixForm(w):
     W = _O_SO3.copy()
