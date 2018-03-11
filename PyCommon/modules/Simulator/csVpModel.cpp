@@ -1581,13 +1581,64 @@ void VpControlModel::solveInverseDynamics()
 
 bp::list VpControlModel::get_q()
 {
-    //TODO:
+    bp::list ls;
+	static SE3 rootBodyFrame = _nodes[index]->body.GetFrame();
+	static SE3 rootJointFrame = bodyFrame * Inv(_boneTs[index]);
+    static Vec3 rootJointPos = rootJointFrame.GetPosition();
+    static Axis rootJointQ = LogR(rootJointFrame);
+    static Axis jointQ;
 
+    for(int i=0; i<3; i++)
+    {
+        ls.append(rootJointPos[i]);
+    }
+    for(int i=0; i<3; i++)
+    {
+        ls.append(rootJointQ[i]);
+    }
+	for(int j=0; j<_nodes.size(); ++i)
+	{
+	    jointQ = _nodes[i]->joint.GetDisplacement();
+	    for(int i=0; i<3; i++)
+	    {
+            ls.append(jointQ[i]);
+	    }
+	}
+
+	return ls;
 }
 
 bp::list VpControlModel::get_dq()
 {
-    //TODO:
+    bp::list ls;
+	static SE3 rootBodyFrame = _nodes[index]->body.GetFrame();
+	static SE3 rootJointFrame = bodyFrame * Inv(_boneTs[index]);
+    static Vec3 rootJointPos = rootJointFrame.GetPosition();
+    static Axis rootJointQ = LogR(rootJointFrame);
+    static Axis jointDq;
+
+    Vec3 rootJointLinVel = getJointVelocityGlobal(0);
+    Vec3 rootJointAngVel = getJointAngVelocityGlobal(0);
+
+
+    for(int i=0; i<3; i++)
+    {
+        ls.append(rootJointPos[i]);
+    }
+    for(int i=0; i<3; i++)
+    {
+        ls.append(rootJointQ[i]);
+    }
+	for(int j=0; j<_nodes.size(); ++i)
+	{
+	    jointDq = _nodes[i]->joint.GetDisplacementDerivate();
+	    for(int i=0; i<3; i++)
+	    {
+            ls.append(jointDq[i]);
+	    }
+	}
+
+	return ls;
 }
 
 bp::list VpControlModel::getDOFPositions()

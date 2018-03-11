@@ -121,6 +121,7 @@ public:
 
 	//hp
 	Axis                     GetDisplacement(void) const;
+	Axis                     GetDisplacementDerivate(void) const;
 
 protected:
 

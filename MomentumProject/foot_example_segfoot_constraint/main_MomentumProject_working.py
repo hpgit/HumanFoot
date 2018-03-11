@@ -408,6 +408,8 @@ def main():
         ddth_r = motion.getDOFAccelerations(frame)
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
 
+        print(controlModel.get_q())
+
         ype.flatten(ddth_des, ddth_des_flat)
         ype.flatten(dth, dth_flat)
 

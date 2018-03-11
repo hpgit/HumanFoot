@@ -63,6 +63,11 @@ VP_INLINE Axis vpBJoint::GetDisplacement(void) const
     return m_rQ;
 }
 
+VP_INLINE Axis vpBJoint::GetDisplacementDerivate(void) const
+{
+    return m_rDq;
+}
+
 VP_INLINE SE3 vpBJoint::Transform(void) const
 {
 	return Exp(m_rQ);
