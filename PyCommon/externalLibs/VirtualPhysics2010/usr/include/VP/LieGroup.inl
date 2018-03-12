@@ -173,6 +173,11 @@ inline scalar Vec3::Normalize(void)
 	return mag;
 }
 
+inline SE3 Vec3::GetCrossMatrix(void)
+{
+	return SE3(0., _v[2], -_v[1], -v[2], 0., -_v[0], _v[1], -_v[0], 0.);
+}
+
 inline Vec3 Rotate(const SE3 &T, const Vec3 &v)
 {
 	return Vec3(T[0] * v[0] + T[3] * v[1] + T[6] * v[2],
@@ -217,6 +222,11 @@ inline Vec3 Cross(const Vec3 &p, const Vec3 &q)
 inline scalar Inner(const Vec3 &p, const Vec3 &q)
 {
 	return (p[0] * q[0] + p[1] * q[1] + p[2] * q[2]);
+}
+
+inline SE3 Outer(const Vec3 &p, const Vec3 &q)
+{
+	return SE3(p[0]*q[0], p[1]*q[0], p[2]*q[0], p[0]*q[1], p[1]*q[1], p[2]*q[1], p[0]*q[2], p[1]*q[2], p[2]*q[2]);
 }
 
 inline scalar SquareSum(const Vec3 &p)
@@ -2185,6 +2195,11 @@ inline void Axis::Reparameterize(void)
 	}
 }
 
+inline SE3 Axis::GetCrossMatrix(void)
+{
+	return SE3(0., _v[2], -_v[1], -v[2], 0., -_v[0], _v[1], -_v[0], 0.);
+}
+
 inline Axis Reparameterize(const Axis &s)
 {
 	scalar theta = sqrt(s[0] * s[0] + s[1] * s[1] + s[2] * s[2]);
@@ -2246,6 +2261,21 @@ inline scalar Inner(const Vec3 &p, const Axis &q)
 inline scalar Inner(const Axis &p, const Vec3 &q)
 {
 	return (p[0] * q[0] + p[1] * q[1] + p[2] * q[2]);
+}
+
+inline SE3 Outer(const Axis &p, const Axis &q)
+{
+	return SE3(p[0]*q[0], p[1]*q[0], p[2]*q[0], p[0]*q[1], p[1]*q[1], p[2]*q[1], p[0]*q[2], p[1]*q[2], p[2]*q[2]);
+}
+
+inline SE3 Outer(const Vec3 &p, const Axis &q)
+{
+	return SE3(p[0]*q[0], p[1]*q[0], p[2]*q[0], p[0]*q[1], p[1]*q[1], p[2]*q[1], p[0]*q[2], p[1]*q[2], p[2]*q[2]);
+}
+
+inline SE3 Outer(const Axis &p, const Vec3 &q)
+{
+	return SE3(p[0]*q[0], p[1]*q[0], p[2]*q[0], p[0]*q[1], p[1]*q[1], p[2]*q[1], p[0]*q[2], p[1]*q[2], p[2]*q[2]);
 }
 
 inline scalar SquareSum(const Axis &p)

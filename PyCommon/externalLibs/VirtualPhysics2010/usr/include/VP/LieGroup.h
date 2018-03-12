@@ -140,6 +140,7 @@ class			 	 dse3;
 class			 	 SE3;
 class				 Inertia;
 class				 AInertia;
+class				 G3x3;
 
 /*!
 	\class Vec3
@@ -245,6 +246,11 @@ public:
 	*/
 	scalar			 Normalize(void);
 
+	/*!
+		get cross matrix.
+	*/
+	SE3				 GetCrossMatrix(void);
+
   	/*!
 		standard output operator
 	*/
@@ -274,6 +280,11 @@ public:
 		get an inner product of p and q.
 	*/
 	friend scalar	 Inner(const Vec3 &p, const Vec3 &a);
+
+	/*!
+		get an outer product of p and q.
+	*/
+	friend SE3	 	 Outer(const Vec3 &p, const Vec3 &a);
 
  	/*!
 		get a squared sum of all the elements in p.
@@ -337,7 +348,6 @@ public:
 		fast version of ad(se3(Vec3(0), v), S)
 	*/
 	friend Vec3		 ad(const Vec3 &v, const se3 &S);
-
 
 	/*!
 	    output string for python modules
@@ -460,6 +470,11 @@ public:
 		reparameterize such that ||s'|| <= M_PI and Exp(s) == Epx(s')
 	*/
 	void			 Reparameterize(void);
+	
+	/*!
+		get cross matrix.
+	*/
+	SE3				 GetCrossMatrix(void);
 
  	/*!
 		standard output operator
@@ -497,6 +512,13 @@ public:
 	friend scalar	 Inner(const Axis &p, const Axis &a);
 	friend scalar	 Inner(const Vec3 &p, const Axis &a);
 	friend scalar	 Inner(const Axis &p, const Vec3 &a);
+
+	/*!
+		get an outer product of p and q.
+	*/
+	friend SE3	 	 Outer(const Axis &p, const Axis &a);
+	friend SE3	 	 Outer(const Vec3 &p, const Axis &a);
+	friend SE3	 	 Outer(const Axis &p, const Vec3 &a);
 
  	/*!
 		get a squared sum of all the elements in p.

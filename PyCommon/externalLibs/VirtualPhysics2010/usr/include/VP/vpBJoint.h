@@ -122,6 +122,8 @@ public:
 	//hp
 	Axis                     GetDisplacement(void) const;
 	Axis                     GetDisplacementDerivate(void) const;
+	SE3					 	 GetJacobian(void) const;
+	SE3						 GetJacobianDerivative(void) const;
 
 protected:
 

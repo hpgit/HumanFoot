@@ -2391,9 +2391,22 @@ object VpControlModel::getBodyGravityForceLocal( int index )
 	return pyV;
 }
 
-object VpControlModel::computeJacobian2(int index, const object& positionGlobal)
+object VpControlModel::computeJacobian(int index, const object& positionGlobal)
 {
 	//TODO:
+	position = pyVec3_2_Vec3(positionGlobal);
+	vpBJoint *joint;
+
+	for(int i=0; i<_nodes.size();i++)
+	{
+        joint = &(_nodes[i]->joint);
+        
+	}
+}
+
+object VpControlModel::computeComJacobian()
+{
+
 }
 
 

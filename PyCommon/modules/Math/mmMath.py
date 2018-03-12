@@ -591,15 +591,21 @@ def R2XYZ(R):
                      math.atan2(-R[0, 1], R[0, 0])
                      ))
 
+
 def getDyadMatrixForm(w):
     return np.outer(w, w)
 
+
 def getCrossMatrixForm(w):
     W = _O_SO3.copy()
-    W[0,1] = -w[2]; W[1,0] = w[2] 
-    W[0,2] = w[1]; W[2,0] = -w[1]
-    W[1,2] = -w[0]; W[2,1] = w[0]
+    W[0, 1] = -w[2]
+    W[1, 0] = w[2]
+    W[0, 2] = w[1]
+    W[2, 0] = -w[1]
+    W[1, 2] = -w[0]
+    W[2, 1] = w[0]
     return W
+
 
 def getPosDefMatrixForm(r):
     _r = np.array(r)
@@ -611,9 +617,11 @@ def getPosDefMatrixForm(r):
 from numpy.linalg import svd
 from numpy import sum,where
 
+
 def matrixrank(A,tol=1e-8):
     s = svd(A, compute_uv=False)
     return sum( where( s>tol, 1, 0 ) ) 
+
 
 def rotX(theta):   
     R = _I_SO3.copy()
@@ -623,6 +631,7 @@ def rotX(theta):
     R[2,1]=s; R[2,2]=c
     return R
 
+
 def rotY(theta):   
     R = _I_SO3.copy()
     c = math.cos(theta)
@@ -630,6 +639,7 @@ def rotY(theta):
     R[0,0]=c; R[0,2]=s
     R[2,0]=-s; R[2,2]=c
     return R
+
 
 def rotZ(theta):   
     R = _I_SO3.copy()

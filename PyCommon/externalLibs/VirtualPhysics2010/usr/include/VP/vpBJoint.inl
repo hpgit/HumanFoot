@@ -137,6 +137,30 @@ VP_INLINE void vpBJoint::SetVelocity(const Vec3 &V)
 	m_rDq = (delta * Inner(m_rQ, V)) * m_rQ + zeta * W + SCALAR_1_2 * Cross(m_rQ, W);
 }
 
+VP_INLINE SE3 vpBJoint::GetJacobian(const Vec3 &V)
+{
+	scalar t = Norm(m_rQ), alpha, beta, gamma, t2 = t * t;
+	
+    if ( t < BJOINT_EPS )
+	{
+		alpha = SCALAR_1_6 - SCALAR_1_120 * t2;
+		beta = SCALAR_1 - SCALAR_1_6 * t2;
+		gamma = SCALAR_1_2 - SCALAR_1_24 * t2;
+	} else
+	{
+		beta = sin(t) / t;
+		alpha = (SCALAR_1 - beta) / t2;
+		gamma = (SCALAR_1 - cos(t)) / t2;
+	}
+
+	SE3 alpha_matrix = Outer(alpha * m_rQ, m_rQ);
+	SE3 gamma_matrix = (-gamma * m_rQ).GetCrossMatrix();
+
+	return SE3(alpha_matrix[0] + gamma_matrix[0] + beta, alpha_matrix[1] + gamma_matrix[1], alpha_matrix[2] + gamma_matrix[2],
+			alpha_matrix[3] + gamma_matrix[3], alpha_matrix[4] + gamma_matrix[4] + beta, alpha_matrix[5] + gamma_matrix[5],
+			alpha_matrix[6] + gamma_matrix[6], alpha_matrix[7] + gamma_matrix[7], alpha_matrix[8] + gamma_matrix[8] + beta);
+}
+
 VP_INLINE Vec3 vpBJoint::GetAcceleration(void) const
 {
 	Axis V;
