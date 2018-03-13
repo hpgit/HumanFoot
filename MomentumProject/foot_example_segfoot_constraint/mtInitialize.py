@@ -272,8 +272,8 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
             # RightFoot_foot_0_1 : inside metatarsals
             capsulize('RightFoot_foot_0_1')
             node = mcfg.getNode('RightFoot_foot_0_1')
-            node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
-            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity,SEGMENT_FOOT_RAD, -1))
+            node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
+            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([1.2, 0., 0.]), mm.exp([0., math.atan2(1.2, 2.5), 0.])], ypc.CapsuleMaterial(capsulDensity,SEGMENT_FOOT_RAD, -1))
             node.jointType = footJointType
 
             # RightFoot_foot_0_1_0 : inside phalanges

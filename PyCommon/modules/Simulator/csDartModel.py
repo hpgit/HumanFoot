@@ -897,9 +897,11 @@ class DartModel:
         # pyR = self.getJointOrientationGlobal(0)
         pyV = np.asarray(self.skeleton.q[3:6])
         pyR = mm.exp(np.asarray(self.skeleton.q[:3]))
-        ls.append((pyV, pyR))
+        ls.append([pyV, pyR])
+        print(pyV)
         for i in range(1, len(self.skeleton.joints)):
             joint = self.skeleton.joints[i]
+            # ls.append(mm.exp(np.array([dof.position() for dof in joint.dofs])))
             ls.append(joint.get_local_transform()[:3, :3])
 
         return ls

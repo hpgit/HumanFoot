@@ -68,7 +68,7 @@ def main():
 
     motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_jump_biped()
-    print(motion.get_q(0))
+    # print(motion.get_q(0))
 
     vpWorld = cvw.VpWorld(wcfg)
     motionModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)
@@ -408,7 +408,7 @@ def main():
         ddth_r = motion.getDOFAccelerations(frame)
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
 
-        print(controlModel.get_q())
+        # print(controlModel.get_q())
 
         ype.flatten(ddth_des, ddth_des_flat)
         ype.flatten(dth, dth_flat)
@@ -603,9 +603,9 @@ def main():
 
         # calculate jacobian
         yjc.computeJacobian2(Jsys, DOFs, jointPositions, jointAxeses, linkPositions, allLinkJointMasks)
-        # dJsys = (Jsys - JsysPre)/(1/30.)
-        # JsysPre = Jsys.copy()
-        yjc.computeJacobianDerivative2(dJsys, DOFs, jointPositions, jointAxeses, linkAngVelocities, linkPositions, allLinkJointMasks)
+        dJsys = (Jsys - JsysPre)/(1/30.)
+        JsysPre = Jsys.copy()
+        # yjc.computeJacobianDerivative2(dJsys, DOFs, jointPositions, jointAxeses, linkAngVelocities, linkPositions, allLinkJointMasks)
 
         for i in range(len(J_contacts)):
             J_contacts[i] = Jsys[6*contact_ids[i]:6*contact_ids[i] + 6, :]
@@ -680,7 +680,7 @@ def main():
         a_oris = list(map(mm.logSO3,
                           [mm.getSO3FromVectors(np.dot(body_ori, np.array([0., 1., 0.])), np.array([0., 1., 0.])) for body_ori in contact_body_ori]))
         a_sups = [np.append(kt_sup*(ref_body_pos[i] - contact_body_pos[i] + contMotionOffset) + dt_sup*(ref_body_vel[i] - contact_body_vel[i]),
-                            10.*kt_sup*a_oris[i]+dt_sup*(ref_body_angvel[i]-contact_body_angvel[i])) for i in range(len(a_oris))]
+                            kt_sup*a_oris[i]+dt_sup*(ref_body_angvel[i]-contact_body_angvel[i])) for i in range(len(a_oris))]
 
         # momentum matrix
         RS = np.dot(P, Jsys)
