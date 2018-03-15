@@ -2,6 +2,7 @@ import numpy as np
 import math
 from PyCommon.modules.Math import mmMath as mm
 
+
 def get_foot_up_vector(posture_ori, footIdDic, foot_state):
     #TODO:
     left_origin = posture_ori.getJointPositionGlobal(footIdDic['LeftFoot_foot_0_1'])
@@ -19,9 +20,9 @@ def get_foot_up_vector(posture_ori, footIdDic, foot_state):
 
 
 def footAdjust(posture_ori, footIdDic, SEGMENT_FOOT_MAG, SEGMENT_FOOT_RAD, baseHeight=0.):
-    '''
+    """
     :return:
-    '''
+    """
 
     def getJointChildPositionGlobal(posture, jointNameOrIdx):
         """

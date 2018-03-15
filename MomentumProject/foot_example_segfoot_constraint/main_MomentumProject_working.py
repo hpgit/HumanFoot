@@ -677,6 +677,10 @@ def main():
             dH_des = None
 
         # set up equality constraint
+        # TODO:
+        # logSO3 is just q'', not acceleration.
+        # To make a_oris acceleration, q'' -> a will be needed
+        a_ori = mm.qdd2accel()
         a_oris = list(map(mm.logSO3,
                           [mm.getSO3FromVectors(np.dot(body_ori, np.array([0., 1., 0.])), np.array([0., 1., 0.])) for body_ori in contact_body_ori]))
         a_sups = [np.append(kt_sup*(ref_body_pos[i] - contact_body_pos[i] + contMotionOffset) + dt_sup*(ref_body_vel[i] - contact_body_vel[i]),

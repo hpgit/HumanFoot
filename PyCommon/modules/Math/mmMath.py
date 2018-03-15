@@ -16,10 +16,27 @@ _O_SO3 = np.zeros((3,3))
 RAD = 0.0174532925199432957692    # = pi / 180 
 DEG = 57.2957795130823208768      # = pi / 180
 
+SCALAR_3 = 3.
+SCALAR_2 = 2.
+SCALAR_1 = 1.
+SCALAR_1_2 = .5
+SCALAR_1_3 = 1./3.
+SCALAR_1_6 = 1./6.
+SCALAR_1_12 = 1./12.
+SCALAR_1_24 = 1./24.
+SCALAR_1_30 = 1./30.
+SCALAR_1_60 = 1./60.
+SCALAR_1_120 = 1./120.
+SCALAR_1_180 = 1./180.
+SCALAR_1_1260 = 1./1260.
+
 def ACOS(x):
-    if x > 1.0:     return 0.0
-    elif x < -1.0:  return math.pi
-    else:           return math.acos(x)
+    if x > 1.0:
+        return 0.0
+    elif x < -1.0:
+        return math.pi
+    else:
+        return math.acos(x)
 
 def I_SO3():
     return _I_SO3.copy()
@@ -648,6 +665,59 @@ def rotZ(theta):
     R[0,0]=c; R[0,1]=-s
     R[1,0]=s; R[1,1]=c
     return R
+
+
+def square_sum(v):
+    return v[0]*v[0] + v[1]*v[1] + v[2]* v[2]
+
+
+def cross(v1, v2):
+    return np.array([v1[1]*v2[2] - v1[2]*v2[1], v1[2]*v2[0] - v1[0]*v2[2], v1[0]*v2[1] - v1[1]*v2[0]])
+
+
+def qd2vel(m_rDq, m_rQ):
+    t = np.linalg.norm(m_rQ)
+    t2 = t * t
+
+    if t < LIE_EPS:
+        alpha = SCALAR_1_6 - SCALAR_1_120 * t2
+        beta = SCALAR_1 - SCALAR_1_6 * t2
+        gamma = SCALAR_1_2 - SCALAR_1_24 * t2
+    else:
+        beta = math.sin(t) / t
+        alpha = (SCALAR_1 - beta) / t2
+        gamma = (SCALAR_1 - math.cos(t)) / t2
+
+    w = (alpha * np.dot(m_rQ, m_rDq)) * m_rQ + beta * m_rDq + gamma * cross(m_rDq, m_rQ)
+    return w
+
+
+def qdd2accel(m_rDdq, m_rDq, m_rQ):
+    t = np.linalg.norm(m_rQ)
+    t2 = t*t
+    q_dq = np.dot(m_rDq, m_rQ)
+    if t < LIE_EPS:
+        alpha = SCALAR_1_6 - SCALAR_1_120 * t2
+        beta = SCALAR_1 - SCALAR_1_6 * t2
+        gamma = SCALAR_1_2 - SCALAR_1_24 * t2
+
+        d_alpha = (SCALAR_1_1260 * t2 - SCALAR_1_60) * q_dq
+        d_beta = (SCALAR_1_30 * t2 - SCALAR_1_3) * q_dq
+        d_gamma = (SCALAR_1_180 * t2 - SCALAR_1_12) * q_dq
+    else:
+        beta = math.sin(t) / t
+        alpha = (SCALAR_1 - beta) / t2
+        gamma = (SCALAR_1 - math.cos(t)) / t2
+
+        d_alpha = (gamma - SCALAR_3 * alpha) / t2 * q_dq
+        d_beta = (alpha - gamma) * q_dq
+        d_gamma = (beta - SCALAR_2 * gamma) / t2 * q_dq
+
+    dw = (d_alpha * q_dq + alpha * (square_sum(m_rDq) + np.dot(m_rQ, m_rDdq))) * m_rQ \
+        + (alpha * q_dq + d_beta) * m_rDq + beta * m_rDdq \
+        + cross(d_gamma * m_rDq + gamma * m_rDdq, m_rQ)
+
+    return dw
 
 
 if __name__ == '__main__':
