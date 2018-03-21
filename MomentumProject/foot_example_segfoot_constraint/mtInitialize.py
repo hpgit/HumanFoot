@@ -24,6 +24,14 @@ def testtest():
 
 
 def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
+    """
+
+    :param SEGMENT_FOOT:
+    :param SEGMENT_FOOT_MAG:
+    :return:
+    :rtype: ym.JointMotion, ypc.ModelConfig, ypc.WorldConfig, int, dict[str, float|dict[str, float]], float
+    """
+
     SEGMENT_FOOT_RAD = SEGMENT_FOOT_MAG * .5
     SEGMENT_FOOT_SEPARATE = False
     SEGMENT_FOOT_OUTSIDE_JOINT_FIRST = True
@@ -51,7 +59,7 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
         partBvh.mirror('YZ')
         bvh.replaceJointFromBvh('LeftFoot', partBvh, SEGMENT_FOOT_MAG)
 
-    motion = bvh.toJointMotion(1., False)
+    motion = bvh.toJointMotion(1., False)  # type: ym.JointMotion
 
     # motion.translateByOffset((0., 0.15, 0.))
     # motion.translateByOffset((0., -0.12, 0.))
@@ -481,7 +489,6 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
     config['supLink2'] = 'RightFoot'
     #config['end'] = 'Hips'
     config['end'] = 'Spine1'
-
 
     return motion, mcfg, wcfg, stepsPerFrame, config, frame_rate
 

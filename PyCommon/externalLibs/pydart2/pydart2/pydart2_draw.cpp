@@ -284,30 +284,89 @@ void drawShape(
         using dart::dynamics::SoftMeshShape;
         using dart::dynamics::LineSegmentShape;
 
-        switch (shape->getShapeType())
-        {
-        case Shape::BOX:
+//        switch (shape->getShapeType())
+//        {
+//        case Shape::BOX:
+//        {
+//            const auto& box = static_cast<const BoxShape*>(shape);
+//            ri->drawCube(box->getSize());
+//
+//            break;
+//        }
+//        case Shape::ELLIPSOID:
+//        {
+//            const auto& ellipsoid = static_cast<const EllipsoidShape*>(shape);
+//            ri->drawEllipsoid(ellipsoid->getSize());
+//
+//            break;
+//        }
+//        case Shape::CYLINDER:
+//        {
+//            const auto& cylinder = static_cast<const CylinderShape*>(shape);
+//            ri->drawCylinder(cylinder->getRadius(), cylinder->getHeight());
+//
+//            break;
+//        }
+//        case Shape::MESH:
+//        {
+//            const auto& mesh = static_cast<const MeshShape*>(shape);
+//
+//            // glDisable(GL_COLOR_MATERIAL); // Use mesh colors to draw
+//
+//            if (mesh->getDisplayList())
+//                ri->drawList(mesh->getDisplayList());
+//            else
+//                ri->drawMesh(mesh->getScale(), mesh->getMesh());
+//
+//            break;
+//        }
+//        case Shape::SOFT_MESH:
+//        {
+//            const auto& softMesh = static_cast<const SoftMeshShape*>(shape);
+//            ri->drawSoftMesh(softMesh->getAssimpMesh());
+//
+//            break;
+//        }
+//        case Shape::LINE_SEGMENT:
+//        {
+//            const auto& lineSegmentShape
+//                = static_cast<const LineSegmentShape*>(shape);
+//            ri->drawLineSegments(lineSegmentShape->getVertices(),
+//                                 lineSegmentShape->getConnections());
+//
+//            break;
+//        }
+//        default:
+//        {
+//            const auto& bbox = shape->getBoundingBox();
+//            const auto& size = bbox.getMax();
+//            ri->drawEllipsoid(size);
+//            break;
+//        }
+//        // default:
+//        // {
+//        //     dterr << "[SimWindow::drawShape] Attempting to draw unsupported shape "
+//        //           << "type '" << shape->getShapeType() << "'.\n";
+//        //     break;
+//        // }
+//        }
+
+        if(shape->is<BoxShape>())
         {
             const auto& box = static_cast<const BoxShape*>(shape);
             ri->drawCube(box->getSize());
-
-            break;
         }
-        case Shape::ELLIPSOID:
+        else if(shape->is<EllipsoidShape>())
         {
             const auto& ellipsoid = static_cast<const EllipsoidShape*>(shape);
             ri->drawEllipsoid(ellipsoid->getSize());
-
-            break;
         }
-        case Shape::CYLINDER:
+        else if(shape->is<CylinderShape>())
         {
             const auto& cylinder = static_cast<const CylinderShape*>(shape);
             ri->drawCylinder(cylinder->getRadius(), cylinder->getHeight());
-
-            break;
         }
-        case Shape::MESH:
+        else if(shape->is<MeshShape>())
         {
             const auto& mesh = static_cast<const MeshShape*>(shape);
 
@@ -317,38 +376,24 @@ void drawShape(
                 ri->drawList(mesh->getDisplayList());
             else
                 ri->drawMesh(mesh->getScale(), mesh->getMesh());
-
-            break;
         }
-        case Shape::SOFT_MESH:
+        else if(shape->is<SoftMeshShape>())
         {
             const auto& softMesh = static_cast<const SoftMeshShape*>(shape);
             ri->drawSoftMesh(softMesh->getAssimpMesh());
-
-            break;
         }
-        case Shape::LINE_SEGMENT:
+        else if(shape->is<LineSegmentShape>())
         {
             const auto& lineSegmentShape
                 = static_cast<const LineSegmentShape*>(shape);
             ri->drawLineSegments(lineSegmentShape->getVertices(),
                                  lineSegmentShape->getConnections());
-
-            break;
         }
-        default:
+        else
         {
             const auto& bbox = shape->getBoundingBox();
             const auto& size = bbox.getMax();
             ri->drawEllipsoid(size);
-            break;
-        }
-        // default:
-        // {
-        //     dterr << "[SimWindow::drawShape] Attempting to draw unsupported shape "
-        //           << "type '" << shape->getShapeType() << "'.\n";
-        //     break;
-        // }
         }
 
         glDisable(GL_COLOR_MATERIAL);

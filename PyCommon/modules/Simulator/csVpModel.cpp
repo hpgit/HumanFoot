@@ -506,12 +506,12 @@ std::string VpModel::__str__()
 //	ss << endl;
 
 	ss << "<BODIES (,JOINTS)>" << endl;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		ss << "[" << i << "]:" << _nodes[i]->name << ", ";
 	ss << endl;
 
 	ss << "<BODY MASSES>" << endl;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 //		if(_nodes[i])
 			ss << "[" << i << "]:" << _nodes[i]->body.GetInertia().GetMass() << ", ";
 	ss << endl;
@@ -534,7 +534,7 @@ std::string VpModel::__str__()
 bp::list VpModel::getBodyMasses()
 {
 	bp::list ls;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		ls.append(_nodes[i]->body.GetInertia().GetMass());
 	return ls;
 }
@@ -542,7 +542,7 @@ bp::list VpModel::getBodyMasses()
 scalar VpModel::getTotalMass()
 {
 	scalar mass = 0.;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		mass += _nodes[i]->body.GetInertia().GetMass();
 	return mass;
 }
@@ -791,7 +791,7 @@ boost::python::object VpModel::getBodyInertiaGlobal_py( int index )
 bp::list VpModel::getBodyInertiasLocal()
 {
 	bp::list ls;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		ls.append(getBodyInertiaLocal_py(i));
 	return ls;
 }
@@ -799,7 +799,7 @@ bp::list VpModel::getBodyInertiasLocal()
 bp::list VpModel::getBodyInertiasGlobal()
 {
 	bp::list ls;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		ls.append(getBodyInertiaGlobal_py(i));
 	return ls;
 }
@@ -809,7 +809,7 @@ object VpModel::getCOM()
 	object pyV;
 	make_pyVec3(pyV);
 	Vec3 com(0., 0., 0.);
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		com += _nodes[i]->body.GetInertia().GetMass() * _nodes[i]->body.GetFrame().GetPosition();
 	com *= 1./getTotalMass();
 
@@ -912,7 +912,7 @@ object VpModel::getBodyVelocityGlobal_py( int index, const object& positionLocal
 bp::list VpModel::getBodyVelocitiesGlobal()
 {
 	bp::list ls;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		ls.append(getBodyVelocityGlobal_py(i));
 	return ls;
 }
@@ -933,7 +933,7 @@ object VpModel::getBodyAngVelocityGlobal( int index )
 bp::list VpModel::getBodyAngVelocitiesGlobal()
 {
 	bp::list ls;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		ls.append(getBodyAngVelocityGlobal(i));
 	return ls;
 }
@@ -969,7 +969,7 @@ object VpModel::getBodyOrientationGlobal(int index)
 bp::list VpModel::getBodyAccelerationsGlobal()
 {
 	bp::list ls;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		ls.append(getBodyAccelerationGlobal_py(i));
 	return ls;
 }
@@ -1034,7 +1034,7 @@ void VpModel::setBodyAngAccelerationGlobal( int index, const object& angacc )
 bp::list VpModel::getBodyPositionsGlobal()
 {
 	bp::list ls;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		ls.append(getBodyPositionGlobal_py(i));
 	return ls;
 }
@@ -1055,7 +1055,7 @@ object VpModel::getBodyAngAccelerationGlobal( int index )
 bp::list VpModel::getBodyAngAccelerationsGlobal()
 {
 	bp::list ls;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		ls.append(getBodyAngAccelerationGlobal(i));
 	return ls;
 }
@@ -1065,7 +1065,7 @@ void VpModel::translateByOffset( const object& offset )
 	Vec3 v;
 	pyVec3_2_Vec3(offset, v);
 
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		setBodyPositionGlobal(i, getBodyPositionGlobal(i) + v);
 }
 
@@ -1083,7 +1083,7 @@ void VpModel::rotate( const object& rotation )
 
 void VpModel::ignoreCollisionWith( vpBody* pBody )
 {
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		_pWorld->IgnoreCollision( &_nodes[i]->body, pBody );
 }
 
@@ -1226,12 +1226,15 @@ VpControlModel::VpControlModel( VpWorld* pWorld, const object& createPosture, co
 
 	update(createPosture);
 
+    m_total_dof = 0;
 	int dof_start_index = 0;
-	for(int i=0; i<_nodes.size(); i++)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); i++)
 	{
 	    _nodes[i]->dof_start_index = dof_start_index;
 	    dof_start_index += _nodes[i]->dof;
+	    m_total_dof += _nodes[i]->dof;
 	}
+
 
 //	addBody(true);
 }
@@ -1243,7 +1246,7 @@ std::string VpControlModel::__str__()
 	stringstream ss;
 
 	ss << "<INTERNAL JOINTS>" << endl;
-	for(int i=1; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=1; i<_nodes.size(); ++i)
 		ss << "[" << i-1 << "]:" << _nodes[i]->name << ", ";
 	ss << endl;
 
@@ -1253,7 +1256,7 @@ std::string VpControlModel::__str__()
 bp::list VpControlModel::getInternalJointDOFs()
 {
 	bp::list ls;
-	for(int i=1; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=1; i<_nodes.size(); ++i)
 		ls.append(3);
 	return ls;
 }
@@ -1261,7 +1264,7 @@ bp::list VpControlModel::getInternalJointDOFs()
 int VpControlModel::getTotalInternalJointDOF()
 {
 	int dof = 0;
-	for(int i=1; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=1; i<_nodes.size(); ++i)
 		dof += _nodes[i]->dof;
 		// dof += 3;
 	return dof;
@@ -1271,7 +1274,7 @@ bp::list VpControlModel::getDOFs()
 {
 	bp::list ls;
 	ls.append(6);
-	for(int i=1; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=1; i<_nodes.size(); ++i)
 		ls.append(3);
 	return ls;
 }
@@ -1280,7 +1283,7 @@ int VpControlModel::getTotalDOF()
 {
 	int dof = 0;
 	dof += 6;
-	for(int i=1; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=1; i<_nodes.size(); ++i)
 		dof += _nodes[i]->dof;
 		// dof += 3;
 	return dof;
@@ -1299,10 +1302,11 @@ bp::list VpControlModel::getJointDOFIndexes(int index)
 void VpControlModel::createJoints( const object& posture )
 {
 	object joint = posture.attr("skeleton").attr("root");
-	_createJoint(joint, posture);
+	std::vector<int> empty;
+	_createJoint(joint, posture, empty);
 }
 
-void VpControlModel::_createJoint( const object& joint, const object& posture )
+void VpControlModel::_createJoint( const object& joint, const object& posture, const std::vector<int> &parent_ancestors)
 {
 	int len_joint_children = len(joint.attr("children"));
 	if (len_joint_children == 0 )
@@ -1401,9 +1405,12 @@ void VpControlModel::_createJoint( const object& joint, const object& posture )
 		// pNode->joint.SetDamping(dam);
 		pNode->use_joint = true;
 	}
+	for (std::vector<int>::size_type i=0; i<parent_ancestors.size(); i++)
+	    _nodes[joint_index]->ancestors.push_back(parent_ancestors[i]);
+    _nodes[joint_index]->ancestors.push_back(joint_index);
 
 	for( int i=0 ; i<len_joint_children; ++i)
-		_createJoint(joint.attr("children")[i], posture);
+		_createJoint(joint.attr("children")[i], posture, _nodes[joint_index]->ancestors);
 }
 
 void VpControlModel::ignoreCollisionBtwnBodies()
@@ -1526,9 +1533,9 @@ void VpControlModel::fixBody( int index )
 
 void VpControlModel::initializeHybridDynamics(bool floatingBase)
 {
-	int rootIndex = 0;
+	std::vector<int>::size_type rootIndex = 0;
 	
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 	{
 		if(i == rootIndex)
 		{
@@ -1544,8 +1551,8 @@ void VpControlModel::initializeHybridDynamics(bool floatingBase)
 
 void VpControlModel::initializeForwardDynamics()
 {
-    int rootIndex = 0;
-	for(int i=0; i<_nodes.size(); ++i)
+    std::vector<int>::size_type rootIndex = 0;
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 	{
         _nodes[i]->body.SetHybridDynamicsType(VP::DYNAMIC);
 	    if(i != rootIndex)
@@ -1579,11 +1586,32 @@ void VpControlModel::solveInverseDynamics()
 	_nodes[0]->body.GetSystem()->InverseDynamics();
 }
 
+static Axis GetDq(const SE3& R, const Vec3& V)
+{
+    Axis m_rDq;
+    Axis m_rQ = LogR(R);
+	Axis W(V[0], V[1], V[2]);
+	scalar t = Norm(m_rQ), delta, zeta, t2 = t * t;
+
+	if ( t < BJOINT_EPS )
+	{
+		delta  = SCALAR_1_12 + SCALAR_1_720 * t2;
+		zeta = SCALAR_1 - SCALAR_1_12 * t2;
+	} else
+	{
+		zeta = SCALAR_1_2 * t * (SCALAR_1 + cos(t)) / sin(t);
+		delta = (SCALAR_1 - zeta) / t2;
+	}
+
+	return (delta * Inner(m_rQ, V)) * m_rQ + zeta * W + SCALAR_1_2 * Cross(m_rQ, W);
+
+}
+
 bp::list VpControlModel::get_q()
 {
     bp::list ls;
-	static SE3 rootBodyFrame = _nodes[index]->body.GetFrame();
-	static SE3 rootJointFrame = bodyFrame * Inv(_boneTs[index]);
+	static SE3 rootBodyFrame = _nodes[0]->body.GetFrame();
+	static SE3 rootJointFrame = rootBodyFrame * Inv(_boneTs[0]);
     static Vec3 rootJointPos = rootJointFrame.GetPosition();
     static Axis rootJointQ = LogR(rootJointFrame);
     static Axis jointQ;
@@ -1596,9 +1624,9 @@ bp::list VpControlModel::get_q()
     {
         ls.append(rootJointQ[i]);
     }
-	for(int j=0; j<_nodes.size(); ++i)
+	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
 	{
-	    jointQ = _nodes[i]->joint.GetDisplacement();
+	    jointQ = _nodes[j]->joint.GetDisplacement();
 	    for(int i=0; i<3; i++)
 	    {
             ls.append(jointQ[i]);
@@ -1611,27 +1639,30 @@ bp::list VpControlModel::get_q()
 bp::list VpControlModel::get_dq()
 {
     bp::list ls;
-	static SE3 rootBodyFrame = _nodes[index]->body.GetFrame();
-	static SE3 rootJointFrame = bodyFrame * Inv(_boneTs[index]);
+	static SE3 rootBodyFrame = _nodes[0]->body.GetFrame();
+	static SE3 rootJointFrame = rootBodyFrame * Inv(_boneTs[0]);
     static Vec3 rootJointPos = rootJointFrame.GetPosition();
     static Axis rootJointQ = LogR(rootJointFrame);
     static Axis jointDq;
 
-    Vec3 rootJointLinVel = getJointVelocityGlobal(0);
-    Vec3 rootJointAngVel = getJointAngVelocityGlobal(0);
+	Vec3 rootJointLinVel = _nodes[0]->body.GetLinVelocity(Inv(_boneTs[0]).GetPosition());
+
+    se3 rootBodyGenVelLocal = _nodes[0]->body.GetGenVelocityLocal();
+    Vec3 rootJointAngVelLocal = Rotate(_boneTs[0], Vec3(rootBodyGenVelLocal[0], rootBodyGenVelLocal[1], rootBodyGenVelLocal[2]));
+    Axis rootJointDq = GetDq(rootJointFrame, rootJointAngVelLocal);
 
 
     for(int i=0; i<3; i++)
     {
-        ls.append(rootJointPos[i]);
+        ls.append(rootJointLinVel[i]);
     }
     for(int i=0; i<3; i++)
     {
-        ls.append(rootJointQ[i]);
+        ls.append(rootJointDq[i]);
     }
-	for(int j=0; j<_nodes.size(); ++i)
+	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
 	{
-	    jointDq = _nodes[i]->joint.GetDisplacementDerivate();
+	    jointDq = _nodes[j]->joint.GetDisplacementDerivate();
 	    for(int i=0; i<3; i++)
 	    {
             ls.append(jointDq[i]);
@@ -1874,7 +1905,7 @@ void VpControlModel::setDOFAccelerations( const bp::list& dofaccs)
 
 void VpControlModel::setDOFTorques(const bp::list& dofTorque)
 {
-	for(int i=1; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=1; i<_nodes.size(); ++i)
 	{
 	    //std::cout << _nodes[i]->name << std::endl;
 	    //std::cout << pyVec3_2_Vec3(dofTorque[i-1]) << std::endl;
@@ -2068,7 +2099,7 @@ object VpControlModel::getJointAccelerationLocal( int index )
 bp::list VpControlModel::getJointOrientationsLocal()
 {
 	bp::list ls;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		ls.append(getJointOrientationLocal(i));
 	return ls;
 }
@@ -2076,7 +2107,7 @@ bp::list VpControlModel::getJointOrientationsLocal()
 bp::list VpControlModel::getJointAngVelocitiesLocal()
 {
 	bp::list ls;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		ls.append(getJointAngVelocityLocal(i));
 	return ls;
 }
@@ -2084,7 +2115,7 @@ bp::list VpControlModel::getJointAngVelocitiesLocal()
 bp::list VpControlModel::getJointAngAccelerationsLocal()
 {
 	bp::list ls;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		ls.append(getJointAngAccelerationLocal(i));
 	return ls;
 }
@@ -2092,7 +2123,7 @@ bp::list VpControlModel::getJointAngAccelerationsLocal()
 bp::list VpControlModel::getJointPositionsGlobal()
 {
 	bp::list ls;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		ls.append(getJointPositionGlobal(i));
 	return ls;
 }
@@ -2100,7 +2131,7 @@ bp::list VpControlModel::getJointPositionsGlobal()
 bp::list VpControlModel::getJointVelocitiesGlobal()
 {
 	bp::list ls;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		ls.append(getJointVelocityGlobal(i));
 	return ls;
 }
@@ -2108,7 +2139,7 @@ bp::list VpControlModel::getJointVelocitiesGlobal()
 bp::list VpControlModel::getJointAccelerationsGlobal()
 {
 	bp::list ls;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		ls.append(getJointAccelerationGlobal(i));
 	return ls;
 }
@@ -2116,7 +2147,7 @@ bp::list VpControlModel::getJointAccelerationsGlobal()
 bp::list VpControlModel::getJointOrientationsGlobal()
 {
 	bp::list ls;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		ls.append(getJointOrientationGlobal(i));
 	return ls;
 }
@@ -2124,7 +2155,7 @@ bp::list VpControlModel::getJointOrientationsGlobal()
 bp::list VpControlModel::getJointAngVelocitiesGlobal()
 {
 	bp::list ls;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		ls.append(getJointAngVelocityGlobal(i));
 	return ls;
 }
@@ -2132,7 +2163,7 @@ bp::list VpControlModel::getJointAngVelocitiesGlobal()
 bp::list VpControlModel::getJointAngAccelerationsGlobal()
 {
 	bp::list ls;
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		ls.append(getJointAngAccelerationGlobal(i));
 	return ls;
 }
@@ -2140,7 +2171,7 @@ bp::list VpControlModel::getJointAngAccelerationsGlobal()
 bp::list VpControlModel::getInternalJointOrientationsLocal()
 {
 	bp::list ls;
-	for(int i=1; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=1; i<_nodes.size(); ++i)
 		ls.append(getJointOrientationLocal(i));
 	return ls;
 }
@@ -2148,7 +2179,7 @@ bp::list VpControlModel::getInternalJointOrientationsLocal()
 bp::list VpControlModel::getInternalJointAngVelocitiesLocal()
 {
 	bp::list ls;
-	for(int i=1; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=1; i<_nodes.size(); ++i)
 		ls.append(getJointAngVelocityLocal(i));
 	return ls;
 }
@@ -2156,7 +2187,7 @@ bp::list VpControlModel::getInternalJointAngVelocitiesLocal()
 bp::list VpControlModel::getInternalJointAngAccelerationsLocal()
 {
 	bp::list ls;
-	for(int i=1; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=1; i<_nodes.size(); ++i)
 		ls.append(getJointAngAccelerationLocal(i));
 	return ls;
 }
@@ -2165,7 +2196,7 @@ bp::list VpControlModel::getInternalJointPositionsGlobal()
 {
 	bp::list ls;
 //	for(int i=1; i<_jointElementIndexes.size(); ++i)
-	for(int i=1; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=1; i<_nodes.size(); ++i)
 		ls.append(getJointPositionGlobal(i));
 	return ls;
 }
@@ -2173,7 +2204,7 @@ bp::list VpControlModel::getInternalJointPositionsGlobal()
 bp::list VpControlModel::getInternalJointOrientationsGlobal()
 {
 	bp::list ls;
-	for(int i=1; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=1; i<_nodes.size(); ++i)
 		ls.append(getJointOrientationGlobal(i));
 	return ls;
 }
@@ -2235,13 +2266,13 @@ void VpControlModel::setJointAngAccelerationGlobal( int index, const object& ang
 
 void VpControlModel::setJointAngAccelerationsLocal( const bp::list& angaccs )
 {
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		setJointAngAccelerationLocal(i, angaccs[i]);
 }
 
 void VpControlModel::setInternalJointAngAccelerationsLocal( const bp::list& angaccs )
 {
-	for(int i=1; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=1; i<_nodes.size(); ++i)
 		_nodes[i]->joint.SetAcceleration(pyVec3_2_Vec3(angaccs[i-1]));
 }
 
@@ -2261,7 +2292,7 @@ void VpControlModel::SetJointElasticity(int index, scalar Kx, scalar Ky, scalar 
 }
 void VpControlModel::SetJointsElasticity(scalar Kx, scalar Ky, scalar Kz)
 {
-    for (int i=1; i<_nodes.size(); i++)
+    for (std::vector<int>::size_type i=1; i<_nodes.size(); i++)
         SetJointElasticity(i, Kx, Ky, Kz);
 }
 
@@ -2283,7 +2314,7 @@ void VpControlModel::SetJointDamping(int index, scalar Dx, scalar Dy, scalar Dz)
 
 void VpControlModel::SetJointsDamping(scalar Dx, scalar Dy, scalar Dz)
 {
-    for (int i=1; i<_nodes.size(); i++)
+    for (std::vector<int>::size_type i=1; i<_nodes.size(); i++)
         SetJointDamping(i, Dx, Dy, Dz);
 }
 
@@ -2303,7 +2334,7 @@ bp::list VpControlModel::getInternalJointTorquesLocal()
 {
 	bp::list ls;
 //	for(int i=1; i<_jointElementIndexes.size(); ++i)
-	for(int i=1; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=1; i<_nodes.size(); ++i)
 		ls.append(getJointTorqueLocal(i));
 	return ls;
 }
@@ -2322,7 +2353,7 @@ void VpControlModel::setInternalJointTorquesLocal( const bp::list& torques )
 //		index = _jointElementIndexes[i];
 //		_nodes[index]->joint.SetTorque(pyVec3_2_Vec3(torques[i]));
 //	}
-	for(int i=1; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=1; i<_nodes.size(); ++i)
 		_nodes[i]->joint.SetTorque(pyVec3_2_Vec3(torques[i-1]));
 }
 
@@ -2394,21 +2425,20 @@ object VpControlModel::getBodyGravityForceLocal( int index )
 object VpControlModel::computeJacobian(int index, const object& positionGlobal)
 {
 	//TODO:
-	position = pyVec3_2_Vec3(positionGlobal);
+	Vec3 effector_position = pyVec3_2_Vec3(positionGlobal);
 	vpBJoint *joint;
 
-	for(int i=0; i<_nodes.size();i++)
+	bp::tuple shape = bp::make_tuple(6, m_total_dof);
+    np::dtype dtype = np::dtype::get_builtin<float>();
+	ndarray J = np::zeros(shape, dtype);
+
+	for(std::vector<int>::size_type i=0; i<_nodes.size();i++)
 	{
         joint = &(_nodes[i]->joint);
-        
 	}
+
+	return J;
 }
-
-object VpControlModel::computeComJacobian()
-{
-
-}
-
 
 /////////////////////////////////////////
 // Additional
@@ -2536,7 +2566,7 @@ bp::list VpControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
 	// dse3 hipTorBackup = Hip->GetForce();
 
 	Hip->ResetForce();
-	for(int i=0; i<_nodes.size(); i++)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); i++)
 	{
 		_nodes.at(i)->body.ResetForce();
 		_nodes.at(i)->joint.SetTorque(Vec3(0,0,0));
@@ -2608,7 +2638,7 @@ bp::list VpControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
 	for(int i=0; i<N; i++)
 	{
 		Hip->ResetForce();
-		for(size_t i=0; i<_nodes.size(); i++)
+		for(std::vector<int>::size_type i=0; i<_nodes.size(); i++)
 		{
 			_nodes.at(i)->body.ResetForce();
 			_nodes.at(i)->joint.SetTorque(Vec3(0,0,0));
@@ -2885,7 +2915,7 @@ void VpControlModel::stepKinematics(double dt, const bp::list& accs)
 
 	Vec3 ddq(0.0), dq(0.0), zero_Vec3(0.0);
 	SE3 q;
-	for(int i=1; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=1; i<_nodes.size(); ++i)
 	{
 		ddq = pyVec3_2_Vec3(accs[i]);
 		vpBJoint *joint = &(_nodes[i]->joint);
@@ -2895,7 +2925,7 @@ void VpControlModel::stepKinematics(double dt, const bp::list& accs)
 		joint->SetOrientation(q);
 	}
 
-	for(int i=0; i<_nodes.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 		_nodes[i]->body.UpdateGeomFrame();
 	
 	se3 zero_se3(0.0);

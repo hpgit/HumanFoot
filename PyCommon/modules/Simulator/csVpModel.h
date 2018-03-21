@@ -26,7 +26,7 @@ public:
 		int dof_start_index;
 		bool use_joint;
 		unsigned char color[4];
-		std::vector<bool> is_ancestor;
+		std::vector<int> ancestors;
 
 		Node(string name_):name(name_), use_joint(false)
 		{
@@ -53,7 +53,7 @@ public:
 	void setBodyPositionGlobal(int index, const Vec3& position);
 	void setBodyAccelerationGlobal( int index, const Vec3& acc, const Vec3* pPositionLocal=NULL);
 
-	void build_name2index() { for(int i=0; i<_nodes.size(); ++i) _name2index[_nodes[i]->name] = i; }
+	void build_name2index() { for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i) _name2index[_nodes[i]->name] = i; }
 
 
 	vpWorld* _pWorld;
@@ -179,7 +179,7 @@ public:
 	void ignoreCollisionBtwnBodies();
 	void addBodiesToWorld(const object& createPosture);
 	void createJoints(const object& posture);
-	void _createJoint(const object& joint, const object& posture);
+	void _createJoint(const object& joint, const object& posture, const std::vector<int> &parent_ancestors);
 	void _updateJoint(const object& joint, const object& posture);
 //	void buildJointIndexes();
 	
@@ -216,6 +216,7 @@ public:	// expose to python
 
 	bp::list get_q();
 	bp::list get_dq();
+	bp::list set_ddq();
 
 	// [T_g[0], R_l[1], R_l[2], ... ,R_l[n-1]]
 	bp::list getDOFPositions();
@@ -336,7 +337,8 @@ public:	// expose to python
 
 	/////////////////////////////////////////////////////////////////
 	// jacobian
-	object computeJacobian2(int index, const object& positionGlobal);
+	object computeJacobian(int index, const object& positionGlobal);
+	object computeComJacobian(int index, const object& positionGlobal);
 
 	/////////////////////////////////////////
 	// Additional

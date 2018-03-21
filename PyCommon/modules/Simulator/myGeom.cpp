@@ -33,7 +33,7 @@ const vector<Vec3>& _getVerticesGlobal( const vpGeom* pGeom, const vector<Vec3>&
 
 	verticesGlobal.resize(verticesLocal.size());
 
-	for(int i=0; i<verticesLocal.size(); ++i)
+	for(std::vector<int>::size_type i=0; i<verticesLocal.size(); ++i)
 		verticesGlobal[i] = pGeom->GetGlobalFrame() * verticesLocal[i];
 
 	return verticesGlobal;
@@ -44,7 +44,7 @@ const vector<Vec3>& _getVerticesLocal(const vpGeom* pGeom, const vector<Vec3>& v
 
 	//verticesLocal.resize(verticesLocal.size());
 
-	for (int i = 0; i<verticesLocal.size(); ++i)
+	for (std::vector<int>::size_type i = 0; i<verticesLocal.size(); ++i)
 		verticesLocal.push_back( Inv(pGeom->GetGlobalFrame()) * verticesGlobal[i]);
 
 	return verticesLocal;
@@ -58,7 +58,7 @@ MyBox::MyBox( const Vec3 &size ):vpBox(size)
 	_verticesLocal.resize(8);
 	this->GetShape(&type, data);
 
-	for( int p=0; p<_verticesLocal.size(); ++p)
+	for( std::vector<int>::size_type p=0; p<_verticesLocal.size(); ++p)
 	{
 		_verticesLocal[p][0] = (p & MAX_X) ? data[0]/2. : -data[0]/2.;
 		_verticesLocal[p][1] = (p & MAX_Y) ? data[1]/2. : -data[1]/2.;
@@ -176,7 +176,7 @@ void MyFoot3::getContactVertices(vector<Vec3>& verticesLocal, vector<Vec3>& vert
 	getContactVerticesGlobal(verticesGlobal);
 	verticesLocal.clear();
 	SE3 globalFrame = this->GetGlobalFrame();
-	for(int i=0; i<verticesGlobal.size(); i++)
+	for(std::vector<int>::size_type i=0; i<verticesGlobal.size(); i++)
         verticesLocal.push_back(Inv(globalFrame)*verticesGlobal[i]);
 }
 void MyFoot3::getContactVerticesGlobal(vector<Vec3>& verticesGlobal)
@@ -217,7 +217,7 @@ void MyFoot4::getContactVertices(vector<Vec3>& verticesLocal, vector<Vec3>& vert
 	getContactVerticesGlobal(verticesGlobal);
 	verticesLocal.clear();
 	SE3 globalFrame = this->GetGlobalFrame();
-	for(int i=0; i<verticesGlobal.size(); i++)
+	for(std::vector<int>::size_type i=0; i<verticesGlobal.size(); i++)
         verticesLocal.push_back(Inv(globalFrame)*verticesGlobal[i]);
 }
 void MyFoot4::getContactVerticesGlobal(vector<Vec3>& verticesGlobal)

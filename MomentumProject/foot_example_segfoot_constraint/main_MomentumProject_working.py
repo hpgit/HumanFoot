@@ -20,8 +20,11 @@ from PyCommon.modules.ArticulatedBody import ysReferencePoints as yrp
 from PyCommon.modules.ArticulatedBody import ysMomentum as ymt
 from PyCommon.modules.ArticulatedBody import ysControl as yct
 
-import mtOptimize as mot
-import mtInitialize as mit
+from MomentumProject.foot_example_segfoot_constraint import mtOptimize as mot
+from MomentumProject.foot_example_segfoot_constraint import mtInitialize as mit
+
+# import mtOptimize as mot
+# import mtInitialize as mit
 
 # from PyCommon.modules.ArticulatedBody import hpFootIK as hfi
 # from scipy.spatial import ConvexHull
@@ -68,7 +71,6 @@ def main():
 
     motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_jump_biped()
-    # print(motion.get_q(0))
 
     vpWorld = cvw.VpWorld(wcfg)
     motionModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)
@@ -401,14 +403,20 @@ def main():
         doubleTosingleVelOffset = 0.0
 
         # tracking
+        # print(len(motion.get_q(frame)))
+        # print(motion.get_q(frame))
+        print(motion.get_dq(frame))
+        # print(len(controlModel.get_q()))
+        # print(controlModel.get_q())
+        print(controlModel.get_dq())
+        print(np.asarray(motion.get_dq(frame))-np.asarray(controlModel.get_dq()))
+
         th_r = motion.getDOFPositions(frame)
         th = controlModel.getDOFPositions()
         dth_r = motion.getDOFVelocities(frame)
         dth = controlModel.getDOFVelocities()
         ddth_r = motion.getDOFAccelerations(frame)
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
-
-        # print(controlModel.get_q())
 
         ype.flatten(ddth_des, ddth_des_flat)
         ype.flatten(dth, dth_flat)
@@ -680,7 +688,8 @@ def main():
         # TODO:
         # logSO3 is just q'', not acceleration.
         # To make a_oris acceleration, q'' -> a will be needed
-        a_ori = mm.qdd2accel()
+        # a_ori = mm.qdd2accel()
+
         a_oris = list(map(mm.logSO3,
                           [mm.getSO3FromVectors(np.dot(body_ori, np.array([0., 1., 0.])), np.array([0., 1., 0.])) for body_ori in contact_body_ori]))
         a_sups = [np.append(kt_sup*(ref_body_pos[i] - contact_body_pos[i] + contMotionOffset) + dt_sup*(ref_body_vel[i] - contact_body_vel[i]),
@@ -770,15 +779,15 @@ def main():
             vpWorld.step()
 
         # rendering
-        rightFootVectorX[0] = np.dot(footOriL, np.array([.1,0,0]))
-        rightFootVectorY[0] = np.dot(footOriL, np.array([0,.1,0]))
-        rightFootVectorZ[0] = np.dot(footOriL, np.array([0,0,.1]))
+        rightFootVectorX[0] = np.dot(footOriL, np.array([.1, 0, 0]))
+        rightFootVectorY[0] = np.dot(footOriL, np.array([0, .1, 0]))
+        rightFootVectorZ[0] = np.dot(footOriL, np.array([0, 0, .1]))
         rightFootPos[0] = footCenterL
 
-        rightVectorX[0] = np.dot(footBodyOriL, np.array([.1,0,0]))
-        rightVectorY[0] = np.dot(footBodyOriL, np.array([0,.1,0]))
-        rightVectorZ[0] = np.dot(footBodyOriL, np.array([0,0,.1]))
-        rightPos[0] = footCenterL + np.array([.1,0,0])
+        rightVectorX[0] = np.dot(footBodyOriL, np.array([.1, 0, 0]))
+        rightVectorY[0] = np.dot(footBodyOriL, np.array([0, .1, 0]))
+        rightVectorZ[0] = np.dot(footBodyOriL, np.array([0, 0, .1]))
+        rightPos[0] = footCenterL + np.array([.1, 0, 0])
 
         rd_footCenter[0] = footCenter
         rd_footCenterL[0] = footCenterL

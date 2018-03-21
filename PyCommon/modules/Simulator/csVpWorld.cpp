@@ -198,7 +198,7 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 													type == 'E'? ((MyFoot5*)pGeom)->getVerticesGlobal() :
 													type == 'M'? ((MyFoot1*)pGeom)->getVerticesGlobal() :
 																 ((MyFoot2*)pGeom)->getVerticesGlobal();
-				for (int k = 0; k < verticesLocal.size(); ++k)
+				for (std::vector<int>::size_type k = 0; k < verticesLocal.size(); ++k)
 				{
 
 					positionLocal = verticesLocal[k];
@@ -387,7 +387,7 @@ boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
 				const vector<Vec3>& verticesGlobal = type == 'C'? ((MyFoot3*)pGeom)->getVerticesGlobal() :
 													 type == 'D'? ((MyFoot4*)pGeom)->getVerticesGlobal() :
 																  ((MyFoot5*)pGeom)->getVerticesGlobal();
-				for (int k = 0; k < verticesLocal.size(); ++k)
+				for (std::vector<int>::size_type k = 0; k < verticesLocal.size(); ++k)
 				{
 					position = verticesGlobal[k];
 					positionLocal = verticesLocal[k];

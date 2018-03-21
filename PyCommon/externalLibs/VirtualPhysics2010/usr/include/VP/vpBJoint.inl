@@ -137,30 +137,6 @@ VP_INLINE void vpBJoint::SetVelocity(const Vec3 &V)
 	m_rDq = (delta * Inner(m_rQ, V)) * m_rQ + zeta * W + SCALAR_1_2 * Cross(m_rQ, W);
 }
 
-VP_INLINE SE3 vpBJoint::GetJacobian(const Vec3 &V)
-{
-	scalar t = Norm(m_rQ), alpha, beta, gamma, t2 = t * t;
-	
-    if ( t < BJOINT_EPS )
-	{
-		alpha = SCALAR_1_6 - SCALAR_1_120 * t2;
-		beta = SCALAR_1 - SCALAR_1_6 * t2;
-		gamma = SCALAR_1_2 - SCALAR_1_24 * t2;
-	} else
-	{
-		beta = sin(t) / t;
-		alpha = (SCALAR_1 - beta) / t2;
-		gamma = (SCALAR_1 - cos(t)) / t2;
-	}
-
-	SE3 alpha_matrix = Outer(alpha * m_rQ, m_rQ);
-	SE3 gamma_matrix = (-gamma * m_rQ).GetCrossMatrix();
-
-	return SE3(alpha_matrix[0] + gamma_matrix[0] + beta, alpha_matrix[1] + gamma_matrix[1], alpha_matrix[2] + gamma_matrix[2],
-			alpha_matrix[3] + gamma_matrix[3], alpha_matrix[4] + gamma_matrix[4] + beta, alpha_matrix[5] + gamma_matrix[5],
-			alpha_matrix[6] + gamma_matrix[6], alpha_matrix[7] + gamma_matrix[7], alpha_matrix[8] + gamma_matrix[8] + beta);
-}
-
 VP_INLINE Vec3 vpBJoint::GetAcceleration(void) const
 {
 	Axis V;
@@ -222,38 +198,6 @@ VP_INLINE void vpBJoint::SetAcceleration(const Vec3 &DV)
 	}
 
 	m_rDdq = (d_delta * qw + delta * (Inner(m_rQ, DW) + Inner(m_rDq, W))) * m_rQ + (delta * qw) * m_rDq + d_eta * W + zeta * DW + SCALAR_1_2 * (Cross(m_rQ, DW) + Cross(m_rDq, W));
-}
-
-VP_INLINE Vec3 vpBJoint::GetJacobianDerivative(void) const
-{
-	Axis V;
-	scalar t = Norm(m_rQ), alpha, beta, gamma, d_alpha, d_beta, d_gamma, q_dq = Inner(m_rQ, m_rDq), t2 = t * t;
-	
-    if ( t < BJOINT_EPS )
-	{
-		alpha = SCALAR_1_6 - SCALAR_1_120 * t2;
-		beta = SCALAR_1 - SCALAR_1_6 * t2;
-		gamma = SCALAR_1_2 - SCALAR_1_24 * t2;
-
-		d_alpha = (SCALAR_1_1260 * t2 - SCALAR_1_60) * q_dq;
-		d_beta = (SCALAR_1_30 * t2 - SCALAR_1_3) * q_dq;
-		d_gamma = (SCALAR_1_180 * t2 - SCALAR_1_12) * q_dq;
-	} else
-	{
-		beta = sin(t) / t;
-		alpha = (SCALAR_1 - beta) / t2;
-		gamma = (SCALAR_1 - cos(t)) / t2;
-		
-		d_alpha = (gamma - SCALAR_3 * alpha) / t2 * q_dq;
-		d_beta = (alpha - gamma) * q_dq;
-		d_gamma = (beta - SCALAR_2 * gamma) / t2 * q_dq;
-	}
-	
-	Axis DV = (d_alpha * q_dq + alpha * SquareSum(m_rDq)) * m_rQ
-			+ (alpha * q_dq + d_beta) * m_rDq
-			+ Cross(d_gamma * m_rDq, m_rQ);
-
-	return Vec3(DV[0], DV[1], DV[2]);
 }
 
 VP_INLINE void vpBJoint::SetVelocity_(int idx, const scalar &x)

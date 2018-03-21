@@ -112,16 +112,29 @@ int SHAPE(getShapeType)(int wid, int skid, int bid, int sid) {
     using dart::dynamics::SoftMeshShape;
     using dart::dynamics::LineSegmentShape;
 
-    switch (shape->getShapeType())
-    {
-      case Shape::BOX: return 0;
-      case Shape::ELLIPSOID: return 1;
-      case Shape::CYLINDER: return 2;
-      case Shape::MESH: return 4;
-      case Shape::SOFT_MESH: return 5;
-      case Shape::LINE_SEGMENT: return 6;
-      default:  return -1;
-    }
+//    switch (shape->getShapeType())
+//    {
+//      case Shape::BOX: return 0;
+//      case Shape::ELLIPSOID: return 1;
+//      case Shape::CYLINDER: return 2;
+//      case Shape::MESH: return 4;
+//      case Shape::SOFT_MESH: return 5;
+//      case Shape::LINE_SEGMENT: return 6;
+//      default:  return -1;
+//    }
+
+    if (shape->is<BoxShape>())
+        return 0;
+    else if(shape->is<EllipsoidShape>())
+        return 1;
+    else if(shape->is<CylinderShape>())
+        return 2;
+    else if(shape->is<MeshShape>())
+        return 4;
+    else if(shape->is<SoftMeshShape>())
+        return 5;
+    else if(shape->is<LineSegmentShape>())
+        return 6;
     return -1;
 }
 // #endif

@@ -63,7 +63,7 @@ class MotionSystem:
 #         motion.fps = self.fps
 #         motion.resourceName = self.resourceName
 #         return motion
-class Motion():
+class Motion:
     """
     :type data : list[Posture]
     :type fps : float
@@ -235,6 +235,7 @@ class Skeleton:
         self.elements = []
         self.elementNames = []
         self.reverseElementNames = {}
+
     def __str__(self):
         s = ''
 #        s += self.elementNames.__str__() + '\n'
@@ -346,7 +347,8 @@ class JointMotion(Motion):
 
         :param ls: list[JointPosture]
         """
-        Motion.__init__(self, None)
+        # Motion.__init__(self, None)
+        super(JointMotion, self).__init__(ls)
         self.data = []
         if ls is not None:
             for l in ls:
@@ -404,7 +406,7 @@ class JointMotion(Motion):
         :param frame1:
         :return:
         '''
-        return self._getDerivative(frame0, frame1, self.get_q, lambda x, y: x-y)
+        return self._getDerivativeBasic(frame0, frame1, self.get_q, lambda x, y: x-y)
 
     def get_ddq(self, frame0, frame1=None):
         '''
@@ -415,7 +417,7 @@ class JointMotion(Motion):
         :param frame1:
         :return:
         '''
-        return self._getDerivative(frame0, frame1, self.get_dq, lambda x, y: x-y)
+        return self._getDerivativeBasic(frame0, frame1, self.get_dq, lambda x, y: x-y)
 
     def getDOFPositions(self, frame):
         '''

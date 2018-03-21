@@ -175,7 +175,7 @@ inline scalar Vec3::Normalize(void)
 
 inline SE3 Vec3::GetCrossMatrix(void)
 {
-	return SE3(0., _v[2], -_v[1], -v[2], 0., -_v[0], _v[1], -_v[0], 0.);
+	return SE3(0., _v[2], -_v[1], -_v[2], 0., -_v[0], _v[1], -_v[0], 0.);
 }
 
 inline Vec3 Rotate(const SE3 &T, const Vec3 &v)
@@ -2197,7 +2197,7 @@ inline void Axis::Reparameterize(void)
 
 inline SE3 Axis::GetCrossMatrix(void)
 {
-	return SE3(0., _v[2], -_v[1], -v[2], 0., -_v[0], _v[1], -_v[0], 0.);
+	return SE3(0., _v[2], -_v[1], -_v[2], 0., -_v[0], _v[1], -_v[0], 0.);
 }
 
 inline Axis Reparameterize(const Axis &s)
