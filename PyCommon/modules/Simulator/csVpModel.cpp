@@ -1607,6 +1607,43 @@ static Axis GetDq(const SE3& R, const Vec3& V)
 
 }
 
+static object GetBJointJacobian(const vpBJoint &joint)
+{
+	bp::tuple shape = bp::make_tuple(3, 3);
+    np::dtype dtype = np::dtype::get_builtin<float>();
+	ndarray J = np::zeros(shape, dtype);
+	Axis m_rQ = joint.GetDisplacement();
+
+	scalar t = Norm(m_rQ), alpha, beta, gamma, t2 = t * t;
+
+    if ( t < BJOINT_EPS )
+	{
+		alpha = SCALAR_1_6 - SCALAR_1_120 * t2;
+		beta = SCALAR_1 - SCALAR_1_6 * t2;
+		gamma = SCALAR_1_2 - SCALAR_1_24 * t2;
+	} else
+	{
+		beta = sin(t) / t;
+		alpha = (SCALAR_1 - beta) / t2;
+		gamma = (SCALAR_1 - cos(t)) / t2;
+	}
+
+	Axis V = (alpha * Inner(m_rQ, m_rDq)) * m_rQ + beta * m_rDq + gamma * Cross(m_rDq, m_rQ);
+
+    J[0][0] = alpha * m_rQ[0] * m_rQ[0] + beta;
+    J[1][0] = alpha * m_rQ[1] * m_rQ[0] - gamma * m_rQ[2];
+    J[2][0] = alpha * m_rQ[2] * m_rQ[0] + gamma * m_rQ[1];
+    J[0][1] = alpha * m_rQ[0] * m_rQ[1] + gamma * m_rQ[2];
+    J[1][1] = alpha * m_rQ[1] * m_rQ[1] + beta;
+    J[2][1] = alpha * m_rQ[2] * m_rQ[1] - gamma * m_rQ[0];
+    J[0][2] = alpha * m_rQ[0] * m_rQ[2] - gamma * m_rQ[1];
+    J[1][2] = alpha * m_rQ[1] * m_rQ[2] + gamma * m_rQ[0];
+    J[2][2] = alpha * m_rQ[2] * m_rQ[2] + beta;
+
+
+    return alpha * mm.getDyadMatrixForm(q) + beta * np.eye(3) - gamma * mm.getCrossMatrixForm(q)
+}
+
 bp::list VpControlModel::get_q()
 {
     bp::list ls;
@@ -2432,7 +2469,8 @@ object VpControlModel::computeJacobian(int index, const object& positionGlobal)
     np::dtype dtype = np::dtype::get_builtin<float>();
 	ndarray J = np::zeros(shape, dtype);
 
-	for(std::vector<int>::size_type i=0; i<_nodes.size();i++)
+
+	for(std::vector<int>::size_type i=1; i<_nodes.size();i++)
 	{
         joint = &(_nodes[i]->joint);
 	}
