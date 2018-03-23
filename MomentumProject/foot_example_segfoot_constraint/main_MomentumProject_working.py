@@ -405,11 +405,11 @@ def main():
         # tracking
         # print(len(motion.get_q(frame)))
         # print(motion.get_q(frame))
-        print(motion.get_dq(frame))
+        # print(motion.get_dq(frame))
         # print(len(controlModel.get_q()))
         # print(controlModel.get_q())
-        print(controlModel.get_dq())
-        print(np.asarray(motion.get_dq(frame))-np.asarray(controlModel.get_dq()))
+        # print(controlModel.get_dq())
+        # print(np.asarray(motion.get_dq(frame))-np.asarray(controlModel.get_dq()))
 
         th_r = motion.getDOFPositions(frame)
         th = controlModel.getDOFPositions()

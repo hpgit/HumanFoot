@@ -337,6 +337,9 @@ public:	// expose to python
 
 	/////////////////////////////////////////////////////////////////
 	// jacobian
+	object getLocalJacobian(int index);
+	object getLocalJointVelocity(int index);
+	object getLocalJointDisplacementDerivatives(int index);
 	object computeJacobian(int index, const object& positionGlobal);
 	object computeComJacobian(int index, const object& positionGlobal);
 
