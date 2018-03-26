@@ -3,12 +3,17 @@
 #include "../../../PyCommon/externalLibs/common/boostPythonUtil.h"
 #include "../../../PyCommon/externalLibs/common/VPUtil.h"
 
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/io.hpp>
+
 //#define make_tuple boost::python::make_tuple
 
 using boost::python::make_tuple;
 namespace bp = boost::python;
 namespace np = boost::python::numpy;
 using boost::python::numpy::ndarray;
+
+namespace ublas = boost::numeric::ublas;
 
 #include "csVpModel.h"
 #include "csVpWorld.h"
@@ -2426,12 +2431,48 @@ object VpControlModel::getBodyGravityForceLocal( int index )
 	return pyV;
 }
 
-static object GetBJointJacobian(const vpBJoint &joint)
+static ublas::vector<double> ToUblasVector(const Vec3 &v_vp)
 {
-	bp::tuple shape = bp::make_tuple(3, 3);
-    np::dtype dtype = np::dtype::get_builtin<float>();
-	ndarray J = np::zeros(shape, dtype);
-	Axis m_rQ = joint.GetDisplacement();
+    ublas::vector<double> v(3);
+    for(int i=0; i<3; i++)
+        v(i) = v_vp[i];
+    return v;
+}
+
+static ublas::vector<double> ToUblasVector(const Axis &v_vp)
+{
+    ublas::vector<double> v(3);
+    for(int i=0; i<3; i++)
+        v(i) = v_vp[i];
+    return v;
+}
+
+static ublas::matrix<double> SE3ToUblasRotate(const SE3 &T_vp)
+{
+    ublas::matrix<double> T(3, 3);
+    for(int i=0; i<3; i++)
+        for(int j=0; j<3; j++)
+            T(j, i) = T_vp[i*3 + j];
+    return T;
+}
+
+static ublas::matrix<double> GetCrossMatrix(const ublas::vector<double> &r)
+{
+    ublas::zero_matrix<double> R(3, 3);
+    R(1, 0) = r[2];
+    R(2, 0) = -r[1];
+    R(0, 1) = -r[2];
+    R(2, 1) = r[0];
+    R(0, 2) = r[1];
+    R(1, 2) = -r[0];
+
+    return R;
+}
+
+static ublas::matrix<double> GetBJointJacobian(const Axis &m_rQ)
+{
+    ublas::matrix<double> J(3, 3);
+	ublas::vector<double> m_rQ_ub = ToUblasVector(m_rQ);
 
 	scalar t = Norm(m_rQ), alpha, beta, gamma, t2 = t * t;
 
@@ -2449,24 +2490,37 @@ static object GetBJointJacobian(const vpBJoint &joint)
 
 //	Axis V = (alpha * Inner(m_rQ, m_rDq)) * m_rQ + beta * m_rDq + gamma * Cross(m_rDq, m_rQ);
 
-    J[0][0] = alpha * m_rQ[0] * m_rQ[0] + beta;
-    J[1][0] = alpha * m_rQ[1] * m_rQ[0] - gamma * m_rQ[2];
-    J[2][0] = alpha * m_rQ[2] * m_rQ[0] + gamma * m_rQ[1];
-    J[0][1] = alpha * m_rQ[0] * m_rQ[1] + gamma * m_rQ[2];
-    J[1][1] = alpha * m_rQ[1] * m_rQ[1] + beta;
-    J[2][1] = alpha * m_rQ[2] * m_rQ[1] - gamma * m_rQ[0];
-    J[0][2] = alpha * m_rQ[0] * m_rQ[2] - gamma * m_rQ[1];
-    J[1][2] = alpha * m_rQ[1] * m_rQ[2] + gamma * m_rQ[0];
-    J[2][2] = alpha * m_rQ[2] * m_rQ[2] + beta;
+    J = alpha * outer_prod(m_rQ_ub, m_rQ_ub) + beta * ublas::identity_matrix<double>(3) - gamma * GetCrossMatrix(m_rQ_ub);
 
+//    J(0, 0) = alpha * m_rQ[0] * m_rQ[0] + beta;
+//    J(1, 0) = alpha * m_rQ[1] * m_rQ[0] - gamma * m_rQ[2];
+//    J(2, 0) = alpha * m_rQ[2] * m_rQ[0] + gamma * m_rQ[1];
+//    J(0, 1) = alpha * m_rQ[0] * m_rQ[1] + gamma * m_rQ[2];
+//    J(1, 1) = alpha * m_rQ[1] * m_rQ[1] + beta;
+//    J(2, 1) = alpha * m_rQ[2] * m_rQ[1] - gamma * m_rQ[0];
+//    J(0, 2) = alpha * m_rQ[0] * m_rQ[2] - gamma * m_rQ[1];
+//    J(1, 2) = alpha * m_rQ[1] * m_rQ[2] + gamma * m_rQ[0];
+//    J(2, 2) = alpha * m_rQ[2] * m_rQ[2] + beta;
 
 //    return alpha * mm.getDyadMatrixForm(q) + beta * np.eye(3) - gamma * mm.getCrossMatrixForm(q)
     return J;
 }
 
+static object ToNumpyArray(const ublas::matrix<double> &m)
+{
+	bp::tuple shape = bp::make_tuple(m.size1(), m.size2());
+    np::dtype dtype = np::dtype::get_builtin<float>();
+	ndarray m_np = np::empty(shape, dtype);
+	for(ublas::matrix<double>::size_type i=0; i<m.size1(); i++)
+	    for(ublas::matrix<double>::size_type j=0; j<m.size2(); j++)
+	        m_np[i][j] = m(i, j);
+	return m_np;
+}
+
+
 object VpControlModel::getLocalJacobian(int index)
 {
-    return GetBJointJacobian(_nodes[index]->joint);
+    return ToNumpyArray(GetBJointJacobian(_nodes[index]->joint));
 }
 
 object VpControlModel::getLocalJointVelocity(int index)
@@ -2482,18 +2536,48 @@ object VpControlModel::getLocalJointDisplacementDerivatives(int index)
 
 object VpControlModel::computeJacobian(int index, const object& positionGlobal)
 {
-	//TODO:
+    //TODO:
 	Vec3 effector_position = pyVec3_2_Vec3(positionGlobal);
 	vpBJoint *joint;
+	SE3 joint_frame;
 
 	bp::tuple shape = bp::make_tuple(6, m_total_dof);
     np::dtype dtype = np::dtype::get_builtin<float>();
 	ndarray J = np::zeros(shape, dtype);
+	ublas::vector<double> offset;
+	ublas::matrix<double> _Jw, _Jv;
 
+	//root joint
+	J[0][0] = 1.;
+	J[1][1] = 1.;
+	J[2][2] = 1.;
+
+    joint_frame = _nodes[0]->body.GetFrame() * Inv(_boneTs[0]);
+    _Jw = prod(SE3ToUblasRotate(joint_frame, GetBJointJacobian(LogR(joint_frame)));
+    for (int dof_index = 0; dof_index < 3; dof_index++)
+    {
+        for (int j=0; j<3; j++)
+        {
+            J[j+3][dof_index+3] = _Jw(j, dof_index);
+        }
+    }
+
+    //internal joint
 	for(std::vector<int>::size_type i=1; i<_nodes.size();i++)
 	{
         joint = &(_nodes[i]->joint);
-        object _J = GetBJointJacobian(*joint);
+        joint_frame = _nodes[i]->body.GetFrame() * Inv(_boneTs[i]);
+        offset = ToUblasVector(effector_position - joint_frame.GetPosition());
+        _Jw = prod(SE3ToUblasRotate(joint_frame, GetBJointJacobian(*joint));
+        _Jv = -prod(GetCrossMatrix(offset), _Jw);
+        for (int dof_index = 0; dof_index < _nodes[i]->dof; dof_index++)
+        {
+            for (int j=0; j<3; j++)
+            {
+                J[j+0][dof_index] = _Jv(j, dof_index);
+                J[j+3][dof_index] = _Jw(j, dof_index);
+            }
+        }
 	}
 
 	return J;
