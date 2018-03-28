@@ -177,24 +177,27 @@ class RenderersWnd(Fl_Window, ybu.Observer):
         self.box(FL_PLASTIC_UP_BOX)
         self.begin()
         self.rx = 5; self.ry = 5; self.rw = w-10; self.rh = h-10
-        self.renderersChk = Fl_Check_Browser(self.rx,self.ry,self.rw,self.rh,'')
+        self.renderersChk = Fl_Check_Browser(self.rx, self.ry, self.rw, self.rh, '')
         self.renderersChk.type(FL_MULTI_BROWSER)
 #        self.renderersChk.callback(self.onClickBrowser)
         self.end()
+
     def update(self, ev, doc):
-        if ev==EV_addRenderer or ev==EV_setRendererVisible:
+        if ev == EV_addRenderer or ev == EV_setRendererVisible:
             self.renderersChk.clear()
             for name in doc.rendererNames:
                 self.renderersChk.add(name, doc.renderersVisible[name])
+
     def onClickBrowser(self, x, y):
-        i = (y-2)/16
-        if i>=0 and i<self.renderersChk.nitems():
+        i = (y-2)//16
+        if 0 <= i < self.renderersChk.nitems():
             self.doc.setRendererVisible(self.renderersChk.text(i+1), not self.renderersChk.checked(i+1))
+
     def handle(self, event):
         if event == FL_PUSH:
             x = Fl.event_x()
             y = Fl.event_y()
-            if x>=self.rx and x<=self.rx+self.rw and y>=self.ry and y<=self.ry+self.rh:
+            if (self.rx <= x <= self.rx+self.rw) and (self.ry <= y <= self.ry+self.rh):
                 self.onClickBrowser(x-self.rx, y-self.ry)
         return Fl_Window.handle(self, event)
     

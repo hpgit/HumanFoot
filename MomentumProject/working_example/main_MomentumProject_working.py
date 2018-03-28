@@ -386,8 +386,8 @@ def main():
             contactR = 0
         if refFootVelL[1] > 0 and refFootVelL[1]/30. + refFootL[1] > doubleTosingleOffset:
             contactL = 0
-        if 32 < frame < 147:
-            contactR = 0
+        # if 32 < frame < 147:
+        #     contactR = 0
 
         contMotionOffset = th[0][0] - th_r[0][0]
 
@@ -699,6 +699,7 @@ def main():
         for i in range(stepsPerFrame):
             # apply penalty force
             bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+            print(contactForces)
             #bodyIDs, contactPositions, contactPositionLocals, contactForces, contactVelocities = vpWorld.calcManyPenaltyForce(0, bodyIDsToCheck, mus, Ks, Ds)
             vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
 

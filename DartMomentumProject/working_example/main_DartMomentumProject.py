@@ -229,8 +229,10 @@ def main():
     #initFm = 50.0
 
     initKt = 25.
-    initKl = 11.
-    initKh = 22.
+    # initKl = 11.
+    # initKh = 22.
+    initKl = 100.
+    initKh = 100.
 
     initBl = .1
     initBh = .13
@@ -362,14 +364,16 @@ def main():
         # th_r = motion.getDOFPositions(frame)
         th_r = dartMotionModel.getDOFPositions()
         th = dartModel.getDOFPositions()
+        th_r_flat = dartMotionModel.get_q()
         # dth_r = motion.getDOFVelocities(frame)
-        dth = dartModel.getDOFVelocities()
+        # dth = dartModel.getDOFVelocities()
         # ddth_r = motion.getDOFAccelerations(frame)
         # ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
-        # dth_flat = dartModel.get_dq()
-        dth_flat =  np.concatenate(dth)
+        dth_flat = dartModel.get_dq()
+        # dth_flat = np.concatenate(dth)
         # ddth_des_flat = pdcontroller.compute(dartMotionModel.get_q())
-        ddth_des_flat = pdcontroller.compute(th_r)
+        # ddth_des_flat = pdcontroller.compute(th_r)
+        ddth_des_flat = pdcontroller.compute_flat(th_r_flat)
 
         # ype.flatten(ddth_des, ddth_des_flat)
         # ype.flatten(dth, dth_flat)
@@ -506,10 +510,12 @@ def main():
         Jsys = np.zeros((6*body_num, totalDOF))
         dJsys = np.zeros((6*body_num, totalDOF))
         for i in range(dartModel.getBodyNum()):
-            body_i_jacobian = dartModel.getBody(i).world_jacobian()[range(-3, 3), :]
-            body_i_jacobian_deriv = dartModel.getBody(i).world_jacobian_classic_deriv()[range(-3, 3), :]
-            Jsys[6*i:6*i+6, :] = body_i_jacobian
-            dJsys[6*i:6*i+6, :] = body_i_jacobian_deriv
+            # body_i_jacobian = dartModel.getBody(i).world_jacobian()[range(-3, 3), :]
+            # body_i_jacobian_deriv = dartModel.getBody(i).world_jacobian_classic_deriv()[range(-3, 3), :]
+            # Jsys[6*i:6*i+6, :] = body_i_jacobian
+            # dJsys[6*i:6*i+6, :] = body_i_jacobian_deriv
+            Jsys[6*i:6*i+6, :] = dartModel.getBody(i).world_jacobian()[range(-3, 3), :]
+            dJsys[6*i:6*i+6, :] = dartModel.getBody(i).world_jacobian_classic_deriv()[range(-3, 3), :]
         # dJsys = (Jsys - Jpre[0])/frame_step_size
         # Jpre[0] = Jsys.copy()
 
@@ -552,7 +558,7 @@ def main():
         # todo that, set joint velocities to vpModel
 
         CM_ref_plane = footCenter
-        dL_des_plane = Kl*totalMass*(CM_ref_plane - CM_plane)  - Dl*totalMass*dCM_plane
+        dL_des_plane = Kl*totalMass*(CM_ref_plane - CM_plane) - Dl*totalMass*dCM_plane
         dL_des_plane[1] = 0.
 
         # CM_ref = footCenter.copy()
@@ -713,7 +719,7 @@ def main():
         problem.clear()
         # ype.nested(r['x'], ddth_sol)
         ddth_sol = np.asarray(r['x'])
-        ddth_sol[:6] = np.zeros(6)
+        # ddth_sol[:6] = np.zeros(6)
 
         rootPos[0] = dartModel.getBodyPositionGlobal(selectedBody)
         localPos = [[0, 0, 0]]

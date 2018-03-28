@@ -28,6 +28,19 @@ class PDController:
         self.Kp = np.diagflat([Kp] * ndofs)
         self.Kd = np.diagflat([Kd] * ndofs)
 
+    def compute_flat(self, qhat):
+        skel = self.skel
+
+        invM = inv(skel.M + self.Kd * self.h)
+        p = -self.Kp.dot(skel.q + skel.dq * self.h - qhat)
+        d = -self.Kd.dot(skel.dq)
+        qddot = invM.dot(-skel.c + p + d + skel.constraint_forces())
+        tau = p + d - self.Kd.dot(qddot) * self.h
+
+        tau = self.Kp.dot(qhat - skel.q) - self.Kd.dot(skel.dq)
+
+        return tau
+
     def compute(self, positions_hat, weightMap=None):
         skel = self.skel
 
