@@ -1141,9 +1141,10 @@ class JointPosture(Posture):
 
     def get_q(self):
         q = np.zeros(self.skeleton.getTotalDOF())
-        q[:3] = self.rootPos
+        q[:3] = mm.logSO3(self.getLocalR(self.skeleton.jointElementIndexes[0]))
+        q[3:6] = self.rootPos
         joint_num = self.skeleton.getJointNum()
-        for i in range(joint_num):
+        for i in range(1, joint_num):
             q[3*i+3:3*i+6] = mm.logSO3(self.getLocalR(self.skeleton.jointElementIndexes[i]))
         return q
 

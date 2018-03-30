@@ -122,6 +122,7 @@ public:
 	//hp
 	Axis                     GetDisplacement(void) const;
 	Axis                     GetDisplacementDerivate(void) const;
+	void                     SetDdq(Axis&);
 
 protected:
 

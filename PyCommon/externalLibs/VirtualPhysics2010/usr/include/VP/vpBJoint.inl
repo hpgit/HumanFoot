@@ -68,6 +68,11 @@ VP_INLINE Axis vpBJoint::GetDisplacementDerivate(void) const
     return m_rDq;
 }
 
+VP_INLINE void vpBJoint::SetDdq(Axis &v)
+{
+    m_rDdq = v;
+}
+
 VP_INLINE SE3 vpBJoint::Transform(void) const
 {
 	return Exp(m_rQ);

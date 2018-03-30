@@ -141,6 +141,7 @@ BOOST_PYTHON_MODULE(csVpModel)
 
 		.def("get_q", &VpControlModel::get_q)
 		.def("get_dq", &VpControlModel::get_dq)
+		.def("set_ddq", &VpControlModel::set_ddq)
 
 		.def("getDOFPositions", &VpControlModel::getDOFPositions)
 		.def("getDOFVelocities", &VpControlModel::getDOFVelocities)
@@ -1618,20 +1619,21 @@ static Axis GetDq(const SE3& R, const Vec3& V)
 
 bp::list VpControlModel::get_q()
 {
+    // Angular First for root joint
     bp::list ls;
-	static SE3 rootBodyFrame = _nodes[0]->body.GetFrame();
-	static SE3 rootJointFrame = rootBodyFrame * Inv(_boneTs[0]);
-    static Vec3 rootJointPos = rootJointFrame.GetPosition();
-    static Axis rootJointQ = LogR(rootJointFrame);
-    static Axis jointQ;
+	SE3 rootBodyFrame = _nodes[0]->body.GetFrame();
+	SE3 rootJointFrame = rootBodyFrame * Inv(_boneTs[0]);
+    Vec3 rootJointPos = rootJointFrame.GetPosition();
+    Axis rootJointQ = LogR(rootJointFrame);
+    Axis jointQ;
 
     for(int i=0; i<3; i++)
     {
-        ls.append(rootJointPos[i]);
+        ls.append(rootJointQ[i]);
     }
     for(int i=0; i<3; i++)
     {
-        ls.append(rootJointQ[i]);
+        ls.append(rootJointPos[i]);
     }
 	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
 	{
@@ -1647,12 +1649,13 @@ bp::list VpControlModel::get_q()
 
 bp::list VpControlModel::get_dq()
 {
+    // Angular First for root joint
     bp::list ls;
-	static SE3 rootBodyFrame = _nodes[0]->body.GetFrame();
-	static SE3 rootJointFrame = rootBodyFrame * Inv(_boneTs[0]);
-    static Vec3 rootJointPos = rootJointFrame.GetPosition();
-    static Axis rootJointQ = LogR(rootJointFrame);
-    static Axis jointDq;
+	SE3 rootBodyFrame = _nodes[0]->body.GetFrame();
+	SE3 rootJointFrame = rootBodyFrame * Inv(_boneTs[0]);
+    Vec3 rootJointPos = rootJointFrame.GetPosition();
+    Axis rootJointQ = LogR(rootJointFrame);
+    Axis jointDq;
 
 	Vec3 rootJointLinVel = _nodes[0]->body.GetLinVelocity(Inv(_boneTs[0]).GetPosition());
 
@@ -1660,14 +1663,13 @@ bp::list VpControlModel::get_dq()
     Vec3 rootJointAngVelLocal = Rotate(_boneTs[0], Vec3(rootBodyGenVelLocal[0], rootBodyGenVelLocal[1], rootBodyGenVelLocal[2]));
     Axis rootJointDq = GetDq(rootJointFrame, rootJointAngVelLocal);
 
-
-    for(int i=0; i<3; i++)
-    {
-        ls.append(rootJointLinVel[i]);
-    }
     for(int i=0; i<3; i++)
     {
         ls.append(rootJointDq[i]);
+    }
+    for(int i=0; i<3; i++)
+    {
+        ls.append(rootJointLinVel[i]);
     }
 	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
 	{
@@ -1679,6 +1681,24 @@ bp::list VpControlModel::get_dq()
 	}
 
 	return ls;
+}
+
+void VpControlModel::set_ddq(const object & ddq)
+{
+    int ddq_index = 6;
+    //TODO:
+    for(int i=0; i<3; i++)
+    {
+    }
+    for(int i=0; i<6; i++)
+    {
+    }
+	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
+	{
+        Axis jointDdq(XD(ddq[ddq_index]), XD(ddq[ddq_index+1]), XD(ddq[ddq_index+2]));
+        _nodes[j]->joint.SetDdq(jointDdq);
+        ddq_index += 3;
+	}
 }
 
 bp::list VpControlModel::getDOFPositions()
@@ -2458,13 +2478,16 @@ static ublas::matrix<double> SE3ToUblasRotate(const SE3 &T_vp)
 
 static ublas::matrix<double> GetCrossMatrix(const ublas::vector<double> &r)
 {
-    ublas::zero_matrix<double> R(3, 3);
+    ublas::matrix<double> R(3, 3);
+    R(0, 0) = 0;
     R(1, 0) = r[2];
     R(2, 0) = -r[1];
     R(0, 1) = -r[2];
+    R(1, 1) = 0;
     R(2, 1) = r[0];
     R(0, 2) = r[1];
     R(1, 2) = -r[0];
+    R(2, 2) = 0;
 
     return R;
 }
@@ -2512,15 +2535,20 @@ static object ToNumpyArray(const ublas::matrix<double> &m)
     np::dtype dtype = np::dtype::get_builtin<float>();
 	ndarray m_np = np::empty(shape, dtype);
 	for(ublas::matrix<double>::size_type i=0; i<m.size1(); i++)
+	{
 	    for(ublas::matrix<double>::size_type j=0; j<m.size2(); j++)
+	    {
 	        m_np[i][j] = m(i, j);
+	    }
+    }
 	return m_np;
 }
 
 
+
 object VpControlModel::getLocalJacobian(int index)
 {
-    return ToNumpyArray(GetBJointJacobian(_nodes[index]->joint));
+    return ToNumpyArray(GetBJointJacobian(_nodes[index]->joint.GetDisplacement()));
 }
 
 object VpControlModel::getLocalJointVelocity(int index)
@@ -2553,7 +2581,7 @@ object VpControlModel::computeJacobian(int index, const object& positionGlobal)
 	J[2][2] = 1.;
 
     joint_frame = _nodes[0]->body.GetFrame() * Inv(_boneTs[0]);
-    _Jw = prod(SE3ToUblasRotate(joint_frame, GetBJointJacobian(LogR(joint_frame)));
+    _Jw = prod(SE3ToUblasRotate(joint_frame), GetBJointJacobian(LogR(joint_frame)));
     for (int dof_index = 0; dof_index < 3; dof_index++)
     {
         for (int j=0; j<3; j++)
@@ -2568,7 +2596,7 @@ object VpControlModel::computeJacobian(int index, const object& positionGlobal)
         joint = &(_nodes[i]->joint);
         joint_frame = _nodes[i]->body.GetFrame() * Inv(_boneTs[i]);
         offset = ToUblasVector(effector_position - joint_frame.GetPosition());
-        _Jw = prod(SE3ToUblasRotate(joint_frame, GetBJointJacobian(*joint));
+        _Jw = prod(SE3ToUblasRotate(joint_frame), GetBJointJacobian(joint->GetDisplacement()));
         _Jv = -prod(GetCrossMatrix(offset), _Jw);
         for (int dof_index = 0; dof_index < _nodes[i]->dof; dof_index++)
         {

@@ -29,6 +29,9 @@ from MomentumProject.foot_example_segfoot_constraint import mtInitialize as mit
 # from PyCommon.modules.ArticulatedBody import hpFootIK as hfi
 # from scipy.spatial import ConvexHull
 
+from PyCommon.modules import pydart2 as pydart
+from PyCommon.modules.Simulator import csDartModel as cdm
+
 g_initFlag = 0
 forceShowTime = 0
 
@@ -43,6 +46,8 @@ contact = 0
 maxContactChangeCount = 30
 
 preFootCenter = [None]
+
+DART_CONTACT_ON = False
 
 
 class FootWindow(Fl_Window):
@@ -67,7 +72,8 @@ class FootWindow(Fl_Window):
 
 
 def main():
-    np.set_printoptions(precision=4, linewidth=200)
+    # np.set_printoptions(precision=4, linewidth=200)
+    np.set_printoptions(precision=5, threshold=np.inf, suppress=True, linewidth=3000)
 
     motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_jump_biped()
@@ -81,6 +87,10 @@ def main():
     # controlToMotionOffset = (1.5, -0.02, 0)
     controlToMotionOffset = (1.5, 0, 0)
     controlModel.translateByOffset(controlToMotionOffset)
+
+    pydart.init()
+    dartModel = cdm.DartModel(wcfg, motion[0], mcfg, DART_CONTACT_ON)
+    dartModel.set_q(controlModel.get_q())
 
     totalDOF = controlModel.getTotalDOF()
     DOFs = controlModel.getDOFs()
@@ -211,6 +221,7 @@ def main():
     # viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,255,255), yr.LINK_BONE))
     viewer.doc.addObject('motion', motion)
     viewer.doc.addRenderer('motionModel', yr.VpModelRenderer(motionModel, (150,150,255), yr.POLYGON_FILL))
+    viewer.doc.addRenderer('dartModel', yr.DartModelRenderer(dartModel, (150,150,255), yr.POLYGON_LINE))
     # viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_LINE))
     control_model_renderer = yr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_FILL)
     viewer.doc.addRenderer('controlModel', control_model_renderer)
@@ -369,11 +380,14 @@ def main():
 
         return J, joint_masks
 
+
     ###################################
     # simulate
     ###################################
     def simulateCallback(frame):
         motionModel.update(motion[frame])
+        # dartModel.update(motion[frame])
+        dartModel.set_q(controlModel.get_q())
 
         global g_initFlag
         global forceShowTime
@@ -410,6 +424,8 @@ def main():
         # print(controlModel.get_q())
         # print(controlModel.get_dq())
         # print(np.asarray(motion.get_dq(frame)) - np.asarray(controlModel.get_dq()))
+        # print(np.asarray(dartModel.get_q())[:6])
+        # print(controlModel.get_q()[:6])
 
         th_r = motion.getDOFPositions(frame)
         th = controlModel.getDOFPositions()
@@ -418,8 +434,10 @@ def main():
         ddth_r = motion.getDOFAccelerations(frame)
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
 
-        ype.flatten(ddth_des, ddth_des_flat)
+        # ype.flatten(ddth_des, ddth_des_flat)
+        ddth_des_flat = Kt * (motion.get_q(frame) - controlModel.get_q())  # - Dt * (controlModel.get_dq())
         ype.flatten(dth, dth_flat)
+        # dth_flat = controlModel.get_dq()
 
         #################################################
         # jacobian
@@ -586,15 +604,11 @@ def main():
 
         # initialization
         if g_initFlag == 0:
-            JsysPre = Jsys.copy()
-            # JsupPreL = JsupL.copy()
-            # JsupPreR = JsupR.copy()
+            # JsysPre = Jsys.copy()
             JconstPre = Jconst.copy()
             softConstPoint = footCenterR.copy()
-            yjc.computeJacobian2(JsysPre, DOFs, jointPositions, jointAxeses, linkPositions, allLinkJointMasks)
-            # yjc.computeJacobian2(JsupPreL, DOFs, jointPositions, jointAxeses, [footCenterL], supLJointMasks)
-            # yjc.computeJacobian2(JsupPreR, DOFs, jointPositions, jointAxeses, [footCenterR], supRJointMasks)
-            yjc.computeJacobian2(JconstPre, DOFs, jointPositions, jointAxeses, [softConstPoint], constJointMasks)
+            # yjc.computeJacobian2(JsysPre, DOFs, jointPositions, jointAxeses, linkPositions, allLinkJointMasks)
+            # yjc.computeJacobian2(JconstPre, DOFs, jointPositions, jointAxeses, [softConstPoint], constJointMasks)
 
             footCenter = footCenterL + (footCenterR - footCenterL)/2.0
             footCenter[1] = 0.
@@ -610,10 +624,36 @@ def main():
             g_initFlag = 1
 
         # calculate jacobian
+        Jsys = yjc.makeEmptyJacobian(DOFs, controlModel.getBodyNum())
         yjc.computeJacobian2(Jsys, DOFs, jointPositions, jointAxeses, linkPositions, allLinkJointMasks)
-        dJsys = (Jsys - JsysPre)/(1/30.)
-        JsysPre = Jsys.copy()
-        # yjc.computeJacobianDerivative2(dJsys, DOFs, jointPositions, jointAxeses, linkAngVelocities, linkPositions, allLinkJointMasks)
+        # dJsys = (Jsys - JsysPre)/(1/30.)
+        # JsysPre = Jsys.copy()
+        # # yjc.computeJacobianDerivative2(dJsys, DOFs, jointPositions, jointAxeses, linkAngVelocities, linkPositions, allLinkJointMasks)
+        # print(np.dot(Jsys, dth_flat))
+        vp_legacy = np.dot(Jsys, dth_flat)
+        # print(Jsys)
+
+        # calculate jacobian
+        body_num = dartModel.getBodyNum()
+        Jsys = np.zeros((6*body_num, totalDOF))
+        dJsys = np.zeros((6*body_num, totalDOF))
+        for i in range(dartModel.getBodyNum()):
+            # body_i_jacobian = dartModel.getBody(i).world_jacobian()[range(-3, 3), :]
+            # body_i_jacobian_deriv = dartModel.getBody(i).world_jacobian_classic_deriv()[range(-3, 3), :]
+            # Jsys[6*i:6*i+6, :] = body_i_jacobian
+            # dJsys[6*i:6*i+6, :] = body_i_jacobian_deriv
+            Jsys[6*i:6*i+6, :] = dartModel.getBody(i).world_jacobian()[range(-3, 3), :]
+            dJsys[6*i:6*i+6, :] = dartModel.getBody(i).world_jacobian_classic_deriv()[range(-3, 3), :]
+
+        # print(np.dot(Jsys, controlModel.get_dq()))
+        dart_result = np.dot(Jsys, controlModel.get_dq())
+        # print(Jsys)
+
+        print(vp_legacy)
+        print(dart_result)
+        print(np.asarray([[controlModel.getBodyVelocityGlobal(i), controlModel.getBodyAngVelocityGlobal(i)] for i in range(controlModel.getBodyNum())]).flatten())
+
+        # print(np.linalg.norm(vp_legacy - dart_result))
 
         for i in range(len(J_contacts)):
             J_contacts[i] = Jsys[6*contact_ids[i]:6*contact_ids[i] + 6, :]
@@ -763,7 +803,9 @@ def main():
             # bodyIDs, contactPositions, contactPositionLocals, contactForces, contactVelocities = vpWorld.calcManyPenaltyForce(0, bodyIDsToCheck, mus, Ks, Ds)
             vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
 
-            controlModel.setDOFAccelerations(ddth_sol)
+            # controlModel.setDOFAccelerations(ddth_sol)
+            controlModel.set_ddq(ddth_sol_flat)
+            # controlModel.set_ddq(ddth_des_flat)
             controlModel.solveHybridDynamics()
 
             if forceShowTime > viewer.objectInfoWnd.labelForceDur.value():
@@ -777,6 +819,8 @@ def main():
                 vpWorld.applyPenaltyForce(selectedBodyId, localPos, extraForce)
 
             vpWorld.step()
+
+        dartModel.set_q(controlModel.get_q())
 
         # rendering
         rightFootVectorX[0] = np.dot(footOriL, np.array([.1, 0, 0]))

@@ -717,6 +717,9 @@ class DartModel:
     def get_dq(self):
         return self.skeleton.dq
 
+    def set_q(self, q):
+        self.skeleton.set_positions(q)
+
     def get_state(self):
         return np.hstack((self.skeleton.q, self.skeleton.dq))
 
