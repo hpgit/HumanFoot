@@ -32,6 +32,8 @@ from MomentumProject.foot_example_segfoot_constraint import mtInitialize as mit
 from PyCommon.modules import pydart2 as pydart
 from PyCommon.modules.Simulator import csDartModel as cdm
 
+from OpenGL.GL import *
+
 g_initFlag = 0
 forceShowTime = 0
 
@@ -50,10 +52,39 @@ preFootCenter = [None]
 DART_CONTACT_ON = False
 
 
+class FootPressureGlWindow(Fl_Gl_Window):
+    def __init__(self, x, y, w, h):
+        Fl_Gl_Window.__init__(self, x, y, w, h)
+        self.initGL()
+        self.rc = yr.RenderContext()
+
+    def initGL(self):
+        glClearColor(1., 1., 1., 1.)
+        self.projectOrtho(3)
+
+    def draw(self):
+        glClear(GL_COLOR_BUFFER_BIT)
+        # self.rc.drawCircle(1.)
+        self.rc.drawCapsule2D(.2, .2)
+
+    def projectOrtho(self, distance):
+        glViewport(0, 0, self.w(), self.h())
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        x = float(self.w())/float(self.h()) * distance
+        y = 1. * distance
+        glOrtho(-.5*x, .5*x, -.5*y, .5*y, -1000., 1000.)
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+
+
 class FootWindow(Fl_Window):
     def __init__(self, x, y, w, h, title, model):
         Fl_Window.__init__(self, x, y, w, h, title)
         y_padding = 20
+
+        self.model = model
+
         self.begin()
 
         self.check_op_l = Fl_Check_Button(10, 10, 30, 30, 'OP')
@@ -67,6 +98,8 @@ class FootWindow(Fl_Window):
         self.check_om_r = Fl_Check_Button(150, 50, 30, 30, 'OM')
         self.check_im_r = Fl_Check_Button(110, 50, 30, 30, 'IM')
         self.check_h_r = Fl_Check_Button(130, 90, 30, 30, 'H')
+
+        self.foot_pressure_gl_window = FootPressureGlWindow(50, 150, 200, 200)
 
         self.end()
 
@@ -388,6 +421,9 @@ def main():
         motionModel.update(motion[frame])
         # dartModel.update(motion[frame])
         dartModel.set_q(controlModel.get_q())
+        if FootWindow is not None:
+            # blabla...
+            pass
 
         global g_initFlag
         global forceShowTime
@@ -873,8 +909,10 @@ def main():
     # viewer.play()
     viewer.show()
 
-    foot_viewer = FootWindow(viewer.x() + viewer.w() + 20, viewer.y(), 300, 400, 'foot contact modifier', controlModel)
+    foot_viewer = FootWindow(viewer.x() + viewer.w() + 20, viewer.y(), 300, 500, 'foot contact modifier', dartModel)
     foot_viewer.show()
+
+    dartModel.set_q(controlModel.get_q())
 
     Fl.run()
 

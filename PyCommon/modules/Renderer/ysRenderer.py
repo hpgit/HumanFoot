@@ -1435,7 +1435,6 @@ class RenderContext:
 
         glPopMatrix()
 
-
     def drawSphere(self, radius):
         _SLICE_SIZE = 8
         gluSphere(self.quad2, radius, _SLICE_SIZE, _SLICE_SIZE)
@@ -1444,6 +1443,23 @@ class RenderContext:
         #     glutWireSphere(radius, SLICE, STACK)
         # else:
         #     glutSolidSphere(radius, SLICE, STACK)
+
+    def drawCircle(self, radius):
+        _SLICE_SIZE = 32
+        glBegin(GL_LINE_LOOP)
+        for i in range(_SLICE_SIZE):
+            glVertex2f(radius * math.cos(2.*math.pi*float(i)/_SLICE_SIZE), radius * math.sin(2.*math.pi*float(i)/_SLICE_SIZE))
+        glEnd()
+
+    def drawCapsule2D(self, radius, height):
+        _SLICE_SIZE = 16
+        glBegin(GL_LINE_LOOP)
+        r, h = radius, height
+        for i in range(_SLICE_SIZE):
+            glVertex2f(r*math.cos(math.pi*float(i)/_SLICE_SIZE), h + r*math.sin(math.pi*float(i)/_SLICE_SIZE))
+        for i in range(_SLICE_SIZE):
+            glVertex2f(-r*math.cos(math.pi*float(i)/_SLICE_SIZE), -h - r*math.sin(math.pi*float(i)/_SLICE_SIZE))
+        glEnd()
 
     #===============================================================================
     # draw primitives at its position        
