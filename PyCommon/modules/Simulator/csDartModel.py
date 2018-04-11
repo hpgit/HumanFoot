@@ -330,7 +330,8 @@ class DartModel:
             self._name2index[self._nodes[i].name] = i
 
     def index2name(self, index):
-        return self._nodes[index]
+        return self.getBody(index).name
+        # return self._nodes[index]
 
     def index2id(self, index):
         return self._nodes[index].body.GetID()
@@ -373,7 +374,7 @@ class DartModel:
 
     def getJointDOFIndexes(self, key):
         joint = self.getJoint(key)
-        dofs= []
+        dofs = []
         for joint_dof_idx in range(joint.num_dofs()):
             dofs.append(joint.dofs[joint_dof_idx].index)
         return dofs
@@ -407,6 +408,32 @@ class DartModel:
         # class			 vpTorus;		// T
 
         return data
+
+    def getBodyGeomNum(self, index):
+        return self.getBody(index).num_shapenodes()
+
+    def getBodyGeomsType(self, index):
+        return [shapenode.shape.shape_type_name() for shapenode in self.getBody(index).shapenodes]
+
+    def getBodyGeomsSize(self, index):
+        for shapenode in self.getBody(index).shapenodes:
+            shape = shapenode.shape
+            geom_type = shape.shape_type_name()
+            shape.shape_type()
+            if geom_type == 'ELLIPSOID':
+                data = shape.size()/2.
+            elif geom_type == 'CYLINDER':
+                data = [shape.getHeight(), shape.getRadius()]
+            elif geom_type == 'BOX':
+                data = shape.size()
+
+        return [shapenode.shape.shape_type_name() for shapenode in self.getBody(index).shapenodes]
+
+    def getBodyGeomsLocalFrame(self, index):
+        return [shapenode.relative_transform() for shapenode in self.getBody(index).shapenodes]
+
+    def getBodyGeomsGlobalFrame(self, index):
+        return [self.getBody(index).world_transform().dot(shapenode.relative_transform()) for shapenode in self.getBody(index).shapenodes]
 
     def getBodyVerticesPositionGlobal(self, index):
         # pGeom = self._nodes[index].body.GetGeometry(0)

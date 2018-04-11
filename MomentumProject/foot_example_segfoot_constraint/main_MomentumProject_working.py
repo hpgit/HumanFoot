@@ -53,10 +53,44 @@ DART_CONTACT_ON = False
 
 
 class FootPressureGlWindow(Fl_Gl_Window):
-    def __init__(self, x, y, w, h):
+    def __init__(self, x, y, w, h, model):
         Fl_Gl_Window.__init__(self, x, y, w, h)
         self.initGL()
         self.rc = yr.RenderContext()
+        self.model = model
+
+        self.foot_index = []
+        self.left_foot_index = []
+        self.right_foot_index = []
+        self.foot_seg_index = []
+        self.left_seg_index = []
+        self.right_seg_index = []
+
+        self.init_model()
+
+    def init_model(self):
+        for joint_idx in range(self.model.getJointNum()):
+            joint_name = self.model.index2name(joint_idx)
+            if 'Foot' in joint_name:
+                self.foot_index.append(joint_idx)
+                if 'Left' in joint_name:
+                    self.left_foot_index.append799390(joint_idx)
+                elif 'Right' in joint_name:
+                    self.right_foot_index.append(joint_idx)
+
+            if 'foot' in joint_name:
+                self.foot_seg_index.append(joint_idx)
+                if 'Left' in joint_name:
+                    self.left_seg_index.append(joint_idx)
+                elif 'Right' in joint_name:
+                    self.right_seg_index.append(joint_idx)
+
+        for seg_idx in self.foot_seg_index:
+            self.model.
+
+    def get_foot_contact_info(self):
+
+        pass
 
     def initGL(self):
         glClearColor(1., 1., 1., 1.)
@@ -99,7 +133,7 @@ class FootWindow(Fl_Window):
         self.check_im_r = Fl_Check_Button(110, 50, 30, 30, 'IM')
         self.check_h_r = Fl_Check_Button(130, 90, 30, 30, 'H')
 
-        self.foot_pressure_gl_window = FootPressureGlWindow(50, 150, 200, 200)
+        self.foot_pressure_gl_window = FootPressureGlWindow(50, 150, 200, 200, model)
 
         self.end()
 
@@ -152,9 +186,9 @@ def main():
             foot_dofs_temp = controlModel.getJointDOFIndexes(joint_idx)
             foot_seg_dofs.extend(foot_dofs_temp)
             if 'Left' in joint_name:
-                left_foot_dofs.extend(foot_dofs_temp)
+                left_foot_seg_dofs.extend(foot_dofs_temp)
             elif 'Right' in joint_name:
-                right_foot_dofs.extend(foot_dofs_temp)
+                right_foot_seg_dofs.extend(foot_dofs_temp)
 
     # parameter
     Kt = config['Kt']; Dt = config['Dt']  # tracking gain
@@ -422,7 +456,6 @@ def main():
         # dartModel.update(motion[frame])
         dartModel.set_q(controlModel.get_q())
         if FootWindow is not None:
-            # blabla...
             pass
 
         global g_initFlag
