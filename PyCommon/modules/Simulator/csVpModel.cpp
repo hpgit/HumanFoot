@@ -98,7 +98,9 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getBodyAccelerationsGlobal", &VpModel::getBodyAccelerationsGlobal)
 		.def("getBodyAngVelocitiesGlobal", &VpModel::getBodyAngVelocitiesGlobal)
 		.def("getBodyAngAccelerationsGlobal", &VpModel::getBodyAngAccelerationsGlobal)
-		.def("getBodyOrientationGlobal", &VpModel::getBodyOrientationGlobal)		
+		.def("getBodyOrientationGlobal", &VpModel::getBodyOrientationGlobal)
+
+		.def("getBodyTransformGlobal", &VpModel::getBodyTransformGlobal)
 
 		.def("setBodyPositionGlobal", &VpModel::setBodyPositionGlobal_py)
 		.def("setBodyVelocityGlobal", &VpModel::setBodyVelocityGlobal_py)
@@ -139,6 +141,7 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("solveForwardDynamics", &VpControlModel::solveForwardDynamics)
 		.def("solveInverseDynamics", &VpControlModel::solveInverseDynamics)
 
+		.def("set_q", &VpControlModel::set_q)
 		.def("get_q", &VpControlModel::get_q)
 		.def("get_dq", &VpControlModel::get_dq)
 		.def("set_ddq", &VpControlModel::set_ddq)
@@ -976,6 +979,22 @@ object VpModel::getBodyOrientationGlobal(int index)
 	return pyR;
 }
 
+object VpModel::getBodyTransformGlobal(int index)
+{
+	ndarray I = np::array(make_tuple(
+	                        make_tuple(1., 0., 0., 0.),
+	                        make_tuple(0., 1., 0., 0.),
+	                        make_tuple(0., 0., 1., 0.),
+	                        make_tuple(0., 0., 0., 1.)
+	                     ));
+	SE3 bodyFrame;
+	object pyT = I.copy();
+
+	bodyFrame = _nodes[index]->body.GetFrame();
+	SE3_2_pySE3(bodyFrame, pyT);
+	return pyT;
+}
+
 bp::list VpModel::getBodyAccelerationsGlobal()
 {
 	bp::list ls;
@@ -1615,6 +1634,26 @@ static Axis GetDq(const SE3& R, const Vec3& V)
 
 	return (delta * Inner(m_rQ, V)) * m_rQ + zeta * W + SCALAR_1_2 * Cross(m_rQ, W);
 
+}
+void VpControlModel::set_q(const object &q)
+{
+    SE3 rootJointFrame = Exp(Axis(XD(q[0]), XD(q[1]), XD(q[2])));
+    rootJointFrame.SetPosition(Vec3(XD(q[3]), XD(q[4]), XD(q[5])));
+    SE3 rootBodyFrame = rootJointFrame * _boneTs[0];
+
+    _nodes[0]->body.SetFrame(rootBodyFrame);
+
+    int q_idx = 6;
+    for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
+    {
+        _nodes[j]->joint.SetOrientation(Exp(Axis(XD(q[q_idx]), XD(q[q_idx+1]), XD(q[q_idx+2]))));
+        q_idx = q_idx + 3;
+    }
+    _pWorld->UpdateFrame();
+    for(std::vector<int>::size_type j=0; j<_nodes.size(); j++)
+    {
+        _nodes[j]->body.UpdateGeomFrame();
+    }
 }
 
 bp::list VpControlModel::get_q()

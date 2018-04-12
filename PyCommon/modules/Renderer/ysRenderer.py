@@ -1453,12 +1453,17 @@ class RenderContext:
 
     def drawCapsule2D(self, radius, height):
         _SLICE_SIZE = 16
-        glBegin(GL_LINE_LOOP)
+        # glBegin(GL_LINE_LOOP)
+        glBegin(GL_TRIANGLE_FAN)
+        glVertex2f(0., 0.)
         r, h = radius, height
+
         for i in range(_SLICE_SIZE):
-            glVertex2f(r*math.cos(math.pi*float(i)/_SLICE_SIZE), h + r*math.sin(math.pi*float(i)/_SLICE_SIZE))
+            glVertex2f(r*math.cos(math.pi*float(i)/_SLICE_SIZE), h/2. + r*math.sin(math.pi*float(i)/_SLICE_SIZE))
         for i in range(_SLICE_SIZE):
-            glVertex2f(-r*math.cos(math.pi*float(i)/_SLICE_SIZE), -h - r*math.sin(math.pi*float(i)/_SLICE_SIZE))
+            glVertex2f(-r*math.cos(math.pi*float(i)/_SLICE_SIZE), -h/2. - r*math.sin(math.pi*float(i)/_SLICE_SIZE))
+
+        glVertex2f(r, h/2.)
         glEnd()
 
     #===============================================================================

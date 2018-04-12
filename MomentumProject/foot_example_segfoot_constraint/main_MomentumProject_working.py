@@ -66,7 +66,17 @@ class FootPressureGlWindow(Fl_Gl_Window):
         self.left_seg_index = []
         self.right_seg_index = []
 
+        self.geom_ids = []
+        self.geom_names = []
+        self.geom_types = []
+        self.geom_trans = []
+        self.geom_sizes = []
+        self.body_trans = []
+
         self.init_model()
+
+        self.contact_seg_idx = []
+        self.contact_seg_position_local = []
 
     def init_model(self):
         for joint_idx in range(self.model.getJointNum()):
@@ -85,21 +95,27 @@ class FootPressureGlWindow(Fl_Gl_Window):
                 elif 'Right' in joint_name:
                     self.right_seg_index.append(joint_idx)
 
+        q = self.model.get_q()
+        q_zero = np.zeros_like(q)
+        self.model.set_q(q_zero)
         for seg_idx in self.foot_seg_index:
-            geom_num = self.model.getBodyGeomNum(seg_idx)
-            geom_types = self.model.getBodyGeomsType(seg_idx)
-            geom_sizes = self.model.getBodyGeomsSize(seg_idx)
-            geom_trans = self.model.getBodyGeomsGlobalFrame(seg_idx)
+            for i in range(self.model.getBodyGeomNum(seg_idx)):
+                self.geom_names.append(self.model.index2name(seg_idx))
+                self.geom_ids.append(seg_idx)
+                self.body_trans.append(self.model.getBodyTransformGlobal(seg_idx))
+            self.geom_types.extend(self.model.getBodyGeomsType(seg_idx))
+            self.geom_sizes.extend(self.model.getBodyGeomsSize(seg_idx))
+            self.geom_trans.extend(self.model.getBodyGeomsGlobalFrame(seg_idx))
 
-            for i in range(geom_num):
-                pass
+        self.model.set_q(q)
 
-
-
-
-    def get_foot_contact_info(self):
-
-        pass
+    def refresh_foot_contact_info(self, world, bodyIDsToCheck, mus, Ks, Ds):
+        del self.contact_seg_idx[:]
+        del self.contact_seg_position_local[:]
+        bodyIDs, contactPositions, contactPositionLocals, contactForces = world.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+        self.contact_seg_idx.extend(bodyIDs)
+        self.contact_seg_position_local.extend(contactPositionLocals)
+        self.redraw()
 
     def initGL(self):
         glClearColor(1., 1., 1., 1.)
@@ -108,7 +124,56 @@ class FootPressureGlWindow(Fl_Gl_Window):
     def draw(self):
         glClear(GL_COLOR_BUFFER_BIT)
         # self.rc.drawCircle(1.)
-        self.rc.drawCapsule2D(.2, .2)
+        # self.rc.drawCapsule2D(.2, .2)
+        for i in range(len(self.geom_types)):
+            geom_seg_idx = self.geom_ids[i]
+            geom_name = self.geom_names[i]
+            geom_type = self.geom_types[i]
+            geom_size = self.geom_sizes[i]
+            geom_tran = self.geom_trans[i].copy()
+            geom_tran[1, 3] = geom_tran[2, 3]
+            geom_tran[2, 3] = 0
+
+            if False and geom_type == 'ELLIPSOID':
+                # print(geom_tran)
+                glPushMatrix()
+                glMultMatrixf(geom_tran.T)
+                glScalef(geom_size[0], geom_size[1], geom_size[2])
+                self.rc.drawCircle(1.)
+                glPopMatrix()
+            elif geom_type in ('B', 'BOX'):
+                pass
+
+            if geom_type in ('C', 'D', 'E'):
+                glPushMatrix()
+                if 'Left' in geom_name:
+                    glTranslatef(-0.3, -0.3, 0.)
+                else:
+                    glTranslatef(0.3, -0.3, 0.)
+                glRotatef(180., 0., 1., 0.)
+                glScalef(4., 4., 4.)
+                glMultMatrixf(geom_tran.T)
+                if geom_seg_idx in self.contact_seg_idx:
+                    glColor3f(1., 0., 0.)
+                else:
+                    glColor3f(1., 1., 1.)
+                self.rc.drawCapsule2D(geom_size[0], geom_size[1] - 2.*geom_size[0])
+                glPopMatrix()
+            elif geom_type is 'CYLINDER':
+                glPushMatrix()
+                if 'Left' in geom_name:
+                    glTranslatef(-0.3, -0.3, 0.)
+                else:
+                    glTranslatef(0.3, -0.3, 0.)
+                glRotatef(180., 0., 1., 0.)
+                glScalef(4., 4., 4.)
+                glMultMatrixf(geom_tran.T)
+                if geom_seg_idx in self.contact_seg_idx:
+                    glColor3f(1., 0., 0.)
+                else:
+                    glColor3f(1., 1., 1.)
+                self.rc.drawCapsule2D(geom_size[1], geom_size[0] - 2.*geom_size[1])
+                glPopMatrix()
 
     def projectOrtho(self, distance):
         glViewport(0, 0, self.w(), self.h())
@@ -464,8 +529,7 @@ def main():
         motionModel.update(motion[frame])
         # dartModel.update(motion[frame])
         dartModel.set_q(controlModel.get_q())
-        if FootWindow is not None:
-            pass
+
 
         global g_initFlag
         global forceShowTime
@@ -512,8 +576,8 @@ def main():
         ddth_r = motion.getDOFAccelerations(frame)
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
 
-        # ype.flatten(ddth_des, ddth_des_flat)
-        ddth_des_flat = Kt * (motion.get_q(frame) - controlModel.get_q())  # - Dt * (controlModel.get_dq())
+        ype.flatten(ddth_des, ddth_des_flat)
+        # ddth_des_flat = Kt * (motion.get_q(frame) - controlModel.get_q())  # - Dt * (controlModel.get_dq())
         ype.flatten(dth, dth_flat)
         # dth_flat = controlModel.get_dq()
 
@@ -546,12 +610,6 @@ def main():
         if foot_viewer.check_h_r.value():
             contact_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_1_0'))
 
-        # render contact_ids
-        for foot_seg_id in footIdlist:
-            control_model_renderer.body_colors[foot_seg_id] = (255, 240, 255)
-
-        for contact_id in contact_ids:
-            control_model_renderer.body_colors[contact_id] = (255, 0, 0)
 
         contact_joint_ori = list(map(controlModel.getJointOrientationGlobal, contact_ids))
         contact_joint_pos = list(map(controlModel.getJointPositionGlobal, contact_ids))
@@ -670,7 +728,6 @@ def main():
                 contact = 1
                 contactChangeCount += maxContactChangeCount
                 contactChangeType = 'DtoS'
-
             else:
                 contact = 0
                 # if refFootR[1] < doubleTosingleOffset:
@@ -704,14 +761,15 @@ def main():
         # calculate jacobian
         Jsys = yjc.makeEmptyJacobian(DOFs, controlModel.getBodyNum())
         yjc.computeJacobian2(Jsys, DOFs, jointPositions, jointAxeses, linkPositions, allLinkJointMasks)
-        # dJsys = (Jsys - JsysPre)/(1/30.)
-        # JsysPre = Jsys.copy()
+        dJsys = (Jsys - JsysPre)/(1/30.)
+        JsysPre = Jsys.copy()
         # # yjc.computeJacobianDerivative2(dJsys, DOFs, jointPositions, jointAxeses, linkAngVelocities, linkPositions, allLinkJointMasks)
         # print(np.dot(Jsys, dth_flat))
         vp_legacy = np.dot(Jsys, dth_flat)
         # print(Jsys)
 
-        # calculate jacobian
+        '''
+        # calculate jacobian using dart
         body_num = dartModel.getBodyNum()
         Jsys = np.zeros((6*body_num, totalDOF))
         dJsys = np.zeros((6*body_num, totalDOF))
@@ -726,10 +784,11 @@ def main():
         # print(np.dot(Jsys, controlModel.get_dq()))
         dart_result = np.dot(Jsys, controlModel.get_dq())
         # print(Jsys)
+        '''
 
-        print(vp_legacy)
-        print(dart_result)
-        print(np.asarray([[controlModel.getBodyVelocityGlobal(i), controlModel.getBodyAngVelocityGlobal(i)] for i in range(controlModel.getBodyNum())]).flatten())
+        # print(vp_legacy)
+        # print(dart_result)
+        # print(np.asarray([[controlModel.getBodyVelocityGlobal(i), controlModel.getBodyAngVelocityGlobal(i)] for i in range(controlModel.getBodyNum())]).flatten())
 
         # print(np.linalg.norm(vp_legacy - dart_result))
 
@@ -881,8 +940,8 @@ def main():
             # bodyIDs, contactPositions, contactPositionLocals, contactForces, contactVelocities = vpWorld.calcManyPenaltyForce(0, bodyIDsToCheck, mus, Ks, Ds)
             vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
 
-            # controlModel.setDOFAccelerations(ddth_sol)
-            controlModel.set_ddq(ddth_sol_flat)
+            controlModel.setDOFAccelerations(ddth_sol)
+            # controlModel.set_ddq(ddth_sol_flat)
             # controlModel.set_ddq(ddth_des_flat)
             controlModel.solveHybridDynamics()
 
@@ -900,7 +959,16 @@ def main():
 
         dartModel.set_q(controlModel.get_q())
 
+        if foot_viewer is not None:
+            foot_viewer.foot_pressure_gl_window.refresh_foot_contact_info(vpWorld, bodyIDsToCheck, mus, Ks, Ds)
+
         # rendering
+        for foot_seg_id in footIdlist:
+            control_model_renderer.body_colors[foot_seg_id] = (255, 240, 255)
+
+        for contact_id in contact_ids:
+            control_model_renderer.body_colors[contact_id] = (255, 0, 0)
+
         rightFootVectorX[0] = np.dot(footOriL, np.array([.1, 0, 0]))
         rightFootVectorY[0] = np.dot(footOriL, np.array([0, .1, 0]))
         rightFootVectorZ[0] = np.dot(footOriL, np.array([0, 0, .1]))
@@ -946,15 +1014,15 @@ def main():
 
         extraForcePos[0] = controlModel.getBodyPositionGlobal(selectedBody)
 
+        # render contact_ids
+
     viewer.setSimulateCallback(simulateCallback)
     viewer.startTimer(1/30.)
     # viewer.play()
     viewer.show()
 
-    foot_viewer = FootWindow(viewer.x() + viewer.w() + 20, viewer.y(), 300, 500, 'foot contact modifier', dartModel)
+    foot_viewer = FootWindow(viewer.x() + viewer.w() + 20, viewer.y(), 300, 500, 'foot contact modifier', controlModel)
     foot_viewer.show()
-
-    dartModel.set_q(controlModel.get_q())
 
     Fl.run()
 

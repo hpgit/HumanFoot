@@ -134,6 +134,8 @@ public:	// expose to python
 	bp::list getBodyAngVelocitiesGlobal();
 	bp::list getBodyAngAccelerationsGlobal();
 
+	object getBodyTransformGlobal(int index);
+
 	void setBodyPositionGlobal_py( int index, const object& pos );
 	void setBodyVelocityGlobal_py( int index, const object& pos );
 	void setBodyAccelerationGlobal_py( int index, const object& acc );
@@ -214,6 +216,7 @@ public:	// expose to python
 	/////////////////////////////////////////////////////////////////
 	// DOF value
 
+    void set_q(const object& q);
 	bp::list get_q();
 	bp::list get_dq();
 	void set_ddq(const object& ddq);
