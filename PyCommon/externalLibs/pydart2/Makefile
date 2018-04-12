@@ -19,6 +19,7 @@ all:
 	rm -rf pydart2/_pydart2_api.so
 	rm -rf pydart2/pydart2_api.py
 	rm -rf pydart2/pydart2_apiPYTHON_wrap.cxx
+	rm -rf pydart2/pydart2_apiPYTHON_wrap.stamp
 	rm -rf CMakeLists.txt
 	ln -s $(CMAKEFILE) CMakeLists.txt
 	cd build;cmake ..;make;make install
@@ -35,4 +36,5 @@ clean:
 	rm -rf build
 	rm -rf pydart2/_pydart2_api.so
 	rm -rf pydart2/pydart2_apiPYTHON_wrap.cxx
+	rm -rf pydart2/pydart2_apiPYTHON_wrap.stamp
 	rm -rf pydart2/pydart2_api.py

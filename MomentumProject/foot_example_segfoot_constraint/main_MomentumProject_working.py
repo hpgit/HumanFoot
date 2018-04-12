@@ -74,7 +74,7 @@ class FootPressureGlWindow(Fl_Gl_Window):
             if 'Foot' in joint_name:
                 self.foot_index.append(joint_idx)
                 if 'Left' in joint_name:
-                    self.left_foot_index.append799390(joint_idx)
+                    self.left_foot_index.append(joint_idx)
                 elif 'Right' in joint_name:
                     self.right_foot_index.append(joint_idx)
 
@@ -86,7 +86,16 @@ class FootPressureGlWindow(Fl_Gl_Window):
                     self.right_seg_index.append(joint_idx)
 
         for seg_idx in self.foot_seg_index:
-            self.model.
+            geom_num = self.model.getBodyGeomNum(seg_idx)
+            geom_types = self.model.getBodyGeomsType(seg_idx)
+            geom_sizes = self.model.getBodyGeomsSize(seg_idx)
+            geom_trans = self.model.getBodyGeomsGlobalFrame(seg_idx)
+
+            for i in range(geom_num):
+                pass
+
+
+
 
     def get_foot_contact_info(self):
 

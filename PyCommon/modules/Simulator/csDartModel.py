@@ -416,18 +416,18 @@ class DartModel:
         return [shapenode.shape.shape_type_name() for shapenode in self.getBody(index).shapenodes]
 
     def getBodyGeomsSize(self, index):
+        sizes = []
         for shapenode in self.getBody(index).shapenodes:
             shape = shapenode.shape
             geom_type = shape.shape_type_name()
-            shape.shape_type()
+            data = None
             if geom_type == 'ELLIPSOID':
-                data = shape.size()/2.
+                sizes.append(shape.size()/2.)
             elif geom_type == 'CYLINDER':
-                data = [shape.getHeight(), shape.getRadius()]
+                sizes.append([shape.getHeight(), shape.getRadius()])
             elif geom_type == 'BOX':
-                data = shape.size()
-
-        return [shapenode.shape.shape_type_name() for shapenode in self.getBody(index).shapenodes]
+                sizes.append(shape.size()/2.)
+        return sizes
 
     def getBodyGeomsLocalFrame(self, index):
         return [shapenode.relative_transform() for shapenode in self.getBody(index).shapenodes]
