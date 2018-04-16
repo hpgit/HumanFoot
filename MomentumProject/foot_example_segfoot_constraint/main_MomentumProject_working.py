@@ -530,7 +530,6 @@ def main():
         # dartModel.update(motion[frame])
         dartModel.set_q(controlModel.get_q())
 
-
         global g_initFlag
         global forceShowTime
 
@@ -580,6 +579,8 @@ def main():
         # ddth_des_flat = Kt * (motion.get_q(frame) - controlModel.get_q())  # - Dt * (controlModel.get_dq())
         ype.flatten(dth, dth_flat)
         # dth_flat = controlModel.get_dq()
+
+
 
         #################################################
         # jacobian
@@ -768,27 +769,27 @@ def main():
         vp_legacy = np.dot(Jsys, dth_flat)
         # print(Jsys)
 
-        '''
+        # '''
         # calculate jacobian using dart
         body_num = dartModel.getBodyNum()
-        Jsys = np.zeros((6*body_num, totalDOF))
-        dJsys = np.zeros((6*body_num, totalDOF))
+        Jsys_dart = np.zeros((6*body_num, totalDOF))
+        dJsys_dart = np.zeros((6*body_num, totalDOF))
         for i in range(dartModel.getBodyNum()):
             # body_i_jacobian = dartModel.getBody(i).world_jacobian()[range(-3, 3), :]
             # body_i_jacobian_deriv = dartModel.getBody(i).world_jacobian_classic_deriv()[range(-3, 3), :]
             # Jsys[6*i:6*i+6, :] = body_i_jacobian
             # dJsys[6*i:6*i+6, :] = body_i_jacobian_deriv
-            Jsys[6*i:6*i+6, :] = dartModel.getBody(i).world_jacobian()[range(-3, 3), :]
-            dJsys[6*i:6*i+6, :] = dartModel.getBody(i).world_jacobian_classic_deriv()[range(-3, 3), :]
+            Jsys_dart[6*i:6*i+6, :] = dartModel.getBody(i).world_jacobian()[range(-3, 3), :]
+            dJsys_dart[6*i:6*i+6, :] = dartModel.getBody(i).world_jacobian_classic_deriv()[range(-3, 3), :]
 
         # print(np.dot(Jsys, controlModel.get_dq()))
-        dart_result = np.dot(Jsys, controlModel.get_dq())
+        dart_result = np.dot(Jsys_dart, controlModel.get_dq())
         # print(Jsys)
-        '''
+        # '''
 
-        # print(vp_legacy)
-        # print(dart_result)
-        # print(np.asarray([[controlModel.getBodyVelocityGlobal(i), controlModel.getBodyAngVelocityGlobal(i)] for i in range(controlModel.getBodyNum())]).flatten())
+        print('vpJ : ', vp_legacy)
+        # print('dart: ', dart_result)
+        print('vp  : ', np.asarray([[controlModel.getBodyVelocityGlobal(i), controlModel.getBodyAngVelocityGlobal(i)] for i in range(controlModel.getBodyNum())]).flatten())
 
         # print(np.linalg.norm(vp_legacy - dart_result))
 
