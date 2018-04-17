@@ -576,11 +576,9 @@ def main():
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
 
         ype.flatten(ddth_des, ddth_des_flat)
-        # ddth_des_flat = Kt * (motion.get_q(frame) - controlModel.get_q())  # - Dt * (controlModel.get_dq())
+        # ddth_des_flat = Kt * (motion.get_q(frame) - np.array(controlModel.get_q())) - Dt * np.array(controlModel.get_dq())
         ype.flatten(dth, dth_flat)
-        # dth_flat = controlModel.get_dq()
-
-
+        # dth_flat = np.array(controlModel.get_dq())
 
         #################################################
         # jacobian
@@ -610,7 +608,6 @@ def main():
             contact_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_1_0'))
         if foot_viewer.check_h_r.value():
             contact_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_1_0'))
-
 
         contact_joint_ori = list(map(controlModel.getJointOrientationGlobal, contact_ids))
         contact_joint_pos = list(map(controlModel.getJointPositionGlobal, contact_ids))
@@ -787,9 +784,15 @@ def main():
         # print(Jsys)
         # '''
 
-        print('vpJ : ', vp_legacy)
+        Jsys_hp = np.zeros_like(Jsys_dart)
+        for i in range(len(linkPositions)):
+            Jsys_hp[6*i:6*i+6, :] = controlModel.computeJacobian(i, linkPositions[i])
+        # Jsys = Jsys_hp
+
+        # print('vpJ : ', vp_legacy)
+        # print('hpJ : ', np.dot(Jsys_hp, controlModel.get_dq()))
         # print('dart: ', dart_result)
-        print('vp  : ', np.asarray([[controlModel.getBodyVelocityGlobal(i), controlModel.getBodyAngVelocityGlobal(i)] for i in range(controlModel.getBodyNum())]).flatten())
+        # print('vp  : ', np.asarray([[controlModel.getBodyVelocityGlobal(i), controlModel.getBodyAngVelocityGlobal(i)] for i in range(controlModel.getBodyNum())]).flatten())
 
         # print(np.linalg.norm(vp_legacy - dart_result))
 
@@ -866,10 +869,22 @@ def main():
         # TODO:
         # logSO3 is just q'', not acceleration.
         # To make a_oris acceleration, q'' -> a will be needed
-        # a_ori = mm.qdd2accel()
+        # body_ddqs = list(map(mm.logSO3, [mm.getSO3FromVectors(np.dot(body_ori, mm.unitY()), mm.unitY()) for body_ori in contact_body_ori]))
+        body_ddqs = list(map(mm.logSO3, [np.dot(contact_body_ori[i].T, np.dot(ref_body_ori[i], mm.getSO3FromVectors(np.dot(ref_body_ori[i], mm.unitY()), mm.unitY()))) for i in range(len(contact_body_ori))]))
+        body_qs = list(map(mm.logSO3, contact_body_ori))
+        body_angs = [np.dot(contact_body_ori[i], contact_body_angvel[i]) for i in range(len(contact_body_ori))]
+        body_dqs = [mm.vel2qd(body_angs[i], body_qs[i]) for i in range(len(body_angs))]
+        a_oris = [np.dot(contact_body_ori[i], mm.qdd2accel(body_ddqs[i], body_dqs[i], body_qs[i])) for i in range(len(contact_body_ori))]
 
-        a_oris = list(map(mm.logSO3,
-                          [mm.getSO3FromVectors(np.dot(body_ori, np.array([0., 1., 0.])), np.array([0., 1., 0.])) for body_ori in contact_body_ori]))
+        # body_ddq = body_ddqs[0]
+        # body_ori = contact_body_ori[0]
+        # body_ang = np.dot(body_ori.T, contact_body_angvel[0])
+        #
+        # body_q = mm.logSO3(body_ori)
+        # body_dq = mm.vel2qd(body_ang, body_q)
+        # a_ori = np.dot(body_ori, mm.qdd2accel(body_ddq, body_dq, body_q))
+
+        # a_oris = list(map(mm.logSO3, [mm.getSO3FromVectors(np.dot(body_ori, mm.unitY()), mm.unitY()) for body_ori in contact_body_ori]))
         a_sups = [np.append(kt_sup*(ref_body_pos[i] - contact_body_pos[i] + contMotionOffset) + dt_sup*(ref_body_vel[i] - contact_body_vel[i]),
                             kt_sup*a_oris[i]+dt_sup*(ref_body_angvel[i]-contact_body_angvel[i])) for i in range(len(a_oris))]
 

@@ -28,6 +28,7 @@ SCALAR_1_30 = 1./30.
 SCALAR_1_60 = 1./60.
 SCALAR_1_120 = 1./120.
 SCALAR_1_180 = 1./180.
+SCALAR_1_720 = 1./720.
 SCALAR_1_1260 = 1./1260.
 
 def ACOS(x):
@@ -673,6 +674,21 @@ def square_sum(v):
 
 def cross(v1, v2):
     return np.array([v1[1]*v2[2] - v1[2]*v2[1], v1[2]*v2[0] - v1[0]*v2[2], v1[0]*v2[1] - v1[1]*v2[0]])
+
+
+def vel2qd(angvel, m_rQ):
+    W = angvel
+    t = np.linalg.norm(m_rQ)
+    t2 = t * t
+
+    if t < LIE_EPS:
+        delta = SCALAR_1_12 + SCALAR_1_720 * t2
+        zeta = SCALAR_1 - SCALAR_1_12 * t2
+    else:
+        zeta = SCALAR_1_2 * t * (SCALAR_1 + math.cos(t)) / math.sin(t)
+        delta = (SCALAR_1 - zeta) / t2
+
+    return (delta * np.dot(m_rQ, W)) * m_rQ + zeta * W + SCALAR_1_2 * cross(m_rQ, W)
 
 
 def qd2vel(m_rDq, m_rQ):

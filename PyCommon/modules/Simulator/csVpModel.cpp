@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <algorithm>
 
 #include "../../../PyCommon/externalLibs/common/boostPythonUtil.h"
 #include "../../../PyCommon/externalLibs/common/VPUtil.h"
@@ -145,6 +146,8 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("get_q", &VpControlModel::get_q)
 		.def("get_dq", &VpControlModel::get_dq)
 		.def("set_ddq", &VpControlModel::set_ddq)
+
+		.def("computeJacobian", &VpControlModel::computeJacobian)
 
 		.def("getDOFPositions", &VpControlModel::getDOFPositions)
 		.def("getDOFVelocities", &VpControlModel::getDOFVelocities)
@@ -1255,6 +1258,7 @@ VpControlModel::VpControlModel( VpWorld* pWorld, const object& createPosture, co
 
 	update(createPosture);
 
+    _nodes[0]->dof = 6;
     m_total_dof = 0;
 	int dof_start_index = 0;
 	for(std::vector<int>::size_type i=0; i<_nodes.size(); i++)
@@ -1262,6 +1266,9 @@ VpControlModel::VpControlModel( VpWorld* pWorld, const object& createPosture, co
 	    _nodes[i]->dof_start_index = dof_start_index;
 	    dof_start_index += _nodes[i]->dof;
 	    m_total_dof += _nodes[i]->dof;
+//	    for(std::vector<int>::size_type j=0; j<_nodes[i]->ancestors.size(); j++)
+//	        std::cout << _nodes[i]->ancestors[j] << " ";
+//	    std::cout << std::endl;
 	}
 
 
@@ -2583,8 +2590,6 @@ static object ToNumpyArray(const ublas::matrix<double> &m)
 	return m_np;
 }
 
-
-
 object VpControlModel::getLocalJacobian(int index)
 {
     return ToNumpyArray(GetBJointJacobian(_nodes[index]->joint.GetDisplacement()));
@@ -2615,34 +2620,44 @@ object VpControlModel::computeJacobian(int index, const object& positionGlobal)
 	ublas::matrix<double> _Jw, _Jv;
 
 	//root joint
-	J[0][0] = 1.;
-	J[1][1] = 1.;
-	J[2][2] = 1.;
+	J[0][3] = 1.;
+	J[1][4] = 1.;
+	J[2][5] = 1.;
 
     joint_frame = _nodes[0]->body.GetFrame() * Inv(_boneTs[0]);
+    offset = ToUblasVector(effector_position - joint_frame.GetPosition());
     _Jw = prod(SE3ToUblasRotate(joint_frame), GetBJointJacobian(LogR(joint_frame)));
+    _Jv = -prod(GetCrossMatrix(offset), _Jw);
     for (int dof_index = 0; dof_index < 3; dof_index++)
     {
         for (int j=0; j<3; j++)
         {
-            J[j+3][dof_index+3] = _Jw(j, dof_index);
+            J[j+0][dof_index] = _Jv(j, dof_index);
+            J[j+3][dof_index] = _Jw(j, dof_index);
         }
     }
 
     //internal joint
+    std::vector<int> &ancestors = _nodes[index]->ancestors;
+    int dof_start_index = 0;
 	for(std::vector<int>::size_type i=1; i<_nodes.size();i++)
 	{
-        joint = &(_nodes[i]->joint);
-        joint_frame = _nodes[i]->body.GetFrame() * Inv(_boneTs[i]);
-        offset = ToUblasVector(effector_position - joint_frame.GetPosition());
-        _Jw = prod(SE3ToUblasRotate(joint_frame), GetBJointJacobian(joint->GetDisplacement()));
-        _Jv = -prod(GetCrossMatrix(offset), _Jw);
-        for (int dof_index = 0; dof_index < _nodes[i]->dof; dof_index++)
-        {
-            for (int j=0; j<3; j++)
+	    if(std::find(ancestors.begin(), ancestors.end(), i) != ancestors.end())
+	    {
+            joint = &(_nodes[i]->joint);
+            joint_frame = _nodes[i]->body.GetFrame() * Inv(_boneTs[i]);
+            offset = ToUblasVector(effector_position - joint_frame.GetPosition());
+            _Jw = prod(SE3ToUblasRotate(joint_frame), GetBJointJacobian(joint->GetDisplacement()));
+            _Jv = -prod(GetCrossMatrix(offset), _Jw);
+
+            dof_start_index = _nodes[i]->dof_start_index;
+            for (int dof_index = 0; dof_index < _nodes[i]->dof; dof_index++)
             {
-                J[j+0][dof_index] = _Jv(j, dof_index);
-                J[j+3][dof_index] = _Jw(j, dof_index);
+                for (int j=0; j<3; j++)
+                {
+                    J[j+0][dof_start_index + dof_index] = _Jv(j, dof_index);
+                    J[j+3][dof_start_index + dof_index] = _Jw(j, dof_index);
+                }
             }
         }
 	}

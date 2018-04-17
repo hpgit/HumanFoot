@@ -458,6 +458,7 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
                          'RightUpLeg':.1, 'RightLeg':.3, 'LeftUpLeg':.1, 'LeftLeg':.3}
     if SEGMENT_FOOT:
         segfoot_weight = 10.
+        # segfoot_weight = .1
         config['weightMap']={'RightArm':.2, 'RightForeArm':.2, 'LeftArm':.2, 'LeftForeArm':.2,
                              'Spine':.6, 'Spine1':.6, 'RightFoot':.2, 'LeftFoot':.2, 'Hips':0.5,
                              'RightUpLeg':.1, 'RightLeg':.3, 'LeftUpLeg':.1, 'LeftLeg':.3,
