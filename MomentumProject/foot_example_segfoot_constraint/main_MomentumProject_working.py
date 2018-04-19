@@ -52,6 +52,13 @@ preFootCenter = [None]
 DART_CONTACT_ON = False
 
 
+class PressureFrameInfo:
+    def __init__(self):
+        self.contact_seg_idx = []
+        self.contact_seg_position_local = []
+        self.contact_seg_forces = []
+
+
 class FootPressureGlWindow(Fl_Gl_Window):
     def __init__(self, x, y, w, h, model):
         Fl_Gl_Window.__init__(self, x, y, w, h)
@@ -73,10 +80,15 @@ class FootPressureGlWindow(Fl_Gl_Window):
         self.geom_sizes = []
         self.body_trans = []
 
-        self.init_model()
+        self.pressure_info = {}  # type: dict[int, PressureFrameInfo]
 
         self.contact_seg_idx = []
         self.contact_seg_position_local = []
+        self.contact_seg_forces = []
+
+        self.frame = -1
+
+        self.init_model()
 
     def init_model(self):
         for joint_idx in range(self.model.getJointNum()):
@@ -109,32 +121,43 @@ class FootPressureGlWindow(Fl_Gl_Window):
 
         self.model.set_q(q)
 
-    def refresh_foot_contact_info(self, world, bodyIDsToCheck, mus, Ks, Ds):
-        del self.contact_seg_idx[:]
-        del self.contact_seg_position_local[:]
-        bodyIDs, contactPositions, contactPositionLocals, contactForces = world.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
-        self.contact_seg_idx.extend(bodyIDs)
-        self.contact_seg_position_local.extend(contactPositionLocals)
+    def refresh_foot_contact_info(self, frame, world, bodyIDsToCheck, mus, Ks, Ds):
+        if frame not in self.pressure_info:
+            self.pressure_info[frame] = PressureFrameInfo()
+            bodyIDs, contactPositions, contactPositionLocals, contactForces = world.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+            self.pressure_info[frame].contact_seg_idx.extend(bodyIDs)
+            self.pressure_info[frame].contact_seg_position_local.extend(contactPositionLocals)
+            self.pressure_info[frame].contact_seg_forces.extend(contactForces)
         self.redraw()
+
+    def goToFrame(self, frame):
+        self.frame = frame
 
     def initGL(self):
         glClearColor(1., 1., 1., 1.)
         self.projectOrtho(3)
 
     def draw(self):
+        frame = self.frame
         glClear(GL_COLOR_BUFFER_BIT)
         # self.rc.drawCircle(1.)
         # self.rc.drawCapsule2D(.2, .2)
+        force_max = None
+        if self.pressure_info:
+            force_max = max([mm.length(force) for force in self.pressure_info[frame].contact_seg_forces]) if self.pressure_info[frame].contact_seg_forces else 1000.
         for i in range(len(self.geom_types)):
             geom_seg_idx = self.geom_ids[i]
             geom_name = self.geom_names[i]
             geom_type = self.geom_types[i]
             geom_size = self.geom_sizes[i]
             geom_tran = self.geom_trans[i].copy()
+            geom_body_tran = self.body_trans[i].copy()
             geom_tran[1, 3] = geom_tran[2, 3]
             geom_tran[2, 3] = 0
+            geom_body_tran[1, 3] = geom_body_tran[2, 3]
+            geom_body_tran[2, 3] = 0
 
-            if False and geom_type == 'ELLIPSOID':
+            if False and geom_type is 'ELLIPSOID':
                 # print(geom_tran)
                 glPushMatrix()
                 glMultMatrixf(geom_tran.T)
@@ -145,6 +168,7 @@ class FootPressureGlWindow(Fl_Gl_Window):
                 pass
 
             if geom_type in ('C', 'D', 'E'):
+                print(geom_seg_idx, geom_name)
                 glPushMatrix()
                 if 'Left' in geom_name:
                     glTranslatef(-0.3, -0.3, 0.)
@@ -152,12 +176,30 @@ class FootPressureGlWindow(Fl_Gl_Window):
                     glTranslatef(0.3, -0.3, 0.)
                 glRotatef(180., 0., 1., 0.)
                 glScalef(4., 4., 4.)
+                glPushMatrix()
                 glMultMatrixf(geom_tran.T)
-                if geom_seg_idx in self.contact_seg_idx:
-                    glColor3f(1., 0., 0.)
-                else:
-                    glColor3f(1., 1., 1.)
+                glColor3f(1., 1., 1.)
                 self.rc.drawCapsule2D(geom_size[0], geom_size[1] - 2.*geom_size[0])
+                glPopMatrix()
+
+                # draw distribution of forces
+                glMultMatrixf(geom_body_tran.T)
+
+                if self.pressure_info:
+                    for contact_idx in np.where(np.array(self.pressure_info[frame].contact_seg_idx) == geom_seg_idx)[0]:
+                        glPushMatrix()
+                        trans = self.pressure_info[frame].contact_seg_position_local[contact_idx]
+                        print(geom_seg_idx, geom_name, trans)
+                        # print(mm.length(self.contact_seg_forces[contact_idx]))
+                        normalized_force = mm.length(self.pressure_info[frame].contact_seg_forces[contact_idx])/force_max
+                        glTranslatef(trans[0], trans[1], trans[2])
+                        if normalized_force < 0.5:
+                            glColor3f(0., 2.*normalized_force, 1. - 2.*normalized_force)
+                        else:
+                            glColor3f(2.*(normalized_force-0.5), 1. - 2.*(normalized_force-0.5), 0.)
+                        # glColor3f(1., 0., 0.)
+                        self.rc.drawSphere(geom_size[0])
+                        glPopMatrix()
                 glPopMatrix()
             elif geom_type is 'CYLINDER':
                 glPushMatrix()
@@ -168,7 +210,7 @@ class FootPressureGlWindow(Fl_Gl_Window):
                 glRotatef(180., 0., 1., 0.)
                 glScalef(4., 4., 4.)
                 glMultMatrixf(geom_tran.T)
-                if geom_seg_idx in self.contact_seg_idx:
+                if geom_seg_idx in self.pressure_info[frame].contact_seg_idx:
                     glColor3f(1., 0., 0.)
                 else:
                     glColor3f(1., 1., 1.)
@@ -976,7 +1018,8 @@ def main():
         dartModel.set_q(controlModel.get_q())
 
         if foot_viewer is not None:
-            foot_viewer.foot_pressure_gl_window.refresh_foot_contact_info(vpWorld, bodyIDsToCheck, mus, Ks, Ds)
+            foot_viewer.foot_pressure_gl_window.refresh_foot_contact_info(frame, vpWorld, bodyIDsToCheck, mus, Ks, Ds)
+            foot_viewer.foot_pressure_gl_window.goToFrame(frame)
 
         # rendering
         for foot_seg_id in footIdlist:
