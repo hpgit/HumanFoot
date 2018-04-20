@@ -19,6 +19,7 @@ from PyCommon.modules.Util import ysPythonEx as ype
 from PyCommon.modules.ArticulatedBody import ysReferencePoints as yrp
 from PyCommon.modules.ArticulatedBody import ysMomentum as ymt
 from PyCommon.modules.ArticulatedBody import ysControl as yct
+from PyCommon.modules.ArticulatedBody import hpInvKineDart as hik
 
 from MomentumProject.foot_example_segfoot_constraint import mtOptimize as mot
 from MomentumProject.foot_example_segfoot_constraint import mtInitialize as mit
@@ -264,14 +265,15 @@ def main():
     vpWorld = cvw.VpWorld(wcfg)
     motionModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)
     controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
-    controlModel_shadow_for_ik = cvm.VpControlModel(vpWorld, motion[0], mcfg)
+    # controlModel_shadow_for_ik = cvm.VpControlModel(vpWorld, motion[0], mcfg)
     vpWorld.initialize()
     controlModel.initializeHybridDynamics()
 
     # controlToMotionOffset = (1.5, -0.02, 0)
     controlToMotionOffset = (1.5, 0, 0)
     controlModel.translateByOffset(controlToMotionOffset)
-    controlModel_shadow_for_ik.computeJacobian(0, np.array([0., 0., 0.]))
+    # controlModel_shadow_for_ik.set_q(controlModel.get_q())
+    # controlModel_shadow_for_ik.computeJacobian(0, np.array([0., 0., 0.]))
 
     pydart.init()
     dartModel = cdm.DartModel(wcfg, motion[0], mcfg, DART_CONTACT_ON)

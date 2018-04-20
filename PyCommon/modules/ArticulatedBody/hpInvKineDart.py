@@ -42,7 +42,7 @@ class numIkSolver:
         """
         self.pose = _pose.copy()
 
-    def addConstraints(self, _bodyIdx, _localPos, _despos, _desori, _desposMask=(True,True,True,True)):
+    def addConstraints(self, _bodyIdx, _localPos, _despos, _desori, _desposMask=(True, True, True, True)):
         self.bodyIdx.append(_bodyIdx)
         self.localPos.append(_localPos)
         self.desPos.append(copy.deepcopy(_despos))
