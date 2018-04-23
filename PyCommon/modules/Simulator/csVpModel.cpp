@@ -68,9 +68,9 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getJointByName", &VpModel::getJointByName, return_value_policy<reference_existing_object>())
 
 		.def("index2name", &VpModel::index2name)
-		.def("index2id", &VpModel::index2id)
+		.def("index2vpid", &VpModel::index2vpid)
 		.def("name2index", &VpModel::name2index)
-		.def("name2id", &VpModel::name2id)
+		.def("name2vpid", &VpModel::name2vpid)
 
 		.def("getBodyInertiaLocal", &VpModel::getBodyInertiaLocal_py)
 		.def("getBodyInertiaGlobal", &VpModel::getBodyInertiaGlobal_py)
@@ -113,7 +113,7 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("rotate", &VpModel::rotate)
 		.def("SetGround", &VpModel::SetGround)
 		.def("SetBodyColor", &VpModel::SetBodyColor)
-		.def("id2index", &VpModel::id2index)
+		.def("vpid2index", &VpModel::vpid2index)
 		;
 
 	class_<VpMotionModel, bases<VpModel> >("VpMotionModel", init<VpWorld*, object, object>())
@@ -2706,12 +2706,12 @@ void VpModel::addBody(bool flagControl)
 
 }
 
- int VpModel::id2index(int id)
+ int VpModel::vpid2index(int id)
  {
  	int index = 0;
  	for (int i = 0; i < getBodyNum(); i++)
  	{
- 		if (id == index2id(i))
+ 		if (id == index2vpid(i))
  		{
  			index = i;
  			break;
@@ -2722,7 +2722,7 @@ void VpModel::addBody(bool flagControl)
 
 void VpModel::SetBodyColor(int id, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
-	int index = id2index(id);
+	int index = vpid2index(id);
 	Node* pNode = _nodes[index];
 	pNode->color[0] = r;
 	pNode->color[1] = g;

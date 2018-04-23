@@ -83,10 +83,6 @@ class FootPressureGlWindow(Fl_Gl_Window):
 
         self.pressure_info = {}  # type: dict[int, PressureFrameInfo]
 
-        self.contact_seg_idx = []
-        self.contact_seg_position_local = []
-        self.contact_seg_forces = []
-
         self.frame = -1
 
         self.init_model()
@@ -153,10 +149,12 @@ class FootPressureGlWindow(Fl_Gl_Window):
             geom_size = self.geom_sizes[i]
             geom_tran = self.geom_trans[i].copy()
             geom_body_tran = self.body_trans[i].copy()
-            geom_tran[1, 3] = geom_tran[2, 3]
-            geom_tran[2, 3] = 0
-            geom_body_tran[1, 3] = geom_body_tran[2, 3]
-            geom_body_tran[2, 3] = 0
+            geom_tran[0, 3], geom_tran[1, 3], geom_tran[2, 3] = -geom_tran[0, 3], geom_tran[2, 3], 0.
+            # geom_tran[1, 3] = geom_tran[2, 3]
+            # geom_tran[2, 3] = 0
+            geom_body_tran[0, 3], geom_body_tran[1, 3], geom_body_tran[2, 3] = -geom_body_tran[0, 3], geom_body_tran[2, 3], 0.
+            # geom_body_tran[1, 3] = geom_body_tran[2, 3]
+            # geom_body_tran[2, 3] = 0
 
             if False and geom_type is 'ELLIPSOID':
                 # print(geom_tran)
@@ -169,13 +167,15 @@ class FootPressureGlWindow(Fl_Gl_Window):
                 pass
 
             if geom_type in ('C', 'D', 'E'):
-                print(geom_seg_idx, geom_name)
+                # print(geom_seg_idx, geom_name)
+                # print(geom_tran)
+                # print(geom_body_tran)
                 glPushMatrix()
                 if 'Left' in geom_name:
                     glTranslatef(-0.3, -0.3, 0.)
                 else:
                     glTranslatef(0.3, -0.3, 0.)
-                glRotatef(180., 0., 1., 0.)
+                # glRotatef(180., 0., 1., 0.)
                 glScalef(4., 4., 4.)
                 glPushMatrix()
                 glMultMatrixf(geom_tran.T)
@@ -190,10 +190,10 @@ class FootPressureGlWindow(Fl_Gl_Window):
                     for contact_idx in np.where(np.array(self.pressure_info[frame].contact_seg_idx) == geom_seg_idx)[0]:
                         glPushMatrix()
                         trans = self.pressure_info[frame].contact_seg_position_local[contact_idx]
-                        print(geom_seg_idx, geom_name, trans)
+                        print(geom_seg_idx, geom_name, trans, geom_size[0])
                         # print(mm.length(self.contact_seg_forces[contact_idx]))
                         normalized_force = mm.length(self.pressure_info[frame].contact_seg_forces[contact_idx])/force_max
-                        glTranslatef(trans[0], trans[0], trans[2])
+                        glTranslatef(trans[0], trans[1]+geom_size[0], trans[2])
                         if normalized_force < 0.5:
                             glColor3f(0., 2.*normalized_force, 1. - 2.*normalized_force)
                         else:
@@ -277,7 +277,8 @@ def main():
 
     pydart.init()
     dartModel = cdm.DartModel(wcfg, motion[0], mcfg, DART_CONTACT_ON)
-    dartModel.set_q(controlModel.get_q())
+    # dartModel.set_q(controlModel.get_q())
+    dartModel.set_q(np.zeros_like(controlModel.get_q()))
 
     totalDOF = controlModel.getTotalDOF()
     DOFs = controlModel.getDOFs()
@@ -574,7 +575,7 @@ def main():
     def simulateCallback(frame):
         motionModel.update(motion[frame])
         # dartModel.update(motion[frame])
-        dartModel.set_q(controlModel.get_q())
+        # dartModel.set_q(controlModel.get_q())
 
         global g_initFlag
         global forceShowTime
@@ -1019,7 +1020,7 @@ def main():
 
             vpWorld.step()
 
-        dartModel.set_q(controlModel.get_q())
+        # dartModel.set_q(controlModel.get_q())
 
         if foot_viewer is not None:
             foot_viewer.foot_pressure_gl_window.refresh_foot_contact_info(frame, vpWorld, bodyIDsToCheck, mus, Ks, Ds)

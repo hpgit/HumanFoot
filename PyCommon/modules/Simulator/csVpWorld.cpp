@@ -139,11 +139,13 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 	char type;
 	scalar data[3];
 	Vec3 position, velocity, force, positionLocal;
+	SE3 bodyInvFrame;
 
 	for (int i = 0; i<len(bodyIDsToCheck); ++i)
 	{
 		bodyID = XI(bodyIDsToCheck[i]);
 		pBody = _world.GetBody(bodyID);
+		bodyInvFrame = Inv(pBody->GetFrame());
 
 		for (int j = 0; j<pBody->GetNumGeometry(); ++j)
 		{
@@ -201,7 +203,8 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 				for (std::vector<int>::size_type k = 0; k < verticesLocal.size(); ++k)
 				{
 
-					positionLocal = verticesLocal[k];
+					// positionLocal = verticesLocal[k];
+                    positionLocal = bodyInvFrame * verticesGlobal[k];
 					position = verticesGlobal[k];
 					velocity = pBody->GetLinVelocity(positionLocal);
 

@@ -94,10 +94,10 @@ public:	// expose to python
 	/////////////////////////////////////////////////////////////////
 	// index converter
 	string index2name(int index) { return _nodes[index]->name; }
-	int index2id(int index) { return _nodes[index]->body.GetID(); }
+	int index2vpid(int index) { return _nodes[index]->body.GetID(); }
 	int name2index(const string& name) { if(_name2index.find(name)!=_name2index.end()) return _name2index.find(name)->second; else return -1; }
-	int name2id(const string& name) { return index2id(name2index(name)); }
-	int id2index(int id);
+	int name2vpid(const string& name) { return index2vpid(name2index(name)); }
+	int vpid2index(int id);
 	// int id2index(int id) { return _id2index[id]; }
 
 	/////////////////////////////////////////////////////////////////

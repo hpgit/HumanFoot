@@ -168,38 +168,21 @@ class FootPressureGlWindow(Fl_Gl_Window):
                 pass
 
             if geom_type in ('C', 'D', 'E'):
-                print(geom_seg_idx, geom_name)
                 glPushMatrix()
                 if 'Left' in geom_name:
                     glTranslatef(-0.3, -0.3, 0.)
                 else:
                     glTranslatef(0.3, -0.3, 0.)
                 glRotatef(180., 0., 1., 0.)
-                glScalef(4., 4., 4.)
+                # glScalef(4., 4., 4.)
                 glPushMatrix()
                 glMultMatrixf(geom_tran.T)
-                glColor3f(1., 1., 1.)
+                if frame in self.pressure_info.keys() and geom_seg_idx in self.pressure_info[frame].contact_seg_idx:
+                    glColor3f(1., 0., 0.)
+                else:
+                    glColor3f(1., 1., 1.)
                 self.rc.drawCapsule2D(geom_size[0], geom_size[1] - 2.*geom_size[0])
                 glPopMatrix()
-
-                # draw distribution of forces
-                glMultMatrixf(geom_body_tran.T)
-
-                if self.pressure_info:
-                    for contact_idx in np.where(np.array(self.pressure_info[frame].contact_seg_idx) == geom_seg_idx)[0]:
-                        glPushMatrix()
-                        trans = self.pressure_info[frame].contact_seg_position_local[contact_idx]
-                        print(geom_seg_idx, geom_name, trans)
-                        # print(mm.length(self.contact_seg_forces[contact_idx]))
-                        normalized_force = mm.length(self.pressure_info[frame].contact_seg_forces[contact_idx])/force_max
-                        glTranslatef(trans[0], trans[0], trans[2])
-                        if normalized_force < 0.5:
-                            glColor3f(0., 2.*normalized_force, 1. - 2.*normalized_force)
-                        else:
-                            glColor3f(2.*(normalized_force-0.5), 1. - 2.*(normalized_force-0.5), 0.)
-                        # glColor3f(1., 0., 0.)
-                        self.rc.drawSphere(geom_size[0])
-                        glPopMatrix()
                 glPopMatrix()
             elif geom_type is 'CYLINDER':
                 glPushMatrix()
