@@ -193,7 +193,7 @@ class FootPressureGlWindow(Fl_Gl_Window):
                         print(geom_seg_idx, geom_name, trans, geom_size[0])
                         # print(mm.length(self.contact_seg_forces[contact_idx]))
                         normalized_force = mm.length(self.pressure_info[frame].contact_seg_forces[contact_idx])/force_max
-                        glTranslatef(trans[0], trans[1]+geom_size[0], trans[2])
+                        glTranslatef(trans[0], trans[1], trans[2])
                         if normalized_force < 0.5:
                             glColor3f(0., 2.*normalized_force, 1. - 2.*normalized_force)
                         else:
@@ -277,8 +277,9 @@ def main():
 
     pydart.init()
     dartModel = cdm.DartModel(wcfg, motion[0], mcfg, DART_CONTACT_ON)
-    # dartModel.set_q(controlModel.get_q())
+    dartModel.set_q(controlModel.get_q())
     dartModel.set_q(np.zeros_like(controlModel.get_q()))
+    dartIkModel = cdm.DartModel(wcfg, motion[0], mcfg, DART_CONTACT_ON)
 
     totalDOF = controlModel.getTotalDOF()
     DOFs = controlModel.getDOFs()
@@ -568,6 +569,8 @@ def main():
 
         return J, joint_masks
 
+    ik_solver = hik.numIkSolver(dartIkModel)
+    ik_solver.clear()
 
     ###################################
     # simulate
@@ -575,7 +578,7 @@ def main():
     def simulateCallback(frame):
         motionModel.update(motion[frame])
         # dartModel.update(motion[frame])
-        # dartModel.set_q(controlModel.get_q())
+        dartModel.set_q(controlModel.get_q())
 
         global g_initFlag
         global forceShowTime
@@ -1020,7 +1023,7 @@ def main():
 
             vpWorld.step()
 
-        # dartModel.set_q(controlModel.get_q())
+        dartModel.set_q(controlModel.get_q())
 
         if foot_viewer is not None:
             foot_viewer.foot_pressure_gl_window.refresh_foot_contact_info(frame, vpWorld, bodyIDsToCheck, mus, Ks, Ds)

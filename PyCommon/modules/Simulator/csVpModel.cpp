@@ -1573,6 +1573,7 @@ void VpControlModel::initializeHybridDynamics(bool floatingBase)
 	
 	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 	{
+	    std::cout << _nodes[i]->name << " " << _nodes[i]->body.GetID() <<std::endl;
 		if(i == rootIndex)
 		{
 			if(floatingBase)
