@@ -54,7 +54,8 @@ CHARACTER_COLOR = (20, 166, 188)
 
 MAX_FRAME = 1500
 
-SEGMENT_FOOT = False
+SEGMENT_FOOT = True
+DART_CONTACT_ON = True
 
 def buildMassMap():
     massMap = {}
@@ -468,6 +469,7 @@ def walkings(params, isCma=True):
     bvh = yf.readBvhFileAsBvh(motionDir+filename)
 
     if SEGMENT_FOOT:
+        bvh = yf.readBvhFileAsBvh(motionDir+'segfoot_'+filename)
         # partBvhFilePath = '../PyCommon/modules/samples/simpleJump_long_test2.bvh'
         partBvhFilePath = current_path+'/../PyCommon/modules/samples/simpleJump_long_test2.bvh'
         partBvh = yf.readBvhFileAsBvh(partBvhFilePath)
@@ -530,7 +532,7 @@ def walkings(params, isCma=True):
     wcfg.timeStep = frameTime/stepsPerFrame
 
     pydart.init()
-    dartModel = cpm.DartModel(wcfg, motion_ori[0], mcfg)
+    dartModel = cpm.DartModel(wcfg, motion_ori[0], mcfg, DART_CONTACT_ON)
     dartMotionModel = None # type: cpm.DartModel
     if not isCma:
         dartMotionModel = cpm.DartModel(wcfg, motion_ori[0], mcfg)
@@ -1395,17 +1397,20 @@ def walkings(params, isCma=True):
         # bodyIDs = [body.index_in_skeleton for body in dartModel.world.collision_result.contacted_bodies]
 
         for i in range(stepsPerFrame):
-            # bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
-            bodyIDs = dartModel.skeleton.self_collision_check()
+            if not DART_CONTACT_ON:
+                bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+            else:
+                bodyIDs = dartModel.skeleton.self_collision_check()
 
             _tau = np.zeros(dartModel.skeleton.q.shape)
             # bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp = \
             #     hdls.calcLCPForces(motion_ori, dartModel.world, dartModel, bodyIDsToCheck, 1., _tau)
-            # dartModel.applyPenaltyForce(bodyIDs, contactPositions, contactForces, localForce=False)
+            if not DART_CONTACT_ON:
+                dartModel.applyPenaltyForce(bodyIDs, contactPositions, contactForces, localForce=False)
             # print('penalty force sum: ', sum(contactForce for contactForce in contactForces))
 
             _ddq = pdController.compute()
-            if SEGMENT_FOOT:
+            if SEGMENT_FOOT and False:
                 _ddq = pdController.compute()
                 _ddq0 = _ddq[specifiedDofIdx]
                 temp1, temp2, temp3, temp4, temp5, qvar = hdls.calcLCPbasicControlHD(motion_ori, dartModel.world, dartModel,
@@ -1414,7 +1419,6 @@ def walkings(params, isCma=True):
                 if qvar is not None and False:
                     _ddq[variableDofIdx] = qvar
             # dartModel.skeleton.set_accelerations(_ddq)
-
 
             if not isCma:
                 # change foot Kd and Kp
@@ -1908,7 +1912,6 @@ if __name__ == '__main__':
     # params = [-0.00676365, -0.62036688,  0.00649792,  0.42459192,  1.01903221, 0.70873662,  1.43189683,  1.66743189,  1.07315172,  0.51921036]
 
     isCma = False
-
     if len(sys.argv) == 1 and not isCma:
         walkings(params, False)
     elif len(sys.argv) == 2 and sys.argv[1] == '-view' and not isCma:

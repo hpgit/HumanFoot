@@ -247,7 +247,7 @@ def init():
 
     print("(index, id, name)")
     for i in range(controlModel.getBodyNum()):
-        print(i, controlModel.index2id(i), controlModel.index2name(i))
+        print(i, controlModel.index2vpid(i), controlModel.index2name(i))
 
 init()
 
@@ -410,7 +410,7 @@ class Callback:
         timeStamp = None
 
         torque_None = False
-        print "torques: ", torques
+        print("torques: ", torques)
 
         if not (desForceFrame[0] <= frame <= desForceFrame[1]) or (torques is None):
             torque_None = True
@@ -471,11 +471,11 @@ class Callback:
             # debug contact force
             for contact in dartModel.world.collision_result.contacts:
                 if contact.bodynode2.name == 'ground':
-                    print 'contact info: ', contact.bodynode1.name, contact
-                    print 'contact info: ', contact.bodynode2.name, contact
+                    print('contact info: ', contact.bodynode1.name, contact)
+                    print('contact info: ', contact.bodynode2.name, contact)
                 else:
-                    print 'contact info: ', contact.bodynode1.name, contact
-                    print 'contact info: ', contact.bodynode2.name, contact
+                    print('contact info: ', contact.bodynode1.name, contact)
+                    print('contact info: ', contact.bodynode2.name, contact)
 
         contactPoints = [contact.point for contact in dartModel.world.collision_result.contacts]
         contactForces = [(-contact.force if contact.bodynode1.name == 'ground' else contact.force)

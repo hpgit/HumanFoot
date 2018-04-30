@@ -14,6 +14,7 @@ def getCM(pos_or_vels, masses, totalMass=None, validIndexes=None):
     CM /= totalMass
     return CM
 
+
 def getCP(contactPositions, contactForces, normal=(0,1,0)):
     if(len(contactPositions) == 0): 
         return None
@@ -24,6 +25,7 @@ def getCP(contactPositions, contactForces, normal=(0,1,0)):
     for i in range(len(contactPositions)):
         CP += (contactPositions[i] * contactForces[i][1])
         totalNormalForce += contactForces[i][1]
+    CP[1] = 0.
 
     if totalNormalForce < 0.000001:
         return None

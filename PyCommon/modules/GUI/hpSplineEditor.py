@@ -262,7 +262,7 @@ class SplineWindow(Fl_Gl_Window):
         elif e == FL_DRAG:
             x = Fl.event_x()
             y = Fl.event_y()
-            print x,y
+            print(x,y)
 
             modelview = []
             projection = []
@@ -278,7 +278,7 @@ class SplineWindow(Fl_Gl_Window):
 
             pos_tmp = gluUnProject(winX, winY, winZ, modelview, projection, viewport)
             pos = np.array((pos_tmp[0], pos_tmp[1]))
-            print pos
+            print(pos)
 
             points = self.base.curve.getControlPoints()
             points[self.pickIdx][0] = pos[0]
@@ -287,7 +287,7 @@ class SplineWindow(Fl_Gl_Window):
             returnVal = 1
 
         if e == FL_KEYUP:
-            print Fl.event_key()
+            print(Fl.event_key())
             returnVal = 1
 
         return Fl_Gl_Window.handle(self, e)

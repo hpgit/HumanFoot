@@ -84,8 +84,8 @@ if __name__=='__main__':
     def test_stitch_fix_foot():
         bvhFilePath = '../samples/wd2_WalkSameSame00.bvh'
         motion = yf.readBvhFile(bvhFilePath, .01)
-        print motion[0].skeleton
-        print
+        print(motion[0].skeleton)
+        print()
 
         hRef = .1; vRef = .3
         lfoot = motion[0].skeleton.getElementIndex('LeftFoot')
@@ -96,10 +96,10 @@ if __name__=='__main__':
         
         intervals, states = yba.getBipedGaitIntervals(lc, rc, 10, .1)
         segments = yma.splitMotionIntoSegments(motion, intervals)
-        print 'wd2_WalkSameSame00'
-        print intervals
-        print [yba.GaitState.text[state] for state in states]
-        print
+        print('wd2_WalkSameSame00')
+        print(intervals)
+        print([yba.GaitState.text[state] for state in states])
+        print()
 
         shorten = 5
         tlen = 10
@@ -116,7 +116,7 @@ if __name__=='__main__':
         # stitch
         motion_stitch_foot = copy.deepcopy(motion_stitch)
         
-        print 'transition interval: %d~%d'%(len(motion_stitch), len(motion_stitch)+tlen)
+        print('transition interval: %d~%d'%(len(motion_stitch), len(motion_stitch)+tlen))
         
         motion_stitch.extend(ymb.getStitchedNextMotion(segments[3], motion_stitch[-1], tlen, transitionFunc))
         
@@ -146,7 +146,7 @@ if __name__=='__main__':
     def test_setPositionTarget():
         bvhFilePath = '../samples/wd2_WalkSameSame00.bvh'
         motion = yf.readBvhFile(bvhFilePath, .01)
-        print motion[0].skeleton
+        print(motion[0].skeleton)
         
         lFoot = motion[0].skeleton.getJointIndex('LeftFoot')
         oripos = motion[0].getJointPositionGlobal(lFoot)
@@ -157,7 +157,7 @@ if __name__=='__main__':
         
         motion_edit2 = copy.deepcopy(motion)
         setPositionTarget(motion_edit2, lFoot, newpos, [10,20], 5, yfg.identity)
-        print len(motion), len(motion_edit2)
+        print(len(motion), len(motion_edit2))
         
         viewer = ysv.SimpleViewer()
         viewer.record(False)

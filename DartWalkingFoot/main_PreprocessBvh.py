@@ -99,8 +99,7 @@ def additionalEdit(motion, path):
         motion[:] = ymt.repeatCycle(motion, interval, 50, 10)
 
 
-def preprocess():
-    SEGMENT_FOOT = True
+def preprocess(SEGMENT_FOOT=False):
     tasks = []
     
     outputDir = './ppmotion/'
@@ -250,7 +249,8 @@ def preprocess():
                 Fl.run()
     
     print('FINISHED')
-        
+
+
 def simulation_test():
     Kt = 20.;       Dt = 2*(Kt**.5)
     Ks = 2000.;    Ds = 2*(Ks**.5)
@@ -320,7 +320,8 @@ def simulation_test():
     viewer.show()
     
     Fl.run()
-                
-if __name__=='__main__':
-   preprocess()
+
+
+if __name__ == '__main__':
+   preprocess(SEGMENT_FOOT=False)
     # simulation_test()

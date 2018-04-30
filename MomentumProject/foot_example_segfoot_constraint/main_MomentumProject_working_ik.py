@@ -1,6 +1,7 @@
 from fltk import *
 import copy
 import numpy as np
+import math
 
 import sys
 if '../..' not in sys.path:
@@ -28,12 +29,14 @@ from MomentumProject.foot_example_segfoot_constraint import mtInitialize as mit
 # import mtInitialize as mit
 
 # from PyCommon.modules.ArticulatedBody import hpFootIK as hfi
-# from scipy.spatial import ConvexHull
+from scipy.spatial import Delaunay
 
 from PyCommon.modules import pydart2 as pydart
 from PyCommon.modules.Simulator import csDartModel as cdm
 
 from OpenGL.GL import *
+from OpenGL.GLUT import *
+
 
 g_initFlag = 0
 forceShowTime = 0
@@ -190,7 +193,7 @@ class FootPressureGlWindow(Fl_Gl_Window):
                     for contact_idx in np.where(np.array(self.pressure_info[frame].contact_seg_idx) == geom_seg_idx)[0]:
                         glPushMatrix()
                         trans = self.pressure_info[frame].contact_seg_position_local[contact_idx]
-                        print(geom_seg_idx, geom_name, trans, geom_size[0])
+                        # print(geom_seg_idx, geom_name, trans, geom_size[0])
                         # print(mm.length(self.contact_seg_forces[contact_idx]))
                         normalized_force = mm.length(self.pressure_info[frame].contact_seg_forces[contact_idx])/force_max
                         glTranslatef(trans[0], trans[1], trans[2])
@@ -619,6 +622,12 @@ def main():
         # print(controlModel.get_q()[:6])
 
         th_r = motion.getDOFPositions(frame)
+        if viewer_GetForceState():
+            print('force on')
+            th_r[footIdDic['LeftFoot_foot_0_0_0']] = np.dot(mm.exp(mm.unitZ(), math.pi * mm.SCALAR_1_6), th_r[footIdDic['LeftFoot_foot_0_0_0']])
+            th_r[footIdDic['LeftFoot_foot_0_1_0']] = np.dot(mm.exp(mm.unitZ(), math.pi * mm.SCALAR_1_6), th_r[footIdDic['LeftFoot_foot_0_1_0']])
+            th_r[footIdDic['RightFoot_foot_0_0_0']] = np.dot(mm.exp(mm.unitZ(), math.pi * mm.SCALAR_1_6), th_r[footIdDic['RightFoot_foot_0_0_0']])
+            th_r[footIdDic['RightFoot_foot_0_1_0']] = np.dot(mm.exp(mm.unitZ(), math.pi * mm.SCALAR_1_6), th_r[footIdDic['RightFoot_foot_0_0_0']])
         th = controlModel.getDOFPositions()
         dth_r = motion.getDOFVelocities(frame)
         dth = controlModel.getDOFVelocities()
@@ -633,6 +642,8 @@ def main():
         #################################################
         # jacobian
         #################################################
+
+        contact_temp_ids = list()  # for balancing
 
         contact_ids = list()
         # contact_ids = [supL, supR]
@@ -878,6 +889,8 @@ def main():
             footCenter = footCenterR.copy()
         footCenter[1] = 0.
 
+        footCenter[0] = footCenter[0] + getParamVal('com X offset')
+
         if contactChangeCount > 0 and contactChangeType == 'StoD':
             # change footcenter gradually
             footCenter = preFootCenter + (maxContactChangeCount - contactChangeCount)*(footCenter-preFootCenter)/maxContactChangeCount
@@ -893,6 +906,7 @@ def main():
         # CM_ref_plane = footCenter_ref
         dL_des_plane = Kl * totalMass * (CM_ref_plane - CM_plane) - Dl * totalMass * dCM_plane
         # dL_des_plane[1] = 0.
+        print('dCM_plane : ', np.linalg.norm(dCM_plane))
 
         # angular momentum
         CP_ref = footCenter
@@ -908,12 +922,22 @@ def main():
 
         if CP is not None and dCP is not None:
             ddCP_des = Kh*(CP_ref - CP) - Dh * dCP
-            CP_des = CP + dCP*(1/30.) + .5*ddCP_des*((1/30.)**2)
+            dCP_des = dCP + ddCP_des * (1/30.)
+            CP_des = CP + dCP_des * (1/30.)
+            # CP_des = CP + dCP*(1/30.) + .5*ddCP_des*((1/30.)**2)
             dH_des = np.cross((CP_des - CM), (dL_des_plane + totalMass * mm.s2v(wcfg.gravity)))
             if contactChangeCount > 0:  # and contactChangeType == 'DtoS':
                 dH_des *= (maxContactChangeCount - contactChangeCount)/maxContactChangeCount
         else:
             dH_des = None
+
+        # convex hull
+        contact_pos_2d = np.asarray([np.array([contactPosition[0], contactPosition[2]]) for contactPosition in contactPositions])
+        p = np.array([CM_plane[0], CM_plane[2]])
+        # hull = None  # type: Delaunay
+        # if contact_pos_2d.shape[0] > 0:
+        #     hull = Delaunay(contact_pos_2d)
+        #     print(hull.find_simplex(p) >= 0)
 
         # set up equality constraint
         # TODO:

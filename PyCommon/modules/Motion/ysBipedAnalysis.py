@@ -44,7 +44,7 @@ def getWalkingCycle(jointMotion, one_contactStates, endZoneSize = 10):
 
 def getWalkingCycle2(jointMotion, one_contactStates, endZoneSize = 10):
     intervals, types = yma.states2intervals(one_contactStates)
-    half1stIndex = (len(intervals)-1)/2 - 1
+    half1stIndex = (len(intervals)-1)//2 - 1
     half2ndIndex = half1stIndex + 1
 #    print half1stIndex, half2ndIndex, intervals[half1stIndex], intervals[half2ndIndex]
     
@@ -53,7 +53,8 @@ def getWalkingCycle2(jointMotion, one_contactStates, endZoneSize = 10):
     startFrame = int(math.ceil(intervals[half1stIndex][0]))
     endFrame = int(math.floor(intervals[half2ndIndex][-1]))
     
-    minDistance = sys.maxint
+    # minDistance = sys.maxint
+    minDistance = len(jointMotion)
     minFrame = 0
     for i in range(endFrame-endZoneSize, endFrame+endZoneSize):
         d = yma.distanceByRelPos2(jointMotion[startFrame], jointMotion[i])
@@ -200,7 +201,6 @@ def getBipedGaitIntervals2(lFootContactStates, rFootContactStates, jumpThreshold
 
 
 if __name__ == '__main__':
-    import psyco; psyco.full()
     import copy, numpy
     from fltk import *
     import Resource.ysMotionLoader as yf

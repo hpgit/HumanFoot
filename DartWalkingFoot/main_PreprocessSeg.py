@@ -24,11 +24,10 @@ import PyCommon.modules.Simulator.csVpModel as cvm
 import PyCommon.modules.ArticulatedBody.ysReferencePoints as yrp
 
 
-if __name__=='__main__':
+def preprocess(SEGMENT_FOOT=False):
 #    dir = './icmotion_test/'
 #    paths = glob.glob(dir+'*.temp')
 
-    SEGMENT_FOOT = False
     dir = './ppmotion/'
     # paths = glob.glob(dir+'*.bvh')
     paths = None
@@ -148,3 +147,7 @@ if __name__=='__main__':
         pprint.pprint(seginfos)
         
     print('FINISHED')
+
+
+if __name__ == '__main__':
+    preprocess(SEGMENT_FOOT=False)
