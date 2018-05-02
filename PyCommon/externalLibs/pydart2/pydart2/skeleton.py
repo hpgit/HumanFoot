@@ -339,7 +339,7 @@ class Skeleton(object):
         return self.linear_momentum()
 
     def forces(self):
-        return self._tad
+        return self._tau
 
     @property
     def tau(self):

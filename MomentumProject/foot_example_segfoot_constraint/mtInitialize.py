@@ -99,7 +99,8 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
     # motion.extend([motion[-1]]*300)
 
     # motion = motion[37:]
-    motion[0:0] = [motion[0]]*2000
+    for i in range(2000):
+        motion.data.insert(0, copy.deepcopy(motion[0]))
     motion.extend([motion[-1]]*300)
 
     # motion = motion[40:41]

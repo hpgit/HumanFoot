@@ -6,7 +6,7 @@ from ..Math import mmMath as mm
 # dth_r, dth : Vec3
 # ddth_r : Vec3
 def getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMap=None):
-    ddth_des = [None]*len(th_r)
+    ddth_des = [None]*len(th_r)  # type: list[np.ndarray]
     
 #    p_r0 = mm.T2p(th_r[0])
 #    p0 = mm.T2p(th[0])
@@ -49,8 +49,9 @@ def getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMap=N
             kt = Kt * weightMap[i]
             dt = Dt * (weightMap[i]**.5)
             # dt = 0.
-        ddth_des[i] = kt*(mm.logSO3(np.dot(th[i].transpose(), th_r[i]))) + dt*(dth_r[i] - dth[i]) + ddth_r[i]
-        # ddth_des[i] = kt*(mm.logSO3(np.dot(th[i].transpose(), th_r[i]))) + dt*( - dth[i]) #+ ddth_r[i]
+
+        # ddth_des[i] = kt*(mm.logSO3(np.dot(th[i].transpose(), th_r[i]))) + dt*(dth_r[i] - dth[i]) #+ ddth_r[i]
+        ddth_des[i] = kt*(mm.logSO3(np.dot(th[i].transpose(), th_r[i]))) + dt*(-dth[i]) #+ ddth_r[i]
 
     return ddth_des
 

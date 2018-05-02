@@ -35,7 +35,7 @@ class World(object):
     def __init__(self, step, skel_path=None, xmlstr=False):
         self.skeletons = list()
         self.control_skel = None
-        if skel_path is not None and xmlstr == False:
+        if skel_path is not None and not xmlstr:
             skel_path = os.path.realpath(skel_path)
             self.id = papi.createWorldFromSkel(skel_path)
             self.set_time_step(step)

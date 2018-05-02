@@ -31,7 +31,8 @@ from MomentumProject.foot_example_segfoot_constraint import mtInitialize as mit
 # from PyCommon.modules.ArticulatedBody import hpFootIK as hfi
 from scipy.spatial import Delaunay
 
-from PyCommon.modules import pydart2 as pydart
+# from PyCommon.modules import pydart2 as pydart
+import pydart2 as pydart
 from PyCommon.modules.Simulator import csDartModel as cdm
 
 from OpenGL.GL import *
@@ -579,6 +580,15 @@ def main():
     # simulate
     ###################################
     def simulateCallback(frame):
+        print(frame)
+        # print(motion[frame].getJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0']))
+        if viewer_GetForceState():
+            print('force on, frame: ', frame)
+            motion[frame].mulJointOrientationLocal(footIdDic['LeftFoot_foot_0_0_0'], mm.exp(mm.unitX(), -math.pi * mm.SCALAR_1_6))
+            motion[frame].mulJointOrientationLocal(footIdDic['LeftFoot_foot_0_1_0'], mm.exp(mm.unitX(), -math.pi * mm.SCALAR_1_6))
+            motion[frame].mulJointOrientationLocal(footIdDic['RightFoot_foot_0_0_0'], mm.exp(mm.unitX(), -math.pi * mm.SCALAR_1_6))
+            motion[frame].mulJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0'], mm.exp(mm.unitX(), -math.pi * mm.SCALAR_1_6))
+        # print(motion[frame].getJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0']))
         motionModel.update(motion[frame])
         # dartModel.update(motion[frame])
         dartModel.set_q(controlModel.get_q())
@@ -622,12 +632,6 @@ def main():
         # print(controlModel.get_q()[:6])
 
         th_r = motion.getDOFPositions(frame)
-        if viewer_GetForceState():
-            print('force on')
-            th_r[footIdDic['LeftFoot_foot_0_0_0']] = np.dot(mm.exp(mm.unitZ(), math.pi * mm.SCALAR_1_6), th_r[footIdDic['LeftFoot_foot_0_0_0']])
-            th_r[footIdDic['LeftFoot_foot_0_1_0']] = np.dot(mm.exp(mm.unitZ(), math.pi * mm.SCALAR_1_6), th_r[footIdDic['LeftFoot_foot_0_1_0']])
-            th_r[footIdDic['RightFoot_foot_0_0_0']] = np.dot(mm.exp(mm.unitZ(), math.pi * mm.SCALAR_1_6), th_r[footIdDic['RightFoot_foot_0_0_0']])
-            th_r[footIdDic['RightFoot_foot_0_1_0']] = np.dot(mm.exp(mm.unitZ(), math.pi * mm.SCALAR_1_6), th_r[footIdDic['RightFoot_foot_0_0_0']])
         th = controlModel.getDOFPositions()
         dth_r = motion.getDOFVelocities(frame)
         dth = controlModel.getDOFVelocities()
@@ -1030,7 +1034,8 @@ def main():
             # bodyIDs, contactPositions, contactPositionLocals, contactForces, contactVelocities = vpWorld.calcManyPenaltyForce(0, bodyIDsToCheck, mus, Ks, Ds)
             vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
 
-            controlModel.setDOFAccelerations(ddth_sol)
+            # controlModel.setDOFAccelerations(ddth_sol)
+            controlModel.setDOFAccelerations(ddth_des)
             # controlModel.set_ddq(ddth_sol_flat)
             # controlModel.set_ddq(ddth_des_flat)
             controlModel.solveHybridDynamics()

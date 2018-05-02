@@ -13,7 +13,8 @@ from PyCommon.modules.Math import mmMath as mm
 import PyCommon.modules.Simulator.ysPhysConfig as ypc
 from PyCommon.modules.Motion import ysMotion as ym
 
-from PyCommon.modules import pydart2 as pydart
+# from PyCommon.modules import pydart2 as pydart
+import pydart2 as pydart
 from PyCommon.modules.dart.bvh2dartSkel import DartModelMaker
 
 
