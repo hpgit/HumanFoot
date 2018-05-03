@@ -1034,8 +1034,8 @@ def main():
             # bodyIDs, contactPositions, contactPositionLocals, contactForces, contactVelocities = vpWorld.calcManyPenaltyForce(0, bodyIDsToCheck, mus, Ks, Ds)
             vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
 
-            # controlModel.setDOFAccelerations(ddth_sol)
-            controlModel.setDOFAccelerations(ddth_des)
+            controlModel.setDOFAccelerations(ddth_sol)
+            # controlModel.setDOFAccelerations(ddth_des)
             # controlModel.set_ddq(ddth_sol_flat)
             # controlModel.set_ddq(ddth_des_flat)
             controlModel.solveHybridDynamics()
