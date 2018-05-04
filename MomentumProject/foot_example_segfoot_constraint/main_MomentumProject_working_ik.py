@@ -621,16 +621,6 @@ def main():
         doubleTosingleVelOffset = 0.0
 
         # tracking
-        # print(len(motion.get_q(frame)))
-        # print(motion.get_q(frame))
-        # print(motion.get_dq(frame))
-        # print(len(controlModel.get_q()))
-        # print(controlModel.get_q())
-        # print(controlModel.get_dq())
-        # print(np.asarray(motion.get_dq(frame)) - np.asarray(controlModel.get_dq()))
-        # print(np.asarray(dartModel.get_q())[:6])
-        # print(controlModel.get_q()[:6])
-
         th_r = motion.getDOFPositions(frame)
         th = controlModel.getDOFPositions()
         dth_r = motion.getDOFVelocities(frame)
@@ -647,32 +637,31 @@ def main():
         # jacobian
         #################################################
 
-        contact_temp_ids = list()  # for balancing
-
-        contact_ids = list()
-        # contact_ids = [supL, supR]
-        # contact_ids = footIdlist
+        contact_des_ids = list()  # desired contact segments
         if foot_viewer.check_om_l.value():
-            contact_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_0'))
+            contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_0'))
         if foot_viewer.check_op_l.value():
-            contact_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_0_0'))
+            contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_0_0'))
         if foot_viewer.check_im_l.value():
-            contact_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_1'))
+            contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_1'))
         if foot_viewer.check_ip_l.value():
-            contact_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_1_0'))
+            contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_1_0'))
         if foot_viewer.check_h_l.value():
-            contact_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_1_0'))
+            contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_1_0'))
 
         if foot_viewer.check_om_r.value():
-            contact_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_0'))
+            contact_des_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_0'))
         if foot_viewer.check_op_r.value():
-            contact_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_0_0'))
+            contact_des_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_0_0'))
         if foot_viewer.check_im_r.value():
-            contact_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_1'))
+            contact_des_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_1'))
         if foot_viewer.check_ip_r.value():
-            contact_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_1_0'))
+            contact_des_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_1_0'))
         if foot_viewer.check_h_r.value():
-            contact_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_1_0'))
+            contact_des_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_1_0'))
+
+        contact_ids = list()  # temp idx for balancing
+        contact_ids.extend(contact_des_ids)
 
         contact_joint_ori = list(map(controlModel.getJointOrientationGlobal, contact_ids))
         contact_joint_pos = list(map(controlModel.getJointPositionGlobal, contact_ids))
@@ -831,7 +820,7 @@ def main():
         vp_legacy = np.dot(Jsys, dth_flat)
         # print(Jsys)
 
-        # '''
+        '''
         # calculate jacobian using dart
         body_num = dartModel.getBodyNum()
         Jsys_dart = np.zeros((6*body_num, totalDOF))
@@ -849,17 +838,10 @@ def main():
         # print(Jsys)
         # '''
 
-        Jsys_hp = np.zeros_like(Jsys_dart)
+        body_num = controlModel.getBodyNum()
+        Jsys_hp = np.zeros((6*body_num, totalDOF))
         for i in range(len(linkPositions)):
             Jsys_hp[6*i:6*i+6, :] = controlModel.computeJacobian(i, linkPositions[i])
-        # Jsys = Jsys_hp
-
-        # print('vpJ : ', vp_legacy)
-        # print('hpJ : ', np.dot(Jsys_hp, controlModel.get_dq()))
-        # print('dart: ', dart_result)
-        # print('vp  : ', np.asarray([[controlModel.getBodyVelocityGlobal(i), controlModel.getBodyAngVelocityGlobal(i)] for i in range(controlModel.getBodyNum())]).flatten())
-
-        # print(np.linalg.norm(vp_legacy - dart_result))
 
         for i in range(len(J_contacts)):
             J_contacts[i] = Jsys[6*contact_ids[i]:6*contact_ids[i] + 6, :]

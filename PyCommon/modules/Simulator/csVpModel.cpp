@@ -2576,6 +2576,46 @@ static ublas::matrix<double> GetBJointJacobian(const Axis &m_rQ)
     return J;
 }
 
+static ublas::matrix<double> GetBJointJacobianDerivative(const Axis &m_rQ, const Axis &m_rDq)
+{
+    ublas::matrix<double> J(3, 3), dJ(3, 3);
+	ublas::vector<double> m_rQ_ub = ToUblasVector(m_rQ);
+    Axis V;
+	double t = Norm(m_rQ), alpha, beta, gamma, d_alpha, d_beta, d_gamma, q_dq = Inner(m_rQ, m_rDq), t2 = t * t;
+    if ( t < BJOINT_EPS )
+	{
+		alpha = SCALAR_1_6 - SCALAR_1_120 * t2;
+		beta = SCALAR_1 - SCALAR_1_6 * t2;
+		gamma = SCALAR_1_2 - SCALAR_1_24 * t2;
+
+		d_alpha = (SCALAR_1_1260 * t2 - SCALAR_1_60) * q_dq;
+		d_beta = (SCALAR_1_30 * t2 - SCALAR_1_3) * q_dq;
+		d_gamma = (SCALAR_1_180 * t2 - SCALAR_1_12) * q_dq;
+	} else
+	{
+		beta = sin(t) / t;
+		alpha = (SCALAR_1 - beta) / t2;
+		gamma = (SCALAR_1 - cos(t)) / t2;
+
+		d_alpha = (gamma - SCALAR_3 * alpha) / t2 * q_dq;
+		d_beta = (alpha - gamma) * q_dq;
+		d_gamma = (beta - SCALAR_2 * gamma) / t2 * q_dq;
+	}
+
+    J = alpha * outer_prod(m_rQ_ub, m_rQ_ub)
+        + beta * ublas::identity_matrix<double>(3)
+        - gamma * GetCrossMatrix(m_rQ_ub);
+
+	Axis DV = (d_alpha * q_dq + alpha * (SquareSum(m_rDq) + Inner(m_rQ, m_rDdq))) * m_rQ
+			+ (alpha * q_dq + d_beta) * m_rDq + beta * m_rDdq
+			+ Cross(d_gamma * m_rDq + gamma * m_rDdq, m_rQ);
+
+    Axis DV_minus_Jddq =
+        (d_alpha * q_dq + alpha * SquareSum(m_rDq)) * m_rQ
+        + (alpha*q_dq + d_beta) * m_rDq
+        + Cross(d_gamma*m_rDq, m_rQ);
+}
+
 static object ToNumpyArray(const ublas::matrix<double> &m)
 {
 	bp::tuple shape = bp::make_tuple(m.size1(), m.size2());
