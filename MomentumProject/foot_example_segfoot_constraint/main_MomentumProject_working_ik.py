@@ -9,7 +9,7 @@ if '../..' not in sys.path:
 from PyCommon.modules.Math import mmMath as mm
 from PyCommon.modules.Resource import ysMotionLoader as yf
 from PyCommon.modules.Renderer import ysRenderer as yr
-# from PyCommon.modules.Renderer import csVpRenderer as cvr
+from PyCommon.modules.Renderer import csVpRenderer as cvr
 from PyCommon.modules.Simulator import csVpWorld as cvw
 from PyCommon.modules.Simulator import csVpModel as cvm
 # from PyCommon.modules.GUI import ysSimpleViewer as ysv
@@ -390,6 +390,9 @@ def main():
     rd_exfen_des = [None]
     rd_root_des = [None]
 
+    rd_root_ori = [None]
+    rd_root_pos = [None]
+
     rd_CF = [None]
     rd_CF_pos = [None]
 
@@ -413,7 +416,7 @@ def main():
     # viewer.record(False)
     # viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,255,255), yr.LINK_BONE))
     viewer.doc.addObject('motion', motion)
-    viewer.doc.addRenderer('motionModel', yr.VpModelRenderer(motionModel, (150,150,255), yr.POLYGON_FILL))
+    viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(motionModel, (150,150,255), yr.POLYGON_FILL))
     viewer.doc.addRenderer('dartModel', yr.DartModelRenderer(dartModel, (150,150,255), yr.POLYGON_LINE))
     # viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_LINE))
     control_model_renderer = yr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_FILL)
@@ -426,6 +429,8 @@ def main():
     viewer.doc.addRenderer('rd_dH_des', yr.VectorsRenderer(rd_dH_des, rd_CM, (0,255,0)))
     # viewer.doc.addRenderer('rd_grf_des', yr.ForcesRenderer(rd_grf_des, rd_CP_des, (0,255,0), .001))
     viewer.doc.addRenderer('rd_CF', yr.VectorsRenderer(rd_CF, rd_CF_pos, (255,255,0)))
+
+    viewer.doc.addRenderer('rd_root_ori', yr.OrientationsRenderer(rd_root_ori, rd_root_pos, (255,255,0)))
 
     viewer.doc.addRenderer('extraForce', yr.VectorsRenderer(rd_exf_des, extraForcePos, (0,255,0)))
     viewer.doc.addRenderer('extraForceEnable', yr.VectorsRenderer(rd_exfen_des, extraForcePos, (255,0,0)))
@@ -1076,6 +1081,8 @@ def main():
             rd_grf_des[0] = dL_des_plane - totalMass * mm.s2v(wcfg.gravity)
 
         rd_root_des[0] = rootPos[0]
+        rd_root_ori[0] = controlModel.getBodyOrientationGlobal(0)
+        rd_root_pos[0] = controlModel.getBodyPositionGlobal(0)
 
         del rd_CF[:]
         del rd_CF_pos[:]

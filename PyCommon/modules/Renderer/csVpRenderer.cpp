@@ -25,12 +25,16 @@ static scalar _T[16];
 #endif
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(render_overloads, render, 0, 1);
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(renderFrame_overloads, renderFrame, 1, 2);
 
 BOOST_PYTHON_MODULE(csVpRenderer)
 {
 	class_<VpModelRenderer>("VpModelRenderer", init<VpMotionModel*, const boost::python::tuple&, optional<int, double> >())
 		.def(init<VpControlModel*, const boost::python::tuple&, optional<int, double> >())
 		.def("render", &VpModelRenderer::render, render_overloads())
+		.def("renderFrame", &VpModelRenderer::renderFrame, renderFrame_overloads())
+		.def("saveState", &VpModelRenderer::saveState)
+		.def("get_max_saved_frame", &VpModelRenderer::get_max_saved_frame)
 		;
 	scope().attr("POLYGON_FILL") = POLYGON_FILL;
 	scope().attr("POLYGON_LINE") = POLYGON_LINE;
@@ -257,13 +261,16 @@ void renderVpBody(const vpBody* pBody)
 		{
 		case 'B':
 		case 'M':
+		case 'N':
 			data[0] *= SCALAR_1_2;
 			data[1] *= SCALAR_1_2;
 			data[2] *= SCALAR_1_2;
 			_draw_box(data);
 			break;
 		case 'C':
-		{			
+		case 'D':
+		case 'E':
+		{
 			
 			data[1] -= SCALAR_2 * data[0];
 			_draw_capsule(data[0], data[1]);
@@ -302,6 +309,8 @@ VpModelRenderer::VpModelRenderer(VpModel* pModel, const boost::python::tuple& co
 
 	_polygonStyle = polygonStyle;
 	_lineWidth = lineWidth;
+
+	max_frame = -1;
 }
 
 void VpModelRenderer::render(int renderType)
@@ -347,4 +356,111 @@ void VpModelRenderer::render(int renderType)
 	{		
 		glDisable(GL_BLEND);
 	}
+}
+
+void VpModelRenderer::renderFrame(int frame, int renderType)
+{
+    if (frame == -1)
+    {
+        GeomState state;
+        getState(state);
+        renderState(state, renderType);
+    }
+    else if (frame == max_frame + 1)
+    {
+        saveState();
+        renderState(saved_state[frame]);
+    }
+    else if (frame <= max_frame)
+    {
+        renderState(saved_state[frame]);
+    }
+    else
+    {
+        renderState(saved_state[max_frame]);
+    }
+}
+
+void VpModelRenderer::renderState(const GeomState& state, int renderType)
+{
+    scalar _T[16];
+    scalar data[3];
+    vpGeom* geom;
+    char geom_type;
+    Vec3 geom_color;
+
+
+    for(std::vector<int>::size_type i=0; i<state.body_id.size(); i++)
+    {
+        geom_color = state.color[i];
+        geom = state.geoms[i];
+
+        if (renderType == RENDER_OBJECT)
+            glColor3f(geom_color[0], geom_color[1], geom_color[2]);
+        else if (renderType == RENDER_SHADOW)
+            glColor3ub(90, 90, 90);
+
+        glPushMatrix();
+		state.frames[i].ToArray<scalar>(_T);
+        glMultMatrixd(_T);
+        geom->GetShape(&geom_type, data);
+
+        switch(geom_type)
+        {
+        case 'B':
+        case 'M':
+        case 'N':
+			data[0] *= SCALAR_1_2;
+			data[1] *= SCALAR_1_2;
+			data[2] *= SCALAR_1_2;
+			_draw_box(data);
+            break;
+        case 'C':
+        case 'D':
+        case 'E':
+			data[1] -= SCALAR_2 * data[0];
+			_draw_capsule(data[0], data[1]);
+            break;
+        case 'S':
+			_draw_sphere(data[0]);
+            break;
+        }
+        glPopMatrix();
+    }
+
+}
+
+void VpModelRenderer::getState(GeomState& state)
+{
+    vpBody* body;
+    vpGeom* geom;
+    char geom_type;
+    scalar data[3];
+
+    for(int i=0; i < _pModel->getBodyNum(); i++)
+    {
+        body = &(_pModel->_nodes[i]->body);
+        for(int j=0; j<body->GetNumGeometry(); j++)
+        {
+            geom = body->GetGeometry(j);
+            state.body_id.push_back(i);
+            state.frames.push_back(geom->GetGlobalFrame());
+            state.color.push_back(Vec3(_color[0]/255., _color[1]/255., _color[2]/255.));
+            state.geoms.push_back(geom);
+            // geom->GetShape(geom_type, data);
+            // state.types.push_back(geom_type);
+            // state.sizes.push_back(Vec3(data));
+        }
+    }
+}
+
+void VpModelRenderer::saveState()
+{
+    saved_state.push_back(GeomState());
+    getState(saved_state[++max_frame]);
+}
+
+int VpModelRenderer::get_max_saved_frame()
+{
+    return max_frame;
 }

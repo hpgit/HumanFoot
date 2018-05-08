@@ -543,6 +543,7 @@ class GlWindow(Fl_Gl_Window):
     def drawScene(self, renderType=yr.RENDER_OBJECT):
         frame = self.parent.getCurrentFrame()
         for renderer in self.renderers:
+            '''
             if not hasattr(renderer, 'savedState'):
                 renderer.render(renderType)
             elif frame != -1 and len(renderer.savedState) > frame:
@@ -554,9 +555,15 @@ class GlWindow(Fl_Gl_Window):
                 renderer.renderState(renderer.getState(), renderType)
             else:
                 renderer.renderFrame(len(renderer.savedState)-1, renderType)
+            '''
+
+            if not hasattr(renderer, 'renderFrame'):
+                renderer.render(renderType)
+            else:
+                renderer.renderFrame(frame, renderType)
 
         for renderer in self.invisibleRenderers:
-            if frame == len(renderer.savedState):
+            if frame == renderer.get_max_saved_frame() + 1:
                 renderer.saveState()
 
         self.extraDrawCallback()

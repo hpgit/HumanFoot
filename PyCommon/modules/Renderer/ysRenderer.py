@@ -19,6 +19,8 @@ from PyCommon.modules.Mesh import ysMesh as yms
 # import Motion.ysMotion as ym
 # import Mesh.ysMesh as yms
 
+from PyCommon.modules.Util.importOBJ import import_obj
+
 # for hinting
 # from PyCommon.modules.pyVirtualPhysics import *
 # from PyCommon.modules.Simulator import csVpUtil as cvu
@@ -80,6 +82,9 @@ class Renderer:
 
     def saveState(self):
         self.savedState.append(self.getState())
+
+    def get_max_saved_frame(self):
+        return len(self.savedState) - 1
 
 
 class SelectedGeomRenderer(Renderer):
@@ -266,6 +271,10 @@ class VpModelRenderer(Renderer):
         self.rc.setPolygonStyle(polygonStyle)
         self.body_colors = [color] * self._model.getBodyNum()
 
+        # for test
+        self.ver, self.nor, self.tex, self.face_tri, self.face_quad = import_obj('../../data/obj/femur_R.obj', 0.01)
+        self.ver2, self.nor2, self.tex2, self.face_tri2, self.face_quad2 = import_obj('../../data/obj/tibia_R.obj', 0.01)
+
     def render(self, renderType=RENDER_OBJECT):
         if self._polygonStyle == POLYGON_FILL:
             glPolygonMode(GL_FRONT, GL_FILL)
@@ -318,7 +327,15 @@ class VpModelRenderer(Renderer):
             glPopMatrix()
 
     def renderFrame(self, frame, renderType=RENDER_OBJECT):
-        self.renderState(self.savedState[frame], renderType)
+        if frame == -1:
+            self.renderState(self.getState(), renderType)
+        elif frame == self.get_max_saved_frame() + 1:
+            self.saveState()
+            self.renderState(self.savedState[frame], renderType)
+        elif frame <= self.get_max_saved_frame():
+            self.renderState(self.savedState[frame], renderType)
+        else:
+            self.renderState(self.savedState[-1], renderType)
 
     def getState(self):
         state = []
@@ -330,12 +347,12 @@ class VpModelRenderer(Renderer):
             geom_colors = self.body_colors[body_idx]
 
             for i in range(self._model.getBodyGeomNum(body_idx)):
-                state.append((geom_types[i], geom_frames[i], geom_sizes[i], geom_colors))
+                state.append((body_idx, geom_types[i], geom_frames[i], geom_sizes[i], geom_colors))
         return state
 
     def renderState(self, state, renderType=RENDER_OBJECT):
         for elem in state:
-            geom_type, _T, geom_size, color = elem
+            body_idx, geom_type, _T, geom_size, color = elem
 
             if renderType == RENDER_OBJECT:
                 glColor3ubv(color)
@@ -344,8 +361,20 @@ class VpModelRenderer(Renderer):
 
             glPushMatrix()
             glMultMatrixd(_T.T)
+            if body_idx == 100:
+                glVertexPointer(3, GL_FLOAT, 0, self.ver)
+                # glNormalPointer(GL_FLOAT, 0, self.nor)
+                glEnableClientState(GL_VERTEX_ARRAY)
+                glDrawElements(GL_QUADS, len(self.face_quad), GL_UNSIGNED_INT, self.face_quad)
+                glDisableClientState(GL_VERTEX_ARRAY)
+            elif body_idx == 200:
+                glVertexPointer(3, GL_FLOAT, 0, self.ver2)
+                # glNormalPointer(GL_FLOAT, 0, self.nor)
+                glEnableClientState(GL_VERTEX_ARRAY)
+                glDrawElements(GL_QUADS, len(self.face_quad2), GL_UNSIGNED_INT, self.face_quad2)
+                glDisableClientState(GL_VERTEX_ARRAY)
 
-            if geom_type in ('B', 'M', 'N'):
+            elif geom_type in ('B', 'M', 'N'):
                 # box case
                 data = geom_size
                 glTranslated(-.5*data[0], -.5*data[1], -.5*data[2])
@@ -438,7 +467,15 @@ class DartModelRenderer(Renderer):
         glPopMatrix()
 
     def renderFrame(self, frame, renderType=RENDER_OBJECT):
-        self.renderState(self.savedState[frame], renderType)
+        if frame == -1:
+            self.renderState(self.getState(), renderType)
+        elif frame == self.get_max_saved_frame() + 1:
+            self.saveState()
+            self.renderState(self.savedState[frame], renderType)
+        elif frame <= self.get_max_saved_frame():
+            self.renderState(self.savedState[frame], renderType)
+        else:
+            self.renderState(self.savedState[-1], renderType)
 
     def getState(self):
         state = []
@@ -516,7 +553,7 @@ class JointMotionRenderer(Renderer):
     def render(self, renderType=RENDER_OBJECT):
         if len(self.motion) > 0:
             self.rc.beginDraw()
-            if renderType==RENDER_SHADOW:
+            if renderType == RENDER_SHADOW:
                 glColor3ubv(self.shadowColor)
             else:
                 glColor3ubv(self.totalColor)
@@ -797,7 +834,15 @@ class PointsRenderer(Renderer):
                         self.rc.drawCube(point)
 
     def renderFrame(self, frame, renderType=RENDER_OBJECT):
-        self.renderState(self.savedState[frame], renderType)
+        if frame == -1:
+            self.renderState(self.getState(), renderType)
+        elif frame == self.get_max_saved_frame() + 1:
+            self.saveState()
+            self.renderState(self.savedState[frame], renderType)
+        elif frame <= self.get_max_saved_frame():
+            self.renderState(self.savedState[frame], renderType)
+        else:
+            self.renderState(self.savedState[-1], renderType)
 
     def getState(self):
         return copy.deepcopy(self.points)
@@ -851,7 +896,15 @@ class VectorsRenderer(Renderer):
                     self.rc.drawLine(origin, (origin[0]+vector[0],origin[1]+vector[1],origin[2]+vector[2]))
 
     def renderFrame(self, frame, renderType=RENDER_OBJECT):
-        self.renderState(self.savedState[frame], renderType)
+        if frame == -1:
+            self.renderState(self.getState(), renderType)
+        elif frame == self.get_max_saved_frame() + 1:
+            self.saveState()
+            self.renderState(self.savedState[frame], renderType)
+        elif frame <= self.get_max_saved_frame():
+            self.renderState(self.savedState[frame], renderType)
+        else:
+            self.renderState(self.savedState[-1], renderType)
 
     def getState(self):
         return [copy.deepcopy(self.vectors), copy.deepcopy(self.origins)]
