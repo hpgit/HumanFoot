@@ -20,6 +20,7 @@ from PyCommon.modules.Mesh import ysMesh as yms
 # import Mesh.ysMesh as yms
 
 from PyCommon.modules.Util.importOBJ import import_obj
+from PyCommon.modules.Renderer.ObjImporter import ObjImporter
 
 # for hinting
 # from PyCommon.modules.pyVirtualPhysics import *
@@ -272,8 +273,10 @@ class VpModelRenderer(Renderer):
         self.body_colors = [color] * self._model.getBodyNum()
 
         # for test
-        self.ver, self.nor, self.tex, self.face_tri, self.face_quad = import_obj('../../data/obj/femur_R.obj', 0.01)
-        self.ver2, self.nor2, self.tex2, self.face_tri2, self.face_quad2 = import_obj('../../data/obj/tibia_R.obj', 0.01)
+        self.obj = ObjImporter()
+        self.obj.import_obj('../../data/obj/femur_R.obj', 0.01)
+        # self.ver, self.nor, self.tex, self.face_tri, self.face_quad = import_obj('../../data/obj/femur_R.obj', 0.01)
+        # self.ver2, self.nor2, self.tex2, self.face_tri2, self.face_quad2 = import_obj('../../data/obj/tibia_R.obj', 0.01)
 
     def render(self, renderType=RENDER_OBJECT):
         if self._polygonStyle == POLYGON_FILL:
@@ -361,12 +364,15 @@ class VpModelRenderer(Renderer):
 
             glPushMatrix()
             glMultMatrixd(_T.T)
-            if body_idx == 100:
+            if body_idx == 1:
+                self.obj.draw()
+                '''
                 glVertexPointer(3, GL_FLOAT, 0, self.ver)
                 # glNormalPointer(GL_FLOAT, 0, self.nor)
                 glEnableClientState(GL_VERTEX_ARRAY)
                 glDrawElements(GL_QUADS, len(self.face_quad), GL_UNSIGNED_INT, self.face_quad)
                 glDisableClientState(GL_VERTEX_ARRAY)
+                '''
             elif body_idx == 200:
                 glVertexPointer(3, GL_FLOAT, 0, self.ver2)
                 # glNormalPointer(GL_FLOAT, 0, self.nor)

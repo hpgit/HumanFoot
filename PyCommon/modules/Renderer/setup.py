@@ -49,6 +49,9 @@ modules.append(m)
 m = setupmodule('csIMSRenderer')
 modules.append(m)
 
+m = setupmodule('ObjImporter')
+m.libraries = [boost_lib]
+modules.append(m)
 
 for m in modules:
     ext_module = Extension(m.name,
