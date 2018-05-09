@@ -37,7 +37,8 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
     SEGMENT_FOOT_OUTSIDE_JOINT_FIRST = True
 
     # motion
-    motionName = 'wd2_n_kick.bvh'
+    # motionName = 'wd2_n_kick.bvh'
+    motionName = 'wd2_n_kick_zygote.bvh'
     # motionName = 'wd2_jump.bvh'
     # motionName = 'wd2_stand.bvh'
     bvh = yf.readBvhFileAsBvh(motionName)

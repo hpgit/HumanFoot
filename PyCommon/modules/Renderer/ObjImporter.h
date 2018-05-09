@@ -6,16 +6,9 @@
 class ObjImporter
 {
 public:
-    std::vector<float> m_vVertices;
-    std::vector<float> m_vNormal;
-    std::vector<float> m_vTexture;
-    std::vector<int> m_iTriIndexVertices;
-    std::vector<int> m_iTriIndexNormal;
-    std::vector<int> m_iTriIndexTexture;
-    std::vector<int> m_iQuadIndexVertices;
-    std::vector<int> m_iQuadIndexNormal;
-    std::vector<int> m_iQuadIndexTexture;
-    std::vector<int> m_vNumIndex;
+    std::vector<float> data_tri;
+    std::vector<float> data_quad;
+    std::vector<float> data_penta;
 
     void import_obj(char* filename, float scale);
     void draw();

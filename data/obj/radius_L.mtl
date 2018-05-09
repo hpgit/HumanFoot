@@ -1,0 +1,16 @@
+newmtl M_Skeleton_Arms_UVed_5:Skeleton_Arms
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.20 0.20 0.20
+Ns 0.06
+newmtl M_Skeleton_Hands_UVed_5:Skeleton_Hands_SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.20 0.20 0.20
+Ns 0.06

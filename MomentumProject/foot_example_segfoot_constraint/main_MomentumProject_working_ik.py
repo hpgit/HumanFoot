@@ -9,7 +9,7 @@ if '../..' not in sys.path:
 from PyCommon.modules.Math import mmMath as mm
 from PyCommon.modules.Resource import ysMotionLoader as yf
 from PyCommon.modules.Renderer import ysRenderer as yr
-from PyCommon.modules.Renderer import csVpRenderer as cvr
+# from PyCommon.modules.Renderer import csVpRenderer as cvr
 from PyCommon.modules.Simulator import csVpWorld as cvw
 from PyCommon.modules.Simulator import csVpModel as cvm
 # from PyCommon.modules.GUI import ysSimpleViewer as ysv
@@ -416,7 +416,7 @@ def main():
     # viewer.record(False)
     # viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,255,255), yr.LINK_BONE))
     viewer.doc.addObject('motion', motion)
-    viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(motionModel, (150,150,255), yr.POLYGON_FILL))
+    viewer.doc.addRenderer('motionModel', yr.VpModelRenderer(motionModel, (150,150,255), yr.POLYGON_FILL))
     viewer.doc.addRenderer('dartModel', yr.DartModelRenderer(dartModel, (150,150,255), yr.POLYGON_LINE))
     # viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_LINE))
     control_model_renderer = yr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_FILL)
@@ -585,10 +585,10 @@ def main():
     # simulate
     ###################################
     def simulateCallback(frame):
-        print(frame)
+        # print(frame)
         # print(motion[frame].getJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0']))
         if viewer_GetForceState():
-            print('force on, frame: ', frame)
+            # print('force on, frame: ', frame)
             motion[frame].mulJointOrientationLocal(footIdDic['LeftFoot_foot_0_0_0'], mm.exp(mm.unitX(), -math.pi * mm.SCALAR_1_6))
             motion[frame].mulJointOrientationLocal(footIdDic['LeftFoot_foot_0_1_0'], mm.exp(mm.unitX(), -math.pi * mm.SCALAR_1_6))
             motion[frame].mulJointOrientationLocal(footIdDic['RightFoot_foot_0_0_0'], mm.exp(mm.unitX(), -math.pi * mm.SCALAR_1_6))

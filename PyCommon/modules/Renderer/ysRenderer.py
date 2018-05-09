@@ -273,10 +273,35 @@ class VpModelRenderer(Renderer):
         self.body_colors = [color] * self._model.getBodyNum()
 
         # for test
-        self.obj = ObjImporter()
-        self.obj.import_obj('../../data/obj/femur_R.obj', 0.01)
-        # self.ver, self.nor, self.tex, self.face_tri, self.face_quad = import_obj('../../data/obj/femur_R.obj', 0.01)
-        # self.ver2, self.nor2, self.tex2, self.face_tri2, self.face_quad2 = import_obj('../../data/obj/tibia_R.obj', 0.01)
+        self.obj0 = ObjImporter()
+        self.obj0.import_obj('../../data/obj/pelvis.obj', 0.01)
+        self.obj1 = ObjImporter()
+        self.obj1.import_obj('../../data/obj/femur_R.obj', 0.01)
+        self.obj2 = ObjImporter()
+        self.obj2.import_obj('../../data/obj/tibia_R.obj', 0.01)
+
+        self.obj3 = ObjImporter()
+        self.obj3.import_obj('../../data/obj/foot_R_test.obj', 0.011)
+
+        self.obj9 = ObjImporter()
+        self.obj9.import_obj('../../data/obj/ribs.obj', 0.01)
+        self.obj10 = ObjImporter()
+        self.obj10.import_obj('../../data/obj/skull.obj', 0.01)
+
+        self.obj11 = ObjImporter()
+        self.obj11.import_obj('../../data/obj/humerus_L.obj', 0.01)
+        self.obj12 = ObjImporter()
+        self.obj12.import_obj('../../data/obj/radius_L.obj', 0.01)
+
+        self.obj13 = ObjImporter()
+        self.obj13.import_obj('../../data/obj/humerus_R.obj', 0.01)
+        self.obj14 = ObjImporter()
+        self.obj14.import_obj('../../data/obj/radius_R.obj', 0.01)
+
+        self.obj15 = ObjImporter()
+        self.obj15.import_obj('../../data/obj/femur_L.obj', 0.01)
+        self.obj16 = ObjImporter()
+        self.obj16.import_obj('../../data/obj/tibia_L.obj', 0.01)
 
     def render(self, renderType=RENDER_OBJECT):
         if self._polygonStyle == POLYGON_FILL:
@@ -364,21 +389,30 @@ class VpModelRenderer(Renderer):
 
             glPushMatrix()
             glMultMatrixd(_T.T)
-            if body_idx == 1:
-                self.obj.draw()
-                '''
-                glVertexPointer(3, GL_FLOAT, 0, self.ver)
-                # glNormalPointer(GL_FLOAT, 0, self.nor)
-                glEnableClientState(GL_VERTEX_ARRAY)
-                glDrawElements(GL_QUADS, len(self.face_quad), GL_UNSIGNED_INT, self.face_quad)
-                glDisableClientState(GL_VERTEX_ARRAY)
-                '''
-            elif body_idx == 200:
-                glVertexPointer(3, GL_FLOAT, 0, self.ver2)
-                # glNormalPointer(GL_FLOAT, 0, self.nor)
-                glEnableClientState(GL_VERTEX_ARRAY)
-                glDrawElements(GL_QUADS, len(self.face_quad2), GL_UNSIGNED_INT, self.face_quad2)
-                glDisableClientState(GL_VERTEX_ARRAY)
+            if body_idx == 0:
+                self.obj0.draw()
+            elif body_idx == 1:
+                self.obj1.draw()
+            elif body_idx == 2:
+                self.obj2.draw()
+            elif body_idx == 3:
+                self.obj3.draw()
+            elif body_idx == 9:
+                self.obj9.draw()
+            elif body_idx == 10:
+                self.obj10.draw()
+            elif body_idx == 11:
+                self.obj11.draw()
+            elif body_idx == 12:
+                self.obj12.draw()
+            elif body_idx == 13:
+                self.obj13.draw()
+            elif body_idx == 14:
+                self.obj14.draw()
+            elif body_idx == 15:
+                self.obj15.draw()
+            elif body_idx == 16:
+                self.obj16.draw()
 
             elif geom_type in ('B', 'M', 'N'):
                 # box case
@@ -466,8 +500,8 @@ class DartModelRenderer(Renderer):
             self.rc.drawCylinder(data[0], data[1])
             # self.rc.drawCapsule(data[0], data[1])
         elif geomType == 'ELLIPSOID':
-            shape = shapeNode.shape # type: pydart.EllipsoidShape
-            data = shape.size() # type: numpy.ndarray
+            shape = shapeNode.shape  # type: pydart.EllipsoidShape
+            data = shape.size()  # type: numpy.ndarray
             glScalef(data[0]/2., data[1]/2., data[2]/2.)
             self.rc.drawSphere(1.)
         glPopMatrix()
@@ -496,15 +530,16 @@ class DartModelRenderer(Renderer):
                     else:
                         color = self.totalColor
 
-                    geomT = numpy.dot(bodyFrame, shapeNode.relative_transform())
+                    # geomT = numpy.dot(bodyFrame, shapeNode.relative_transform())
+                    geomT = bodyFrame
                     geomType = shapeNode.shape.shape_type_name()
                     shape = shapeNode.shape
                     data = None
-                    if geomType == 'BOX':
+                    if geomType[0] == 'B':
                         data = shape.size()
-                    elif geomType == 'CYLINDER':
-                        data = [shape.getRadius(), shape.getHeight()]
-                    elif geomType == 'ELLIPSOID':
+                    elif geomType[0] == 'C':
+                        data = [shape.radius(), shape.height()]
+                    elif geomType[0] == 'E':
                         data = shape.size()
                     state.append((geomType, geomT, data, color))
         return state
@@ -526,19 +561,18 @@ class DartModelRenderer(Renderer):
             else:
                 glColor3ub(90, 90, 90)
 
-            if geomType == 'BOX':
+            if geomType[0] == 'B':
                 glTranslatef(-data[0]/2., -data[1]/2., -data[2]/2.)
                 self.rc.drawBox(data[0], data[1], data[2])
-            elif geomType == 'CYLINDER':
+            elif geomType[0] == 'C':
                 glTranslatef(0., 0., -data[1]/2.)
                 self.rc.drawCylinder(data[0], data[1])
                 # self.rc.drawCapsule(data[0], data[1])
-            elif geomType == 'ELLIPSOID':
+            elif geomType[0] == 'E':
                 glScalef(data[0]/2., data[1]/2., data[2]/2.)
                 self.rc.drawSphere(1.)
 
             glPopMatrix()
-
 
 
 class JointMotionRenderer(Renderer):
