@@ -203,7 +203,6 @@ class DartModelMaker:
             bodyToJointTs.append(Inv(boneTs[joint_index]))
             jointTypes.append("free")
 
-
         for i in range(len_joint_children):
             childJointPairs, childbodyToJointTs, childJointTypes = self._createJoint(joint.children[i], posture, boneTs)
             jointPairs.extend(childJointPairs)
@@ -212,13 +211,18 @@ class DartModelMaker:
 
         return jointPairs, bodyToJointTs, jointTypes
 
-
     def AddDartShapeNode(self, T, size, geom, shapeType='visual', name='', number=0):
         geomtext = ""
         if geom == "box":
             geomtext = "box"
         elif geom == "cylinder":
             geomtext = "cylinder"
+        elif geom == 'sphere':
+            geomtext = 'sphere'
+        elif geom == 'capsule':
+            geomtext = 'capsule'
+        elif geom == 'multi_sphere':
+            geomtext = 'multi_sphere'
         elif geom == "ellipsoid":
             geomtext = "ellipsoid"
         else:
@@ -235,12 +239,13 @@ class DartModelMaker:
         etGeom = et.SubElement(et.SubElement(etShape, "geometry"), geomtext)
         if (geom == "box") or (geom == "ellipsoid"):
             et.SubElement(etGeom, "size").text = " ".join(map(str, size))
+        # elif geom == "multi_sphere":
+        #     et.SubElement(etGeom, )
         else:
             et.SubElement(etGeom, "radius").text = str(size[0])
             et.SubElement(etGeom, "height").text = str(size[1])
 
         return etShape
-
 
     def AddInertia(self, geomMaterialOrMass):
         # TODO:
@@ -255,7 +260,6 @@ class DartModelMaker:
         et.SubElement(etInertia, "offset").text = "0.0 0 0.0"
 
         return etInertia
-
 
     def AddBody(self, name, T, offset, inertia):
         """
@@ -324,7 +328,7 @@ class DartModelMaker:
 
                         geomSphereT = copy.deepcopy(geomT)
                         geomSphereT.SetPosition(geomT*Vec3(0., 0., -(height/2. - radius)))
-                        if geomType == "MyFoot3" or geomType =="MyFoot4":
+                        if geomType == "MyFoot3" or geomType == "MyFoot4":
                             etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid", name=name, number=visualShapeCount))
                             visualShapeCount += 1
                         if geomType == "MyFoot3":
@@ -525,7 +529,7 @@ class DartModelMaker:
         self.skelname = name
         tree, boneTs = self.posture2dartSkel(posture, config, isContainGround)
         # return prettifyXML(tree.getroot())
-        # print prettifyXML(tree.getroot())
+        print(prettifyXML(tree.getroot()))
         return et.tostring(tree.getroot(), 'ascii'), boneTs
 
 if __name__ == '__main__':

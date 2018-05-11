@@ -282,7 +282,7 @@ def main():
     pydart.init()
     dartModel = cdm.DartModel(wcfg, motion[0], mcfg, DART_CONTACT_ON)
     dartModel.set_q(controlModel.get_q())
-    dartModel.set_q(np.zeros_like(controlModel.get_q()))
+    # dartModel.set_q(np.zeros_like(controlModel.get_q()))
     dartIkModel = cdm.DartModel(wcfg, motion[0], mcfg, DART_CONTACT_ON)
 
     totalDOF = controlModel.getTotalDOF()
@@ -411,6 +411,25 @@ def main():
     rightVectorZ = [None]
     rightPos = [None]
 
+    def makeEmptyBasicSkeletonTransformDict(init=None):
+        Ts = dict()
+        Ts['pelvis'] = init
+        Ts['spine_ribs'] = init
+        Ts['head'] = init
+        Ts['thigh_R'] = init
+        Ts['shin_R'] = init
+        Ts['foot_R'] = init
+        Ts['upper_limb_R'] = init
+        Ts['lower_limb_R'] = init
+        Ts['thigh_L'] = init
+        Ts['shin_L'] = init
+        Ts['foot_L'] = init
+        Ts['upper_limb_L'] = init
+        Ts['lower_limb_L'] = init
+
+        return Ts
+
+
     # viewer = ysv.SimpleViewer()
     viewer = hsv.hpSimpleViewer(rect=[0, 0, 1024, 768], viewForceWnd=False)
     # viewer.record(False)
@@ -421,6 +440,8 @@ def main():
     # viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_LINE))
     control_model_renderer = yr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_FILL)
     viewer.doc.addRenderer('controlModel', control_model_renderer)
+    skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), offset_Y=-0.08)
+    viewer.doc.addRenderer('skeleton', skeleton_renderer)
     viewer.doc.addRenderer('rd_footCenter', yr.PointsRenderer(rd_footCenter))
     viewer.doc.addRenderer('rd_CM_plane', yr.PointsRenderer(rd_CM_plane, (255,255,0)))
     viewer.doc.addRenderer('rd_CP', yr.PointsRenderer(rd_CP, (0,255,0)))
@@ -915,7 +936,8 @@ def main():
             ddCP_des = Kh*(CP_ref - CP) - Dh * dCP
             dCP_des = dCP + ddCP_des * (1/30.)
             CP_des = CP + dCP_des * (1/30.)
-            # CP_des = CP + dCP*(1/30.) + .5*ddCP_des*((1/30.)**2)
+            # CP_des = footCenter
+            CP_des = CP + dCP*(1/30.) + .5*ddCP_des*((1/30.)**2)
             dH_des = np.cross((CP_des - CM), (dL_des_plane + totalMass * mm.s2v(wcfg.gravity)))
             if contactChangeCount > 0:  # and contactChangeType == 'DtoS':
                 dH_des *= (maxContactChangeCount - contactChangeCount)/maxContactChangeCount
@@ -1100,6 +1122,24 @@ def main():
         extraForcePos[0] = controlModel.getBodyPositionGlobal(selectedBody)
 
         # render contact_ids
+
+        # render skeleton
+        Ts = dict()
+        Ts['pelvis'] = controlModel.getJointTransform(0)
+        Ts['thigh_R'] = controlModel.getJointTransform(1)
+        Ts['shin_R'] = controlModel.getJointTransform(2)
+        Ts['foot_R'] = controlModel.getJointTransform(3)
+        Ts['spine_ribs'] = controlModel.getJointTransform(9)
+        Ts['head'] = controlModel.getJointTransform(10)
+        Ts['upper_limb_R'] = controlModel.getJointTransform(13)
+        Ts['lower_limb_R'] = controlModel.getJointTransform(14)
+        Ts['thigh_L'] = controlModel.getJointTransform(15)
+        Ts['shin_L'] = controlModel.getJointTransform(16)
+        Ts['foot_L'] = controlModel.getJointTransform(17)
+        Ts['upper_limb_L'] = controlModel.getJointTransform(11)
+        Ts['lower_limb_L'] = controlModel.getJointTransform(12)
+
+        skeleton_renderer.appendFrameState(Ts)
 
     viewer.setSimulateCallback(simulateCallback)
     viewer.startTimer(1/30.)

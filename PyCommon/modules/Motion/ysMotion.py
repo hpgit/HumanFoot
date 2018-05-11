@@ -349,7 +349,7 @@ class JointMotion(Motion):
         """
         # Motion.__init__(self, None)
         super(JointMotion, self).__init__(ls)
-        self.data = []
+        self.data = []  # type: list[JointPosture]
         if ls is not None:
             for l in ls:
                 self.data.append(l)

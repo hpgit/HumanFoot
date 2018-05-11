@@ -177,6 +177,8 @@ BOOST_PYTHON_MODULE(csVpModel)
         .def("getLocalJointDisplacementDerivatives", &VpControlModel::getLocalJointDisplacementDerivatives)
 
 
+		.def("getJointTransform", &VpControlModel::getJointTransform)
+		.def("getJointAfterTransformGlobal", &VpControlModel::getJointAfterTransformGlobal)
 		.def("getJointPositionGlobal", &VpControlModel::getJointPositionGlobal, getJointPositionGlobal_py_overloads())
 //		.def("getJointPositionGlobal", &VpControlModel::getJointPositionGlobal)
 		.def("getJointVelocityGlobal", &VpControlModel::getJointVelocityGlobal)
@@ -332,6 +334,8 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 
 		Node* pNode = new Node(joint_name);
 		_nodes[joint_index] = pNode;
+
+		_nodes[joint_index]->offset_from_parent = pyVec3_2_Vec3(joint.attr("offset"));
 
 		object cfgNode = _config.attr("getNode")(joint_name);
 		///*
@@ -1575,7 +1579,6 @@ void VpControlModel::initializeHybridDynamics(bool floatingBase)
 	
 	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
 	{
-	    std::cout << _nodes[i]->name << " " << _nodes[i]->body.GetID() <<std::endl;
 		if(i == rootIndex)
 		{
 			if(floatingBase)
@@ -1991,6 +1994,38 @@ void VpControlModel::setDOFTorques(const bp::list& dofTorque)
 	}
 }
 
+boost::python::object VpControlModel::getJointTransform( int index )
+{
+	ndarray pyT = np::array( make_tuple(make_tuple(1.,0.,0.,0.),
+	                        make_tuple(0.,1.,0.,0.),
+	                        make_tuple(0.,0.,1.,0.),
+	                        make_tuple(0.,0.,0.,1.)) );
+
+    if (index == 0)
+    {
+        SE3 bodyFrame = _nodes[index]->body.GetFrame();
+        SE3_2_pySE3(bodyFrame * Inv(_boneTs[index]), pyT);
+	}
+	else
+	{
+        SE3_2_pySE3(_nodes[index]->joint.GetOrientation(), pyT);
+	}
+
+	return pyT;
+}
+
+boost::python::object VpControlModel::getJointAfterTransformGlobal( int index )
+{
+	ndarray pyT = np::array( make_tuple(make_tuple(1.,0.,0.,0.),
+	                        make_tuple(0.,1.,0.,0.),
+	                        make_tuple(0.,0.,1.,0.),
+	                        make_tuple(0.,0.,0.,1.)) );
+
+	SE3 bodyFrame = _nodes[index]->body.GetFrame();
+	SE3_2_pySE3(bodyFrame * Inv(_boneTs[index]), pyT);
+
+	return pyT;
+}
 
 boost::python::object VpControlModel::getJointOrientationLocal( int index )
 {

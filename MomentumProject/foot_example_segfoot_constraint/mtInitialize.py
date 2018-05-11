@@ -29,8 +29,8 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
     :param SEGMENT_FOOT:
     :param SEGMENT_FOOT_MAG:
     :return:
-    :rtype: ym.JointMotion, ypc.ModelConfig, ypc.WorldConfig, int, dict[str, float|dict[str, float]], float
     """
+    # :rtype: ym.JointMotion, ypc.ModelConfig, ypc.WorldConfig, int, dict[str, float|dict[str, float]], float
 
     SEGMENT_FOOT_RAD = SEGMENT_FOOT_MAG * .5
     SEGMENT_FOOT_SEPARATE = False

@@ -67,6 +67,7 @@ class Renderer:
         self.selectedElement = None
         self.shadowColor = (150,150,150)
         self.savedState = list()
+        self.savable = False
 
     def render(self, renderType=RENDER_OBJECT):
         print("Renderer.render() : Must subclass me")
@@ -271,37 +272,41 @@ class VpModelRenderer(Renderer):
         self._lineWidth = lineWidth
         self.rc.setPolygonStyle(polygonStyle)
         self.body_colors = [color] * self._model.getBodyNum()
+        self.savable = True
 
         # for test
-        self.obj0 = ObjImporter()
-        self.obj0.import_obj('../../data/obj/pelvis.obj', 0.01)
-        self.obj1 = ObjImporter()
-        self.obj1.import_obj('../../data/obj/femur_R.obj', 0.01)
-        self.obj2 = ObjImporter()
-        self.obj2.import_obj('../../data/obj/tibia_R.obj', 0.01)
+        self.is_obj = False
 
-        self.obj3 = ObjImporter()
-        self.obj3.import_obj('../../data/obj/foot_R_test.obj', 0.011)
+        if self.is_obj:
+            self.obj0 = ObjImporter()
+            self.obj0.import_obj('../../data/obj/pelvis.obj', 0.01)
+            self.obj1 = ObjImporter()
+            self.obj1.import_obj('../../data/obj/femur_R.obj', 0.01)
+            self.obj2 = ObjImporter()
+            self.obj2.import_obj('../../data/obj/tibia_R.obj', 0.01)
 
-        self.obj9 = ObjImporter()
-        self.obj9.import_obj('../../data/obj/ribs.obj', 0.01)
-        self.obj10 = ObjImporter()
-        self.obj10.import_obj('../../data/obj/skull.obj', 0.01)
+            self.obj3 = ObjImporter()
+            self.obj3.import_obj('../../data/obj/foot_R_test.obj', 0.011)
 
-        self.obj11 = ObjImporter()
-        self.obj11.import_obj('../../data/obj/humerus_L.obj', 0.01)
-        self.obj12 = ObjImporter()
-        self.obj12.import_obj('../../data/obj/radius_L.obj', 0.01)
+            self.obj9 = ObjImporter()
+            self.obj9.import_obj('../../data/obj/ribs.obj', 0.01)
+            self.obj10 = ObjImporter()
+            self.obj10.import_obj('../../data/obj/skull.obj', 0.01)
 
-        self.obj13 = ObjImporter()
-        self.obj13.import_obj('../../data/obj/humerus_R.obj', 0.01)
-        self.obj14 = ObjImporter()
-        self.obj14.import_obj('../../data/obj/radius_R.obj', 0.01)
+            self.obj11 = ObjImporter()
+            self.obj11.import_obj('../../data/obj/humerus_L.obj', 0.01)
+            self.obj12 = ObjImporter()
+            self.obj12.import_obj('../../data/obj/radius_L.obj', 0.01)
 
-        self.obj15 = ObjImporter()
-        self.obj15.import_obj('../../data/obj/femur_L.obj', 0.01)
-        self.obj16 = ObjImporter()
-        self.obj16.import_obj('../../data/obj/tibia_L.obj', 0.01)
+            self.obj13 = ObjImporter()
+            self.obj13.import_obj('../../data/obj/humerus_R.obj', 0.01)
+            self.obj14 = ObjImporter()
+            self.obj14.import_obj('../../data/obj/radius_R.obj', 0.01)
+
+            self.obj15 = ObjImporter()
+            self.obj15.import_obj('../../data/obj/femur_L.obj', 0.01)
+            self.obj16 = ObjImporter()
+            self.obj16.import_obj('../../data/obj/tibia_L.obj', 0.01)
 
     def render(self, renderType=RENDER_OBJECT):
         if self._polygonStyle == POLYGON_FILL:
@@ -389,30 +394,31 @@ class VpModelRenderer(Renderer):
 
             glPushMatrix()
             glMultMatrixd(_T.T)
-            if body_idx == 0:
-                self.obj0.draw()
-            elif body_idx == 1:
-                self.obj1.draw()
-            elif body_idx == 2:
-                self.obj2.draw()
-            elif body_idx == 3:
-                self.obj3.draw()
-            elif body_idx == 9:
-                self.obj9.draw()
-            elif body_idx == 10:
-                self.obj10.draw()
-            elif body_idx == 11:
-                self.obj11.draw()
-            elif body_idx == 12:
-                self.obj12.draw()
-            elif body_idx == 13:
-                self.obj13.draw()
-            elif body_idx == 14:
-                self.obj14.draw()
-            elif body_idx == 15:
-                self.obj15.draw()
-            elif body_idx == 16:
-                self.obj16.draw()
+            if self.is_obj:
+                if body_idx == 0:
+                    self.obj0.draw()
+                elif body_idx == 1:
+                    self.obj1.draw()
+                elif body_idx == 2:
+                    self.obj2.draw()
+                elif body_idx == 3:
+                    self.obj3.draw()
+                elif body_idx == 9:
+                    self.obj9.draw()
+                elif body_idx == 10:
+                    self.obj10.draw()
+                elif body_idx == 11:
+                    self.obj11.draw()
+                elif body_idx == 12:
+                    self.obj12.draw()
+                elif body_idx == 13:
+                    self.obj13.draw()
+                elif body_idx == 14:
+                    self.obj14.draw()
+                elif body_idx == 15:
+                    self.obj15.draw()
+                elif body_idx == 16:
+                    self.obj16.draw()
 
             elif geom_type in ('B', 'M', 'N'):
                 # box case
@@ -442,6 +448,7 @@ class DartModelRenderer(Renderer):
         self.model = target
         self.rc.setPolygonStyle(polygonStyle)
         self._lineWidth = lineWidth
+        self.savable = True
 
     def render(self, renderType=RENDER_OBJECT):
         glLineWidth(self._lineWidth)
@@ -748,6 +755,109 @@ class JointMotionRenderer(Renderer):
     #         state.extend(_getState(posture, posture.skeleton.root, numpy.eye(4)))
     #
     #         return state
+
+
+class BasicSkeletonRenderer(Renderer):
+    def __init__(self, Ts, color=(255, 255, 255), offset_Y=0.):
+        """
+        Ts should be dict type.
+        pelvis, spine_ribs, head, thigh_R, shin_R, foot_R, upper_limb_R, lower_limb_R
+                                  thigh_L, shin_L, foot_L, upper_limb_L, lower_limb_L
+        :param Ts:
+        :param color:
+        """
+        from glob import glob
+        Renderer.__init__(self, Ts, color)
+        self.Ts_init = Ts
+        # self.savedState.append(Ts)
+        self.objs = dict()  # type: dict[str, ObjImporter]
+        for path in glob('../../data/obj/zygote_skeleton_basic/*.obj'):
+            filename = path.split('/')[-1].split('.')[0]
+            self.objs[filename] = ObjImporter()
+            self.objs[filename].import_obj(path, 0.01)
+
+        self.offset = dict()  # type: dict[str, numpy.ndarray]
+        self.offset['pelvis'] = numpy.array([0., 0., 0.])
+        self.offset['spine_ribs'] = numpy.array([0., 0.0577, -0.01791])
+        self.offset['head'] = numpy.array([0., 0.57875, 0.04319])
+        self.offset['thigh_R'] = numpy.array([-0.08931, -0.031, 0.01779])
+        self.offset['shin_R'] = numpy.array([-0.007, -0.40402, -0.00173])
+        self.offset['foot_R'] = numpy.array([0.01482, -0.46019, -0.02403])
+        self.offset['upper_limb_R'] = numpy.array([-0.19431, 0.40374, 0.01608])
+        self.offset['lower_limb_R'] = numpy.array([-0.327, 0.01339, -0.0251])
+        self.offset['thigh_L'] = numpy.array([0.08931, -0.031, 0.01779])
+        self.offset['shin_L'] = numpy.array([0.007, -0.40402, -0.00173])
+        self.offset['foot_L'] = numpy.array([-0.01482, -0.46019, -0.02403])
+        self.offset['upper_limb_L'] = numpy.array([0.19431, 0.40374, 0.01608])
+        self.offset['lower_limb_L'] = numpy.array([0.327, 0.01339, -0.0251])
+
+        self.children = dict()
+        self.children['pelvis'] = ['spine_ribs', 'thigh_R', 'thigh_L']
+        self.children['spine_ribs'] = ['head', 'upper_limb_R', 'upper_limb_L']
+        self.children['head'] = []
+        self.children['thigh_R'] = ['shin_R']
+        self.children['shin_R'] = ['foot_R']
+        self.children['foot_R'] = []
+        self.children['upper_limb_R'] = ['lower_limb_R']
+        self.children['lower_limb_R'] = []
+        self.children['thigh_L'] = ['shin_L']
+        self.children['shin_L'] = ['foot_L']
+        self.children['foot_L'] = []
+        self.children['upper_limb_L'] = ['lower_limb_L']
+        self.children['lower_limb_L'] = []
+
+        self.offset_Y = offset_Y
+
+    def appendFrameState(self, Ts):
+        self.savedState.append(Ts)
+
+    def render(self, renderType=RENDER_OBJECT):
+        print("Renderer.render() : Must subclass me")
+        raise NotImplementedError
+
+    def renderState(self, state, renderType=RENDER_OBJECT):
+        """
+
+        :param state:
+        :type state: dict[str, np.ndarray]
+        :param renderType:
+        :return:
+        """
+        glPushMatrix()
+        glTranslatef(0., self.offset_Y, 0.)
+        self._render('pelvis', state)
+        glPopMatrix()
+
+    def _render(self, body_name, state):
+        glPushMatrix()
+        offset = self.offset[body_name]
+        glTranslatef(offset[0], offset[1], offset[2])
+        glMultMatrixf(state[body_name].T)
+        self.objs[body_name].draw()
+        for child_name in self.children[body_name]:
+            self._render(child_name, state)
+        glPopMatrix()
+
+    def renderFrame(self, frame, renderType=RENDER_OBJECT):
+        if frame == -1:
+            self.renderState(self.Ts_init, renderType)
+        elif frame == self.get_max_saved_frame() + 1:
+            self.saveState()
+            self.renderState(self.savedState[frame], renderType)
+        elif frame <= self.get_max_saved_frame():
+            self.renderState(self.savedState[frame], renderType)
+        else:
+            self.renderState(self.savedState[-1], renderType)
+
+    # def saveState(self):
+    #     self.savedState.append(self.getState())
+
+    def get_max_saved_frame(self):
+        return len(self.savedState) - 1
+
+    def set_offset_Y(self, offset_Y):
+        self.offset_Y = offset_Y
+
 
 class PointMotionRenderer(Renderer):
     def __init__(self, target, color = (0,0,255)):

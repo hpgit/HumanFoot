@@ -27,6 +27,7 @@ public:
 		bool use_joint;
 		unsigned char color[4];
 		std::vector<int> ancestors;
+		Vec3 offset_from_parent;
 
 		Node(string name_):name(name_), use_joint(false)
 		{
@@ -262,10 +263,13 @@ public:	// expose to python
 
 	/////////////////////////////////////////////////////////////////
 	// joint
+	object getJointTransform(int index);
+
 	object getJointOrientationLocal( int index );
 	object getJointAngVelocityLocal( int index );
 	object getJointAngAccelerationLocal( int index );
 
+	object getJointAfterTransformGlobal(int index);
 	object getJointPositionGlobal( int index, const object& positionLocal=object() );
 //	object getJointPositionGlobal(int index);
 	object getJointVelocityGlobal(int index);

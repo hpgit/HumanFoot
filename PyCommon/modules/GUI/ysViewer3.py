@@ -563,8 +563,9 @@ class GlWindow(Fl_Gl_Window):
                 renderer.renderFrame(frame, renderType)
 
         for renderer in self.invisibleRenderers:
-            if frame == renderer.get_max_saved_frame() + 1:
-                renderer.saveState()
+            if renderer.savable:
+                if frame == renderer.get_max_saved_frame() + 1:
+                    renderer.saveState()
 
         self.extraDrawCallback()
         
