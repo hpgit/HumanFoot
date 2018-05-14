@@ -145,11 +145,11 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("set_q", &VpControlModel::set_q)
 		.def("get_q", &VpControlModel::get_q)
 		.def("get_dq", &VpControlModel::get_dq)
+		.def("get_dq_nested", &VpControlModel::get_dq_nested)
 		.def("set_ddq", &VpControlModel::set_ddq)
 
 		.def("computeJacobian", &VpControlModel::computeJacobian)
-		// .def("computeComJacobian", &VpControlModel::computeComJacobian)
-		.def("computeDJDQ", &VpControlModel::computeDJDQ)
+        .def("computeCom_J_dJdq", &VpControlModel::computeCom_J_dJdq)
 
 		.def("getDOFPositions", &VpControlModel::getDOFPositions)
 		.def("getDOFVelocities", &VpControlModel::getDOFVelocities)
@@ -315,15 +315,15 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 		for( int i=0 ; i<len_joint_children; ++i)
 			offset += pyVec3_2_Vec3(joint.attr("children")[i].attr("offset"));
 
-		//if (joint.attr("parent") == object())
+//		if (joint.attr("parent") == object())
 			offset *= (1./len_joint_children);
 
 
 		SE3 boneT(offset*.5);
 
 
-		// if(joint.attr("parent") == object())
-		//  	boneT=SE3();
+//        if(joint.attr("parent") == object())
+//            boneT=SE3();
 
 		Vec3 defaultBoneV(0,0,1);
 		SE3 boneR = getSE3FromVectors(defaultBoneV, offset);
@@ -1277,6 +1277,23 @@ VpControlModel::VpControlModel( VpWorld* pWorld, const object& createPosture, co
 //	    std::cout << std::endl;
 	}
 
+	for(std::vector<int>::size_type body_idx=0; body_idx<_nodes.size(); body_idx++)
+	{
+        std::vector<int> &ancestors = _nodes[body_idx]->ancestors;
+        for(std::vector<int>::size_type j=0; j<_nodes.size(); j++)
+        {
+            if(std::find(ancestors.begin(), ancestors.end(), j) != ancestors.end())
+            {
+                _nodes[body_idx]->is_ancestor.push_back(true);
+            }
+            else
+            {
+                _nodes[body_idx]->is_ancestor.push_back(false);
+            }
+	    }
+	}
+
+
 
 //	addBody(true);
 }
@@ -1446,6 +1463,7 @@ void VpControlModel::_createJoint( const object& joint, const object& posture, c
 		// pNode->joint.SetElasticity(el);
 		// pNode->joint.SetDamping(dam);
 		pNode->use_joint = true;
+		_nodes[joint_index]->parent_index = parent_index;
 	}
 	for (std::vector<int>::size_type i=0; i<parent_ancestors.size(); i++)
 	    _nodes[joint_index]->ancestors.push_back(parent_ancestors[i]);
@@ -1705,8 +1723,6 @@ bp::list VpControlModel::get_dq()
     bp::list ls;
 	SE3 rootBodyFrame = _nodes[0]->body.GetFrame();
 	SE3 rootJointFrame = rootBodyFrame * Inv(_boneTs[0]);
-    // Vec3 rootJointPos = rootJointFrame.GetPosition();
-    // Axis rootJointQ = LogR(rootJointFrame);
     Axis jointDq;
 
 	Vec3 rootJointLinVel = _nodes[0]->body.GetLinVelocity(Inv(_boneTs[0]).GetPosition());
@@ -1733,6 +1749,43 @@ bp::list VpControlModel::get_dq()
 	}
 
 	return ls;
+}
+
+bp::list VpControlModel::get_dq_nested()
+{
+    // Angular First for root joint
+    bp::list ls;
+	SE3 rootBodyFrame = _nodes[0]->body.GetFrame();
+	SE3 rootJointFrame = rootBodyFrame * Inv(_boneTs[0]);
+    Axis jointDq;
+
+	Vec3 rootJointLinVel = _nodes[0]->body.GetLinVelocity(Inv(_boneTs[0]).GetPosition());
+
+    se3 rootBodyGenVelLocal = _nodes[0]->body.GetGenVelocityLocal();
+    Vec3 rootJointAngVelLocal = Rotate(_boneTs[0], Vec3(rootBodyGenVelLocal[0], rootBodyGenVelLocal[1], rootBodyGenVelLocal[2]));
+    Axis rootJointDq = GetDq(rootJointFrame, rootJointAngVelLocal);
+
+	ndarray rootGenVel = np::array(make_tuple(0.,0.,0.,0.,0.,0.));
+
+    for(int i=0; i<3; i++)
+    {
+        rootGenVel[i] = rootJointDq[i];
+    }
+    for(int i=0; i<3; i++)
+    {
+        rootGenVel[i+3] = rootJointLinVel[i];
+    }
+
+    ls.append(rootGenVel);
+
+	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
+	{
+	    jointDq = _nodes[j]->joint.GetDisplacementDerivate();
+	    ls.append(Axis_2_pyVec3(jointDq));
+	}
+
+	return ls;
+
 }
 
 void VpControlModel::set_ddq(const object & ddq)
@@ -2585,6 +2638,24 @@ static ublas::matrix<double> GetCrossMatrix(const ublas::vector<double> &r)
     return R;
 }
 
+Axis GetBJointDq(const Axis &m_rQ, const Vec3 &V)
+{
+	Axis W(V[0], V[1], V[2]);
+	scalar t = Norm(m_rQ), delta, zeta, t2 = t * t;
+
+	if ( t < BJOINT_EPS )
+	{
+		delta  = SCALAR_1_12 + SCALAR_1_720 * t2;
+		zeta = SCALAR_1 - SCALAR_1_12 * t2;
+	} else
+	{
+		zeta = SCALAR_1_2 * t * (SCALAR_1 + cos(t)) / sin(t);
+		delta = (SCALAR_1 - zeta) / t2;
+	}
+
+	return (delta * Inner(m_rQ, V)) * m_rQ + zeta * W + SCALAR_1_2 * Cross(m_rQ, W);
+}
+
 static ublas::matrix<double> GetBJointJacobian(const Axis &m_rQ)
 {
     ublas::matrix<double> J(3, 3);
@@ -2622,7 +2693,7 @@ static ublas::matrix<double> GetBJointJacobian(const Axis &m_rQ)
     return J;
 }
 
-static ublas::vector<double> GetBJointJDQ(const Axis &m_rQ, const Axis &m_rDq)
+static Axis GetBJointJDQ(const Axis &m_rQ, const Axis &m_rDq)
 {
     ublas::vector<double> JDQ(3);
 	ublas::vector<double> m_rQ_ub = ToUblasVector(m_rQ);
@@ -2646,10 +2717,10 @@ static ublas::vector<double> GetBJointJDQ(const Axis &m_rQ, const Axis &m_rDq)
 	JDQ(1) = V[1];
 	JDQ(2) = V[2];
 
-	return JDQ;
+	return V;
 }
 
-static ublas::vector<double> GetBJointDJDQ(const Axis &m_rQ, const Axis &m_rDq)
+static Axis GetBJointDJDQ(const Axis &m_rQ, const Axis &m_rDq)
 {
 	ublas::vector<double> DJDQ(3);
 	ublas::vector<double> m_rQ_ub = ToUblasVector(m_rQ);
@@ -2681,7 +2752,7 @@ static ublas::vector<double> GetBJointDJDQ(const Axis &m_rQ, const Axis &m_rDq)
     DJDQ(1) = dJdq[1];
     DJDQ(2) = dJdq[2];
 
-    return DJDQ;
+    return dJdq;
 }
 
 static object ToNumpyArray(const ublas::matrix<double> &m)
@@ -2774,78 +2845,138 @@ object VpControlModel::computeJacobian(int index, const object& positionGlobal)
 	return J;
 }
 
-object VpControlModel::computeDJDQ(int index, const object& positionGlobal)
+bp::tuple VpControlModel::computeCom_J_dJdq()
 {
-	Vec3 effector_position = pyVec3_2_Vec3(positionGlobal);
-    Axis joint_displacement, joint_displacement_derivative;
-	SE3 joint_frame, body_frame, effector_frame, ancestors_joint_frame;
-	Vec3 joint_velocity, effector_velocity, ancestors_joint_global_ang_vel;
+    int body_num = this->getBodyNum();
 
+	bp::tuple shape_J = bp::make_tuple(6*body_num, m_total_dof);
+	bp::tuple shape_dJdq = bp::make_tuple(6*body_num);
+    np::dtype dtype = np::dtype::get_builtin<float>();
+	ndarray J = np::zeros(shape_J, dtype);
+	ndarray dJdq = np::zeros(shape_dJdq, dtype);
+	ublas::vector<double> offset, offset_velocity;
+	ublas::matrix<double> _Jw, _Jv;
+	ublas::vector<double> _dJdqw, _dJdqv;
+
+	//preprocessing : get joint frames and sum of ancestor's global angular velocity
 	std::vector<SE3> joint_frames;
-	std::vector<Vec3> joint_global_ang_vels, joint_global_lin_vels;
-	for(std::vector<Node*>::size_type i=0; i<_nodes.size(); i++)
+	std::vector<Axis> sum_ancestors_joint_global_ang_vel;
+	joint_frames.push_back(_nodes[0]->body.GetFrame() * Inv(_boneTs[0]));
+	sum_ancestors_joint_global_ang_vel.push_back(Vec3_2_Axis(_nodes[0]->body.GetAngVelocity()));
+	Axis temp_ancestors_joint_global_ang_vel;
+	for (std::vector<Node*>::size_type i=1; i < _nodes.size(); i++)
 	{
 	    joint_frames.push_back(_nodes[i]->body.GetFrame() * Inv(_boneTs[i]));
-	    se3 joint_gen_vel_local = InvAd(_boneTs[i], _nodes[i]->body.GetGenVelocityLocal());
-	    se3 joint_gen_vel_global = Rotate(joint_frames[i], joint_gen_vel_local);
-	    // se3 joint_gen_vel_spatial = Ad(joint_frames[i], joint_gen_vel_local);
-	    joint_global_ang_vels.push_back(Vec3(joint_gen_vel_global[0], joint_gen_vel_global[1], joint_gen_vel_global[2]));
-	    joint_global_lin_vels.push_back(Vec3(joint_gen_vel_global[3], joint_gen_vel_global[4], joint_gen_vel_global[5]));
-    }
+	    int parent_index = _nodes[i]->parent_index;
+        temp_ancestors_joint_global_ang_vel =
+            sum_ancestors_joint_global_ang_vel[parent_index]
+            + Rotate(joint_frames[i], Vec3_2_Axis(_nodes[i]->joint.GetVelocity()));
 
-	bp::tuple shape = bp::make_tuple(6);
-    np::dtype dtype = np::dtype::get_builtin<float>();
-	ndarray DJDQ = np::zeros(shape, dtype);
+	    sum_ancestors_joint_global_ang_vel.push_back(temp_ancestors_joint_global_ang_vel);
+	}
 
-	ublas::matrix<double> joint_frame_ublas;
-	ublas::vector<double> _DJDQw, _DJDQv, _JDQw;
-	ublas::vector<double> offset;
-	Vec3 offset_from_body_local = Inv(_nodes[index]->body.GetFrame()) * effector_position;
-	Vec3 offset_velocity = _nodes[index]->body.GetLinVelocity(offset_from_body_local);
-
-	//TODO: root joint
-
-    //internal joint
-    std::vector<int> &ancestors = _nodes[index]->ancestors;
-	for(std::vector<Node*>::size_type i=1; i<_nodes.size();i++)
-	{
-	    if(std::find(ancestors.begin(), ancestors.end(), i) != ancestors.end())
-	    {
-            joint_displacement = _nodes[i]->joint.GetDisplacement();
-            joint_displacement_derivative = _nodes[i]->joint.GetDisplacementDerivate();
-            body_frame = _nodes[i]->body.GetFrame();
-            joint_frame = joint_frames[i];
-            joint_frame_ublas = SE3ToUblasRotate(joint_frame);
-            joint_velocity = joint_global_lin_vels[i];
-            std::vector<int> &ancestors_ancestors = _nodes[i]->ancestors;
-
-            _JDQw = GetBJointJDQ(joint_displacement, joint_displacement_derivative);
-            _DJDQw = prod(joint_frame_ublas, GetBJointDJDQ(joint_displacement, joint_displacement_derivative));
-
-            for(std::vector<int>::size_type k=0; k<ancestors_ancestors.size(); k++)
-            {
-                //TODO: special care for k = 0
-                int ancestors_joint_idx = ancestors_ancestors[k];
-                ancestors_joint_global_ang_vel = joint_global_ang_vels[ancestors_joint_idx];
-                _DJDQw += cross(
-                    ToUblasVector(ancestors_joint_global_ang_vel),
-                    prod(joint_frame_ublas, _JDQw)
-                    );
-            }
-
-            offset = ToUblasVector(effector_position - joint_frame.GetPosition());
-            _DJDQv = -cross(ToUblasVector(offset_velocity - joint_velocity), prod(joint_frame_ublas, _JDQw))
-                    - cross(offset, _DJDQw);
-
+	//root joint
+	// jacobian
+	Vec3 effector_position, effector_velocity;
+    _Jw = prod(SE3ToUblasRotate(joint_frames[0]), GetBJointJacobian(LogR(joint_frames[0])));
+    for(std::vector<Node*>::size_type body_idx=0; body_idx < _nodes.size(); body_idx++)
+    {
+        effector_position = _nodes[body_idx]->get_body_position();
+        offset = ToUblasVector(effector_position - joint_frames[0].GetPosition());
+        _Jv = -prod(GetCrossMatrix(offset), _Jw);
+        for (int dof_index = 0; dof_index < 3; dof_index++)
+        {
+            J[6*body_idx + dof_index][3+dof_index] = 1.;
             for (int j=0; j<3; j++)
             {
-                DJDQ[j+0] = _DJDQv(j);
-                DJDQ[j+3] = _DJDQw(j);
+                J[6*body_idx + 0 + j][dof_index] = _Jv(j, dof_index);
+                J[6*body_idx + 3 + j][dof_index] = _Jw(j, dof_index);
+            }
+        }
+    }
+
+    // jacobian derivative
+    Vec3 root_joint_local_ang_vel = InvRotate(joint_frames[0], _nodes[0]->body.GetAngVelocity());
+    Vec3 root_joint_global_pos = joint_frames[0].GetPosition();
+    Vec3 root_joint_global_velocity = _nodes[0]->body.GetLinVelocity(Inv(_boneTs[0]).GetPosition());
+    Axis root_m_rQ = LogR(joint_frames[0]);
+    Axis root_m_rDq = GetBJointDq(root_m_rQ, root_joint_local_ang_vel);
+    Axis joint_dJdq = GetBJointDJDQ(root_m_rQ, root_m_rDq);
+    Axis joint_Jdq = GetBJointJDQ(root_m_rQ, root_m_rDq);
+    Axis joint_RJdq = Rotate(joint_frames[0], joint_Jdq);
+
+    effector_velocity = _nodes[0]->get_body_com_velocity();
+
+    _dJdqw = ToUblasVector(
+        Rotate(joint_frames[0], joint_dJdq) + Cross(sum_ancestors_joint_global_ang_vel[0], joint_RJdq)
+        );
+    for(std::vector<Node*>::size_type body_idx=0; body_idx < _nodes.size(); body_idx++)
+    {
+        effector_position = _nodes[body_idx]->get_body_position();
+        offset = ToUblasVector(effector_position - root_joint_global_pos);
+        offset_velocity = ToUblasVector(effector_velocity - root_joint_global_velocity);
+        _dJdqv = -cross(offset, _dJdqw) - cross(offset_velocity, ToUblasVector(joint_RJdq));
+        for (int j=0; j<3; j++)
+        {
+            dJdq[6*body_idx + 0 + j] += _dJdqv(j);
+            dJdq[6*body_idx + 3 + j] += _dJdqw(j);
+        }
+    }
+
+    //internal joint
+    Axis m_rQ, m_rDq;
+    Vec3 joint_global_pos, joint_global_velocity;
+    for(std::vector<Node*>::size_type i=1; i<_nodes.size(); i++)
+    {
+        int dof_start_index = _nodes[i]->dof_start_index;
+        m_rQ = _nodes[i]->joint.GetDisplacement();
+        m_rDq = _nodes[i]->joint.GetDisplacementDerivate();
+        joint_global_pos = joint_frames[i].GetPosition();
+        joint_global_velocity = _nodes[i]->body.GetLinVelocity(Inv(_boneTs[0]).GetPosition());
+        _Jw = prod(SE3ToUblasRotate(joint_frames[i]), GetBJointJacobian(m_rQ));
+
+        joint_dJdq = GetBJointDJDQ(m_rQ, m_rDq);
+        joint_Jdq = GetBJointJDQ(m_rQ, m_rDq);
+        joint_RJdq = Rotate(joint_frames[i], joint_Jdq);
+        _dJdqw = ToUblasVector(Rotate(joint_frames[i], joint_dJdq) + Cross(sum_ancestors_joint_global_ang_vel[i], joint_RJdq));
+
+        for(std::vector<Node*>::size_type body_idx=1; body_idx < _nodes.size(); body_idx++)
+        {
+            std::vector<bool> &is_body_ancestors = _nodes[body_idx]->is_ancestor;
+            effector_position = _nodes[body_idx]->get_body_position();
+            effector_velocity = _nodes[body_idx]->get_body_com_velocity();
+            if(is_body_ancestors[i])
+            {
+                // jacobian
+                offset = ToUblasVector(effector_position - joint_global_pos);
+                _Jv = -prod(GetCrossMatrix(offset), _Jw);
+
+                dof_start_index = _nodes[i]->dof_start_index;
+                for (int dof_index = 0; dof_index < _nodes[i]->dof; dof_index++)
+                {
+                    for (int j=0; j<3; j++)
+                    {
+                        J[6*body_idx + 0+j][dof_start_index + dof_index] = _Jv(j, dof_index);
+                        J[6*body_idx + 3+j][dof_start_index + dof_index] = _Jw(j, dof_index);
+                    }
+                }
+
+                // jacobian derivatives
+                offset_velocity = ToUblasVector(effector_velocity - joint_global_velocity);
+                _dJdqv = -cross(offset, _dJdqw) - cross(offset_velocity, ToUblasVector(joint_RJdq));
+                for (int j=0; j<3; j++)
+                {
+                    dJdq[6*body_idx + 0 + j] += _dJdqv(j);
+                    dJdq[6*body_idx + 3 + j] += _dJdqw(j);
+                }
             }
         }
 	}
-    return DJDQ;
+
+	return bp::make_tuple(J, dJdq);
 }
+
+
 
 /////////////////////////////////////////
 // Additional

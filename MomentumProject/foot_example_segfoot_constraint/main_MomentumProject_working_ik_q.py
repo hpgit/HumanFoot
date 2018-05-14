@@ -42,11 +42,6 @@ from OpenGL.GLUT import *
 g_initFlag = 0
 forceShowTime = 0
 
-JsysPre = 0
-JsupPreL = 0
-JsupPreR = 0
-JconstPre = 0
-
 contactChangeCount = 0
 contactChangeType = 0
 contact = 0
@@ -333,26 +328,6 @@ def main():
     selectedBody = motion[0].skeleton.getJointIndex(config['end'])
     constBody = motion[0].skeleton.getJointIndex('RightFoot')
 
-    # jacobian
-    # JsupL = yjc.makeEmptyJacobian(DOFs, 1)
-    # dJsupL = JsupL.copy()
-    # JsupPreL = JsupL.copy()
-    #
-    # JsupR = yjc.makeEmptyJacobian(DOFs, 1)
-    # dJsupR = JsupR.copy()
-    # JsupPreR = JsupR.copy()
-
-    Jconst = yjc.makeEmptyJacobian(DOFs, 1)
-    dJconst = Jconst.copy()
-    JconstPre = Jconst.copy()
-
-    Jsys = yjc.makeEmptyJacobian(DOFs, controlModel.getBodyNum())
-    dJsys = Jsys.copy()
-    JsysPre = Jsys.copy()
-
-    constJointMasks = [yjc.getLinkJointMask(motion[0].skeleton, constBody)]
-    allLinkJointMasks = yjc.getAllLinkJointMasks(motion[0].skeleton)
-
     # momentum matrix
     linkMasses = controlModel.getBodyMasses()
     totalMass = controlModel.getTotalMass()
@@ -606,6 +581,41 @@ def main():
 
     # ik_solver = hik.numIkSolver(dartIkModel)
     # ik_solver.clear()
+    def getDesiredDOFAccelerations(_th_r, _th, _dth_r, _dth, _Kt, _Dt, weightMap=None):
+        ddth_des = [None]*len(_th_r)  # type: list[np.ndarray]
+
+        p_r0 = _th_r[0][0]
+        p0 = _th[0][0]
+        v_r0 = _dth_r[0][0:3]
+        v0 = _dth[0][0:3]
+
+        th_r0 = _th_r[0][1]
+        th0 = _th[0][1]
+        dth_r0 = _dth_r[0][3:6]
+        dth0 = _dth[0][3:6]
+
+        kt = Kt
+        dt = Dt
+
+        if weightMap is not None:
+            kt = Kt * weightMap[0]
+            dt = Dt * (weightMap[0]**.5)
+            # dt = 0.
+        a_des0 = kt*(p_r0 - p0) + dt*(v_r0 - v0)
+        ddth_des0 = kt*(mm.logSO3(np.dot(th0.transpose(), th_r0))) + dt*(dth_r0 - dth0)
+        ddth_des[0] = np.concatenate((a_des0, ddth_des0))
+
+        for i in range(1, len(_th_r)):
+            if weightMap is not None:
+                kt = Kt * weightMap[i]
+                dt = Dt * (weightMap[i]**.5)
+                # dt = 0.
+
+            # ddth_des[i] = kt*(mm.logSO3(np.dot(th[i].transpose(), th_r[i]))) + dt*(dth_r[i] - dth[i])
+            ddth_des[i] = kt*(mm.logSO3(np.dot(_th[i].transpose(), _th_r[i]))) + dt*(-_dth[i])
+
+        return ddth_des
+
 
     ###################################
     # simulate
@@ -625,12 +635,6 @@ def main():
 
         global g_initFlag
         global forceShowTime
-
-        global JsysPre
-        global JsupPreL
-        global JsupPreR
-
-        global JconstPre
 
         global preFootCenter
         global maxContactChangeCount
@@ -654,9 +658,10 @@ def main():
         th_r = motion.getDOFPositions(frame)
         th = controlModel.getDOFPositions()
         dth_r = motion.getDOFVelocities(frame)
-        dth = controlModel.getDOFVelocities()
-        ddth_r = motion.getDOFAccelerations(frame)
-        ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
+        # dth = controlModel.getDOFVelocities()
+        dth = controlModel.get_dq_nested()
+        # ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
+        ddth_des = getDesiredDOFAccelerations(th_r, th, dth_r, dth, Kt, Dt)
 
         ype.flatten(ddth_des, ddth_des_flat)
         # ddth_des_flat = Kt * (motion.get_q(frame) - np.array(controlModel.get_q())) - Dt * np.array(controlModel.get_dq())
@@ -669,26 +674,26 @@ def main():
 
         contact_des_ids = list()  # desired contact segments
         if foot_viewer.check_om_l.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_0'))
+            contact_des_ids.append(footIdDic['LeftFoot_foot_0_0'])
         if foot_viewer.check_op_l.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_0_0'))
+            contact_des_ids.append(footIdDic['LeftFoot_foot_0_0_0'])
         if foot_viewer.check_im_l.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_1'))
+            contact_des_ids.append(footIdDic['LeftFoot_foot_0_1'])
         if foot_viewer.check_ip_l.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_1_0'))
+            contact_des_ids.append(footIdDic['LeftFoot_foot_0_1_0'])
         if foot_viewer.check_h_l.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_1_0'))
+            contact_des_ids.append(footIdDic['LeftFoot_foot_1_0'])
 
         if foot_viewer.check_om_r.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_0'))
+            contact_des_ids.append(footIdDic['RightFoot_foot_0_0'])
         if foot_viewer.check_op_r.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_0_0'))
+            contact_des_ids.append(footIdDic['RightFoot_foot_0_0_0'])
         if foot_viewer.check_im_r.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_1'))
+            contact_des_ids.append(footIdDic['RightFoot_foot_0_1'])
         if foot_viewer.check_ip_r.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_1_0'))
+            contact_des_ids.append(footIdDic['RightFoot_foot_0_1_0'])
         if foot_viewer.check_h_r.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_1_0'))
+            contact_des_ids.append(footIdDic['RightFoot_foot_1_0'])
 
         contact_ids = list()  # temp idx for balancing
         contact_ids.extend(contact_des_ids)
@@ -710,10 +715,6 @@ def main():
         ref_body_angvel = [motion.getJointAngVelocityGlobal(joint_idx, frame) for joint_idx in contact_ids]
         ref_body_vel = [ref_joint_vel[i] + np.cross(ref_joint_angvel[i], ref_body_pos[i] - ref_joint_pos[i])
                         for i in range(len(ref_joint_vel))]
-
-        J_contacts = [yjc.makeEmptyJacobian(DOFs, 1) for i in range(len(contact_ids))]
-        dJ_contacts = [yjc.makeEmptyJacobian(DOFs, 1) for i in range(len(contact_ids))]
-        joint_masks = [yjc.getLinkJointMask(motion[0].skeleton, joint_idx) for joint_idx in contact_ids]
 
         # caution!! body orientation and joint orientation of foot are totally different!!
         footOriL = controlModel.getJointOrientationGlobal(supL)
@@ -767,21 +768,19 @@ def main():
         linkAngVelocities = controlModel.getBodyAngVelocitiesGlobal()
         linkInertias = controlModel.getBodyInertiasGlobal()
 
-        jointPositions = controlModel.getJointPositionsGlobal()
-        jointAxeses = controlModel.getDOFAxeses()
-
-        CM = yrp.getCM(linkPositions, linkMasses, totalMass)
+        # CM = yrp.getCM(linkPositions, linkMasses, totalMass)
+        CM = controlModel.getCOM()
         dCM = yrp.getCM(linkVelocities, linkMasses, totalMass)
-        CM_plane = copy.copy(CM)
+        CM_plane = copy.deepcopy(CM)
         CM_plane[1] = 0.
-        dCM_plane = copy.copy(dCM)
+        dCM_plane = copy.deepcopy(dCM)
         dCM_plane[1] = 0.
 
-        P = ymt.getPureInertiaMatrix(TO, linkMasses, linkPositions, CM, linkInertias)
+        # P = ymt.getPureInertiaMatrix(TO, linkMasses, linkPositions, CM, linkInertias)
+        P = ymt.get_P(linkMasses, linkPositions, CM, linkInertias)
         dP = ymt.getPureInertiaMatrixDerivative(dTO, linkMasses, linkVelocities, dCM, linkAngVelocities, linkInertias)
 
         # calculate contact state
-        # if g_initFlag == 1 and contact == 1 and refFootR[1] < doubleTosingleOffset and footCenterR[1] < 0.08:
         if g_initFlag == 1:
             # contact state
             # 0: flying 1: right only 2: left only 3: double
@@ -821,11 +820,7 @@ def main():
 
         # initialization
         if g_initFlag == 0:
-            # JsysPre = Jsys.copy()
-            JconstPre = Jconst.copy()
             softConstPoint = footCenterR.copy()
-            # yjc.computeJacobian2(JsysPre, DOFs, jointPositions, jointAxeses, linkPositions, allLinkJointMasks)
-            # yjc.computeJacobian2(JconstPre, DOFs, jointPositions, jointAxeses, [softConstPoint], constJointMasks)
 
             footCenter = footCenterL + (footCenterR - footCenterL)/2.0
             footCenter[1] = 0.
@@ -841,26 +836,9 @@ def main():
             g_initFlag = 1
 
         # calculate jacobian
-        Jsys = yjc.makeEmptyJacobian(DOFs, controlModel.getBodyNum())
-        yjc.computeJacobian2(Jsys, DOFs, jointPositions, jointAxeses, linkPositions, allLinkJointMasks)
-        dJsys = (Jsys - JsysPre)/(1/30.)
-        JsysPre = Jsys.copy()
-        # # yjc.computeJacobianDerivative2(dJsys, DOFs, jointPositions, jointAxeses, linkAngVelocities, linkPositions, allLinkJointMasks)
-        # print(np.dot(Jsys, dth_flat))
-        vp_legacy = np.dot(Jsys, dth_flat)
-        # print(Jsys)
-
-        body_num = controlModel.getBodyNum()
-        Jsys_hp = np.zeros((6*body_num, totalDOF))
-        for i in range(len(linkPositions)):
-            Jsys_hp[6*i:6*i+6, :] = controlModel.computeJacobian(i, linkPositions[i])
-
-        for i in range(len(J_contacts)):
-            J_contacts[i] = Jsys[6*contact_ids[i]:6*contact_ids[i] + 6, :]
-            dJ_contacts[i] = dJsys[6*contact_ids[i]:6*contact_ids[i] + 6, :]
-            # yjc.computeJacobian2(J_contacts[i], DOFs, jointPositions, jointAxeses, [contact_body_pos[i]], [joint_masks[i]])
-            # yjc.computeJacobianDerivative2(
-            #     dJ_contacts[i], DOFs, jointPositions, jointAxeses, linkAngVelocities, [contact_body_pos[i]], [joint_masks[i]])
+        Jsys, dJsys = controlModel.computeCom_J_dJdq()
+        J_contacts = [Jsys[6*contact_id:6*contact_id+6, :] for contact_id in contact_ids]
+        dJ_contacts = [dJsys[6*contact_id:6*contact_id+6] for contact_id in contact_ids]
 
         # calculate footCenter
         footCenter = sum(contact_body_pos) / len(contact_body_pos) if len(contact_body_pos) > 0 \
@@ -902,9 +880,10 @@ def main():
         # to do that, set joint velocities to vpModel
         CM_ref_plane = footCenter
         # CM_ref_plane = footCenter_ref
-        dL_des_plane = Kl * totalMass * (CM_ref_plane - CM_plane) - Dl * totalMass * dCM_plane
+        dL_des_plane = Kl * totalMass * (CM_ref_plane - CM_plane) - 0.1*Dl * totalMass * dCM_plane
+        print('dL_des_plane: ', dL_des_plane)
         # dL_des_plane[1] = 0.
-        print('dCM_plane : ', np.linalg.norm(dCM_plane))
+        # print('dCM_plane : ', np.linalg.norm(dCM_plane))
 
         # angular momentum
         CP_ref = footCenter
@@ -945,7 +924,7 @@ def main():
         # body_ddqs = list(map(mm.logSO3, [mm.getSO3FromVectors(np.dot(body_ori, mm.unitY()), mm.unitY()) for body_ori in contact_body_ori]))
         body_ddqs = list(map(mm.logSO3, [np.dot(contact_body_ori[i].T, np.dot(ref_body_ori[i], mm.getSO3FromVectors(np.dot(ref_body_ori[i], mm.unitY()), mm.unitY()))) for i in range(len(contact_body_ori))]))
         body_qs = list(map(mm.logSO3, contact_body_ori))
-        body_angs = [np.dot(contact_body_ori[i], contact_body_angvel[i]) for i in range(len(contact_body_ori))]
+        body_angs = [np.dot(contact_body_ori[i].T, contact_body_angvel[i]) for i in range(len(contact_body_ori))]
         body_dqs = [mm.vel2qd(body_angs[i], body_qs[i]) for i in range(len(body_angs))]
         a_oris = [np.dot(contact_body_ori[i], mm.qdd2accel(body_ddqs[i], body_dqs[i], body_qs[i])) for i in range(len(contact_body_ori))]
 
@@ -965,7 +944,7 @@ def main():
         RS = np.dot(P, Jsys)
         R, S = np.vsplit(RS, 2)
 
-        rs = np.dot((np.dot(dP, Jsys) + np.dot(P, dJsys)), dth_flat)
+        rs = np.dot(dP, np.dot(Jsys, dth_flat)) + np.dot(P, dJsys)
         r_bias, s_bias = np.hsplit(rs, 2)
 
         #######################################################
@@ -999,14 +978,14 @@ def main():
         mot.addTrackingTerms(problem, totalDOF, Bt, w, ddth_des_flat)
         if dH_des is not None:
             mot.addLinearTerms(problem, totalDOF, Bl, dL_des_plane, R, r_bias)
-            mot.addAngularTerms(problem, totalDOF, Bh, dH_des, S, s_bias)
+            # mot.addAngularTerms(problem, totalDOF, Bh, dH_des, S, s_bias)
 
             # mot.setConstraint(problem, totalDOF, Jsup, dJsup, dth_flat, a_sup)
             # mot.addConstraint(problem, totalDOF, Jsup, dJsup, dth_flat, a_sup)
             # if contact & 1 and contactChangeCount == 0:
-            if True:
+            if False:
                 for c_idx in range(len(contact_ids)):
-                    mot.addConstraint(problem, totalDOF, J_contacts[c_idx], dJ_contacts[c_idx], dth_flat, a_sups[c_idx])
+                    mot.addConstraint2(problem, totalDOF, J_contacts[c_idx], dJ_contacts[c_idx], dth_flat, a_sups[c_idx])
 
         if contactChangeCount > 0:
             contactChangeCount = contactChangeCount - 1
@@ -1017,6 +996,8 @@ def main():
         r = problem.solve()
         problem.clear()
         ddth_sol_flat = np.asarray(r['x'])
+        # print(np.dot(Jsys, ddth_sol_flat))
+        print(np.dot(J_contacts[0], ddth_sol_flat))
         # ddth_sol_flat[foot_seg_dofs] = np.array(ddth_des_flat)[foot_seg_dofs]
         ype.nested(ddth_sol_flat, ddth_sol)
 
@@ -1029,9 +1010,9 @@ def main():
             # bodyIDs, contactPositions, contactPositionLocals, contactForces, contactVelocities = vpWorld.calcManyPenaltyForce(0, bodyIDsToCheck, mus, Ks, Ds)
             vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
 
-            controlModel.setDOFAccelerations(ddth_sol)
+            # controlModel.setDOFAccelerations(ddth_sol)
             # controlModel.setDOFAccelerations(ddth_des)
-            # controlModel.set_ddq(ddth_sol_flat)
+            controlModel.set_ddq(ddth_sol_flat)
             # controlModel.set_ddq(ddth_des_flat)
             controlModel.solveHybridDynamics()
 

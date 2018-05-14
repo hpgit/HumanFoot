@@ -24,33 +24,45 @@ def getTrackingWeight(DOFs, skeleton, weightMap, rootPositionWeight=0.):
 
     return weights_ext
 
+
 def addTrackingTerms(problem, totalDOF, weight, jointWeights, ddth_des_flat):
     # minimize | Wt(ddth_des - ddth) |^2
     problem.addObjective_matrix(np.diag( [jointWeights[i] for i in range(len(jointWeights))] ), np.array([jointWeights[i]*ddth_des_flat[i] for i in range(len(jointWeights))]), weight )
+
 
 def addLinearTerms(problem, totalDOF, weight, dL_des, R, r_bias):
     # minimize | dL_des - (R*ddth + r_bias) |^2
     problem.addObjective_matrix(R, dL_des - r_bias, weight)
 
+
 def addAngularTerms(problem, totalDOF, weight, dH_des, S, s_bias):
     # minimize | dH_des - (S*ddth + s_bias) |^2
     problem.addObjective_matrix(S, dH_des - s_bias, weight)
+
 
 def addEndEffectorTerms(problem, totalDOF, weight, J, dJ, dth, ddP_des):
     # minimize | ddP_des - (J*ddth + dJ*dth)|^2
     problem.addObjective_matrix(J, ddP_des - np.dot(dJ, dth), weight)
 
+
 def addSoftPointConstraintTerms(problem, totalDOF, weight, ddP_des, Q, q_bias):
     # minimize | ddP_des - (Q*ddth + q_bias) |^2
     problem.addObjective_matrix(Q, ddP_des - q_bias, weight)
+
 
 def setConstraint(problem, totalDOF, J, dJ, dth_flat, a_sup):
     # subject to J_sup*ddth + dJ_sup*dth_flat = a_sup
     problem.setConstraint_matrix(J, a_sup - np.dot(dJ, dth_flat))
 
+
 def addConstraint(problem, totalDOF, J, dJ, dth_flat, a_sup):
     # subject to J_sup*ddth + dJ_sup*dth_flat = a_sup
     problem.addConstraint_matrix(J, a_sup - np.dot(dJ, dth_flat))
+
+
+def addConstraint2(problem, totalDOF, J, dJdq, dth_flat, a_sup):
+    # subject to J_sup*ddth + dJ_sup*dth_flat = a_sup
+    problem.addConstraint_matrix(J, a_sup - dJdq)
 
 
 # Quadratic Programming 

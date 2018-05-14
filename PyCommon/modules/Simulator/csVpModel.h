@@ -1,4 +1,6 @@
-#pragma once
+#ifndef _CS_VP_MODEL_H_
+#define _CS_VP_MODEL_H_
+
 #include <vector>
 #include <VP/vphysics.h>
 #include "../VirtualPhysics/pyVpBody.h"
@@ -13,33 +15,40 @@ class VpWorld;
 // joint[0](=None) - link[0] - joint[1] - link[1] - ... - joint[n-1] - link[n-1]
 //
 // link[0]: (root body) 
+class Node
+{
+public:
+    string name;
+    vpBody body;
+    vpMaterial material;
+    vpBJoint joint;
+    int dof;
+    int dof_start_index;
+    bool use_joint;
+    unsigned char color[4];
+    std::vector<int> ancestors;  // contains itself
+    std::vector<bool> is_ancestor;  // is_ancestor[ancestor_idx] = true;
+    int parent_index;
+    Vec3 offset_from_parent;
+
+    Node(string name_):name(name_), use_joint(false)
+    {
+        parent_index = -1;
+        body.SetMaterial(&material);
+        dof = 3;
+        color[0] = 0;
+        color[1] = 0;
+        color[2] = 0;
+        color[3] = 255;
+    }
+    SE3 get_body_frame(){return this->body.GetFrame();}
+    Vec3 get_body_position(){return this->body.GetFrame().GetPosition();}
+    Vec3 get_body_com_velocity(){return this->body.GetLinVelocity(Vec3(0.));}
+};
+
 class VpModel
 {
 public:
-	struct Node
-	{
-		string name;
-		vpBody body;
-		vpMaterial material;
-		vpBJoint joint;
-		int dof;
-		int dof_start_index;
-		bool use_joint;
-		unsigned char color[4];
-		std::vector<int> ancestors;
-		Vec3 offset_from_parent;
-
-		Node(string name_):name(name_), use_joint(false)
-		{
-			body.SetMaterial(&material);
-			dof = 3;
-			color[0] = 0;
-			color[1] = 0;
-			color[2] = 0;
-			color[3] = 255;
-		}
-	};
-
 	~VpModel();
 	void createBodies(const object& posture);
 	void _createBody(const object& joint, const SE3& parentT, const object& posture);
@@ -222,6 +231,8 @@ public:	// expose to python
 	bp::list get_dq();
 	void set_ddq(const object& ddq);
 
+	bp::list get_dq_nested();
+
 	// [T_g[0], R_l[1], R_l[2], ... ,R_l[n-1]]
 	bp::list getDOFPositions();
 
@@ -348,8 +359,7 @@ public:	// expose to python
 	object getLocalJointVelocity(int index);
 	object getLocalJointDisplacementDerivatives(int index);
 	object computeJacobian(int index, const object& positionGlobal);
-	object computeComJacobian();
-	object computeDJDQ(int index, const object& positionGlobal);
+	bp::tuple computeCom_J_dJdq();
 
 	/////////////////////////////////////////
 	// Additional
@@ -361,3 +371,5 @@ public:	// expose to python
 	//void stepKinematics( double dt, const object& acc);
 	void stepKinematics( double dt, const bp::list& accs);
 };
+
+#endif  // _CS_VP_MODEL_H_

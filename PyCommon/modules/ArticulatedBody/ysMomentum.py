@@ -1,10 +1,27 @@
 import numpy as np
-
 from ..Math import mmMath as mm
 
-#===============================================================================
+# ===============================================================================
 # Reference : Appendix A of Momentum Control for Balance, SIGGRAPH 2009
-#===============================================================================
+# ===============================================================================
+
+
+def get_P(masses, positions, CM, inertias):
+    P = np.empty((6, 6*len(masses)))
+    for i in range(len(masses)):
+        P[:, 6*i:6*i+6] = _get_P(masses[i], positions[i], CM, inertias[i])
+    return P
+
+
+def _get_P(mass, position, CM, inertia):
+    _P = np.empty((6, 6))
+    _P[:3, :3] = mass * np.eye(3)
+    _P[:3, 3:] = np.zeros((3, 3))
+    _P[3:, :3] = mass * mm.getCrossMatrixForm(position - CM)
+    _P[3:, 3:] = inertia
+    return _P
+
+
 def make_TO(masses):
     O = np.zeros((3,3)) 
     TOs = [None]*len(masses)
@@ -12,12 +29,14 @@ def make_TO(masses):
         TOs[i] = np.concatenate((mm.I_SO3()*masses[i], O), 1)
     return np.concatenate(TOs, 1)
 
+
 def _make_Us(masses, positions, CM):
     Us = [None]*len(masses)
     for i in range(len(masses)):
         Us[i] = masses[i] * mm.getCrossMatrixForm(positions[i] - CM) 
 #        Us[i] = masses[i] * mm.getCrossMatrixForm(CM - positions[i]) 
     return Us
+
 
 # pure inertia matrix
 # CM : CM or origin about angular momentum
@@ -29,9 +48,11 @@ def getPureInertiaMatrix(TO, masses, positions, CM, inertias):
         UVs[i] = np.concatenate((Us[i], Vs[i]), 1)
     return np.concatenate((TO, np.concatenate(UVs, 1)), 0)
 
+
 def make_dTO(linkNum):
     O = np.zeros((3, linkNum*3))
     return np.concatenate((O, O), 1)
+
 
 def _make_dUs(masses, velocities, dCM):
     dUs = [None]*len(masses)
@@ -39,6 +60,7 @@ def _make_dUs(masses, velocities, dCM):
         dUs[i] = masses[i] * mm.getCrossMatrixForm(velocities[i] - dCM) 
 #        dUs[i] = masses[i] * mm.getCrossMatrixForm(dCM - velocities[i]) 
     return dUs
+
 
 def _make_dVs(angVels, inertias):
     dVs = [None]*len(angVels)
@@ -55,9 +77,10 @@ def getPureInertiaMatrixDerivative(dTO, masses, velocities, dCM, angVels, inerti
         dUVs[i] = np.concatenate((dUs[i], dVs[i]), 1)
     return np.concatenate((dTO, np.concatenate(dUVs, 1)), 0) 
 
-#===============================================================================
+# ===============================================================================
 # momentum calculation by standard method
-#===============================================================================
+# ===============================================================================
+
 def getLinearMomentum(masses, velocities):
     L = mm.v3(0.,0.,0.)
     for i in range(len(masses)):

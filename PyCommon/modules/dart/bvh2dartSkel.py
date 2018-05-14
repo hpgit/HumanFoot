@@ -133,7 +133,6 @@ class DartModelMaker:
 
         return names, Ts, offsets, boneTs
 
-
     def createJoints(self, posture, boneTs):
         """
 
@@ -146,7 +145,6 @@ class DartModelMaker:
 
         # TODO:
         # return body_to_joint list, [parent, child] list
-
 
     def _createJoint(self, joint, posture, boneTs):
         jointPairs = []
@@ -239,9 +237,12 @@ class DartModelMaker:
         etGeom = et.SubElement(et.SubElement(etShape, "geometry"), geomtext)
         if (geom == "box") or (geom == "ellipsoid"):
             et.SubElement(etGeom, "size").text = " ".join(map(str, size))
+        elif geom == 'sphere':
+            et.SubElement(etGeom, 'radius').text = str(size[0])
         # elif geom == "multi_sphere":
         #     et.SubElement(etGeom, )
         else:
+            # cylinder, capsule
             et.SubElement(etGeom, "radius").text = str(size[0])
             et.SubElement(etGeom, "height").text = str(size[1])
 
@@ -323,23 +324,18 @@ class DartModelMaker:
                         else:
                             print("there is no geom Ts!")
 
-                        etBody.append(self.AddDartShapeNode(geomT, [radius, height-2.*radius], "cylinder", name=name, number=visualShapeCount))
+                        etBody.append(self.AddDartShapeNode(geomT, [radius, height-2.*radius], "capsule", name=name, number=visualShapeCount))
                         visualShapeCount += 1
 
                         geomSphereT = copy.deepcopy(geomT)
                         geomSphereT.SetPosition(geomT*Vec3(0., 0., -(height/2. - radius)))
-                        if geomType == "MyFoot3" or geomType == "MyFoot4":
-                            etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid", name=name, number=visualShapeCount))
-                            visualShapeCount += 1
                         if geomType == "MyFoot3":
-                            etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid", "collision", name=name, number=collisionShapeCount))
+                            etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.], 'sphere', "collision", name=name, number=collisionShapeCount))
                             collisionShapeCount += 1
 
                         geomSphereT.SetPosition(geomT*Vec3(0., 0., (height/2. - radius)))
-                        etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid", name=name, number=visualShapeCount))
-                        visualShapeCount += 1
                         if geomType != "MyFoot5":
-                            etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.]*3, "ellipsoid", "collision", name=name, number=collisionShapeCount))
+                            etBody.append(self.AddDartShapeNode(geomSphereT, [radius*2.], 'sphere', "collision", name=name, number=collisionShapeCount))
                             collisionShapeCount += 1
 
                         # etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., cylLen_2)), [radius]*3, "ellipsoid"))
@@ -378,18 +374,12 @@ class DartModelMaker:
 
                     etBody.append(self.AddInertia(mass))
 
-                    etBody.append(self.AddDartShapeNode(SE3(), [radius, length-2.*radius], "cylinder", name=name, number=visualShapeCount))
-                    visualShapeCount += 1
-                    if geomType == "MyFoot3" or geomType =="MyFoot4":
-                        etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., -(length/2.-radius))), [radius*2.]*3, "ellipsoid", name=name, number=visualShapeCount))
-                        visualShapeCount += 1
+                    etBody.append(self.AddDartShapeNode(SE3(), [radius, length-2.*radius], "capsule", name=name))
                     if geomType == "MyFoot3":
-                        etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., -(length/2.-radius))), [radius*2.]*3, "ellipsoid", "collision", name=name, number=collisionShapeCount))
+                        etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., -(length/2.-radius))), [radius*2.], 'sphere', "collision", name=name, number=collisionShapeCount))
                         collisionShapeCount += 1
-                    etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., length/2.-radius)), [radius*2.]*3, "ellipsoid", name=name, number=visualShapeCount))
-                    visualShapeCount += 1
                     if geomType != "MyFoot5":
-                        etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., length/2.-radius)), [radius*2.]*3, "ellipsoid", "collision", name=name, number=collisionShapeCount))
+                        etBody.append(self.AddDartShapeNode(SE3(Vec3(0., 0., length/2.-radius)), [radius*2.], 'sphere', "collision", name=name, number=collisionShapeCount))
                         collisionShapeCount += 1
                 else:
                     length = 1.

@@ -86,6 +86,10 @@ inline object Vec3_2_pyVec3(const Vec3& V)
 {
 	return numpy::array(make_tuple(V[0], V[1], V[2]));
 }
+inline object Axis_2_pyVec3(const Axis& V)
+{
+	return numpy::array(make_tuple(V[0], V[1], V[2]));
+}
 inline void Vec3_2_pyVec3(const Vec3& V, object& pyV)
 {
 	pyV[0] = V[0]; pyV[1] = V[1]; pyV[2] = V[2];
@@ -224,4 +228,10 @@ SE3 getSE3FromVectors(const Vec3& vec1, const Vec3& vec2)
 
 	return Inv(R);
 }
+
+inline Axis Vec3_2_Axis(const Vec3& v)
+{
+    return Axis(v[0], v[1], v[2]);
+}
+
 #endif //_VPUTIL_H_

@@ -49,7 +49,7 @@ modules.append(m)
 m = setupmodule('csIMSRenderer')
 modules.append(m)
 
-m = setupmodule('ObjImporter')
+m = setupmodule('csRenderer')
 m.libraries = [boost_lib]
 modules.append(m)
 

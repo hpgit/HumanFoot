@@ -19,8 +19,9 @@ from PyCommon.modules.Mesh import ysMesh as yms
 # import Motion.ysMotion as ym
 # import Mesh.ysMesh as yms
 
-from PyCommon.modules.Util.importOBJ import import_obj
-from PyCommon.modules.Renderer.ObjImporter import ObjImporter
+from PyCommon.modules.Renderer import csRenderer as cr
+from PyCommon.modules.Renderer.csRenderer import ObjImporter
+
 
 # for hinting
 # from PyCommon.modules.pyVirtualPhysics import *
@@ -274,40 +275,6 @@ class VpModelRenderer(Renderer):
         self.body_colors = [color] * self._model.getBodyNum()
         self.savable = True
 
-        # for test
-        self.is_obj = False
-
-        if self.is_obj:
-            self.obj0 = ObjImporter()
-            self.obj0.import_obj('../../data/obj/pelvis.obj', 0.01)
-            self.obj1 = ObjImporter()
-            self.obj1.import_obj('../../data/obj/femur_R.obj', 0.01)
-            self.obj2 = ObjImporter()
-            self.obj2.import_obj('../../data/obj/tibia_R.obj', 0.01)
-
-            self.obj3 = ObjImporter()
-            self.obj3.import_obj('../../data/obj/foot_R_test.obj', 0.011)
-
-            self.obj9 = ObjImporter()
-            self.obj9.import_obj('../../data/obj/ribs.obj', 0.01)
-            self.obj10 = ObjImporter()
-            self.obj10.import_obj('../../data/obj/skull.obj', 0.01)
-
-            self.obj11 = ObjImporter()
-            self.obj11.import_obj('../../data/obj/humerus_L.obj', 0.01)
-            self.obj12 = ObjImporter()
-            self.obj12.import_obj('../../data/obj/radius_L.obj', 0.01)
-
-            self.obj13 = ObjImporter()
-            self.obj13.import_obj('../../data/obj/humerus_R.obj', 0.01)
-            self.obj14 = ObjImporter()
-            self.obj14.import_obj('../../data/obj/radius_R.obj', 0.01)
-
-            self.obj15 = ObjImporter()
-            self.obj15.import_obj('../../data/obj/femur_L.obj', 0.01)
-            self.obj16 = ObjImporter()
-            self.obj16.import_obj('../../data/obj/tibia_L.obj', 0.01)
-
     def render(self, renderType=RENDER_OBJECT):
         if self._polygonStyle == POLYGON_FILL:
             glPolygonMode(GL_FRONT, GL_FILL)
@@ -394,33 +361,8 @@ class VpModelRenderer(Renderer):
 
             glPushMatrix()
             glMultMatrixd(_T.T)
-            if self.is_obj:
-                if body_idx == 0:
-                    self.obj0.draw()
-                elif body_idx == 1:
-                    self.obj1.draw()
-                elif body_idx == 2:
-                    self.obj2.draw()
-                elif body_idx == 3:
-                    self.obj3.draw()
-                elif body_idx == 9:
-                    self.obj9.draw()
-                elif body_idx == 10:
-                    self.obj10.draw()
-                elif body_idx == 11:
-                    self.obj11.draw()
-                elif body_idx == 12:
-                    self.obj12.draw()
-                elif body_idx == 13:
-                    self.obj13.draw()
-                elif body_idx == 14:
-                    self.obj14.draw()
-                elif body_idx == 15:
-                    self.obj15.draw()
-                elif body_idx == 16:
-                    self.obj16.draw()
 
-            elif geom_type in ('B', 'M', 'N'):
+            if geom_type in ('B', 'M', 'N'):
                 # box case
                 data = geom_size
                 glTranslated(-.5*data[0], -.5*data[1], -.5*data[2])
@@ -780,6 +722,7 @@ class BasicSkeletonRenderer(Renderer):
         self.offset['pelvis'] = numpy.array([0., 0., 0.])
         self.offset['spine_ribs'] = numpy.array([0., 0.0577, -0.01791])
         self.offset['head'] = numpy.array([0., 0.57875, 0.04319])
+
         self.offset['thigh_R'] = numpy.array([-0.08931, -0.031, 0.01779])
         self.offset['shin_R'] = numpy.array([-0.007, -0.40402, -0.00173])
         self.offset['foot_R'] = numpy.array([0.01482, -0.46019, -0.02403])
@@ -807,6 +750,8 @@ class BasicSkeletonRenderer(Renderer):
         self.children['lower_limb_L'] = []
 
         self.offset_Y = offset_Y
+
+        self.isInit = False
 
     def appendFrameState(self, Ts):
         self.savedState.append(Ts)
@@ -1367,6 +1312,8 @@ class RenderContext:
         self.setNormalStyle(NORMAL_SMOOTH)
         self.setLineWidth(1.)
         self.crossLength = .1
+
+        self.crc = cr.RenderContext()
         
     def __del__(self):
         gluDeleteQuadric(self.quad)
@@ -1409,100 +1356,14 @@ class RenderContext:
     #===============================================================================
     # draw primitives at origin    
     #===============================================================================
-    box_line_point_array = \
-        [
-            -.5, -.5, -.5,
-            -.5, -.5, +.5,
-            +.5, -.5, -.5,
-            +.5, -.5, +.5,
-            -.5, +.5, -.5,
-            -.5, +.5, +.5,
-            +.5, +.5, -.5,
-            +.5, +.5, +.5,
-
-            +.5, -.5, -.5,
-            -.5, -.5, -.5,
-            +.5, +.5, -.5,
-            -.5, +.5, -.5,
-            +.5, -.5, +.5,
-            -.5, -.5, +.5,
-            +.5, +.5, +.5,
-            -.5, +.5, +.5,
-
-            -.5, -.5, -.5,
-            -.5, +.5, -.5,
-            -.5, -.5, +.5,
-            -.5, +.5, +.5,
-            +.5, -.5, +.5,
-            +.5, +.5, +.5,
-            +.5, -.5, -.5,
-            +.5, +.5, -.5,
-        ]
-
-    box_fill_point_array = \
-        [
-            -.5, -.5, -.5,
-            -.5, +.5, -.5,
-            +.5, +.5, -.5,
-            +.5, -.5, -.5,
-            -.5, -.5, +.5,
-            +.5, -.5, +.5,
-            +.5, +.5, +.5,
-            -.5, +.5, +.5,
-            -.5, -.5, -.5,
-            -.5, -.5, +.5,
-            -.5, +.5, +.5,
-            -.5, +.5, -.5,
-            +.5, -.5, -.5,
-            +.5, +.5, -.5,
-            +.5, +.5, +.5,
-            +.5, -.5, +.5,
-            -.5, -.5, -.5,
-            +.5, -.5, -.5,
-            +.5, -.5, +.5,
-            -.5, -.5, +.5,
-            -.5, +.5, -.5,
-            -.5, +.5, +.5,
-            +.5, +.5, +.5,
-            +.5, +.5, -.5
-        ]
-
-    box_fill_normal_array = \
-        [
-            0., 0., -1.,
-            0., 0., -1.,
-            0., 0., -1.,
-            0., 0., -1.,
-            0., 0., +1.,
-            0., 0., +1.,
-            0., 0., +1.,
-            0., 0., +1.,
-            -1., 0., 0.,
-            -1., 0., 0.,
-            -1., 0., 0.,
-            -1., 0., 0.,
-            +1., 0., 0.,
-            +1., 0., 0.,
-            +1., 0., 0.,
-            +1., 0., 0.,
-            0., -1., 0.,
-            0., -1., 0.,
-            0., -1., 0.,
-            0., -1., 0.,
-            0., +1., 0.,
-            0., +1., 0.,
-            0., +1., 0.,
-            0., +1., 0.
-        ]
-
-
     def drawBox(self, lx, ly, lz):
         glPushMatrix()
         glTranslated(lx/2.,ly/2.,lz/2.)
         glScale(lx, ly, lz)
+        self.crc.drawBox(self.polygonStyle)
 
+        '''
         if self.polygonStyle == POLYGON_LINE:
-            # glutWireCube(1)
             glBegin(GL_LINES)
             glVertex3f(-.5, -.5, -.5)
             glVertex3f(-.5, -.5, +.5)
@@ -1533,8 +1394,6 @@ class RenderContext:
 
             glEnd()
         else:
-            # glutSolidCube(1)
-            #'''
             glBegin(GL_QUADS)
             glNormal3f(0., 0., -1.)
             glVertex3f(-.5, -.5, -.5)
@@ -1590,17 +1449,7 @@ class RenderContext:
             glNormal3f(0., +1., 0.)
             glVertex3f(+.5, +.5, -.5)
             glEnd()
-            #'''
-            '''
-            vertex_size = int(len(self.box_fill_point_array)//3)
-            glVertexPointer(3, GL_FLOAT, 0, self.box_fill_point_array)
-            glNormalPointer(GL_FLOAT, 0, self.box_fill_normal_array)
-            glEnableClientState(GL_VERTEX_ARRAY)
-            glEnableClientState(GL_NORMAL_ARRAY)
-            glDrawArrays(GL_QUADS, 0, vertex_size)
-            glDisableClientState(GL_NORMAL_ARRAY)
-            glDisableClientState(GL_NORMAL_ARRAY)
-            '''
+        #'''
         glPopMatrix()
 
     def drawCylinder(self, radius, length_z):
@@ -1628,13 +1477,6 @@ class RenderContext:
         glTranslatef(0., 0., -length_z)
 
         gluCylinder(self.quad, radius, radius, length_z, _SLICE_SIZE, 1)
-
-        if False:
-            glPushMatrix()
-            glTranslatef(0.0002, 0., 0.)
-            glColor3f(1., 0., 0.)
-            gluCylinder(self.quad, radius, radius, length_z, _SLICE_SIZE, 1)
-            glPopMatrix()
 
         glPopMatrix()
 

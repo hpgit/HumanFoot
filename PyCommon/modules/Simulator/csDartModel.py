@@ -86,15 +86,15 @@ class DartModel:
                 if shapeNode.has_collision_aspect():
                     geomType = shapeNode.shape.shape_type_name()
                     # geomT = np.dot(body.world_transform(), shapeNode.relative_transform())
-                    if MULTIPLE_CAPSULE and geomType == "ELLIPSOID":
+                    if MULTIPLE_CAPSULE and geomType == "SphereShape":
                         rad, gap, row, col, height_ratio = .01, .01, 4, 4, .5
-                        shape = shapeNode.shape # type: pydart.EllipsoidShape
+                        shape = shapeNode.shape # type: pydart.SphereShape
                         lowestCenter = np.array([0., 0., 0.])
 
                         geomPoint = list()
                         geomPoint.extend(self.getContactSphere(lowestCenter, rad, row, col, height_ratio))
                         self.geomPoints[i] = geomPoint
-                    elif geomType == "ELLIPSOID":
+                    elif geomType == "SphereShape":
                         self.geomPoints[i] = [np.array([0., 0., 0.])]
 
                     elif MULTIPLE_BOX and geomType == "BOX":
@@ -179,10 +179,10 @@ class DartModel:
                 if shapeNode.has_collision_aspect():
                     geomType = shapeNode.shape.shape_type_name()
                     geomT = np.dot(body.world_transform(), shapeNode.relative_transform())
-                    if geomType == "ELLIPSOID":
-                        shape = shapeNode.shape # type: pydart.EllipsoidShape
+                    if geomType == "SphereShape":
+                        shape = shapeNode.shape # type: pydart.SphereShape
                         lowestPoint = geomT[:3, 3]
-                        lowestPoint[1] -= shape.size()[0]/2.
+                        lowestPoint[1] -= shape.radius()/2.
                         if lowestPoint[1] < 0.:
                             bodyIDs.append(i)
                             positions.append(lowestPoint)
@@ -251,9 +251,9 @@ class DartModel:
                     geomT = np.dot(body.world_transform(), shapeNode.relative_transform())
                     if not MULTIPLE_POINT and geomType == "ELLIPSOID":
                         # single point
-                        shape = shapeNode.shape # type: pydart.EllipsoidShape
+                        shape = shapeNode.shape # type: pydart.SphereShape
                         lowestPoint = geomT[:3, 3]
-                        lowestPoint[1] -= shape.size()[0]/2.
+                        lowestPoint[1] -= shape.radius()/2.
                         if lowestPoint[1] < 0.:
                             spatialVel = body.com_spatial_velocity() # type: np.ndarray
                             velocity = body.com_linear_velocity() + np.cross(spatialVel[:3], lowestPoint - body.com())
@@ -264,9 +264,9 @@ class DartModel:
                             velocities.append(velocity)
                             forces.append(force)
 
-                    elif geomType == "ELLIPSOID":
+                    elif geomType == "SphereShape":
                         # multiple point
-                        shape = shapeNode.shape # type: pydart.EllipsoidShape
+                        shape = shapeNode.shape # type: pydart.SphereShape
                         geomPoint = self.geomPoints[bodyIdx]
 
                         bodySpatialVel = body.com_spatial_velocity() # type: np.ndarray
