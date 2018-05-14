@@ -17,6 +17,7 @@ BOOST_PYTHON_MODULE(csRenderer)
 
     class_<RenderContext>("RenderContext")
         .def("drawBox", &RenderContext::drawBox)
+//        .def("drawCapsule", &RenderContext::drawCapsule)
         ;
 }
 
@@ -381,5 +382,4 @@ void RenderContext::drawBox(int polygon_style)
     glDisableClientState(GL_NORMAL_ARRAY);
     glPolygonMode(GL_FRONT, GL_FILL);
 }
-
 

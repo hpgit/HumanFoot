@@ -119,6 +119,7 @@ class Node:
         self.offset = (0,0,0)
         self.length = None
         self.width = None
+        self.height = None
         self.geom = 'MyBox'
         self.jointType = 'B'
 

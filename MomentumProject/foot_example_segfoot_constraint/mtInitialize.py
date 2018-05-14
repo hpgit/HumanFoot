@@ -136,8 +136,10 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
     # height: y axis on body frame
     # length: z axis on body frame
     node = mcfg.getNode('Hips')
-    node.length = .2
+    node.length = 4./27.
     node.width = .25
+    # node.height = .2
+    # node.width = .25
 
     node = mcfg.getNode('Spine1')
     node.length = .2

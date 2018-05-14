@@ -230,6 +230,7 @@ public:	// expose to python
 	bp::list get_q();
 	bp::list get_dq();
 	void set_ddq(const object& ddq);
+	void set_ddq_vp(const std::vector<double>& ddq);
 
 	bp::list get_dq_nested();
 

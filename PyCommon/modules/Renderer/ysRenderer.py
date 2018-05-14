@@ -1454,16 +1454,6 @@ class RenderContext:
 
     def drawCylinder(self, radius, length_z):
         gluCylinder(self.quad, radius, radius, length_z, 16, 1)
-        if False:
-            glColor3f(1., 0., 0.)
-            glPushMatrix()
-            glTranslatef(0.0001, 0., 0.)
-            gluCylinder(self.quad, radius, radius, length_z, 16, 1)
-            glPopMatrix()
-
-        # gleSetNumSides(20)
-        # glePolyCylinder(((0,0,-length_z/2.), (0,0,-length_z/2.), (0,0,length_z/2.), (0,0,length_z/2.)), None, radius)
-        # gleSetNumSides(12)
 
     def drawCapsule(self, radius, length_z):
         _SLICE_SIZE = 4

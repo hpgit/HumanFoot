@@ -315,22 +315,14 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 		for( int i=0 ; i<len_joint_children; ++i)
 			offset += pyVec3_2_Vec3(joint.attr("children")[i].attr("offset"));
 
-//		if (joint.attr("parent") == object())
-			offset *= (1./len_joint_children);
-
+        offset *= (1./len_joint_children);
 
 		SE3 boneT(offset*.5);
-
-
-//        if(joint.attr("parent") == object())
-//            boneT=SE3();
 
 		Vec3 defaultBoneV(0,0,1);
 		SE3 boneR = getSE3FromVectors(defaultBoneV, offset);
 
-
-		// if(joint.attr("parent") != object())
-			boneT = boneT * boneR;
+        boneT = boneT * boneR;
 
 		Node* pNode = new Node(joint_name);
 		_nodes[joint_index] = pNode;
@@ -448,16 +440,39 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 					width = XD(cfgNode.attr("width"));
 					if( cfgNode.attr("mass") != object() )
 						height = (XD(cfgNode.attr("mass")) / (density * length)) / width;
+					else if (cfgNode.attr("height") != object())
+						height = XD(cfgNode.attr("height"));
 					else
-						height = .1;
+					    height = .1;
 				}
 				else
 				{
 					if( cfgNode.attr("mass") != object() )
-						width = sqrt( (XD(cfgNode.attr("mass")) / (density * length)) );
+					{
+                        if (cfgNode.attr("height") != object())
+                        {
+                            height = XD(cfgNode.attr("height"));
+                            width = (XD(cfgNode.attr("mass")) / (density * length)) / height;
+                        }
+                        else
+                        {
+                            width = sqrt( (XD(cfgNode.attr("mass")) / (density * length)) );
+                            height = width;
+                        }
+                    }
 					else
-						width = .1;
-					height = width;
+					{
+                        if (cfgNode.attr("height") != object())
+                        {
+                            height = XD(cfgNode.attr("height"));
+                            width = height;
+                        }
+                        else
+                        {
+                            width = .1;
+                            height = width;
+                        }
+                    }
 				}
 				string geomType = XS(cfgNode.attr("geom"));
 				if(0 == geomType.compare("MyBox"))
@@ -484,6 +499,9 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 		//pNode->body.SetInertia(BoxInertia(density, Vec3(width/2.,height/2.,length/2.)));
 
 		boneT = boneT * SE3(pyVec3_2_Vec3(cfgNode.attr("offset")));
+        if(joint.attr("parent") == object())
+            boneT=SE3();
+
         _boneTs[joint_index] = boneT;
 		SE3 newT = T * boneT;
 
@@ -1792,15 +1810,46 @@ void VpControlModel::set_ddq(const object & ddq)
 {
     int ddq_index = 6;
     //TODO:
+    Axis rootJointAngAccGlobal(XD(ddq[0]), XD(ddq[1]), XD(ddq[2]));
+    Vec3 rootJointLinAccGlobal(XD(ddq[3]), XD(ddq[4]), XD(ddq[5]));
     for(int i=0; i<3; i++)
     {
     }
-    for(int i=0; i<6; i++)
+    for(int i=3; i<6; i++)
     {
     }
 	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
 	{
         Axis jointDdq(XD(ddq[ddq_index]), XD(ddq[ddq_index+1]), XD(ddq[ddq_index+2]));
+        _nodes[j]->joint.SetDdq(jointDdq);
+        ddq_index += 3;
+	}
+}
+
+void VpControlModel::set_ddq_vp(const std::vector<double> & ddq)
+{
+    int ddq_index = 6;
+    //TODO:
+
+    SE3 rootBodyFrame = _nodes[0]->body.GetFrame();
+    SE3 rootJointFrame = rootBodyFrame * Inv(_boneTs[0]);
+    Vec3 offset = rootBodyFrame.GetPosition() - rootJointFrame.GetPosition();
+    Vec3 rootJointAngVelGlobal = _nodes[0]->body.GetAngVelocity();
+    Vec3 rootJointAngAccLocal(ddq[0], ddq[1], ddq[2]);
+    Vec3 rootJointAngAccGlobal = Rotate(rootJointFrame, rootJointAngAccLocal);
+    Vec3 rootBodyAngAccLocal = InvRotate(rootBodyFrame, rootJointAngAccGlobal);
+    Vec3 rootJointLinAccGlobal(ddq[3], ddq[4], ddq[5]);
+    Vec3 rootBodyLinAccGlobal =
+        rootJointLinAccGlobal + Cross(rootJointAngAccGlobal, offset) + Cross(rootJointAngVelGlobal, Cross(rootJointAngVelGlobal, offset));
+    Vec3 rootBodyLinAccLocal = InvRotate(rootBodyFrame, rootBodyLinAccLocal);
+
+    se3 rootBodyGenAccLocal(rootBodyAngAccLocal[0], rootBodyAngAccLocal[1], rootBodyAngAccLocal[2],
+                            rootBodyLinAccLocal[0], rootBodyLinAccLocal[1], rootBodyLinAccLocal[2]);
+
+    _nodes[0]->body.SetGenAccelerationLocal(rootBodyGenAccLocal);
+	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
+	{
+        Axis jointDdq(ddq[ddq_index], ddq[ddq_index+1], ddq[ddq_index+2]);
         _nodes[j]->joint.SetDdq(jointDdq);
         ddq_index += 3;
 	}
@@ -3057,6 +3106,8 @@ void VpControlModel::setSpring(int body1Index, int body2Index, scalar elasticity
 
 
 
+
+
 // must be called at first:clear all torques and accelerations
 bp::list VpControlModel::getInverseEquationOfMotion(object &invM, object &invMb)
 {
@@ -3328,7 +3379,7 @@ bp::list VpControlModel::getEquationOfMotion(object& M, object& b)
 	se3 zero_se3(0.0);
 	Vec3 zero_Vec3(0.0);
 	Hip->SetGenAccelerationLocal(zero_se3);
-//	Hip->SetGenAcceleration(zero_se3);
+	// Hip->SetGenAcceleration(zero_se3);
 	for(int i=0; i<n; i++)
 	{
 		vpBJoint *joint = &(_nodes.at(i+1)->joint);

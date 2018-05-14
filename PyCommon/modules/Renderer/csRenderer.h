@@ -31,10 +31,16 @@ public:
 
 class RenderContext
 {
+private:
+    std::vector<float> data_capsule;
+    // std::vector<float> data_cylinder;
 public:
     RenderContext();
     void drawBox(int polygon_style);
-    void drawCapsule();
+    void drawCapsule(float radius, float height);
+    void drawCylinder(float radius, float height);
+    void drawHalfSphere(float radius);
+    void drawSphere(float radius);
 };
 
 #endif  // _OBJ_IMPORTER_H_

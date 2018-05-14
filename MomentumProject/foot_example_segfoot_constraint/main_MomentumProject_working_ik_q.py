@@ -267,7 +267,7 @@ def main():
     controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
     # controlModel_shadow_for_ik = cvm.VpControlModel(vpWorld, motion[0], mcfg)
     vpWorld.initialize()
-    controlModel.initializeHybridDynamics()
+    controlModel.initializeHybridDynamics(True)
 
     # controlToMotionOffset = (1.5, -0.02, 0)
     controlToMotionOffset = (1.5, 0, 0)
@@ -621,7 +621,7 @@ def main():
     # simulate
     ###################################
     def simulateCallback(frame):
-        # print(frame)
+        print('frame: ', frame)
         # print(motion[frame].getJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0']))
         if viewer_GetForceState():
             # print('force on, frame: ', frame)
@@ -776,8 +776,8 @@ def main():
         dCM_plane = copy.deepcopy(dCM)
         dCM_plane[1] = 0.
 
-        # P = ymt.getPureInertiaMatrix(TO, linkMasses, linkPositions, CM, linkInertias)
-        P = ymt.get_P(linkMasses, linkPositions, CM, linkInertias)
+        P = ymt.getPureInertiaMatrix(TO, linkMasses, linkPositions, CM, linkInertias)
+        # P = ymt.get_P(linkMasses, linkPositions, CM, linkInertias)
         dP = ymt.getPureInertiaMatrixDerivative(dTO, linkMasses, linkVelocities, dCM, linkAngVelocities, linkInertias)
 
         # calculate contact state
@@ -880,7 +880,7 @@ def main():
         # to do that, set joint velocities to vpModel
         CM_ref_plane = footCenter
         # CM_ref_plane = footCenter_ref
-        dL_des_plane = Kl * totalMass * (CM_ref_plane - CM_plane) - 0.1*Dl * totalMass * dCM_plane
+        dL_des_plane = Kl * totalMass * (CM_ref_plane - CM_plane) # - 0.1*Dl * totalMass * dCM_plane
         print('dL_des_plane: ', dL_des_plane)
         # dL_des_plane[1] = 0.
         # print('dCM_plane : ', np.linalg.norm(dCM_plane))
@@ -938,7 +938,7 @@ def main():
 
         # a_oris = list(map(mm.logSO3, [mm.getSO3FromVectors(np.dot(body_ori, mm.unitY()), mm.unitY()) for body_ori in contact_body_ori]))
         a_sups = [np.append(kt_sup*(ref_body_pos[i] - contact_body_pos[i] + contMotionOffset) + dt_sup*(ref_body_vel[i] - contact_body_vel[i]),
-                            kt_sup*a_oris[i]+dt_sup*(ref_body_angvel[i]-contact_body_angvel[i])) for i in range(len(a_oris))]
+                            kt_sup*a_oris[i] + dt_sup*(ref_body_angvel[i]-contact_body_angvel[i])) for i in range(len(a_oris))]
 
         # momentum matrix
         RS = np.dot(P, Jsys)
@@ -983,7 +983,7 @@ def main():
             # mot.setConstraint(problem, totalDOF, Jsup, dJsup, dth_flat, a_sup)
             # mot.addConstraint(problem, totalDOF, Jsup, dJsup, dth_flat, a_sup)
             # if contact & 1 and contactChangeCount == 0:
-            if False:
+            if True:
                 for c_idx in range(len(contact_ids)):
                     mot.addConstraint2(problem, totalDOF, J_contacts[c_idx], dJ_contacts[c_idx], dth_flat, a_sups[c_idx])
 
@@ -997,7 +997,8 @@ def main():
         problem.clear()
         ddth_sol_flat = np.asarray(r['x'])
         # print(np.dot(Jsys, ddth_sol_flat))
-        print(np.dot(J_contacts[0], ddth_sol_flat))
+        if J_contacts:
+            print(np.dot(J_contacts[0], ddth_sol_flat)+dJ_contacts[0])
         # ddth_sol_flat[foot_seg_dofs] = np.array(ddth_des_flat)[foot_seg_dofs]
         ype.nested(ddth_sol_flat, ddth_sol)
 
