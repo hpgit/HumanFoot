@@ -1,12 +1,13 @@
 from cvxopt import matrix, solvers
 import numpy as np
 import numpy.linalg as npl
-#import scipy.linalg as npl
+# import scipy.linalg as npl
 
-# Equality Constrained Least Square
-# minimize |C1x-d1|^2 + ... + |Cnx-dn|^2
-# subject to Ax=b
+
 class LSE:
+    # Equality Constrained Least Square
+    # minimize |C1x-d1|^2 + ... + |Cnx-dn|^2
+    # subject to Ax=b
     def __init__(self, varNum, consNum):
         self.varNum = varNum
         self.consNum = consNum
@@ -15,18 +16,18 @@ class LSE:
         self.ds = []
         self.A = None
         self.b = None
-        #self.A = []
-        #self.b = []
+        # self.A = []
+        # self.b = []
         
     # add |Cix-di|^2
     # C: matrix, d: vector
     def addObjective_matrix(self, Ci, di, w=1.): 
-        if Ci.shape[1]!=self.varNum:
+        if Ci.shape[1] != self.varNum:
             print('varNum mismatched 1')
             print("Ci.shape[1]", Ci.shape[1])
             print("self.varNum", self.varNum)
             return
-        if Ci.shape[0]!=len(di):
+        if Ci.shape[0] != len(di):
             print('Ci & di mismatched')
             return
         self.Cs.append(w*Ci)
@@ -51,8 +52,8 @@ class LSE:
     # subject to Ax=b
     # A: matrix, b: vector
     def addConstraint_matrix(self, A, b):
-        #print("b", b)
-        #print("b.T", b.T)
+        # print("b", b)
+        # print("b.T", b.T)
         '''
         if A.shape[1]!=self.varNum:
             print 'varNum mismatched 2'
@@ -61,8 +62,8 @@ class LSE:
             print 'consNum misnatched'
             return
         '''
-        #self.A.append(A)
-        #self.b.append(b)
+        # self.A.append(A)
+        # self.b.append(b)
         if self.A is None:
             self.A = A
             self.b = b
@@ -102,30 +103,28 @@ class LSE:
         # A_large * x_large = b_large
         A11 = sum([2*np.dot(Ci.T, Ci) for Ci in self.Cs])
 
-        A = self.A
-        if self.A is None:
-            A = np.zeros((1, A11.shape[0]))
-        A12 = A.T
-        A21 = A
-        A22 = np.zeros((A.shape[0], A.shape[0]))
-        A_large = np.vstack((np.hstack((A11,A12)), np.hstack((A21,A22))))      
+        # A_large = np.vstack((np.hstack((A11,A12)), np.hstack((A21,A22))))
+        A_large = A11 if self.A is None else np.vstack((
+            np.hstack((A11, self.A.T)),
+            np.hstack((self.A, np.zeros((self.A.shape[0], self.A.shape[0]))))
+        ))
 
         b1 = sum([2*np.dot(self.Cs[i].T, self.ds[i]) for i in range(len(self.Cs))])
-        b2 = self.b
-        if self.b is None:
-            b2 = (0)
-        b_large = np.hstack((b1,b2))        
-        
-        #x_large = npl.solve(A_large, b_large)
+        b_large = b1 if self.b is None else np.hstack((b1, self.b))
+
+        # x_large = npl.solve(A_large, b_large)
         x_large = npl.lstsq(A_large, b_large, rcond=None)
         if np.isnan(x_large[0][0]):
             print('nan!!')
             x_large = npl.lstsq(A11, b1)
-        #x_large = npl.lstsq(A11, b1)
+        # x_large = npl.lstsq(A11, b1)
         
-        result = {}
+        result = dict()
         result['x'] = x_large[0][:self.varNum]
-        result['lambda'] = x_large[self.varNum:]
+        if self.A is not None:
+            result['lambda'] = x_large[self.varNum:]
+        else:
+            result['lambda'] = tuple()
         return result
 
     def solve2(self):

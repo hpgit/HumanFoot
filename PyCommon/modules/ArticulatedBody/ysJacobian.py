@@ -167,7 +167,7 @@ def computeJacobianDerivative2(dJ, jointDOFs, jointPositions, jointAxeses, linkA
                 parentLinkAngVel_jth_joint = linkAngVels[j]
             else:
                 parentLinkAngVel_jth_joint = linkAngVels[j-1] if j>0 else (0,0,0)
-            
+
             for d in range(jointDOF_jth_joint):
                 if effectorJointMasks is None or effectorJointMasks[e][j]:
                     axis_colth_dof = jointAxes_jth_joint[d]
@@ -182,7 +182,7 @@ def computeJacobianDerivative2(dJ, jointDOFs, jointPositions, jointAxeses, linkA
                         # instanteneousAcceleration_colth_dof = np.cross(axis_colth_dof, get_dP_effector_from_joint2(j, jointPositions, linkAngVels, effectorJointMasks[e], effectorPositions[e], internalJointsOnly)) \
                         #                                       + np.cross(np.cross(parentLinkAngVel_jth_joint, axis_colth_dof), effectorPositions[e]-jointPosition_jth_joint)
                         instanteneousAcceleration_colth_dof = cm.cross(axis_colth_dof, get_dP_effector_from_joint2(j, jointPositions, linkAngVels, effectorJointMasks[e], effectorPositions[e], internalJointsOnly)) \
-                                                              + cm.cross(cm.cross(parentLinkAngVel_jth_joint, axis_colth_dof), effectorPositions[e]-jointPosition_jth_joint)
+                                                              + cm.cross(instanteneousAngAcceleration_colth_dof, effectorPositions[e]-jointPosition_jth_joint)
                     else:   # translationalDOF
                         instanteneousAngAcceleration_colth_dof = [0.,0.,0.] 
                         # instanteneousAcceleration_colth_dof = np.cross(parentLinkAngVel_jth_joint, axis_colth_dof)

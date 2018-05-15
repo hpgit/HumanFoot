@@ -842,22 +842,25 @@ def main():
 
         # calculate jacobian
         Jsys = yjc.makeEmptyJacobian(DOFs, controlModel.getBodyNum())
-        yjc.computeJacobian2(Jsys, DOFs, jointPositions, jointAxeses, linkPositions, allLinkJointMasks)
-        dJsys = (Jsys - JsysPre)/(1/30.)
-        JsysPre = Jsys.copy()
-        # # yjc.computeJacobianDerivative2(dJsys, DOFs, jointPositions, jointAxeses, linkAngVelocities, linkPositions, allLinkJointMasks)
-        # print(np.dot(Jsys, dth_flat))
+        # yjc.computeJacobian2(Jsys, DOFs, jointPositions, jointAxeses, linkPositions, allLinkJointMasks)
+        Jsys, dJsys_hp = controlModel.computeCom_J_dJdq()
+        # dJsys = (Jsys - JsysPre)/(1/30.)
+        # JsysPre = Jsys.copy()
+        yjc.computeJacobianDerivative2(dJsys, DOFs, jointPositions, jointAxeses, linkAngVelocities, linkPositions, allLinkJointMasks)
+        # print(dJsys[:, :6])
+        # print(np.linalg.norm(dJsys_hp - np.dot(dJsys, dth_flat)))
+        print(dJsys_hp - np.dot(dJsys, dth_flat))
         vp_legacy = np.dot(Jsys, dth_flat)
         # print(Jsys)
 
         body_num = controlModel.getBodyNum()
-        Jsys_hp = np.zeros((6*body_num, totalDOF))
-        for i in range(len(linkPositions)):
-            Jsys_hp[6*i:6*i+6, :] = controlModel.computeJacobian(i, linkPositions[i])
+        # dJsys = (Jsys - JsysPre)/(1/30.)
+        # JsysPre = Jsys.copy()
 
         for i in range(len(J_contacts)):
             J_contacts[i] = Jsys[6*contact_ids[i]:6*contact_ids[i] + 6, :]
             dJ_contacts[i] = dJsys[6*contact_ids[i]:6*contact_ids[i] + 6, :]
+            # dJ_contacts[i] = dJsys[6*contact_ids[i]:6*contact_ids[i] + 6]
             # yjc.computeJacobian2(J_contacts[i], DOFs, jointPositions, jointAxeses, [contact_body_pos[i]], [joint_masks[i]])
             # yjc.computeJacobianDerivative2(
             #     dJ_contacts[i], DOFs, jointPositions, jointAxeses, linkAngVelocities, [contact_body_pos[i]], [joint_masks[i]])
@@ -966,6 +969,7 @@ def main():
         R, S = np.vsplit(RS, 2)
 
         rs = np.dot((np.dot(dP, Jsys) + np.dot(P, dJsys)), dth_flat)
+        # rs = np.dot(dP, np.dot(Jsys, dth_flat)) + np.dot(P, dJsys)
         r_bias, s_bias = np.hsplit(rs, 2)
 
         #######################################################
@@ -1007,6 +1011,7 @@ def main():
             if True:
                 for c_idx in range(len(contact_ids)):
                     mot.addConstraint(problem, totalDOF, J_contacts[c_idx], dJ_contacts[c_idx], dth_flat, a_sups[c_idx])
+                    # mot.addConstraint2(problem, totalDOF, J_contacts[c_idx], dJ_contacts[c_idx], dth_flat, a_sups[c_idx])
 
         if contactChangeCount > 0:
             contactChangeCount = contactChangeCount - 1

@@ -1664,7 +1664,7 @@ void VpControlModel::solveInverseDynamics()
 	_nodes[0]->body.GetSystem()->InverseDynamics();
 }
 
-static Axis GetDq(const SE3& R, const Vec3& V)
+static Axis GetDq_Body(const SE3& R, const Vec3& V)
 {
     Axis m_rDq;
     Axis m_rQ = LogR(R);
@@ -1682,8 +1682,28 @@ static Axis GetDq(const SE3& R, const Vec3& V)
 	}
 
 	return (delta * Inner(m_rQ, V)) * m_rQ + zeta * W + SCALAR_1_2 * Cross(m_rQ, W);
-
 }
+
+static Axis GetDq_Spatial(const SE3& R, const Vec3& V)
+{
+    Axis m_rDq;
+    Axis m_rQ = LogR(R);
+	Axis W(V[0], V[1], V[2]);
+	scalar t = Norm(m_rQ), delta, zeta, t2 = t * t;
+
+	if ( t < BJOINT_EPS )
+	{
+		delta  = SCALAR_1_12 + SCALAR_1_720 * t2;
+		zeta = SCALAR_1 - SCALAR_1_12 * t2;
+	} else
+	{
+		zeta = SCALAR_1_2 * t * (SCALAR_1 + cos(t)) / sin(t);
+		delta = (SCALAR_1 - zeta) / t2;
+	}
+
+	return (delta * Inner(m_rQ, V)) * m_rQ + zeta * W - SCALAR_1_2 * Cross(m_rQ, W);
+}
+
 void VpControlModel::set_q(const object &q)
 {
     SE3 rootJointFrame = Exp(Axis(XD(q[0]), XD(q[1]), XD(q[2])));
@@ -1737,33 +1757,28 @@ bp::list VpControlModel::get_q()
 
 bp::list VpControlModel::get_dq()
 {
-    // Angular First for root joint
+    // Linear First for root joint
     bp::list ls;
-	SE3 rootBodyFrame = _nodes[0]->body.GetFrame();
-	SE3 rootJointFrame = rootBodyFrame * Inv(_boneTs[0]);
-    Axis jointDq;
 
-	Vec3 rootJointLinVel = _nodes[0]->body.GetLinVelocity(Inv(_boneTs[0]).GetPosition());
-
+    SE3 rootJointFrame = _nodes[0]->body.GetFrame() * Inv(_boneTs[0]);
     se3 rootBodyGenVelLocal = _nodes[0]->body.GetGenVelocityLocal();
-//    Vec3 rootJointAngVelLocal = Rotate(_boneTs[0], Vec3(rootBodyGenVelLocal[0], rootBodyGenVelLocal[1], rootBodyGenVelLocal[2]));
-//    Axis rootJointDq = GetDq(rootJointFrame, rootJointAngVelLocal);
-//
-//    for(int i=0; i<3; i++)
-//    {
-//        ls.append(rootJointDq[i]);
-//    }
-//    for(int i=0; i<3; i++)
-//    {
-//        ls.append(rootJointLinVel[i]);
-//    }
-    for(int i=0; i<6; i++)
+    se3 rootJointGenVelLocal = rootBodyGenVelLocal;
+    Vec3 rootJointAngVelLocal(rootJointGenVelLocal[0], rootJointGenVelLocal[1], rootJointGenVelLocal[2]);
+    Axis rootJointDq = GetDq_Body(rootJointFrame, rootJointAngVelLocal);
+    Vec3 rootJointLinVelGlobal = _nodes[0]->body.GetLinVelocity(Inv(_boneTs[0]).GetPosition());
+    for(int i=0; i<3; i++)
     {
-        ls.append(rootBodyGenVelLocal[i]);
+        ls.append(rootJointLinVelGlobal[i]);
+    }
+    for(int i=0; i<3; i++)
+    {
+//        ls.append(rootJointDq);
+        ls.append(rootJointAngVelLocal);
     }
 	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
 	{
-	    jointDq = _nodes[j]->joint.GetDisplacementDerivate();
+//	    Axis jointDq = _nodes[j]->joint.GetDisplacementDerivate();
+        Vec3 jointDq = _nodes[j]->joint.GetVelocity();
 	    for(int i=0; i<3; i++)
 	    {
             ls.append(jointDq[i]);
@@ -1777,35 +1792,32 @@ bp::list VpControlModel::get_dq_nested()
 {
     // Angular First for root joint
     bp::list ls;
-	SE3 rootBodyFrame = _nodes[0]->body.GetFrame();
-	SE3 rootJointFrame = rootBodyFrame * Inv(_boneTs[0]);
-    Axis jointDq;
-
-	Vec3 rootJointLinVel = _nodes[0]->body.GetLinVelocity(Inv(_boneTs[0]).GetPosition());
-
-    se3 rootBodyGenVelLocal = _nodes[0]->body.GetGenVelocityLocal();
-    Vec3 rootJointAngVelLocal = Rotate(_boneTs[0], Vec3(rootBodyGenVelLocal[0], rootBodyGenVelLocal[1], rootBodyGenVelLocal[2]));
-    Axis rootJointDq = GetDq(rootJointFrame, rootJointAngVelLocal);
-
 	ndarray rootGenVel = np::array(make_tuple(0.,0.,0.,0.,0.,0.));
 
+    SE3 rootJointFrame = _nodes[0]->body.GetFrame() * Inv(_boneTs[0]);
+    se3 rootBodyGenVelLocal = _nodes[0]->body.GetGenVelocityLocal();
+    se3 rootJointGenVelLocal = rootBodyGenVelLocal;
+    Vec3 rootJointAngVelLocal(rootJointGenVelLocal[0], rootJointGenVelLocal[1], rootJointGenVelLocal[2]);
+    Axis rootJointDq = GetDq_Body(rootJointFrame, rootJointAngVelLocal);
+    Vec3 rootJointLinVelGlobal = _nodes[0]->body.GetLinVelocity(Inv(_boneTs[0]).GetPosition());
     for(int i=0; i<3; i++)
     {
-        rootGenVel[i] = rootJointDq[i];
+//        rootGenVel[i] = rootJointDq[i];
+        rootGenVel[i+3] = rootJointAngVelLocal[i];
     }
     for(int i=0; i<3; i++)
     {
-        rootGenVel[i+3] = rootJointLinVel[i];
+        rootGenVel[i] = rootJointLinVelGlobal[i];
     }
-    for(int i=0; i<6; i++)
-        rootGenVel[i] = rootBodyGenVelLocal[i];
 
     ls.append(rootGenVel);
 
 	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
 	{
-	    jointDq = _nodes[j]->joint.GetDisplacementDerivate();
-	    ls.append(Axis_2_pyVec3(jointDq));
+//	    Axis jointDq = _nodes[j]->joint.GetDisplacementDerivate();
+//	    ls.append(Axis_2_pyVec3(jointDq));
+        Vec3 jointDq = _nodes[j]->joint.GetVelocity();
+	    ls.append(Vec3_2_pyVec3(jointDq));
 	}
 
 	return ls;
@@ -1814,41 +1826,16 @@ bp::list VpControlModel::get_dq_nested()
 
 void VpControlModel::set_ddq(const object & ddq)
 {
-    int ddq_index = 6;
     //TODO:
-    SE3 rootBodyFrame = _nodes[0]->body.GetFrame();
-    Vec3 rootBodyAngAccLocal(XD(ddq[0]), XD(ddq[1]), XD(ddq[2]));
-    Vec3 rootBodyLinAccLocal(XD(ddq[3]), XD(ddq[4]), XD(ddq[5]));
-//    Vec3 rootBodyLinAccLocal = InvRotate(rootBodyFrame, rootBodyLinAccGlobal);
-
-    se3 rootBodyGenAccLocal(rootBodyAngAccLocal[0], rootBodyAngAccLocal[1], rootBodyAngAccLocal[2],
-                            rootBodyLinAccLocal[0], rootBodyLinAccLocal[1], rootBodyLinAccLocal[2]);
-
-    _nodes[0]->body.SetGenAccelerationLocal(rootBodyGenAccLocal);
-	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
-	{
-        Axis jointDdq(XD(ddq[ddq_index]), XD(ddq[ddq_index+1]), XD(ddq[ddq_index+2]));
-        _nodes[j]->joint.SetDdq(jointDdq);
-        ddq_index += 3;
-	}
-}
-
-void VpControlModel::set_ddq_vp(const std::vector<double> & ddq)
-{
     int ddq_index = 6;
-    //TODO:
+    SE3 rootJointFrame = _nodes[0]->body.GetFrame() * Inv(_boneTs[0]);
+    Axis rootJointDdq(XD(ddq[3]), XD(ddq[4]), XD(ddq[5]));
+    _nodes[0]->joint.SetDdq(rootJointDdq);
+    Vec3 rootJointAngAccLocal = _nodes[0]->joint.GetAcceleration();
+    Vec3 rootBodyAngAccLocal = rootJointAngAccLocal;
 
-    SE3 rootBodyFrame = _nodes[0]->body.GetFrame();
-    SE3 rootJointFrame = rootBodyFrame * Inv(_boneTs[0]);
-    Vec3 offset = rootBodyFrame.GetPosition() - rootJointFrame.GetPosition();
-    Vec3 rootJointAngVelGlobal = _nodes[0]->body.GetAngVelocity();
-    Vec3 rootJointAngAccLocal(ddq[0], ddq[1], ddq[2]);
-    Vec3 rootJointAngAccGlobal = Rotate(rootJointFrame, rootJointAngAccLocal);
-    Vec3 rootBodyAngAccLocal = InvRotate(rootBodyFrame, rootJointAngAccGlobal);
-    Vec3 rootJointLinAccLocal(ddq[3], ddq[4], ddq[5]);
-//    Vec3 rootBodyLinAccGlobal =
-//        rootJointLinAccGlobal + Cross(rootJointAngAccGlobal, offset) + Cross(rootJointAngVelGlobal, Cross(rootJointAngVelGlobal, offset));
-//    Vec3 rootBodyLinAccLocal = InvRotate(rootBodyFrame, rootBodyLinAccGlobal);
+    Vec3 rootJointLinAccGlobal(XD(ddq[0]), XD(ddq[1]), XD(ddq[2]));
+    Vec3 rootJointLinAccLocal = InvRotate(rootJointFrame, rootJointLinAccGlobal);
     Vec3 rootBodyLinAccLocal = rootJointLinAccLocal;
 
     se3 rootBodyGenAccLocal(rootBodyAngAccLocal[0], rootBodyAngAccLocal[1], rootBodyAngAccLocal[2],
@@ -1857,8 +1844,38 @@ void VpControlModel::set_ddq_vp(const std::vector<double> & ddq)
     _nodes[0]->body.SetGenAccelerationLocal(rootBodyGenAccLocal);
 	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
 	{
-        Axis jointDdq(ddq[ddq_index], ddq[ddq_index+1], ddq[ddq_index+2]);
-        _nodes[j]->joint.SetDdq(jointDdq);
+//        Axis jointDdq(XD(ddq[ddq_index]), XD(ddq[ddq_index+1]), XD(ddq[ddq_index+2]));
+//        _nodes[j]->joint.SetDdq(jointDdq);
+        Vec3 jointDdq(XD(ddq[ddq_index]), XD(ddq[ddq_index+1]), XD(ddq[ddq_index+2]));
+        _nodes[j]->joint.SetAcceleration(jointDdq);
+        ddq_index += 3;
+	}
+}
+
+void VpControlModel::set_ddq_vp(const std::vector<double> & ddq)
+{
+    //TODO:
+    int ddq_index = 6;
+    SE3 rootJointFrame = _nodes[0]->body.GetFrame() * Inv(_boneTs[0]);
+    Axis rootJointDdq(ddq[3], ddq[4], ddq[5]);
+    _nodes[0]->joint.SetDdq(rootJointDdq);
+    Vec3 rootJointAngAccLocal = _nodes[0]->joint.GetAcceleration();
+    Vec3 rootBodyAngAccLocal = rootJointAngAccLocal;
+
+    Vec3 rootJointLinAccGlobal(ddq[0], ddq[1], ddq[2]);
+    Vec3 rootJointLinAccLocal = InvRotate(rootJointFrame, rootJointLinAccGlobal);
+    Vec3 rootBodyLinAccLocal = rootJointLinAccLocal;
+
+    se3 rootBodyGenAccLocal(rootBodyAngAccLocal[0], rootBodyAngAccLocal[1], rootBodyAngAccLocal[2],
+                            rootBodyLinAccLocal[0], rootBodyLinAccLocal[1], rootBodyLinAccLocal[2]);
+
+    _nodes[0]->body.SetGenAccelerationLocal(rootBodyGenAccLocal);
+	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
+	{
+//        Axis jointDdq(ddq[ddq_index], ddq[ddq_index+1], ddq[ddq_index+2]);
+//        _nodes[j]->joint.SetDdq(jointDdq);
+        Vec3 jointDdq(ddq[ddq_index], ddq[ddq_index+1], ddq[ddq_index+2]);
+        _nodes[j]->joint.SetAcceleration(jointDdq);
         ddq_index += 3;
 	}
 }
@@ -2915,27 +2932,14 @@ bp::tuple VpControlModel::computeCom_J_dJdq()
 	ublas::matrix<double> _Jw, _Jv;
 	ublas::vector<double> _dJdqw, _dJdqv;
 
-	//preprocessing : get joint frames and sum of ancestor's global angular velocity
+	//preprocessing : get joint frames
 	std::vector<SE3> joint_frames;
-	std::vector<Axis> sum_ancestors_joint_global_ang_vel;
-	joint_frames.push_back(_nodes[0]->body.GetFrame() * Inv(_boneTs[0]));
-	sum_ancestors_joint_global_ang_vel.push_back(Vec3_2_Axis(_nodes[0]->body.GetAngVelocity()));
-	Axis temp_ancestors_joint_global_ang_vel;
-	for (std::vector<Node*>::size_type i=1; i < _nodes.size(); i++)
-	{
+	for (std::vector<Node*>::size_type i=0; i < _nodes.size(); i++)
 	    joint_frames.push_back(_nodes[i]->body.GetFrame() * Inv(_boneTs[i]));
-	    int parent_index = _nodes[i]->parent_index;
-        temp_ancestors_joint_global_ang_vel =
-            sum_ancestors_joint_global_ang_vel[parent_index]
-            + Rotate(joint_frames[i], Vec3_2_Axis(_nodes[i]->joint.GetVelocity()));
-
-	    sum_ancestors_joint_global_ang_vel.push_back(temp_ancestors_joint_global_ang_vel);
-	}
 
 	//root joint
 	// jacobian
 	Vec3 effector_position, effector_velocity;
-    // _Jw = prod(SE3ToUblasRotate(joint_frames[0]), GetBJointJacobian(LogR(joint_frames[0])));
     _Jw = SE3ToUblasRotate(joint_frames[0]);
     for(std::vector<Node*>::size_type body_idx=0; body_idx < _nodes.size(); body_idx++)
     {
@@ -2944,11 +2948,12 @@ bp::tuple VpControlModel::computeCom_J_dJdq()
         _Jv = -prod(GetCrossMatrix(offset), _Jw);
         for (int dof_index = 0; dof_index < 3; dof_index++)
         {
+            J[6*body_idx + dof_index][dof_index] = 1.;
             for (int j=0; j<3; j++)
             {
-                J[6*body_idx + 0 + j][3 + dof_index] = joint_frames[0][3*dof_index + j];
-                J[6*body_idx + 0 + j][dof_index] = _Jv(j, dof_index);
-                J[6*body_idx + 3 + j][dof_index] = _Jw(j, dof_index);
+//                J[6*body_idx + 0 + j][3 + dof_index] = joint_frames[0][3*dof_index + j];
+                J[6*body_idx + 0 + j][3+dof_index] = _Jv(j, dof_index);
+                J[6*body_idx + 3 + j][3+dof_index] = _Jw(j, dof_index);
             }
         }
     }
@@ -2959,15 +2964,12 @@ bp::tuple VpControlModel::computeCom_J_dJdq()
     Vec3 root_joint_global_velocity = _nodes[0]->body.GetLinVelocity(Inv(_boneTs[0]).GetPosition());
     Axis root_m_rQ = LogR(joint_frames[0]);
     Axis root_m_rDq = GetBJointDq(root_m_rQ, root_joint_local_ang_vel);
-    Axis joint_dJdq = GetBJointDJDQ(root_m_rQ, root_m_rDq);
-    Axis joint_Jdq = GetBJointJDQ(root_m_rQ, root_m_rDq);
-    Axis joint_RJdq = Rotate(joint_frames[0], joint_Jdq);
+    // Vec3 joint_Jdq = GetBJointJDQ(root_m_rQ, root_m_rDq);
+    Vec3 joint_RJdq = _nodes[0]->body.GetAngVelocity();
 
     effector_velocity = _nodes[0]->get_body_com_velocity();
 
-    _dJdqw = ToUblasVector(
-        Rotate(joint_frames[0], joint_dJdq) + Cross(sum_ancestors_joint_global_ang_vel[0], joint_RJdq)
-        );
+    _dJdqw = ToUblasVector(Vec3(0.));
     for(std::vector<Node*>::size_type body_idx=0; body_idx < _nodes.size(); body_idx++)
     {
         effector_position = _nodes[body_idx]->get_body_position();
@@ -2986,17 +2988,17 @@ bp::tuple VpControlModel::computeCom_J_dJdq()
     Vec3 joint_global_pos, joint_global_velocity;
     for(std::vector<Node*>::size_type i=1; i<_nodes.size(); i++)
     {
+        int parent_joint_index = _nodes[i]->parent_index;
         int dof_start_index = _nodes[i]->dof_start_index;
         m_rQ = _nodes[i]->joint.GetDisplacement();
         m_rDq = _nodes[i]->joint.GetDisplacementDerivate();
         joint_global_pos = joint_frames[i].GetPosition();
         joint_global_velocity = _nodes[i]->body.GetLinVelocity(Inv(_boneTs[0]).GetPosition());
-        _Jw = prod(SE3ToUblasRotate(joint_frames[i]), GetBJointJacobian(m_rQ));
+        _Jw =SE3ToUblasRotate(joint_frames[i]);
 
-        joint_dJdq = GetBJointDJDQ(m_rQ, m_rDq);
-        joint_Jdq = GetBJointJDQ(m_rQ, m_rDq);
+        Vec3 joint_Jdq = _nodes[i]->joint.GetVelocity();
         joint_RJdq = Rotate(joint_frames[i], joint_Jdq);
-        _dJdqw = ToUblasVector(Rotate(joint_frames[i], joint_dJdq) + Cross(sum_ancestors_joint_global_ang_vel[i], joint_RJdq));
+        _dJdqw = ToUblasVector(Cross(_nodes[parent_joint_index]->body.GetAngVelocity(), joint_RJdq));
 
         for(std::vector<Node*>::size_type body_idx=1; body_idx < _nodes.size(); body_idx++)
         {
@@ -3033,7 +3035,6 @@ bp::tuple VpControlModel::computeCom_J_dJdq()
 
 	return bp::make_tuple(J, dJdq);
 }
-
 
 
 /////////////////////////////////////////
