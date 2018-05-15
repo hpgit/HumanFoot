@@ -1746,16 +1746,20 @@ bp::list VpControlModel::get_dq()
 	Vec3 rootJointLinVel = _nodes[0]->body.GetLinVelocity(Inv(_boneTs[0]).GetPosition());
 
     se3 rootBodyGenVelLocal = _nodes[0]->body.GetGenVelocityLocal();
-    Vec3 rootJointAngVelLocal = Rotate(_boneTs[0], Vec3(rootBodyGenVelLocal[0], rootBodyGenVelLocal[1], rootBodyGenVelLocal[2]));
-    Axis rootJointDq = GetDq(rootJointFrame, rootJointAngVelLocal);
-
-    for(int i=0; i<3; i++)
+//    Vec3 rootJointAngVelLocal = Rotate(_boneTs[0], Vec3(rootBodyGenVelLocal[0], rootBodyGenVelLocal[1], rootBodyGenVelLocal[2]));
+//    Axis rootJointDq = GetDq(rootJointFrame, rootJointAngVelLocal);
+//
+//    for(int i=0; i<3; i++)
+//    {
+//        ls.append(rootJointDq[i]);
+//    }
+//    for(int i=0; i<3; i++)
+//    {
+//        ls.append(rootJointLinVel[i]);
+//    }
+    for(int i=0; i<6; i++)
     {
-        ls.append(rootJointDq[i]);
-    }
-    for(int i=0; i<3; i++)
-    {
-        ls.append(rootJointLinVel[i]);
+        ls.append(rootBodyGenVelLocal[i]);
     }
 	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
 	{
@@ -1793,6 +1797,8 @@ bp::list VpControlModel::get_dq_nested()
     {
         rootGenVel[i+3] = rootJointLinVel[i];
     }
+    for(int i=0; i<6; i++)
+        rootGenVel[i] = rootBodyGenVelLocal[i];
 
     ls.append(rootGenVel);
 
@@ -1810,14 +1816,15 @@ void VpControlModel::set_ddq(const object & ddq)
 {
     int ddq_index = 6;
     //TODO:
-    Axis rootJointAngAccGlobal(XD(ddq[0]), XD(ddq[1]), XD(ddq[2]));
-    Vec3 rootJointLinAccGlobal(XD(ddq[3]), XD(ddq[4]), XD(ddq[5]));
-    for(int i=0; i<3; i++)
-    {
-    }
-    for(int i=3; i<6; i++)
-    {
-    }
+    SE3 rootBodyFrame = _nodes[0]->body.GetFrame();
+    Vec3 rootBodyAngAccLocal(XD(ddq[0]), XD(ddq[1]), XD(ddq[2]));
+    Vec3 rootBodyLinAccLocal(XD(ddq[3]), XD(ddq[4]), XD(ddq[5]));
+//    Vec3 rootBodyLinAccLocal = InvRotate(rootBodyFrame, rootBodyLinAccGlobal);
+
+    se3 rootBodyGenAccLocal(rootBodyAngAccLocal[0], rootBodyAngAccLocal[1], rootBodyAngAccLocal[2],
+                            rootBodyLinAccLocal[0], rootBodyLinAccLocal[1], rootBodyLinAccLocal[2]);
+
+    _nodes[0]->body.SetGenAccelerationLocal(rootBodyGenAccLocal);
 	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
 	{
         Axis jointDdq(XD(ddq[ddq_index]), XD(ddq[ddq_index+1]), XD(ddq[ddq_index+2]));
@@ -1838,10 +1845,11 @@ void VpControlModel::set_ddq_vp(const std::vector<double> & ddq)
     Vec3 rootJointAngAccLocal(ddq[0], ddq[1], ddq[2]);
     Vec3 rootJointAngAccGlobal = Rotate(rootJointFrame, rootJointAngAccLocal);
     Vec3 rootBodyAngAccLocal = InvRotate(rootBodyFrame, rootJointAngAccGlobal);
-    Vec3 rootJointLinAccGlobal(ddq[3], ddq[4], ddq[5]);
-    Vec3 rootBodyLinAccGlobal =
-        rootJointLinAccGlobal + Cross(rootJointAngAccGlobal, offset) + Cross(rootJointAngVelGlobal, Cross(rootJointAngVelGlobal, offset));
-    Vec3 rootBodyLinAccLocal = InvRotate(rootBodyFrame, rootBodyLinAccLocal);
+    Vec3 rootJointLinAccLocal(ddq[3], ddq[4], ddq[5]);
+//    Vec3 rootBodyLinAccGlobal =
+//        rootJointLinAccGlobal + Cross(rootJointAngAccGlobal, offset) + Cross(rootJointAngVelGlobal, Cross(rootJointAngVelGlobal, offset));
+//    Vec3 rootBodyLinAccLocal = InvRotate(rootBodyFrame, rootBodyLinAccGlobal);
+    Vec3 rootBodyLinAccLocal = rootJointLinAccLocal;
 
     se3 rootBodyGenAccLocal(rootBodyAngAccLocal[0], rootBodyAngAccLocal[1], rootBodyAngAccLocal[2],
                             rootBodyLinAccLocal[0], rootBodyLinAccLocal[1], rootBodyLinAccLocal[2]);
@@ -2927,7 +2935,8 @@ bp::tuple VpControlModel::computeCom_J_dJdq()
 	//root joint
 	// jacobian
 	Vec3 effector_position, effector_velocity;
-    _Jw = prod(SE3ToUblasRotate(joint_frames[0]), GetBJointJacobian(LogR(joint_frames[0])));
+    // _Jw = prod(SE3ToUblasRotate(joint_frames[0]), GetBJointJacobian(LogR(joint_frames[0])));
+    _Jw = SE3ToUblasRotate(joint_frames[0]);
     for(std::vector<Node*>::size_type body_idx=0; body_idx < _nodes.size(); body_idx++)
     {
         effector_position = _nodes[body_idx]->get_body_position();
@@ -2935,9 +2944,9 @@ bp::tuple VpControlModel::computeCom_J_dJdq()
         _Jv = -prod(GetCrossMatrix(offset), _Jw);
         for (int dof_index = 0; dof_index < 3; dof_index++)
         {
-            J[6*body_idx + dof_index][3+dof_index] = 1.;
             for (int j=0; j<3; j++)
             {
+                J[6*body_idx + 0 + j][3 + dof_index] = joint_frames[0][3*dof_index + j];
                 J[6*body_idx + 0 + j][dof_index] = _Jv(j, dof_index);
                 J[6*body_idx + 3 + j][dof_index] = _Jw(j, dof_index);
             }

@@ -267,7 +267,7 @@ def main():
     controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
     # controlModel_shadow_for_ik = cvm.VpControlModel(vpWorld, motion[0], mcfg)
     vpWorld.initialize()
-    controlModel.initializeHybridDynamics(True)
+    controlModel.initializeHybridDynamics()
 
     # controlToMotionOffset = (1.5, -0.02, 0)
     controlToMotionOffset = (1.5, 0, 0)
@@ -601,8 +601,11 @@ def main():
             kt = Kt * weightMap[0]
             dt = Dt * (weightMap[0]**.5)
             # dt = 0.
-        a_des0 = kt*(p_r0 - p0) + dt*(v_r0 - v0)
-        ddth_des0 = kt*(mm.logSO3(np.dot(th0.transpose(), th_r0))) + dt*(dth_r0 - dth0)
+        # a_des0 = kt*(p_r0 - p0) + dt*(v_r0 - v0)
+        # ddth_des0 = kt*(mm.logSO3(np.dot(th0.transpose(), th_r0))) + dt*(dth_r0 - dth0)
+        # ddth_des[0] = np.concatenate((a_des0, ddth_des0))
+        a_des0 = kt*(p_r0 - p0) - dt * np.dot(th0, v0)
+        ddth_des0 = kt*(mm.logSO3(np.dot(th0.transpose(), th_r0))) - dt*dth0
         ddth_des[0] = np.concatenate((a_des0, ddth_des0))
 
         for i in range(1, len(_th_r)):
@@ -880,7 +883,7 @@ def main():
         # to do that, set joint velocities to vpModel
         CM_ref_plane = footCenter
         # CM_ref_plane = footCenter_ref
-        dL_des_plane = Kl * totalMass * (CM_ref_plane - CM_plane) # - 0.1*Dl * totalMass * dCM_plane
+        dL_des_plane = Kl * totalMass * (CM_ref_plane - CM_plane) - Dl * totalMass * dCM_plane
         print('dL_des_plane: ', dL_des_plane)
         # dL_des_plane[1] = 0.
         # print('dCM_plane : ', np.linalg.norm(dCM_plane))
@@ -974,10 +977,11 @@ def main():
 
         # if contact == 2:
         #     mot.addSoftPointConstraintTerms(problem, totalDOF, Bsc, ddP_des1, Q1, q_bias1)
+        print(ddth_des_flat)
 
         mot.addTrackingTerms(problem, totalDOF, Bt, w, ddth_des_flat)
         if dH_des is not None:
-            mot.addLinearTerms(problem, totalDOF, Bl, dL_des_plane, R, r_bias)
+            # mot.addLinearTerms(problem, totalDOF, Bl, dL_des_plane, R, r_bias)
             # mot.addAngularTerms(problem, totalDOF, Bh, dH_des, S, s_bias)
 
             # mot.setConstraint(problem, totalDOF, Jsup, dJsup, dth_flat, a_sup)
@@ -994,10 +998,14 @@ def main():
                 contactChangeType = 0
 
         r = problem.solve()
+        print(r)
         problem.clear()
         ddth_sol_flat = np.asarray(r['x'])
+        print(ddth_sol_flat)
         # print(np.dot(Jsys, ddth_sol_flat))
         if J_contacts:
+            print(J_contacts[0])
+            print(dJ_contacts[0])
             print(np.dot(J_contacts[0], ddth_sol_flat)+dJ_contacts[0])
         # ddth_sol_flat[foot_seg_dofs] = np.array(ddth_des_flat)[foot_seg_dofs]
         ype.nested(ddth_sol_flat, ddth_sol)
