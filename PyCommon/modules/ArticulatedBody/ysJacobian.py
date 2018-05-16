@@ -168,6 +168,9 @@ def computeJacobianDerivative2(dJ, jointDOFs, jointPositions, jointAxeses, linkA
             else:
                 parentLinkAngVel_jth_joint = linkAngVels[j-1] if j>0 else (0,0,0)
 
+            dP_effector_from_joint = get_dP_effector_from_joint2(j, jointPositions, linkAngVels, effectorJointMasks[e], effectorPositions[e], internalJointsOnly)
+            # print('ysJa: ', e, j, effectorPositions[e]-jointPosition_jth_joint, dP_effector_from_joint, jointAxes_jth_joint)
+
             for d in range(jointDOF_jth_joint):
                 if effectorJointMasks is None or effectorJointMasks[e][j]:
                     axis_colth_dof = jointAxes_jth_joint[d]
@@ -181,7 +184,7 @@ def computeJacobianDerivative2(dJ, jointDOFs, jointPositions, jointAxeses, linkA
                         # Z(i)<cross>(<sum j=i to n>w(j+1)<cross>P(j+1, j)) + (w(i)<cross>Z(i))<cross>P(n+1, i)
                         # instanteneousAcceleration_colth_dof = np.cross(axis_colth_dof, get_dP_effector_from_joint2(j, jointPositions, linkAngVels, effectorJointMasks[e], effectorPositions[e], internalJointsOnly)) \
                         #                                       + np.cross(np.cross(parentLinkAngVel_jth_joint, axis_colth_dof), effectorPositions[e]-jointPosition_jth_joint)
-                        instanteneousAcceleration_colth_dof = cm.cross(axis_colth_dof, get_dP_effector_from_joint2(j, jointPositions, linkAngVels, effectorJointMasks[e], effectorPositions[e], internalJointsOnly)) \
+                        instanteneousAcceleration_colth_dof = cm.cross(axis_colth_dof, dP_effector_from_joint) \
                                                               + cm.cross(instanteneousAngAcceleration_colth_dof, effectorPositions[e]-jointPosition_jth_joint)
                     else:   # translationalDOF
                         instanteneousAngAcceleration_colth_dof = [0.,0.,0.] 
@@ -218,6 +221,7 @@ def get_dP_effector_from_joint2(jointIndex, jointPositions, linkAngVels, effecto
         index = jointIndexes[i]
         jointPosition = jointPositions[index]
         childPosition = jointPositions[jointIndexes[i+1]] if i < len(jointIndexes)-1 else effectorPosition
+        # childPosition = effectorPosition
         linkAngVel = linkAngVels[index] if not internalJointsOnly else linkAngVels[index+1]
         # dP += np.cross(linkAngVel, childPosition - jointPosition)
         dP += cm.cross(linkAngVel, childPosition - jointPosition)

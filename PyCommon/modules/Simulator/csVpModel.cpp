@@ -2959,23 +2959,18 @@ bp::tuple VpControlModel::computeCom_J_dJdq()
     }
 
     // jacobian derivative
-    Vec3 root_joint_local_ang_vel = InvRotate(joint_frames[0], _nodes[0]->body.GetAngVelocity());
-    Vec3 root_joint_global_pos = joint_frames[0].GetPosition();
-    Vec3 root_joint_global_velocity = _nodes[0]->body.GetLinVelocity(Inv(_boneTs[0]).GetPosition());
-    Axis root_m_rQ = LogR(joint_frames[0]);
-    Axis root_m_rDq = GetBJointDq(root_m_rQ, root_joint_local_ang_vel);
-    // Vec3 joint_Jdq = GetBJointJDQ(root_m_rQ, root_m_rDq);
-    Vec3 joint_RJdq = _nodes[0]->body.GetAngVelocity();
-
-    effector_velocity = _nodes[0]->get_body_com_velocity();
+    Vec3 joint_global_pos = joint_frames[0].GetPosition();
+    Vec3 joint_global_velocity = _nodes[0]->body.GetLinVelocity(Inv(_boneTs[0]).GetPosition());
+    Vec3 joint_global_ang_vel = _nodes[0]->body.GetAngVelocity();
 
     _dJdqw = ToUblasVector(Vec3(0.));
     for(std::vector<Node*>::size_type body_idx=0; body_idx < _nodes.size(); body_idx++)
     {
         effector_position = _nodes[body_idx]->get_body_position();
-        offset = ToUblasVector(effector_position - root_joint_global_pos);
-        offset_velocity = ToUblasVector(effector_velocity - root_joint_global_velocity);
-        _dJdqv = -cross(offset, _dJdqw) - cross(offset_velocity, ToUblasVector(joint_RJdq));
+        offset = ToUblasVector(effector_position - joint_global_pos);
+        effector_velocity = _nodes[body_idx]->get_body_com_velocity();
+        offset_velocity = ToUblasVector(effector_velocity - joint_global_velocity);
+        _dJdqv = -cross(offset, _dJdqw) - cross(offset_velocity, ToUblasVector(joint_global_ang_vel));
         for (int j=0; j<3; j++)
         {
             dJdq[6*body_idx + 0 + j] += _dJdqv(j);
@@ -2984,21 +2979,16 @@ bp::tuple VpControlModel::computeCom_J_dJdq()
     }
 
     //internal joint
-    Axis m_rQ, m_rDq;
-    Vec3 joint_global_pos, joint_global_velocity;
     for(std::vector<Node*>::size_type i=1; i<_nodes.size(); i++)
     {
         int parent_joint_index = _nodes[i]->parent_index;
         int dof_start_index = _nodes[i]->dof_start_index;
-        m_rQ = _nodes[i]->joint.GetDisplacement();
-        m_rDq = _nodes[i]->joint.GetDisplacementDerivate();
         joint_global_pos = joint_frames[i].GetPosition();
-        joint_global_velocity = _nodes[i]->body.GetLinVelocity(Inv(_boneTs[0]).GetPosition());
-        _Jw =SE3ToUblasRotate(joint_frames[i]);
+        joint_global_velocity = _nodes[i]->body.GetLinVelocity(Inv(_boneTs[i]).GetPosition());
+        _Jw = SE3ToUblasRotate(joint_frames[i]);
 
-        Vec3 joint_Jdq = _nodes[i]->joint.GetVelocity();
-        joint_RJdq = Rotate(joint_frames[i], joint_Jdq);
-        _dJdqw = ToUblasVector(Cross(_nodes[parent_joint_index]->body.GetAngVelocity(), joint_RJdq));
+        joint_global_ang_vel = Rotate(joint_frames[i], _nodes[i]->joint.GetVelocity());
+        _dJdqw = ToUblasVector(Cross(_nodes[parent_joint_index]->body.GetAngVelocity(), joint_global_ang_vel));
 
         for(std::vector<Node*>::size_type body_idx=1; body_idx < _nodes.size(); body_idx++)
         {
@@ -3023,7 +3013,7 @@ bp::tuple VpControlModel::computeCom_J_dJdq()
 
                 // jacobian derivatives
                 offset_velocity = ToUblasVector(effector_velocity - joint_global_velocity);
-                _dJdqv = -cross(offset, _dJdqw) - cross(offset_velocity, ToUblasVector(joint_RJdq));
+                _dJdqv = -cross(offset, _dJdqw) - cross(offset_velocity, ToUblasVector(joint_global_ang_vel));
                 for (int j=0; j<3; j++)
                 {
                     dJdq[6*body_idx + 0 + j] += _dJdqv(j);
@@ -3386,90 +3376,22 @@ bp::list VpControlModel::getEquationOfMotion(object& M, object& b)
 	//}
 
 	//get b
-	se3 zero_se3(0.0);
-	Vec3 zero_Vec3(0.0);
-	Hip->SetGenAccelerationLocal(zero_se3);
-	// Hip->SetGenAcceleration(zero_se3);
-	for(int i=0; i<n; i++)
-	{
-		vpBJoint *joint = &(_nodes.at(i+1)->joint);
-		joint->SetAcceleration(zero_Vec3);
-	}
-	Hip->GetSystem()->InverseDynamics();
-	dse3 hipTorque_tmp_b = Hip->GetForce(); // represented in body frame
-	SE3 hipFrame = Hip->GetFrame();
-	{
-		b[0] = hipTorque_tmp_b[3];
-		b[1] = hipTorque_tmp_b[4];
-		b[2] = hipTorque_tmp_b[5];
-		b[3] = hipTorque_tmp_b[0];
-		b[4] = hipTorque_tmp_b[1];
-		b[5] = hipTorque_tmp_b[2];
-	}
-	//std::cout << "Hip velocity: " << Hip->GetGenVelocity();
-	for(int i=0; i<n; i++)
-	{
-		Vec3 torque(0,0,0);
-		vpBJoint *joint = &(_nodes.at(i+1)->joint);
-		torque = joint->GetTorque();
-		//std::cout << "name: " << _nodes[i+1]->name <<std::endl;
-		//std::cout << "torque: " << joint->GetTorque(); 
-		//std::cout << "velocity: " << joint->GetVelocity();
-		for(int j=0; j<3; j++)
-		{
-			b[6+3*i+j] = torque[j];
-		}
-	}
+	std::vector<double> ddq;
+	for(int i=0; i<N; i++)
+	    ddq.push_back(0.);
+
+	set_ddq_vp(ddq);
+	_nodes[0]->body.GetSystem()->InverseDynamics();
 
 	//get M
 	for(int i=0; i<N; i++)
 	{
-		//Hip->ResetForce();
-		//for(int i=0; i<_nodes.size(); i++)
-		//{
-			////_nodes.at(i)->body.ResetForce();
-			//_nodes.at(i)->joint.SetTorque(Vec3(0,0,0));
-		//}
-		Vec3 acc_hip(0.0);
-		Axis accang_hip(0.0);
-		if (i < 3) acc_hip[i] = 1.0;
-		else if(i<6) accang_hip[i-3] = 1.0;
-		for(int j=0; j<n; j++)
-		{
-			Vec3 acc(0., 0., 0.);
-			if ( i >= 6 && (i-6)/3 == j )
-				acc[ (i-6)%3 ] = 1.;
-			vpBJoint *joint = &(_nodes.at(j+1)->joint);
-			joint->SetAcceleration(acc);
-		}
-		{
-			se3 genAccBodyLocal(accang_hip, acc_hip);
-			Hip->SetGenAccelerationLocal(genAccBodyLocal);
-			// Hip->SetGenAcceleration(genAccBodyLocal);
-		}
+	    ddq[i] = 1.;
+	    if(i > 0)
+	        ddq[i+1] = 0.;
 
-		Hip->GetSystem()->InverseDynamics();
-		dse3 hipTorque_tmp = Hip->GetForce();
-		for (int j = 0; j < 3; j++)
-		{
-			M[j][i] = hipTorque_tmp[j+3] - hipTorque_tmp_b[j+3];
-		}
-		for (int j = 3; j < 6; j++)
-		{
-			M[j][i] = hipTorque_tmp[j-3] - hipTorque_tmp_b[j-3];
-		}
-		//for (int j = 0; j < 6; j++)
-			//M[j][i] = hipTorque_tmp[j] - hipTorque_tmp_b[j];
-		for(int j=0; j<n; j++)
-		{
-			Vec3 torque(0,0,0);
-			vpBJoint *joint = &(_nodes.at(j+1)->joint);
-			torque = joint->GetTorque();
-			for(int k=0; k<3; k++)
-			{
-				M[6+3*j+k][i] = torque[k] - b[6+3*j+k];
-			}
-		}
+	    _nodes[0]->body.GetSystem()->InverseDynamics();
+
 	}
 
 	// restore ddq and tau
