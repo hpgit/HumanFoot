@@ -9,13 +9,11 @@ if '../..' not in sys.path:
 from PyCommon.modules.Math import mmMath as mm
 from PyCommon.modules.Resource import ysMotionLoader as yf
 from PyCommon.modules.Renderer import ysRenderer as yr
-# from PyCommon.modules.Renderer import csVpRenderer as cvr
 from PyCommon.modules.Simulator import csVpWorld as cvw
 from PyCommon.modules.Simulator import csVpModel as cvm
 # from PyCommon.modules.GUI import ysSimpleViewer as ysv
 from PyCommon.modules.GUI import hpSimpleViewer as hsv
 from PyCommon.modules.Optimization import ysAnalyticConstrainedOpt as yac
-from PyCommon.modules.ArticulatedBody import ysJacobian as yjc
 from PyCommon.modules.Util import ysPythonEx as ype
 from PyCommon.modules.ArticulatedBody import ysReferencePoints as yrp
 from PyCommon.modules.ArticulatedBody import ysMomentum as ymt
@@ -24,19 +22,15 @@ from PyCommon.modules.ArticulatedBody import hpInvKineDart as hik
 
 from MomentumProject.foot_example_segfoot_constraint import mtOptimize as mot
 from MomentumProject.foot_example_segfoot_constraint import mtInitialize as mit
-
-# import mtOptimize as mot
-# import mtInitialize as mit
+from MomentumProject.foot_example_segfoot_constraint.foot_window import FootWindow
 
 # from PyCommon.modules.ArticulatedBody import hpFootIK as hfi
-from scipy.spatial import Delaunay
+# from scipy.spatial import Delaunay
 
-# from PyCommon.modules import pydart2 as pydart
-import pydart2 as pydart
-from PyCommon.modules.Simulator import csDartModel as cdm
-
-from OpenGL.GL import *
-from OpenGL.GLUT import *
+# import pydart2 as pydart
+# from PyCommon.modules.Simulator import csDartModel as cdm
+# from OpenGL.GL import *
+# from OpenGL.GLUT import *
 
 
 g_initFlag = 0
@@ -57,207 +51,6 @@ preFootCenter = [None]
 DART_CONTACT_ON = False
 SKELETON_ON = False
 
-
-class PressureFrameInfo:
-    def __init__(self):
-        self.contact_seg_idx = []
-        self.contact_seg_position_local = []
-        self.contact_seg_forces = []
-
-
-class FootPressureGlWindow(Fl_Gl_Window):
-    def __init__(self, x, y, w, h, model):
-        Fl_Gl_Window.__init__(self, x, y, w, h)
-        self.initGL()
-        self.rc = yr.RenderContext()
-        self.model = model
-
-        self.foot_index = []
-        self.left_foot_index = []
-        self.right_foot_index = []
-        self.foot_seg_index = []
-        self.left_seg_index = []
-        self.right_seg_index = []
-
-        self.geom_ids = []
-        self.geom_names = []
-        self.geom_types = []
-        self.geom_trans = []
-        self.geom_sizes = []
-        self.body_trans = []
-
-        self.pressure_info = {}  # type: dict[int, PressureFrameInfo]
-
-        self.frame = -1
-
-        self.init_model()
-
-    def init_model(self):
-        for joint_idx in range(self.model.getJointNum()):
-            joint_name = self.model.index2name(joint_idx)
-            if 'Foot' in joint_name:
-                self.foot_index.append(joint_idx)
-                if 'Left' in joint_name:
-                    self.left_foot_index.append(joint_idx)
-                elif 'Right' in joint_name:
-                    self.right_foot_index.append(joint_idx)
-
-            if 'foot' in joint_name:
-                self.foot_seg_index.append(joint_idx)
-                if 'Left' in joint_name:
-                    self.left_seg_index.append(joint_idx)
-                elif 'Right' in joint_name:
-                    self.right_seg_index.append(joint_idx)
-
-        q = self.model.get_q()
-        q_zero = np.zeros_like(q)
-        self.model.set_q(q_zero)
-        for seg_idx in self.foot_seg_index:
-            for i in range(self.model.getBodyGeomNum(seg_idx)):
-                self.geom_names.append(self.model.index2name(seg_idx))
-                self.geom_ids.append(seg_idx)
-                self.body_trans.append(self.model.getBodyTransformGlobal(seg_idx))
-            self.geom_types.extend(self.model.getBodyGeomsType(seg_idx))
-            self.geom_sizes.extend(self.model.getBodyGeomsSize(seg_idx))
-            self.geom_trans.extend(self.model.getBodyGeomsGlobalFrame(seg_idx))
-
-        self.model.set_q(q)
-
-    def refresh_foot_contact_info(self, frame, world, bodyIDsToCheck, mus, Ks, Ds):
-        if frame not in self.pressure_info:
-            self.pressure_info[frame] = PressureFrameInfo()
-            bodyIDs, contactPositions, contactPositionLocals, contactForces = world.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
-            self.pressure_info[frame].contact_seg_idx.extend(bodyIDs)
-            self.pressure_info[frame].contact_seg_position_local.extend(contactPositionLocals)
-            self.pressure_info[frame].contact_seg_forces.extend(contactForces)
-        self.redraw()
-
-    def goToFrame(self, frame):
-        self.frame = frame
-
-    def initGL(self):
-        glClearColor(1., 1., 1., 1.)
-        self.projectOrtho(3)
-
-    def draw(self):
-        frame = self.frame
-        glClear(GL_COLOR_BUFFER_BIT)
-        # self.rc.drawCircle(1.)
-        # self.rc.drawCapsule2D(.2, .2)
-        force_max = None
-        if self.pressure_info:
-            force_max = max([mm.length(force) for force in self.pressure_info[frame].contact_seg_forces]) if self.pressure_info[frame].contact_seg_forces else 1000.
-        for i in range(len(self.geom_types)):
-            geom_seg_idx = self.geom_ids[i]
-            geom_name = self.geom_names[i]
-            geom_type = self.geom_types[i]
-            geom_size = self.geom_sizes[i]
-            geom_tran = self.geom_trans[i].copy()
-            geom_body_tran = self.body_trans[i].copy()
-            geom_tran[0, 3], geom_tran[1, 3], geom_tran[2, 3] = -geom_tran[0, 3], geom_tran[2, 3], 0.
-            # geom_tran[1, 3] = geom_tran[2, 3]
-            # geom_tran[2, 3] = 0
-            geom_body_tran[0, 3], geom_body_tran[1, 3], geom_body_tran[2, 3] = -geom_body_tran[0, 3], geom_body_tran[2, 3], 0.
-            # geom_body_tran[1, 3] = geom_body_tran[2, 3]
-            # geom_body_tran[2, 3] = 0
-
-            if False and geom_type is 'ELLIPSOID':
-                # print(geom_tran)
-                glPushMatrix()
-                glMultMatrixf(geom_tran.T)
-                glScalef(geom_size[0], geom_size[1], geom_size[2])
-                self.rc.drawCircle(1.)
-                glPopMatrix()
-            elif geom_type in ('B', 'BOX'):
-                pass
-
-            if geom_type in ('C', 'D', 'E'):
-                # print(geom_seg_idx, geom_name)
-                # print(geom_tran)
-                # print(geom_body_tran)
-                glPushMatrix()
-                if 'Left' in geom_name:
-                    glTranslatef(-0.3, -0.3, 0.)
-                else:
-                    glTranslatef(0.3, -0.3, 0.)
-                # glRotatef(180., 0., 1., 0.)
-                glScalef(4., 4., 4.)
-                glPushMatrix()
-                glMultMatrixf(geom_tran.T)
-                glColor3f(1., 1., 1.)
-                self.rc.drawCapsule2D(geom_size[0], geom_size[1] - 2.*geom_size[0])
-                glPopMatrix()
-
-                # draw distribution of forces
-                glMultMatrixf(geom_body_tran.T)
-
-                if self.pressure_info:
-                    for contact_idx in np.where(np.array(self.pressure_info[frame].contact_seg_idx) == geom_seg_idx)[0]:
-                        glPushMatrix()
-                        trans = self.pressure_info[frame].contact_seg_position_local[contact_idx]
-                        # print(geom_seg_idx, geom_name, trans, geom_size[0])
-                        # print(mm.length(self.contact_seg_forces[contact_idx]))
-                        normalized_force = mm.length(self.pressure_info[frame].contact_seg_forces[contact_idx])/force_max
-                        glTranslatef(trans[0], trans[1], trans[2])
-                        if normalized_force < 0.5:
-                            glColor3f(0., 2.*normalized_force, 1. - 2.*normalized_force)
-                        else:
-                            glColor3f(2.*(normalized_force-0.5), 1. - 2.*(normalized_force-0.5), 0.)
-                        # glColor3f(1., 0., 0.)
-                        self.rc.drawSphere(geom_size[0])
-                        glPopMatrix()
-                glPopMatrix()
-            elif geom_type is 'CYLINDER':
-                glPushMatrix()
-                if 'Left' in geom_name:
-                    glTranslatef(-0.3, -0.3, 0.)
-                else:
-                    glTranslatef(0.3, -0.3, 0.)
-                glRotatef(180., 0., 1., 0.)
-                glScalef(4., 4., 4.)
-                glMultMatrixf(geom_tran.T)
-                if geom_seg_idx in self.pressure_info[frame].contact_seg_idx:
-                    glColor3f(1., 0., 0.)
-                else:
-                    glColor3f(1., 1., 1.)
-                self.rc.drawCapsule2D(geom_size[1], geom_size[0] - 2.*geom_size[1])
-                glPopMatrix()
-
-    def projectOrtho(self, distance):
-        glViewport(0, 0, self.w(), self.h())
-        glMatrixMode(GL_PROJECTION)
-        glLoadIdentity()
-        x = float(self.w())/float(self.h()) * distance
-        y = 1. * distance
-        glOrtho(-.5*x, .5*x, -.5*y, .5*y, -1000., 1000.)
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-
-
-class FootWindow(Fl_Window):
-    def __init__(self, x, y, w, h, title, model):
-        Fl_Window.__init__(self, x, y, w, h, title)
-        y_padding = 20
-
-        self.model = model
-
-        self.begin()
-
-        self.check_op_l = Fl_Check_Button(10, 10, 30, 30, 'OP')
-        self.check_ip_l = Fl_Check_Button(50, 10, 30, 30, 'IP')
-        self.check_om_l = Fl_Check_Button(10, 50, 30, 30, 'OM')
-        self.check_im_l = Fl_Check_Button(50, 50, 30, 30, 'IM')
-        self.check_h_l = Fl_Check_Button(30, 90, 30, 30, 'H')
-
-        self.check_op_r = Fl_Check_Button(150, 10, 30, 30, 'OP')
-        self.check_ip_r = Fl_Check_Button(110, 10, 30, 30, 'IP')
-        self.check_om_r = Fl_Check_Button(150, 50, 30, 30, 'OM')
-        self.check_im_r = Fl_Check_Button(110, 50, 30, 30, 'IM')
-        self.check_h_r = Fl_Check_Button(130, 90, 30, 30, 'H')
-
-        self.foot_pressure_gl_window = FootPressureGlWindow(50, 150, 200, 200, model)
-
-        self.end()
 
 
 def main():
@@ -327,31 +120,11 @@ def main():
     Bl = config['Bl']
     Bh = config['Bh']
 
-    supL = motion[0].skeleton.getJointIndex(config['supLink1'])
-    supR = motion[0].skeleton.getJointIndex(config['supLink2'])
-
     selectedBody = motion[0].skeleton.getJointIndex(config['end'])
     constBody = motion[0].skeleton.getJointIndex('RightFoot')
 
-    # jacobian
-    # JsupL = yjc.makeEmptyJacobian(DOFs, 1)
-    # dJsupL = JsupL.copy()
-    # JsupPreL = JsupL.copy()
-    #
-    # JsupR = yjc.makeEmptyJacobian(DOFs, 1)
-    # dJsupR = JsupR.copy()
-    # JsupPreR = JsupR.copy()
-
-    Jconst = yjc.makeEmptyJacobian(DOFs, 1)
-    dJconst = Jconst.copy()
-    JconstPre = Jconst.copy()
-
-    Jsys = yjc.makeEmptyJacobian(DOFs, controlModel.getBodyNum())
-    dJsys_temp = Jsys.copy()
-    JsysPre = Jsys.copy()
-
-    constJointMasks = [yjc.getLinkJointMask(motion[0].skeleton, constBody)]
-    allLinkJointMasks = yjc.getAllLinkJointMasks(motion[0].skeleton)
+    supL = motion[0].skeleton.getJointIndex('LeftFoot')
+    supR = motion[0].skeleton.getJointIndex('RightFoot')
 
     # momentum matrix
     linkMasses = controlModel.getBodyMasses()
@@ -472,50 +245,6 @@ def main():
     # foot_viewer = FootWindow(viewer.x() + viewer.w() + 20, viewer.y(), 300, 400, 'foot contact modifier', controlModel)
     foot_viewer = None  # type: FootWindow
 
-    # success!!
-    # initKt = 50
-    # initKl = 10.1
-    # initKh = 3.1
-
-    # initBl = .1
-    # initBh = .1
-    # initSupKt = 21.6
-
-    # initFm = 100.0
-
-    # success!! -- 2015.2.12. double stance
-    # initKt = 50
-    # initKl = 37.1
-    # initKh = 41.8
-
-    # initBl = .1
-    # initBh = .13
-    # initSupKt = 21.6
-
-    # initFm = 165.0
-
-    # single stance
-    # initKt = 25
-    # initKl = 80.1
-    # initKh = 10.8
-
-    # initBl = .1
-    # initBh = .13
-    # initSupKt = 21.6
-
-    # initFm = 50.0
-
-    # single stance -> double stance
-    # initKt = 25
-    # initKl = 60.
-    # initKh = 20.
-
-    # initBl = .1
-    # initBh = .13
-    # initSupKt = 21.6
-
-    # initFm = 50.0
-
     initKt = 25
     initKl = 100.
     initKh = 100.
@@ -599,12 +328,6 @@ def main():
     foot_left_idx_temp = motion[0].skeleton.getJointIndex('LeftFoot_foot_1_0')
     foot_right_idx_temp = motion[0].skeleton.getJointIndex('RightFoot_foot_1_0')
 
-    def get_jacobianbase_and_masks(skeleton, DOFs, joint_idx):
-        J = yjc.makeEmptyJacobian(DOFs, 1)
-        joint_masks = [yjc.getLinkJointMask(skeleton, joint_idx)]
-
-        return J, joint_masks
-
     # ik_solver = hik.numIkSolver(dartIkModel)
     # ik_solver.clear()
 
@@ -640,17 +363,11 @@ def main():
         global contact
         global contactChangeType
 
-        # Kt, Kl, Kh, Bl, Bh, kt_sup = viewer.GetParam()
         Kt, Kl, Kh, Bl, Bh, kt_sup = getParamVals(['Kt', 'Kl', 'Kh', 'Bl', 'Bh', 'SupKt'])
         Dt = 2*(Kt**.5)
         Dl = 2*(Kl**.5)
         Dh = 2*(Kh**.5)
         dt_sup = 2*(kt_sup**.5)
-
-        doubleTosingleOffset = 0.15
-        singleTodoubleOffset = 0.30
-        # doubleTosingleOffset = 0.09
-        doubleTosingleVelOffset = 0.0
 
         # tracking
         th_r = motion.getDOFPositions(frame)
@@ -661,9 +378,7 @@ def main():
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
 
         ype.flatten(ddth_des, ddth_des_flat)
-        # ddth_des_flat = Kt * (motion.get_q(frame) - np.array(controlModel.get_q())) - Dt * np.array(controlModel.get_dq())
         ype.flatten(dth, dth_flat)
-        # dth_flat = np.array(controlModel.get_dq())
 
         #################################################
         # jacobian
@@ -713,54 +428,8 @@ def main():
         ref_body_vel = [ref_joint_vel[i] + np.cross(ref_joint_angvel[i], ref_body_pos[i] - ref_joint_pos[i])
                         for i in range(len(ref_joint_vel))]
 
-        J_contacts = [yjc.makeEmptyJacobian(DOFs, 1) for i in range(len(contact_ids))]
-        dJ_contacts = [yjc.makeEmptyJacobian(DOFs, 1) for i in range(len(contact_ids))]
-        joint_masks = [yjc.getLinkJointMask(motion[0].skeleton, joint_idx) for joint_idx in contact_ids]
-
-        # caution!! body orientation and joint orientation of foot are totally different!!
-        footOriL = controlModel.getJointOrientationGlobal(supL)
-        footOriR = controlModel.getJointOrientationGlobal(supR)
-
-        # desire footCenter[1] = 0.041135
-        # desire footCenter[1] = 0.0197
-        footCenterL = controlModel.getBodyPositionGlobal(supL)
-        footCenterR = controlModel.getBodyPositionGlobal(supR)
-        footBodyOriL = controlModel.getBodyOrientationGlobal(supL)
-        footBodyOriR = controlModel.getBodyOrientationGlobal(supR)
-        footBodyVelL = controlModel.getBodyVelocityGlobal(supL)
-        footBodyVelR = controlModel.getBodyVelocityGlobal(supR)
-        footBodyAngVelL = controlModel.getBodyAngVelocityGlobal(supL)
-        footBodyAngVelR = controlModel.getBodyAngVelocityGlobal(supR)
-
-        refFootL = motionModel.getBodyPositionGlobal(supL)
-        refFootR = motionModel.getBodyPositionGlobal(supR)
-        refFootVelL = motionModel.getBodyVelocityGlobal(supL)
-        refFootVelR = motionModel.getBodyVelocityGlobal(supR)
-        refFootAngVelL = motionModel.getBodyAngVelocityGlobal(supL)
-        refFootAngVelR = motionModel.getBodyAngVelocityGlobal(supR)
-
-        refFootJointVelR = motion.getJointVelocityGlobal(supR, frame)
-        refFootJointAngVelR = motion.getJointAngVelocityGlobal(supR, frame)
-        refFootJointR = motion.getJointPositionGlobal(supR, frame)
-        refFootVelR = refFootJointVelR + np.cross(refFootJointAngVelR, (refFootR-refFootJointR))
-
-        refFootJointVelL = motion.getJointVelocityGlobal(supL, frame)
-        refFootJointAngVelL = motion.getJointAngVelocityGlobal(supL, frame)
-        refFootJointL = motion.getJointPositionGlobal(supL, frame)
-        refFootVelL = refFootJointVelL + np.cross(refFootJointAngVelL, (refFootL-refFootJointL))
 
         is_contact = [1] * len(contact_ids)
-        contactR = 1
-        contactL = 1
-        if refFootVelR[1] < 0 and refFootVelR[1]/30. + refFootR[1] > singleTodoubleOffset:
-            contactR = 0
-        if refFootVelL[1] < 0 and refFootVelL[1]/30. + refFootL[1] > singleTodoubleOffset:
-            contactL = 0
-        if refFootVelR[1] > 0 and refFootVelR[1]/30. + refFootR[1] > doubleTosingleOffset:
-            contactR = 0
-        if refFootVelL[1] > 0 and refFootVelL[1]/30. + refFootL[1] > doubleTosingleOffset:
-            contactL = 0
-        # contactR = 1
 
         contMotionOffset = th[0][0] - th_r[0][0]
 
@@ -779,76 +448,19 @@ def main():
         P = ymt.getPureInertiaMatrix(TO, linkMasses, linkPositions, CM, linkInertias)
         dP = ymt.getPureInertiaMatrixDerivative(dTO, linkMasses, linkVelocities, dCM, linkAngVelocities, linkInertias)
 
-        # calculate contact state
-        # if g_initFlag == 1 and contact == 1 and refFootR[1] < doubleTosingleOffset and footCenterR[1] < 0.08:
-        if g_initFlag == 1:
-            # contact state
-            # 0: flying 1: right only 2: left only 3: double
-            # if contact == 2 and refFootR[1] < doubleTosingleOffset:
-            print(contact, contactR, contactL)
-            if contact == 2 and contactR == 1:
-                contact = 3
-                maxContactChangeCount += 30
-                contactChangeCount += maxContactChangeCount
-                contactChangeType = 'StoD'
-
-            # elif contact == 3 and refFootL[1] < doubleTosingleOffset:
-            elif contact == 1 and contactL == 1:
-                contact = 3
-                maxContactChangeCount += 30
-                contactChangeCount += maxContactChangeCount
-                contactChangeType = 'StoD'
-
-            # elif contact == 3 and refFootR[1] > doubleTosingleOffset:
-            elif contact == 3 and contactR == 0:
-                contact = 2
-                contactChangeCount += maxContactChangeCount
-                contactChangeType = 'DtoS'
-
-            # elif contact == 3 and refFootL[1] > doubleTosingleOffset:
-            elif contact == 3 and contactL == 0:
-                contact = 1
-                contactChangeCount += maxContactChangeCount
-                contactChangeType = 'DtoS'
-            else:
-                contact = 0
-                # if refFootR[1] < doubleTosingleOffset:
-                if contactR == 1:
-                    contact += 1
-                # if refFootL[1] < doubleTosingleOffset:
-                if contactL == 1:
-                    contact += 2
-
-        # initialization
-        if g_initFlag == 0:
-            # JsysPre = Jsys.copy()
-            JconstPre = Jconst.copy()
-            softConstPoint = footCenterR.copy()
-            # yjc.computeJacobian2(JsysPre, DOFs, jointPositions, jointAxeses, linkPositions, allLinkJointMasks)
-            # yjc.computeJacobian2(JconstPre, DOFs, jointPositions, jointAxeses, [softConstPoint], constJointMasks)
-
-            footCenter = footCenterL + (footCenterR - footCenterL)/2.0
-            footCenter[1] = 0.
-            preFootCenter[0] = footCenter.copy()
-            # footToBodyFootRotL = np.dot(np.transpose(footOriL), footBodyOriL)
-            # footToBodyFootRotR = np.dot(np.transpose(footOriR), footBodyOriR)
-
-            if refFootR[1] < doubleTosingleOffset:
-                contact += 1
-            if refFootL[1] < doubleTosingleOffset:
-                contact += 2
-
-            g_initFlag = 1
 
         # calculate jacobian
         Jsys, dJsys = controlModel.computeCom_J_dJdq()
-        for i in range(len(J_contacts)):
-            J_contacts[i] = Jsys[6*contact_ids[i]:6*contact_ids[i] + 6, :]
-            dJ_contacts[i] = dJsys[6*contact_ids[i]:6*contact_ids[i] + 6]
+        J_contacts = []  # type: list[np.ndarray]
+        dJ_contacts = []  # type: list[np.ndarray]
+        for contact_id in contact_ids:
+            J_contacts.append(Jsys[6*contact_id:6*contact_id + 6, :])
+            dJ_contacts.append(dJsys[6*contact_id:6*contact_id + 6])
 
         # calculate footCenter
         footCenter = sum(contact_body_pos) / len(contact_body_pos) if len(contact_body_pos) > 0 \
                         else .5 * (controlModel.getBodyPositionGlobal(supL) + controlModel.getBodyPositionGlobal(supR))
+        footCenter[1] = 0.
         # if len(contact_body_pos) > 2:
         #     hull = ConvexHull(contact_body_pos)
 
@@ -859,26 +471,20 @@ def main():
         #     hull = ConvexHull(ref_body_pos)
         footCenter_ref[1] = 0.
 
-        # footCenter = footCenterL + (footCenterR - footCenterL)/2.0
-        # if refFootR[1] >doubleTosingleOffset:
-        # if refFootR[1] > doubleTosingleOffset or footCenterR[1] > 0.08:
-        # if contact == 1 or footCenterR[1] > 0.08:
-        # if contact == 2 or footCenterR[1] > doubleTosingleOffset/2:
-        if contact == 2:
-            footCenter = footCenterL.copy()
-        # elif contact == 1 or footCenterL[1] > doubleTosingleOffset/2:
-        if contact == 1:
-            footCenter = footCenterR.copy()
-        footCenter[1] = 0.
-
         footCenter[0] = footCenter[0] + getParamVal('com X offset')
 
-        # if contactChangeCount > 0 and contactChangeType == 'StoD':
+        # initialization
+        if g_initFlag == 0:
+            preFootCenter[0] = footCenter.copy()
+            g_initFlag = 1
+
+        if contactChangeCount == 0 and np.linalg.norm(footCenter - preFootCenter[0]) > 0.01:
+            contactChangeCount += 30
         if contactChangeCount > 0:
             # change footcenter gradually
-            footCenter = preFootCenter + (maxContactChangeCount - contactChangeCount)*(footCenter-preFootCenter)/maxContactChangeCount
-
-        preFootCenter = footCenter.copy()
+            footCenter = preFootCenter[0] + (maxContactChangeCount - contactChangeCount)*(footCenter-preFootCenter[0])/maxContactChangeCount
+        else:
+            preFootCenter[0] = footCenter.copy()
 
         # linear momentum
         # TODO:
@@ -889,13 +495,12 @@ def main():
         # CM_ref_plane = footCenter_ref
         dL_des_plane = Kl * totalMass * (CM_ref_plane - CM_plane) - Dl * totalMass * dCM_plane
         # dL_des_plane[1] = 0.
-        print('dCM_plane : ', np.linalg.norm(dCM_plane))
+        # print('dCM_plane : ', np.linalg.norm(dCM_plane))
 
         # angular momentum
         CP_ref = footCenter
         # CP_ref = footCenter_ref
         bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
-        # bodyIDs, contactPositions, contactPositionLocals, contactForces, contactVelocities = vpWorld.calcManyPenaltyForce(0, bodyIDsToCheck, mus, Ks, Ds)
         CP = yrp.getCP(contactPositions, contactForces)
         if CP_old[0] is None or CP is None:
             dCP = None
@@ -979,20 +584,13 @@ def main():
 
         w = mot.getTrackingWeight(DOFs, motion[0].skeleton, config['weightMap'])
 
-        # if contact == 2:
-        #     mot.addSoftPointConstraintTerms(problem, totalDOF, Bsc, ddP_des1, Q1, q_bias1)
-
         mot.addTrackingTerms(problem, totalDOF, Bt, w, ddth_des_flat)
         if dH_des is not None:
             mot.addLinearTerms(problem, totalDOF, Bl, dL_des_plane, R, r_bias)
             mot.addAngularTerms(problem, totalDOF, Bh, dH_des, S, s_bias)
 
-            # mot.setConstraint(problem, totalDOF, Jsup, dJsup, dth_flat, a_sup)
-            # mot.addConstraint(problem, totalDOF, Jsup, dJsup, dth_flat, a_sup)
-            # if contact & 1 and contactChangeCount == 0:
             if True:
                 for c_idx in range(len(contact_ids)):
-                    # mot.addConstraint(problem, totalDOF, J_contacts[c_idx], dJ_contacts[c_idx], dth_flat, a_sups[c_idx])
                     mot.addConstraint2(problem, totalDOF, J_contacts[c_idx], dJ_contacts[c_idx], dth_flat, a_sups[c_idx])
 
         if contactChangeCount > 0:
@@ -1047,20 +645,9 @@ def main():
         for contact_id in contact_ids:
             control_model_renderer.body_colors[contact_id] = (255, 0, 0)
 
-        rightFootVectorX[0] = np.dot(footOriL, np.array([.1, 0, 0]))
-        rightFootVectorY[0] = np.dot(footOriL, np.array([0, .1, 0]))
-        rightFootVectorZ[0] = np.dot(footOriL, np.array([0, 0, .1]))
-        rightFootPos[0] = footCenterL
-
-        rightVectorX[0] = np.dot(footBodyOriL, np.array([.1, 0, 0]))
-        rightVectorY[0] = np.dot(footBodyOriL, np.array([0, .1, 0]))
-        rightVectorZ[0] = np.dot(footBodyOriL, np.array([0, 0, .1]))
-        rightPos[0] = footCenterL + np.array([.1, 0, 0])
 
         rd_footCenter[0] = footCenter
         rd_footCenter_ref[0] = footCenter_ref
-        rd_footCenterL[0] = footCenterL
-        rd_footCenterR[0] = footCenterR
 
         rd_CM[0] = CM
 

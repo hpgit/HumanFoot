@@ -3395,7 +3395,8 @@ bp::list VpControlModel::getEquationOfMotion(object& M, object& b)
 	}
 
 	// restore ddq and tau
-	
+
+	Vec3 zero_Vec3(0.);
 	for(int i=0; i<n; i++)
 	{
 		vpBJoint *joint = &(_nodes.at(i+1)->joint);

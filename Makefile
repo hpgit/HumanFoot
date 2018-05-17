@@ -38,7 +38,7 @@ install_dependencies_mac:
 	cp $(VP_DIR)/usr/lib/Win32/gccRelease/libvpLib.a $(MODULE_LIB_DIR)/
 	cd $(qpOASES_DIR);[ -e bin ] || mkdir -p bin;make
 	cp $(qpOASES_DIR)/bin/libqpOASES.a $(MODULE_LIB_DIR)/
-	cd $(PYDART2_DIR);make
+	# cd $(PYDART2_DIR);make
 
 run:
 	cd MomentumProject;python -i $(PYTHON_FILE)

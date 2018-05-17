@@ -336,7 +336,7 @@ void VpModelRenderer::render(int renderType)
 
     for( VpModel::NODES_ITOR it=_pModel->_nodes.begin(); it!=_pModel->_nodes.end(); ++it)
     {
-        VpModel::Node* pNode = *it;
+        Node* pNode = *it;
         if (pNode != NULL)
         {
             if (renderType != RENDER_SHADOW)
