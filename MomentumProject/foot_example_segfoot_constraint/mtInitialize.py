@@ -290,7 +290,8 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
                          ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*2.5 + 2.*SEGMENT_FOOT_RAD))
             node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([-0.3-1.2, 0., 2.5*0.25]), mm.exp([0., -math.atan2(1.2, 2.5), 0.])],
                          ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*2.5 + 2.*SEGMENT_FOOT_RAD))
-            node.jointType = footJointType
+            # node.jointType = footJointType
+            node.jointType = 'B'
 
             # RightFoot_foot_0_0_0 : outside phalanges
             capsulize('RightFoot_foot_0_0_0')
@@ -298,6 +299,8 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
             node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             node.addGeom('MyFoot4', [SEGMENT_FOOT_MAG*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             node.jointType = footJointType
+            # node.jointType = 'R'
+            # node.jointAxes = ['X']
 
             # RightFoot_foot_0_1 : inside metatarsals
             capsulize('RightFoot_foot_0_1')
@@ -305,6 +308,8 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
             node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity,SEGMENT_FOOT_RAD, -1))
             node.jointType = footJointType
+            # node.jointType = 'R'
+            # node.jointAxes = ['Z']
 
             # RightFoot_foot_0_1_0 : inside phalanges
             capsulize('RightFoot_foot_0_1_0')
@@ -312,6 +317,8 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
             node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             node.addGeom('MyFoot4', [SEGMENT_FOOT_MAG*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             node.jointType = footJointType
+            # node.jointType = 'R'
+            # node.jointAxes = ['X']
 
             # RightFoot_foot_1_0 : center heel
             capsulize('RightFoot_foot_1_0')
@@ -320,33 +327,43 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
                          ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*1.2+2.*SEGMENT_FOOT_RAD))
             node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([+.6, 0., 0.]), mm.exp([0.]*3)],
                          ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*1.2+2.*SEGMENT_FOOT_RAD))
-            node.jointType = footJointType
+            # node.jointType = footJointType
+            node.jointType = 'B'
 
+            # left foot
+            # outside metatarsals
             capsulize('LeftFoot_foot_0_0')
             node = mcfg.getNode('LeftFoot_foot_0_0')
             node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([0.3, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])],
                          ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*2.5+2.*SEGMENT_FOOT_RAD))
             node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([0.3+1.2, 0., 2.5*0.25]), mm.exp([0., math.atan2(1.2, 2.5), 0.])],
                          ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*2.5+2.*SEGMENT_FOOT_RAD))
-            node.jointType = footJointType
+            # node.jointType = footJointType
+            node.jointType = 'B'
 
             capsulize('LeftFoot_foot_0_0_0')
             node = mcfg.getNode('LeftFoot_foot_0_0_0')
             node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             node.addGeom('MyFoot4', [SEGMENT_FOOT_MAG*np.array([1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             node.jointType = footJointType
+            # node.jointType = 'R'
+            # node.jointAxes = ['X']
 
             capsulize('LeftFoot_foot_0_1')
             node = mcfg.getNode('LeftFoot_foot_0_1')
             node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             node.jointType = footJointType
+            # node.jointType = 'R'
+            # node.jointAxes = ['Z']
 
             capsulize('LeftFoot_foot_0_1_0')
             node = mcfg.getNode('LeftFoot_foot_0_1_0')
             node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             node.addGeom('MyFoot4', [SEGMENT_FOOT_MAG*np.array([-1.2, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             node.jointType = footJointType
+            # node.jointType = 'R'
+            # node.jointAxes = ['X']
 
             capsulize('LeftFoot_foot_1_0')
             node = mcfg.getNode('LeftFoot_foot_1_0')
@@ -354,7 +371,8 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
                          ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*1.2+2.*SEGMENT_FOOT_RAD))
             node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([+.6, 0., .0]), mm.exp([0.]*3)],
                          ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*1.2+2.*SEGMENT_FOOT_RAD))
-            node.jointType = footJointType
+            # node.jointType = footJointType
+            node.jointType = 'B'
 
         else:  # SEGMENT_FOOT_INSIDE_FIRST
             # TODO:

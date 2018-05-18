@@ -150,7 +150,7 @@ public:	// expose to python
 	int									 GetNumThreads(void);
 
 	void								 SetGlobalDamping(scalar);
-	scalar								 GetGlobalDampling(void);
+	scalar								 GetGlobalDamping(void);
 
 	int									 GetFrameCount(void);
 

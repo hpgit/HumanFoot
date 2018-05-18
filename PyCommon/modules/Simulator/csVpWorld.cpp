@@ -65,7 +65,7 @@ BOOST_PYTHON_MODULE(csVpWorld)
 		.def("SetNumThreads", &VpWorld::SetNumThreads)
 		.def("GetNumThreads", &VpWorld::GetNumThreads)
 		.def("SetGlobalDamping", &VpWorld::SetGlobalDamping)
-		.def("GetGlobalDampling", &VpWorld::GetGlobalDampling)
+		.def("GetGlobalDamping", &VpWorld::GetGlobalDamping)
 		.def("GetFrameCount", &VpWorld::GetFrameCount)
 		.def("ReportStatistics", &VpWorld::ReportStatistics)
 		.def("ResetStatistics", &VpWorld::ResetStatistics)
@@ -642,7 +642,7 @@ void VpWorld::SetGlobalDamping(scalar d)
 	_world.SetGlobalDamping(d);
 }
 
-scalar VpWorld::GetGlobalDampling()
+scalar VpWorld::GetGlobalDamping()
 {
 	return _world.GetGlobalDampling();
 }

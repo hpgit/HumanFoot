@@ -22,6 +22,7 @@ public:
     vpBody body;
     vpMaterial material;
     vpBJoint joint;
+    vpRJoint joint_revolute;
     int dof;
     int dof_start_index;
     bool use_joint;

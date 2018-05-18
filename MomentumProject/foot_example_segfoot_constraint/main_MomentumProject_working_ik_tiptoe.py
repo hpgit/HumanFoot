@@ -60,7 +60,18 @@ def main():
     motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_jump_biped()
 
+    init_tiptoe = 0.4
+    if True:
+        for i in range(len(motion)):
+            motion[i].mulJointOrientationLocal(19, mm.exp(mm.unitX(), -math.pi * init_tiptoe))
+            motion[i].mulJointOrientationLocal(21, mm.exp(mm.unitX(), -math.pi * init_tiptoe))
+            motion[i].mulJointOrientationLocal(5, mm.exp(mm.unitX(), -math.pi * init_tiptoe))
+            motion[i].mulJointOrientationLocal(7, mm.exp(mm.unitX(), -math.pi * init_tiptoe))
+            motion[i].mulJointOrientationLocal(17, mm.exp(mm.unitX(), math.pi * init_tiptoe*0.95))
+            motion[i].mulJointOrientationLocal(3, mm.exp(mm.unitX(), math.pi * init_tiptoe*0.95))
+
     vpWorld = cvw.VpWorld(wcfg)
+    vpWorld.SetGlobalDamping(0.999)
     motionModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)
     controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
     # controlModel_shadow_for_ik = cvm.VpControlModel(vpWorld, motion[0], mcfg)
@@ -68,7 +79,8 @@ def main():
     controlModel.initializeHybridDynamics()
 
     # controlToMotionOffset = (1.5, -0.02, 0)
-    controlToMotionOffset = (1.5, 0, 0)
+    # controlToMotionOffset = (1.5, 0., 0)
+    controlToMotionOffset = (1.5, 0.1, 0)
     controlModel.translateByOffset(controlToMotionOffset)
     # controlModel_shadow_for_ik.set_q(controlModel.get_q())
     # controlModel_shadow_for_ik.computeJacobian(0, np.array([0., 0., 0.]))
@@ -165,6 +177,9 @@ def main():
     rd_exfen_des = [None]
     rd_root_des = [None]
 
+    rd_foot_ori = [None]
+    rd_foot_pos = [None]
+
     rd_root_ori = [None]
     rd_root_pos = [None]
 
@@ -204,7 +219,6 @@ def main():
 
         return Ts
 
-
     # viewer = ysv.SimpleViewer()
     viewer = hsv.hpSimpleViewer(rect=[0, 0, 1024, 768], viewForceWnd=False)
     # viewer.record(False)
@@ -228,6 +242,7 @@ def main():
     viewer.doc.addRenderer('rd_dH_des', yr.VectorsRenderer(rd_dH_des, rd_CM, (0,255,0)))
     # viewer.doc.addRenderer('rd_grf_des', yr.ForcesRenderer(rd_grf_des, rd_CP_des, (0,255,0), .001))
     viewer.doc.addRenderer('rd_CF', yr.VectorsRenderer(rd_CF, rd_CF_pos, (255,255,0)))
+    viewer.doc.addRenderer('rd_foot_ori', yr.OrientationsRenderer(rd_foot_ori, rd_foot_pos, (255,255,0)))
 
     viewer.doc.addRenderer('rd_root_ori', yr.OrientationsRenderer(rd_root_ori, rd_root_pos, (255,255,0)))
 
@@ -270,6 +285,8 @@ def main():
     viewer.objectInfoWnd.add1DSlider("com Y offset", -1., 1., 0.01, initComY)
     viewer.objectInfoWnd.add1DSlider("com Z offset", -1., 1., 0.01, initComZ)
     viewer.objectInfoWnd.add1DSlider("tiptoe angle", .0, .5, 0.001, 0.)
+    viewer.objectInfoWnd.add1DSlider("left tilt angle", .0, .5, 0.001, 0.)
+    viewer.objectInfoWnd.add1DSlider("right tilt angle", .0, .5, 0.001, 0.)
 
     viewer.force_on = False
 
@@ -331,6 +348,28 @@ def main():
     # ik_solver = hik.numIkSolver(dartIkModel)
     # ik_solver.clear()
 
+    # bodyIDsToCheck = rIDlist.copy()
+
+    joint_names = [motion[0].skeleton.getJointName(i) for i in range(motion[0].skeleton.getJointNum())]
+
+    def fix_dofs(_DOFs, nested_dof_values, _mcfg, _joint_names):
+        fixed_nested_dof_values = list()
+        fixed_nested_dof_values.append(nested_dof_values[0])
+        for i in range(1, len(_DOFs)):
+            dof = _DOFs[i]
+            if dof == 1:
+                node = _mcfg.getNode(_joint_names[i])
+                axis = mm.unitZ()
+                if node.jointAxes[0] == 'X':
+                    axis = mm.unitX()
+                elif node.jointAxes[0] == 'Y':
+                    axis = mm.unitY()
+                fixed_nested_dof_values.append(np.array([np.dot(nested_dof_values[i], axis)]))
+            else:
+                fixed_nested_dof_values.append(nested_dof_values[i])
+
+        return fixed_nested_dof_values
+
     ###################################
     # simulate
     ###################################
@@ -338,13 +377,19 @@ def main():
         # print(frame)
         # print(motion[frame].getJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0']))
         if getParamVal('tiptoe angle') > 0.001:
-            # print('force on, frame: ', frame)
             tiptoe_angle = getParamVal('tiptoe angle')
             motion[frame].mulJointOrientationLocal(footIdDic['LeftFoot_foot_0_0_0'], mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
             motion[frame].mulJointOrientationLocal(footIdDic['LeftFoot_foot_0_1_0'], mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
             motion[frame].mulJointOrientationLocal(footIdDic['RightFoot_foot_0_0_0'], mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
             motion[frame].mulJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0'], mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
-        # print(motion[frame].getJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0']))
+            motion[frame].mulJointOrientationLocal(supL, mm.exp(mm.unitX(), math.pi * tiptoe_angle))
+            motion[frame].mulJointOrientationLocal(supR, mm.exp(mm.unitX(), math.pi * tiptoe_angle))
+        if getParamVal('left tilt angle') > 0.001:
+            left_tilt_angle = getParamVal('left tilt angle')
+            motion[frame].mulJointOrientationLocal(footIdDic['LeftFoot_foot_0_1'], mm.exp(mm.unitZ(), -math.pi * left_tilt_angle))
+        if getParamVal('right tilt angle') > 0.001:
+            right_tilt_angle = getParamVal('right tilt angle')
+            motion[frame].mulJointOrientationLocal(footIdDic['RightFoot_foot_0_1'], mm.exp(mm.unitZ(), math.pi * right_tilt_angle))
         motionModel.update(motion[frame])
         controlModel_ik.set_q(controlModel.get_q())
 
@@ -377,8 +422,8 @@ def main():
         ddth_r = motion.getDOFAccelerations(frame)
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
 
-        ype.flatten(ddth_des, ddth_des_flat)
-        ype.flatten(dth, dth_flat)
+        ype.flatten(fix_dofs(DOFs, ddth_des, mcfg, joint_names), ddth_des_flat)
+        ype.flatten(fix_dofs(DOFs, dth, mcfg, joint_names), dth_flat)
 
         #################################################
         # jacobian
@@ -428,8 +473,9 @@ def main():
         ref_body_vel = [ref_joint_vel[i] + np.cross(ref_joint_angvel[i], ref_body_pos[i] - ref_joint_pos[i])
                         for i in range(len(ref_joint_vel))]
 
-
         is_contact = [1] * len(contact_ids)
+        contact_right = len(set(contact_des_ids).intersection(rIDlist)) > 0
+        contact_left = len(set(contact_des_ids).intersection(lIDlist)) > 0
 
         contMotionOffset = th[0][0] - th_r[0][0]
 
@@ -447,7 +493,6 @@ def main():
 
         P = ymt.getPureInertiaMatrix(TO, linkMasses, linkPositions, CM, linkInertias)
         dP = ymt.getPureInertiaMatrixDerivative(dTO, linkMasses, linkVelocities, dCM, linkAngVelocities, linkInertias)
-
 
         # calculate jacobian
         Jsys, dJsys = controlModel.computeCom_J_dJdq()
@@ -478,8 +523,8 @@ def main():
             preFootCenter[0] = footCenter.copy()
             g_initFlag = 1
 
-        if contactChangeCount == 0 and np.linalg.norm(footCenter - preFootCenter[0]) > 0.01:
-            contactChangeCount += 30
+        # if contactChangeCount == 0 and np.linalg.norm(footCenter - preFootCenter[0]) > 0.01:
+        #     contactChangeCount += 30
         if contactChangeCount > 0:
             # change footcenter gradually
             footCenter = preFootCenter[0] + (maxContactChangeCount - contactChangeCount)*(footCenter-preFootCenter[0])/maxContactChangeCount
@@ -563,7 +608,7 @@ def main():
         # optimization
         #######################################################
         # if contact == 2 and footCenterR[1] > doubleTosingleOffset/2:
-        if contact == 2:
+        if contact_left and not contact_right:
             config['weightMap']['RightUpLeg'] = .8
             config['weightMap']['RightLeg'] = .8
             config['weightMap']['RightFoot'] = .8
@@ -573,7 +618,7 @@ def main():
             config['weightMap']['RightFoot'] = .2
 
         # if contact == 1 and footCenterL[1] > doubleTosingleOffset/2:
-        if contact == 1:
+        if contact_right and not contact_left:
             config['weightMap']['LeftUpLeg'] = .8
             config['weightMap']['LeftLeg'] = .8
             config['weightMap']['LeftFoot'] = .8
@@ -662,6 +707,16 @@ def main():
             rd_dH_des[0] = dH_des
 
             rd_grf_des[0] = dL_des_plane - totalMass * mm.s2v(wcfg.gravity)
+
+        del rd_foot_ori[:]
+        del rd_foot_pos[:]
+        # for seg_foot_id in footIdlist:
+        #     rd_foot_ori.append(controlModel.getJointOrientationGlobal(seg_foot_id))
+        #     rd_foot_pos.append(controlModel.getJointPositionGlobal(seg_foot_id))
+        rd_foot_ori.append(controlModel.getJointOrientationGlobal(supL))
+        rd_foot_ori.append(controlModel.getJointOrientationGlobal(supR))
+        rd_foot_pos.append(controlModel.getJointPositionGlobal(supL))
+        rd_foot_pos.append(controlModel.getJointPositionGlobal(supR))
 
         rd_root_des[0] = rootPos[0]
         rd_root_ori[0] = controlModel.getBodyOrientationGlobal(0)

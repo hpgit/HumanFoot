@@ -1334,7 +1334,9 @@ bp::list VpControlModel::getInternalJointDOFs()
 {
 	bp::list ls;
 	for(std::vector<int>::size_type i=1; i<_nodes.size(); ++i)
-		ls.append(3);
+	{
+		ls.append(_nodes[i]->dof);
+    }
 	return ls;
 }
 
@@ -1352,7 +1354,9 @@ bp::list VpControlModel::getDOFs()
 	bp::list ls;
 	ls.append(6);
 	for(std::vector<int>::size_type i=1; i<_nodes.size(); ++i)
-		ls.append(3);
+	{
+		ls.append(_nodes[i]->dof);
+    }
 	return ls;
 }
 
@@ -1470,8 +1474,25 @@ void VpControlModel::_createJoint( const object& joint, const object& posture, c
 		//object parentOffset = parentCfgNode.attr("offset");
 		//SE3 parentOffsetT = SE3(pyVec3_2_Vec3(parentOffset));
 
-		pParentNode->body.SetJoint(&pNode->joint, Inv(_boneTs[parent_index])*Inv(invLocalT));
-		pNode->body.SetJoint(&pNode->joint, Inv(_boneTs[joint_index]));
+        if (0 == std::string(XS(cfgNode.attr("jointType"))).compare("B"))
+        {
+            pParentNode->body.SetJoint(&pNode->joint, Inv(_boneTs[parent_index])*Inv(invLocalT));
+            pNode->body.SetJoint(&pNode->joint, Inv(_boneTs[joint_index]));
+        }
+        else if (0 == std::string(XS(cfgNode.attr("jointType"))).compare("R"))
+        {
+            pParentNode->body.SetJoint(&pNode->joint_revolute, Inv(_boneTs[parent_index])*Inv(invLocalT));
+            pNode->body.SetJoint(&pNode->joint_revolute, Inv(_boneTs[joint_index]));
+            if (0 == std::string(XS(cfgNode.attr("jointAxes")[0])).compare("X"))
+                pNode->joint_revolute.SetAxis(Vec3(1., 0., 0.));
+            else if (0 == std::string(XS(cfgNode.attr("jointAxes")[0])).compare("Y"))
+                pNode->joint_revolute.SetAxis(Vec3(0., 1., 0.));
+            else if (0 == std::string(XS(cfgNode.attr("jointAxes")[0])).compare("Z"))
+                pNode->joint_revolute.SetAxis(Vec3(0., 0., 1.));
+            pNode->dof = 1;
+        }
+        else
+            std::cout << joint_name <<" " << std::string(XS(cfgNode.attr("jointType"))) << " is an unsupported joint type." << std::endl;
 
 		scalar kt = 16.;
 		scalar dt = 8.;
@@ -1777,11 +1798,18 @@ bp::list VpControlModel::get_dq()
     }
 	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
 	{
-//	    Axis jointDq = _nodes[j]->joint.GetDisplacementDerivate();
-        Vec3 jointDq = _nodes[j]->joint.GetVelocity();
-	    for(int i=0; i<3; i++)
+	    if (_nodes[j]->dof == 3)
 	    {
-            ls.append(jointDq[i]);
+            // Axis jointDq = _nodes[j]->joint.GetDisplacementDerivate();
+            Vec3 jointDq = _nodes[j]->joint.GetVelocity();
+            for(int i=0; i<3; i++)
+            {
+                ls.append(jointDq[i]);
+            }
+	    }
+	    else if(_nodes[j]->dof == 1)
+	    {
+	        ls.append(_nodes[j]->joint_revolute.GetVelocity());
 	    }
 	}
 
@@ -1814,10 +1842,18 @@ bp::list VpControlModel::get_dq_nested()
 
 	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
 	{
-//	    Axis jointDq = _nodes[j]->joint.GetDisplacementDerivate();
-//	    ls.append(Axis_2_pyVec3(jointDq));
-        Vec3 jointDq = _nodes[j]->joint.GetVelocity();
-	    ls.append(Vec3_2_pyVec3(jointDq));
+	    if (_nodes[j]->dof == 3)
+	    {
+            // Axis jointDq = _nodes[j]->joint.GetDisplacementDerivate();
+            // ls.append(Axis_2_pyVec3(jointDq));
+            Vec3 jointDq = _nodes[j]->joint.GetVelocity();
+            ls.append(Vec3_2_pyVec3(jointDq));
+	    }
+	    else if(_nodes[j]->dof == 1)
+	    {
+	        Vec3 jointDq = _nodes[j]->joint_revolute.GetVelocity() * _nodes[j]->joint_revolute.GetAxis();
+            ls.append(Vec3_2_pyVec3(jointDq));
+	    }
 	}
 
 	return ls;
@@ -1844,11 +1880,19 @@ void VpControlModel::set_ddq(const object & ddq)
     _nodes[0]->body.SetGenAccelerationLocal(rootBodyGenAccLocal);
 	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
 	{
-//        Axis jointDdq(XD(ddq[ddq_index]), XD(ddq[ddq_index+1]), XD(ddq[ddq_index+2]));
-//        _nodes[j]->joint.SetDdq(jointDdq);
-        Vec3 jointDdq(XD(ddq[ddq_index]), XD(ddq[ddq_index+1]), XD(ddq[ddq_index+2]));
-        _nodes[j]->joint.SetAcceleration(jointDdq);
-        ddq_index += 3;
+	    if(_nodes[j]->dof == 3)
+	    {
+            // Axis jointDdq(XD(ddq[ddq_index]), XD(ddq[ddq_index+1]), XD(ddq[ddq_index+2]));
+            // _nodes[j]->joint.SetDdq(jointDdq);
+            Vec3 jointDdq(XD(ddq[ddq_index]), XD(ddq[ddq_index+1]), XD(ddq[ddq_index+2]));
+            _nodes[j]->joint.SetAcceleration(jointDdq);
+            ddq_index += 3;
+        }
+        else if(_nodes[j]->dof == 1)
+        {
+            _nodes[j]->joint_revolute.SetAcceleration(XD(ddq[ddq_index]));
+            ddq_index += 1;
+        }
 	}
 }
 
@@ -1872,11 +1916,19 @@ void VpControlModel::set_ddq_vp(const std::vector<double> & ddq)
     _nodes[0]->body.SetGenAccelerationLocal(rootBodyGenAccLocal);
 	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
 	{
-//        Axis jointDdq(ddq[ddq_index], ddq[ddq_index+1], ddq[ddq_index+2]);
-//        _nodes[j]->joint.SetDdq(jointDdq);
-        Vec3 jointDdq(ddq[ddq_index], ddq[ddq_index+1], ddq[ddq_index+2]);
-        _nodes[j]->joint.SetAcceleration(jointDdq);
-        ddq_index += 3;
+	    if(_nodes[j]->dof == 3)
+	    {
+            // Axis jointDdq(ddq[ddq_index], ddq[ddq_index+1], ddq[ddq_index+2]);
+            // _nodes[j]->joint.SetDdq(jointDdq);
+            Vec3 jointDdq(ddq[ddq_index], ddq[ddq_index+1], ddq[ddq_index+2]);
+            _nodes[j]->joint.SetAcceleration(jointDdq);
+            ddq_index += 3;
+        }
+        else if(_nodes[j]->dof == 1)
+        {
+            _nodes[j]->joint_revolute.SetAcceleration(ddq[ddq_index]);
+            ddq_index += 1;
+        }
 	}
 }
 
@@ -2163,7 +2215,14 @@ boost::python::object VpControlModel::getJointOrientationLocal( int index )
 	else
 	{
 		object pyR = I.copy();
-		SE3_2_pySO3(_nodes[index]->joint.GetOrientation(), pyR);
+		if(_nodes[index]->dof == 3)
+		{
+            SE3_2_pySO3(_nodes[index]->joint.GetOrientation(), pyR);
+		}
+		else if(_nodes[index]->dof == 1)
+		{
+		    SE3_2_pySO3(Exp(_nodes[index]->joint_revolute.GetAngle() * Vec3_2_Axis(_nodes[index]->joint_revolute.GetAxis())), pyR);
+		}
 		return pyR;
 	}
 }
@@ -2185,7 +2244,16 @@ boost::python::object VpControlModel::getJointAngVelocityLocal( int index )
 		pyV[2] = genVelJointLocal[2]; 
 	}
 	else
-		Vec3_2_pyVec3(_nodes[index]->joint.GetVelocity(), pyV);
+	{
+	    if( _nodes[index]->dof == 3)
+	    {
+            Vec3_2_pyVec3(_nodes[index]->joint.GetVelocity(), pyV);
+		}
+	    if( _nodes[index]->dof == 1)
+	    {
+            Vec3_2_pyVec3(_nodes[index]->joint_revolute.GetVelocity() * _nodes[index]->joint_revolute.GetAxis(), pyV);
+	    }
+    }
 	
 	return pyV;
 }
@@ -2513,7 +2581,12 @@ void VpControlModel::setJointAngAccelerationsLocal( const bp::list& angaccs )
 void VpControlModel::setInternalJointAngAccelerationsLocal( const bp::list& angaccs )
 {
 	for(std::vector<int>::size_type i=1; i<_nodes.size(); ++i)
-		_nodes[i]->joint.SetAcceleration(pyVec3_2_Vec3(angaccs[i-1]));
+	{
+	    if (_nodes[i]->dof == 3)
+            _nodes[i]->joint.SetAcceleration(pyVec3_2_Vec3(angaccs[i-1]));
+        else if(_nodes[i]->dof == 1)
+            _nodes[i]->joint_revolute.SetAcceleration(XD(angaccs[i-1][0]));
+    }
 }
 
 void VpControlModel::SetJointElasticity(int index, scalar Kx, scalar Ky, scalar Kz)
@@ -2676,6 +2749,22 @@ static ublas::vector<double> ToUblasVector(const Axis &v_vp)
     for(int i=0; i<3; i++)
         v(i) = v_vp[i];
     return v;
+}
+
+static ublas::matrix<double> ToUblasMatrix(const Vec3 &v_vp)
+{
+    ublas::matrix<double> m(3, 1);
+    for(int i=0; i<3; i++)
+        m(i, 0) = v_vp[i];
+    return m;
+}
+
+static ublas::matrix<double> ToUblasMatrix(const Axis &v_vp)
+{
+    ublas::matrix<double> m(3, 1);
+    for(int i=0; i<3; i++)
+        m(i, 0) = v_vp[i];
+    return m;
 }
 
 static ublas::matrix<double> SE3ToUblasRotate(const SE3 &T_vp)
@@ -2985,9 +3074,19 @@ bp::tuple VpControlModel::computeCom_J_dJdq()
         int dof_start_index = _nodes[i]->dof_start_index;
         joint_global_pos = joint_frames[i].GetPosition();
         joint_global_velocity = _nodes[i]->body.GetLinVelocity(Inv(_boneTs[i]).GetPosition());
-        _Jw = SE3ToUblasRotate(joint_frames[i]);
+        joint_global_ang_vel = _nodes[i]->body.GetAngVelocity() - _nodes[parent_joint_index]->body.GetAngVelocity();
 
-        joint_global_ang_vel = Rotate(joint_frames[i], _nodes[i]->joint.GetVelocity());
+        if (_nodes[i]->dof == 3)
+        {
+            _Jw = SE3ToUblasRotate(joint_frames[i]);
+            // joint_global_ang_vel = Rotate(joint_frames[i], _nodes[i]->joint.GetVelocity());
+        }
+        else if(_nodes[i]->dof == 1)
+        {
+            _Jw = prod(SE3ToUblasRotate(joint_frames[i]), ToUblasMatrix(_nodes[i]->joint_revolute.GetAxis()));
+            // joint_global_ang_vel = Rotate(joint_frames[i], _nodes[i]->joint_revolute.GetVelocity() * _nodes[i]->joint_revolute.GetAxis());
+        }
+
         _dJdqw = ToUblasVector(Cross(_nodes[parent_joint_index]->body.GetAngVelocity(), joint_global_ang_vel));
 
         for(std::vector<Node*>::size_type body_idx=1; body_idx < _nodes.size(); body_idx++)
