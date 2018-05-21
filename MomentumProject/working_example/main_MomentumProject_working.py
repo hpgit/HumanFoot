@@ -20,8 +20,8 @@ from PyCommon.modules.ArticulatedBody import ysReferencePoints as yrp
 from PyCommon.modules.ArticulatedBody import ysMomentum as ymt
 from PyCommon.modules.ArticulatedBody import ysControl as yct
 
-import mtOptimize as mot
-import mtInitialize as mit
+from MomentumProject.working_example import mtOptimize as mot
+from MomentumProject.working_example import mtInitialize as mit
 
 
 g_initFlag = 0
@@ -407,6 +407,13 @@ def main():
         P = ymt.getPureInertiaMatrix(TO, linkMasses, linkPositions, CM, linkInertias)
         dP = ymt.getPureInertiaMatrixDerivative(dTO, linkMasses, linkVelocities, dCM, linkAngVelocities, linkInertias)
 
+        # calculate jacobian
+        Jsys, dJsys = controlModel.computeCom_J_dJdq()
+        JsupL = Jsys[6*supL:6*supL+6, :]
+        dJsupL = dJsys[6*supL:6*supL+6]
+        JsupR = Jsys[6*supR:6*supR+6, :]
+        dJsupR = dJsys[6*supR:6*supR+6]
+
         # calculate contact state
         # if g_initFlag == 1 and contact == 1 and refFootR[1] < doubleTosingleOffset and footCenterR[1] < 0.08:
         if g_initFlag == 1:
@@ -454,10 +461,10 @@ def main():
             JsupPreR = JsupR.copy()
             JconstPre = Jconst.copy()
             softConstPoint = footCenterR.copy()
-            yjc.computeJacobian2(JsysPre, DOFs, jointPositions, jointAxeses, linkPositions, allLinkJointMasks)
-            yjc.computeJacobian2(JsupPreL, DOFs, jointPositions, jointAxeses, [footCenterL], supLJointMasks)
-            yjc.computeJacobian2(JsupPreR, DOFs, jointPositions, jointAxeses, [footCenterR], supRJointMasks)
-            yjc.computeJacobian2(JconstPre, DOFs, jointPositions, jointAxeses, [softConstPoint], constJointMasks)
+            # yjc.computeJacobian2(JsysPre, DOFs, jointPositions, jointAxeses, linkPositions, allLinkJointMasks)
+            # yjc.computeJacobian2(JsupPreL, DOFs, jointPositions, jointAxeses, [footCenterL], supLJointMasks)
+            # yjc.computeJacobian2(JsupPreR, DOFs, jointPositions, jointAxeses, [footCenterR], supRJointMasks)
+            # yjc.computeJacobian2(JconstPre, DOFs, jointPositions, jointAxeses, [softConstPoint], constJointMasks)
 
             footCenter = footCenterL + (footCenterR - footCenterL)/2.0
             footCenter[1] = 0.
@@ -472,21 +479,6 @@ def main():
 
             g_initFlag = 1
 
-        # calculate jacobian
-        yjc.computeJacobian2(Jsys, DOFs, jointPositions, jointAxeses, linkPositions, allLinkJointMasks)
-        # dJsys = (Jsys - JsysPre)/(1/30.)
-        # JsysPre = Jsys.copy()
-        yjc.computeJacobianDerivative2(dJsys, DOFs, jointPositions, jointAxeses, linkAngVelocities, linkPositions, allLinkJointMasks)
-
-        yjc.computeJacobian2(JsupL, DOFs, jointPositions, jointAxeses, [footCenterL], supLJointMasks)
-        # dJsupL = (JsupL - JsupPreL)/(1/30.)
-        # JsupPreL = JsupL.copy()
-        yjc.computeJacobianDerivative2(dJsupL, DOFs, jointPositions, jointAxeses, linkAngVelocities, [footCenterL], supLJointMasks, False)
-
-        yjc.computeJacobian2(JsupR, DOFs, jointPositions, jointAxeses, [footCenterR], supRJointMasks)
-        # dJsupR = (JsupR - JsupPreR)/(1/30.)
-        # JsupPreR = JsupR.copy()
-        yjc.computeJacobianDerivative2(dJsupR, DOFs, jointPositions, jointAxeses, linkAngVelocities, [footCenterR], supRJointMasks, False)
 
         # calculate footCenter
         footCenter = footCenterL + (footCenterR - footCenterL)/2.0
@@ -639,7 +631,8 @@ def main():
         RS = np.dot(P, Jsys)
         R, S = np.vsplit(RS, 2)
 
-        rs = np.dot((np.dot(dP, Jsys) + np.dot(P, dJsys)), dth_flat)
+        # rs = np.dot((np.dot(dP, Jsys) + np.dot(P, dJsys)), dth_flat)
+        rs = np.dot(dP, np.dot(Jsys, dth_flat)) + np.dot(P, dJsys)
         r_bias, s_bias = np.hsplit(rs, 2)
 
         #######################################################
@@ -672,16 +665,16 @@ def main():
             #mot.addSoftPointConstraintTerms(problem, totalDOF, Bsc, ddP_des1, Q1, q_bias1)
         mot.addTrackingTerms(problem, totalDOF, Bt, w, ddth_des_flat)
         if dH_des is not None:
-            # mot.addLinearTerms(problem, totalDOF, Bl, dL_des_plane, R, r_bias)
-            # mot.addAngularTerms(problem, totalDOF, Bh, dH_des, S, s_bias)
+            mot.addLinearTerms(problem, totalDOF, Bl, dL_des_plane, R, r_bias)
+            mot.addAngularTerms(problem, totalDOF, Bh, dH_des, S, s_bias)
 
             #if contact & 1 and contactChangeCount == 0:
             if contact & 1:
             #if refFootR[1] < doubleTosingleOffset:
-                mot.addConstraint(problem, totalDOF, JsupR, dJsupR, dth_flat, a_supR)
+                mot.addConstraint2(problem, totalDOF, JsupR, dJsupR, dth_flat, a_supR)
             if contact & 2:
             #if refFootL[1] < doubleTosingleOffset:
-                mot.addConstraint(problem, totalDOF, JsupL, dJsupL, dth_flat, a_supL)
+                mot.addConstraint2(problem, totalDOF, JsupL, dJsupL, dth_flat, a_supL)
 
         if contactChangeCount >0:
             contactChangeCount -= 1
@@ -699,7 +692,7 @@ def main():
         for i in range(stepsPerFrame):
             # apply penalty force
             bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
-            print(contactForces)
+            # print(contactForces)
             #bodyIDs, contactPositions, contactPositionLocals, contactForces, contactVelocities = vpWorld.calcManyPenaltyForce(0, bodyIDsToCheck, mus, Ks, Ds)
             vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
 

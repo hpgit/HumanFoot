@@ -203,12 +203,12 @@ class FootWindow(Fl_Window):
 
         self.foot_pressure_gl_window = FootPressureGlWindow(50, 150, 200, 200, model)
 
-        self.check_op_l.value(True)
-        self.check_om_l.value(True)
-        self.check_h_l.value(True)
-        self.check_op_r.value(True)
-        self.check_om_r.value(True)
-        self.check_h_r.value(True)
+        # self.check_op_l.value(True)
+        # self.check_om_l.value(True)
+        # self.check_h_l.value(True)
+        # self.check_op_r.value(True)
+        # self.check_om_r.value(True)
+        # self.check_h_r.value(True)
 
         self.end()
 

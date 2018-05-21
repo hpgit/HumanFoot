@@ -4,59 +4,72 @@ import numpy.linalg as npl
 import sys
 if '../PyCommon/modules' not in sys.path:
 	sys.path.append('../PyCommon/modules')
-from PyCommon.modules.Math import mmMath as mm
-from PyCommon.modules.Util import ysPythonEx as ype
+import PyCommon.modules.Math.mmMath as mm
+import PyCommon.modules.Util.ysPythonEx as ype
 
 def getTrackingWeight(DOFs, skeleton, weightMap, rootPositionWeight=0.):
 	weights = [1.]*skeleton.getJointNum()
 	for name, weight in weightMap.items():
 		index = skeleton.getJointIndex(name)
-		weights[index] = weight
-	
+		if index is not None:
+			weights[index] = weight
+
 	totalDOF = 0
 	for dof in DOFs:
 		totalDOF += dof
-	
+
 	weights_ext = [None]*totalDOF
 	ype.repeatListElements(weights, weights_ext, DOFs)
-	weights_ext[0:3] = [rootPositionWeight, rootPositionWeight, rootPositionWeight]  
+	weights_ext[0:3] = [rootPositionWeight, rootPositionWeight, rootPositionWeight]
 
 	return weights_ext
 
+
 def addTrackingTerms(problem, totalDOF, weight, jointWeights, ddth_des_flat):
-	# minimize | Wt(ddth_des - ddth) |^2    
+	# minimize | Wt(ddth_des - ddth) |^2
 	problem.addObjective_matrix(np.diag( [jointWeights[i] for i in range(len(jointWeights))] ), np.array([jointWeights[i]*ddth_des_flat[i] for i in range(len(jointWeights))]), weight )
-		
+
+
 def addLinearTerms(problem, totalDOF, weight, dL_des, R, r_bias):
 	# minimize | dL_des - (R*ddth + r_bias) |^2
 	problem.addObjective_matrix(R, dL_des - r_bias, weight)
+
 
 def addAngularTerms(problem, totalDOF, weight, dH_des, S, s_bias):
 	# minimize | dH_des - (S*ddth + s_bias) |^2
 	problem.addObjective_matrix(S, dH_des - s_bias, weight)
 
+
 def addEndEffectorTerms(problem, totalDOF, weight, J, dJ, dth, ddP_des):
 	# minimize | ddP_des - (J*ddth + dJ*dth)|^2
-	problem.addObjective_matrix(J, ddP_des - np.dot(dJ, dth), weight);
-		
+	problem.addObjective_matrix(J, ddP_des - np.dot(dJ, dth), weight)
+
+
 def addSoftPointConstraintTerms(problem, totalDOF, weight, ddP_des, Q, q_bias):
 	# minimize | ddP_des - (Q*ddth + q_bias) |^2
 	problem.addObjective_matrix(Q, ddP_des - q_bias, weight)
 
+
 def setConstraint(problem, totalDOF, J, dJ, dth_flat, a_sup):
 	# subject to J_sup*ddth + dJ_sup*dth_flat = a_sup
 	problem.setConstraint_matrix(J, a_sup - np.dot(dJ, dth_flat))
+
 
 def addConstraint(problem, totalDOF, J, dJ, dth_flat, a_sup):
 	# subject to J_sup*ddth + dJ_sup*dth_flat = a_sup
 	problem.addConstraint_matrix(J, a_sup - np.dot(dJ, dth_flat))
 
 
-# Quadratic Programming 
+def addConstraint2(problem, totalDOF, J, dJdq, dth_flat, a_sup):
+	# subject to J_sup*ddth + dJ_sup*dth_flat = a_sup
+	problem.addConstraint_matrix(J, a_sup - dJdq)
+
+
+# Quadratic Programming
 # x = [ddotq tau lambda]
 
 def addQPTrackingTerms(qp, totalProblemSize, si, totalDOF, weight, jointWeights, ddth_des_flat):
-	# minimize | Wt(ddth_des - ddth) |^2    
+	# minimize | Wt(ddth_des - ddth) |^2
 	#jointWeights[0] = .5
 	#jointWeights[1] = 1.1
 	#jointWeights[2] = .5
@@ -127,7 +140,7 @@ def addQPInequalityTorqueConstraint(qp, totalProblemSize, totalDOF, totalActuato
 	G = np.vstack((G_max, G_min))
 	h = np.append( torqueMax, -torqueMin)
 	if G.shape[0] != h.shape[0]:
-		print('Inequality Torque : G and h shapes are not matched') 
+		print('Inequality Torque : G and h shapes are not matched')
 
 	qp.addInequalityConstraint(G, h)
 
@@ -136,14 +149,14 @@ def addQPInequalityContactForceConstraint(qp, totalProblemSize, totalDOF, totalA
 	G = -np.hstack((np.zeros((totalContact, totalDOF+totalActuator)), np.diag(1.*np.ones(totalContact)) ))
 	h = np.zeros(totalContact)
 	if G.shape[0] != h.shape[0]:
-		print('Inequality Contact : G and h shapes are not matched') 
+		print('Inequality Contact : G and h shapes are not matched')
 	qp.addInequalityConstraint(G, h)
 
 def addQPInequalityVelocityConstraint(qp, totalProblemSize, totalDOF, totalActuator, totalContact, VcTJc_list, VcTdJc_list, dVcTJc_list, dq, ac_offset_list, invdt):
 	# subject to -(VcTJcq'' + VcTJc'q' + VcT'Jcq') <= 0
 	#TODO:
 	# assume that Vc' = 0 <- is it right? check it!
-	G = None 
+	G = None
 	h = None
 	for i in range(len(VcTJc_list)):
 		G_temp = np.hstack( (-VcTJc_list[i], np.zeros((4, totalActuator+totalContact))) )
@@ -159,5 +172,5 @@ def addQPInequalityVelocityConstraint(qp, totalProblemSize, totalDOF, totalActua
 			h = np.append( h, h_temp )
 
 	if G.shape[0] != h.shape[0]:
-		print('Inequality Velocity : G and h shapes are not matched') 
+		print('Inequality Velocity : G and h shapes are not matched')
 	qp.addInequalityConstraint(G, h)

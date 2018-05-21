@@ -765,6 +765,10 @@ def main():
 
     foot_viewer = FootWindow(viewer.x() + viewer.w() + 20, viewer.y(), 300, 500, 'foot contact modifier', controlModel)
     foot_viewer.show()
+    foot_viewer.check_op_l.value(True)
+    foot_viewer.check_ip_l.value(True)
+    foot_viewer.check_op_r.value(True)
+    foot_viewer.check_ip_r.value(True)
 
     Fl.run()
 
