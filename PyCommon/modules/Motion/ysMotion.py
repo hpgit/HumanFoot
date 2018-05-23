@@ -704,20 +704,23 @@ class JointSkeleton(Skeleton):
     #===============================================================================
     def getParentIndex(self, index):
         joint = self.elements[index]
-        if joint.parent!=None:
+        if joint.parent is not None:
             return self.reverseElementNames[joint.parent.name]
         else:
             return None
+
     def getChildIndexes(self, index):
         ls = []
         joint = self.elements[index]
         for child in joint.children:
             ls.append(self.getElementIndex(child.name))
         return ls
+
     def getOffset(self, index):
         return self.elements[index].offset
+
     def removeElement(self, index):
-#        print index
+        # print(index)
         joint = Skeleton.getElement(self, index)
         parent = joint.parent
 
@@ -725,17 +728,20 @@ class JointSkeleton(Skeleton):
             child.parent = parent
             child.offset += joint.offset
         
-        if parent!=None:
-#            print [child.name for child in parent.children]
-#            print [Skeleton.getElementIndex(self, child.name) for child in parent.children]
+        if parent is not None:
+            # print([child.name for child in parent.children])
+            # print([Skeleton.getElementIndex(self, child.name) for child in parent.children])
             index_in_parent = [Skeleton.getElementIndex(self, child.name) for child in parent.children].index(index)
-#            print index_in_parent
+            # print(index_in_parent)
             del parent.children[index_in_parent:index_in_parent+1]
             parent.children.extend(joint.children)
-#            print [child.name for child in parent.children]
+            # print([child.name for child in parent.children])
             
         Skeleton.removeElement(self, index)
+        # print([child.name for child in parent.children])
         self.initialize()
+        # print(self)
+        # print([child.name for child in parent.children])
 
 #    def changeRoot(self, root_name_or_index):
 #        if isinstance(root_name_or_index, int):
@@ -996,15 +1002,16 @@ class JointPosture(Posture):
 #            self._updateGlobalT(childJoint, p, R)
 
     def updateGlobalT(self, fromIndex=None):
-        if fromIndex==None:
+        if fromIndex is None:
             self._updateGlobalT(self.skeleton.root, mm.p2T(self.rootPos))
         else:
             parent = self.skeleton.getParentIndex(fromIndex)
-            if parent==None:
+            if parent is None:
                 self._updateGlobalT(self.skeleton.root, mm.p2T(self.rootPos))
             else:
                 joint = self.skeleton.getElement(fromIndex)
                 self._updateGlobalT(joint, self.globalTs[parent])
+
     def _updateGlobalT(self, joint, parentT):
         index = self.skeleton.getElementIndex(joint.name)
         T = np.dot(parentT, mm.p2T(joint.offset))

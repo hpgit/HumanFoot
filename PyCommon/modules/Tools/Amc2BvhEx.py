@@ -1,8 +1,7 @@
-import psyco; psyco.full()
 import glob, os, sys
 
 def usuage(scriptName):
-    print 'Usage: %s [src_amc_dir] [dest_bvh_dir]'%scriptName
+    print('Usage: %s [src_amc_dir] [dest_bvh_dir]'%scriptName)
 
 def makeListFiles(asfFilePaths, amcFilePaths, bvhFilePaths):
     list_asf = open('list_asf.txt', 'w')
@@ -78,17 +77,17 @@ def changeBvhJointNamesInFile(bvhFilePath, changeMap):
 
 def convertAmc2Bvh(amcDir, bvhDir):
     asfFilePath = glob.glob(amcDir+'/*.asf')[0]
-    print 'asf:', asfFilePath
-    print
+    print('asf:', asfFilePath)
+    print()
     
     amcFilePaths = glob.glob(amcDir+'/*.amc')
     bvhFilePaths = []
     asfFilePaths = [] 
     
-    print 'amc:'
+    print('amc:')
     for i in range(len(amcFilePaths)):
         amcPath = amcFilePaths[i]
-        print '[%d] %s'%(i, amcPath)
+        print('[%d] %s'%(i, amcPath))
         
         amcFileName = os.path.basename(amcPath)
         fileName = os.path.splitext(amcFileName)[0]
@@ -98,7 +97,7 @@ def convertAmc2Bvh(amcDir, bvhDir):
         bvhFilePaths.append(bvhFilePath)
         
         asfFilePaths.append(asfFilePath)
-    print
+    print()
     
     makeListFiles(asfFilePaths, amcFilePaths, bvhFilePaths)
     os.system('Amc2Bvh.exe')
@@ -108,17 +107,17 @@ def convertAmc2Bvh(amcDir, bvhDir):
     changeMap['hip'] = 'Hips'
     changeMap['head'] = 'Head'
     
-    print 'bvh:'
+    print('bvh:')
     for i in range(len(amcFilePaths)):
         bvhPath = bvhFilePaths[i] 
         changeBvhJointNamesInFile(bvhPath, changeMap)
-        print '[%d] %s'%(i, bvhPath)
-    print
+        print('[%d] %s'%(i, bvhPath))
+    print()
     
-    print 'Done'    
+    print('Done')
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     if len(sys.argv) > 3:
         usuage(os.path.basename(sys.argv[0]))
     else:

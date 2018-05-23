@@ -1,4 +1,5 @@
-import numpy, math
+import numpy
+import math
 
 from PyCommon.modules.Math import mmMath as mm
 from PyCommon.modules.Math import csMath as cm
@@ -117,7 +118,7 @@ def readTrcFile(trcFilePath, scale = 1.0):
     pointMotion.fps = dataRate
     return pointMotion
 
-pass
+
 #===============================================================================
 # .bvh file
 #===============================================================================
@@ -127,15 +128,18 @@ def readBvhFile(bvhFilePath, scale=1.0, applyRootOffset=False):
     jointMotion = bvh.toJointMotion(scale, applyRootOffset)
     return jointMotion
 
+
 def readBvhFileAsBvh(bvhFilePath):
     bvh = Bvh()
     bvh.parseBvhFile(bvhFilePath)
     return bvh
 
+
 def writeBvhFile(bvhFilePath, jointMotion):
     bvh = Bvh()
     bvh.fromJointMotion(jointMotion)
     bvh.writeBvhFile(bvhFilePath)
+
 
 class Bvh:
     channelTypes6dof = ['XPOSITION', 'YPOSITION', 'ZPOSITION', 'ZROTATION', 'XROTATION', 'YROTATION']
@@ -148,6 +152,7 @@ class Bvh:
             self.channels = []  # type: list[Bvh.Channel]
             self.children = []  # type: list[Bvh]
             self.jointIndex = None  # type: int
+
         def __strHierarchy__(self, depth=0):
             s = ''
             tab1 = '  '*depth
@@ -220,7 +225,7 @@ class Bvh:
         bvhJoint = Bvh.Joint(name)
         self.joints.append(bvhJoint)
         
-        if tokens.pop()!="{":
+        if tokens.pop() != "{":
             print("'{' missing")
             return None
         

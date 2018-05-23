@@ -20,7 +20,7 @@ from PyCommon.modules.Util import ysPythonEx as ype
 from PyCommon.modules.ArticulatedBody import ysReferencePoints as yrp
 from PyCommon.modules.ArticulatedBody import ysMomentum as ymt
 from PyCommon.modules.ArticulatedBody import ysControl as yct
-from PyCommon.modules.ArticulatedBody import hpInvKineDart as hik
+# from PyCommon.modules.ArticulatedBody import hpInvKineDart as hik
 
 from MomentumProject.foot_example_segfoot_constraint import mtOptimize as mot
 from MomentumProject.foot_example_segfoot_constraint import mtInitialize as mit
@@ -413,7 +413,7 @@ def main():
     def simulateCallback(frame):
         # print(frame)
         # print(motion[frame].getJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0']))
-        if viewer_GetForceState():
+        if False and viewer_GetForceState():
             # print('force on, frame: ', frame)
             motion[frame].mulJointOrientationLocal(footIdDic['LeftFoot_foot_0_0_0'], mm.exp(mm.unitX(), -math.pi * mm.SCALAR_1_6))
             motion[frame].mulJointOrientationLocal(footIdDic['LeftFoot_foot_0_1_0'], mm.exp(mm.unitX(), -math.pi * mm.SCALAR_1_6))

@@ -1,4 +1,3 @@
-import psyco; psyco.full()
 import os
 from fltk import *
 
@@ -8,13 +7,13 @@ from fltk import *
 import sys
 if '..' not in sys.path:
     sys.path.append('..')
-import Resource.ysMotionLoader as yf
-import Renderer.ysRenderer as yr
-import GUI.ysSimpleViewer as ysv
-import Motion.ysMotion as ym
+import PyCommon.modules.Resource.ysMotionLoader as yf
+import PyCommon.modules.Renderer.ysRenderer as yr
+import PyCommon.modules.GUI.ysSimpleViewer as ysv
+import PyCommon.modules.Motion.ysMotion as ym
 
 def usuage(scriptName):
-    print 'Usage: %s bvh_file'%scriptName
+    print('Usage: %s bvh_file'%scriptName)
 
 class BvhViewer(ysv.SimpleViewer):
     def __init__(self, rect=None, title='BvhViewer'):
@@ -28,21 +27,22 @@ class BvhViewer(ysv.SimpleViewer):
         jointMotion = yf.readBvhFile(bvhFilePath, 1.)
         tpose = jointMotion[0].getTPose()
         
-        print jointMotion[0].skeleton
-        print jointMotion.fps, 'fps'
+        print(jointMotion[0].skeleton)
+        print(jointMotion.fps, 'fps')
         
         self.doc.addRenderer('jointMotion_BOX', yr.JointMotionRenderer(jointMotion, (0,127,255), yr.LINK_SOLIDBOX), False)
         self.doc.addRenderer('jointMotion_LINE', yr.JointMotionRenderer(jointMotion, (0,127,255), yr.LINK_LINE), True)
         self.doc.addRenderer('jointMotion_BONE', yr.JointMotionRenderer(jointMotion, (0,127,255), yr.LINK_BONE), False)
-        self.doc.addRenderer('tpose', yr.JointMotionRenderer(ym.JointMotion([tpose]), (255,0,0), yr.LINK_BONE), True)
+        # self.doc.addRenderer('tpose', yr.JointMotionRenderer(ym.JointMotion([tpose]), (255,0,0), yr.LINK_BONE), True)
         self.doc.addObject('jointMotion', jointMotion)
         
         title = '%s - BvhViewer'%os.path.basename(bvhFilePath)
         self.label(title)
         self.iconlabel(title)
         
-        self.setTimeInterval(1./jointMotion.fps)
-        
+        # self.setTimeInterval(1./jointMotion.fps)
+        self.startTimer(1./jointMotion.fps)
+
         fl_cursor(FL_CURSOR_DEFAULT)
     
 def dnd_handle(event):
@@ -69,8 +69,21 @@ if __name__ == "__main__":
         
         bvhViewer = BvhViewer()
         bvhViewer.record(False)
-        
-        if bvhFilePath!=None:
+
+        bvhFilePath = '../../../data/woody2/Motion/Balancing/wd2_1_kick.bvh'
+        bvhFilePath = '../../../data/woody2/Motion/Balancing/wd2_1_kick.bvh'
+        bvhFilePath = '../../../data/woody2/Motion/Balancing/wd2_1_kick.bvh'
+        bvhFilePath = '../../../data/woody2/Motion/Balancing/wd2_1_kick.bvh'
+        bvhFilePath = '../../../data/woody2/Motion/Balancing/wd2_1_kick.bvh'
+        bvhFilePath = '../../../data/woody2/Motion/Balancing/wd2_1_kick.bvh'
+        bvhFilePath = '../../../data/woody2/Motion/Balancing/wd2_1foot_contact_run.bvh'
+        bvhFilePath = '../../../data/woody2/Motion/Balancing/wd2_slow_2foot_hop.bvh'
+        bvhFilePath = '../../../data/woody2/Motion/Balancing/wd2_1foot_contact_run2.bvh'
+        bvhFilePath = '../../../data/woody2/Motion/Balancing/wd2_falling_down.bvh'
+        bvhFilePath = '../../../MomentumProject/woddy2_jump1.bvh'
+        bvhFilePath = '../../../MomentumProject/MotionFile/cmu/15_07_15_07.bvh'
+
+        if bvhFilePath is not None:
             bvhViewer.open(bvhFilePath)
             
         bvhViewer.startTimer((1/30.)/1.4)

@@ -24,7 +24,7 @@ from MomentumProject.foot_example_segfoot_constraint import mtOptimize as mot
 from MomentumProject.foot_example_segfoot_constraint import mtInitialize as mit
 from MomentumProject.foot_example_segfoot_constraint.foot_window import FootWindow
 
-# from PyCommon.modules.ArticulatedBody import hpFootIK as hfi
+from PyCommon.modules.ArticulatedBody import hpFootIK as hfi
 # from scipy.spatial import Delaunay
 
 # import pydart2 as pydart
@@ -57,7 +57,7 @@ def main():
     # np.set_printoptions(precision=4, linewidth=200)
     np.set_printoptions(precision=5, threshold=np.inf, suppress=True, linewidth=3000)
 
-    motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped()
+    motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped('wd2_tiptoe.bvh')
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_jump_biped()
 
     vpWorld = cvw.VpWorld(wcfg)
@@ -69,8 +69,7 @@ def main():
     controlModel.initializeHybridDynamics()
 
     # controlToMotionOffset = (1.5, -0.02, 0)
-    # controlToMotionOffset = (1.5, 0., 0)
-    controlToMotionOffset = (1.5, 0.1, 0)
+    controlToMotionOffset = (1.5, 0., 0)
     controlModel.translateByOffset(controlToMotionOffset)
     # controlModel_shadow_for_ik.set_q(controlModel.get_q())
     # controlModel_shadow_for_ik.computeJacobian(0, np.array([0., 0., 0.]))
@@ -370,6 +369,9 @@ def main():
     def simulateCallback(frame):
         # print(frame)
         # print(motion[frame].getJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0']))
+
+        hfi.footAdjust(motion[frame], idDic, SEGMENT_FOOT_MAG=.03, SEGMENT_FOOT_RAD=.015, baseHeight=0.02)
+
         if getParamVal('tiptoe angle') > 0.001:
             tiptoe_angle = getParamVal('tiptoe angle')
             motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_0_0'], mm.exp(mm.unitX(), -math.pi * tiptoe_angle))

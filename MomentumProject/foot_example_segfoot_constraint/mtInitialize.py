@@ -23,10 +23,11 @@ def testtest():
     yf.writeBvhFile()
 
 
-def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
+def create_biped(motionName='wd2_n_kick.bvh', SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
     """
 
-    :param SEGMENT_FOOT:
+    :param motionName: motion file name
+    :param SEGMENT_FOOT: whether segment foot is
     :param SEGMENT_FOOT_MAG:
     :return:
     """
@@ -37,7 +38,8 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
     SEGMENT_FOOT_OUTSIDE_JOINT_FIRST = True
 
     # motion
-    motionName = 'wd2_n_kick.bvh'
+    # motionName = 'wd2_n_kick.bvh'
+    # motionName = 'wd2_tiptoe.bvh'
     # motionName = 'wd2_n_kick_zygote.bvh'
     # motionName = 'wd2_jump.bvh'
     # motionName = 'wd2_stand.bvh'
@@ -62,6 +64,7 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
 
     motion = bvh.toJointMotion(1., False)  # type: ym.JointMotion
 
+
     # motion.translateByOffset((0., 0.15, 0.))
     # motion.translateByOffset((0., -0.12, 0.))
     # motion.rotateByOffset(mm.rotZ(math.pi*1./18.))
@@ -69,7 +72,7 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
     # motion = yf.readBvhFile(motionName, .01)
     # yme.offsetJointLocal(motion, 'RightArm', (.03,-.05,0), False)
     # yme.offsetJointLocal(motion, 'LeftArm', (-.03,-.05,0), False)
-    yme.rotateJointLocal(motion, 'Hips', mm.exp(mm.v3(1, 0, 0), .01), False)
+    # yme.rotateJointLocal(motion, 'Hips', mm.exp(mm.v3(1, 0, 0), .01), False)
     # yme.rotateJointLocal(motion, 'LeftFoot', mm.exp(mm.v3(1,-0.0,.3), -.5), False)
     # yme.rotateJointLocal(motion, 'RightFoot', mm.exp(mm.v3(1,0.0,-.3), -.5), False)
     # yme.rotateJointLocal(motion, 'LeftFoot', mm.exp(mm.v3(1,-0.5,0), -.6), False)
@@ -81,37 +84,26 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
     # yme.removeJoint(motion, 'LeftFoot_foot_1_1')
     # yme.removeJoint(motion, 'LeftFoot_foot_1_2')
 
-    yme.updateGlobalT(motion)
-    motion.translateByOffset((0, 0.04, 0))
+    if motionName == 'wd2_n_kick.bvh':
+        yme.rotateJointLocal(motion, 'Hips', mm.exp(mm.v3(1, 0, 0), .01), False)
+        yme.updateGlobalT(motion)
 
-    # motion = motion[40:-58]
-    # motion[0:0] = [motion[0]]*20
-    # motion.extend([motion[-1]]*5000)
+        motion.translateByOffset((0, 0.04, 0))
 
-    # motion = motion[40:]
-    # motion[0:0] = [motion[0]]*50
-    # motion.extend([motion[-1]]*5000)
+        for i in range(2000):
+            motion.data.insert(0, copy.deepcopy(motion[0]))
+        motion.extend([motion[-1]]*300)
 
-    # motion = motion[30:151]
-    # motion = motion[30:]
-    # motion = motion[30:31]
-    # motion[5:5] = [motion[5]]*30
-    # motion[0:0] = [motion[0]]*2000
-    # motion.extend([motion[-1]]*300)
+    elif motionName == 'wd2_tiptoe.bvh':
+        yme.rotateJointLocal(motion, 'Hips', mm.exp(mm.v3(1, 0, 0), .01), False)
+        yme.rotateJointLocal(motion, 'LeftFoot', mm.exp(mm.v3(1., 0., 0.), -.1), False)
+        yme.rotateJointLocal(motion, 'RightFoot', mm.exp(mm.v3(1., 0., 0.), -.1), False)
+        yme.updateGlobalT(motion)
 
-    # motion = motion[37:]
-    for i in range(2000):
-        motion.data.insert(0, copy.deepcopy(motion[0]))
-    motion.extend([motion[-1]]*300)
-
-    # motion = motion[40:41]
-    # motion[0:0] = [motion[0]]*5000
-
-    # motion = motion[56:-248]
-
-    # motion = motion[-249:-248]
-    # motion[0:0] = [motion[0]]*10
-    # motion.extend([motion[-1]]*5000)
+        motion.translateByOffset((0, 0.06, 0))
+        del motion[:270]
+        for i in range(200):
+            motion.data.insert(0, copy.deepcopy(motion[0]))
 
     # world, model
     mcfg = ypc.ModelConfig()
@@ -479,7 +471,7 @@ def create_biped(SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03):
                          'Spine':.6, 'Spine1':.6, 'RightFoot':.2, 'LeftFoot':.2, 'Hips':0.5,
                          'RightUpLeg':.1, 'RightLeg':.3, 'LeftUpLeg':.1, 'LeftLeg':.3}
     if SEGMENT_FOOT:
-        segfoot_weight = 10.
+        segfoot_weight = 1000.
         # segfoot_weight = .1
         config['weightMap']={'RightArm':.2, 'RightForeArm':.2, 'LeftArm':.2, 'LeftForeArm':.2,
                              'Spine':.6, 'Spine1':.6, 'RightFoot':.2, 'LeftFoot':.2, 'Hips':0.5,

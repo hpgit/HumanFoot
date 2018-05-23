@@ -7,6 +7,7 @@ if '..' not in sys.path:
 import PyCommon.modules.Math.mmMath as mm
 import PyCommon.modules.Motion.ysMotion as ym
 
+
 def removeJoint(motion, joint_name_or_index, update=True):
     if isinstance(joint_name_or_index, int):
         removeIndex = joint_name_or_index
@@ -15,7 +16,8 @@ def removeJoint(motion, joint_name_or_index, update=True):
 
     skeleton = motion[0].skeleton
     children = skeleton.getChildIndexes(removeIndex)
-    
+    children_names = [skeleton.getElementName(child) for child in children]
+
     for posture in motion:
         for child in children:
             posture.setLocalR(child, np.dot(posture.getLocalR(removeIndex), posture.getLocalR(child)))
@@ -25,9 +27,10 @@ def removeJoint(motion, joint_name_or_index, update=True):
         del posture.localRs[removeIndex:removeIndex+1]
         del posture.globalTs[removeIndex:removeIndex+1]
         if update:
-            for child in children:
-                posture.updateGlobalT(child)
-            
+            for child_name in children_names:
+                posture.updateGlobalT(skeleton.getElementIndex(child_name))
+
+
 def offsetJointLocal(motion, joint_name_or_index, offset, update=True):
     if isinstance(joint_name_or_index, int):
         index = joint_name_or_index
@@ -40,7 +43,8 @@ def offsetJointLocal(motion, joint_name_or_index, offset, update=True):
     if update:
         for posture in motion:
             posture.updateGlobalT(index)
-        
+
+
 def rotateJointLocal(motion, joint_name_or_index, R, update=True):
     if isinstance(joint_name_or_index, int):
         index = joint_name_or_index
@@ -51,7 +55,8 @@ def rotateJointLocal(motion, joint_name_or_index, R, update=True):
         posture.mulLocalR(index, R)
         if update:
             posture.updateGlobalT(index)
-            
+
+
 def updateGlobalT(motion):
     for posture in motion:
         posture.updateGlobalT()
