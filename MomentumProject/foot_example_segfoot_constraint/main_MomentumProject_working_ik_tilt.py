@@ -544,6 +544,8 @@ def main():
         CM_ref_plane = footCenter
         # CM_ref_plane = footCenter_ref
         dL_des_plane = Kl * totalMass * (CM_ref_plane - CM_plane) - Dl * totalMass * dCM_plane
+        CM_ref = footCenter + np.array([getParamVal('com X offset'), motionModel.getCOM()[1] + getParamVal('com Y offset'), getParamVal('com Z offset')])
+        dL_des_plane = Kl * totalMass * (CM_ref - CM) - Dl * totalMass * dCM
         # dL_des_plane[1] = 0.
         # print('dCM_plane : ', np.linalg.norm(dCM_plane))
 

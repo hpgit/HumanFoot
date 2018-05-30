@@ -175,6 +175,7 @@ class Bvh:
         def __init__(self, channelType, channelIndex):
             self.channelType = channelType    # type: str
             self.channelIndex = channelIndex  # type: int
+
         def __str__(self):
             return self.channelType
         
@@ -617,6 +618,20 @@ class Bvh:
         # modify joint offset
         for joint in partBvh.joints:
             joint.offset *= scale
+
+    # ===========================================================================
+    # other motion file type import
+    # ===========================================================================
+    def importFromAsfAmc(self, asf_path, amc_path):
+        self.importAsf(asf_path)
+        self.importAmc(amc_path)
+
+    def importAsf(self, asf_path):
+        bvhJoint = Bvh.Joint(name)
+        pass
+
+    def importAmc(self, amc_path):
+        pass
 
 
 if __name__ == "__main__":

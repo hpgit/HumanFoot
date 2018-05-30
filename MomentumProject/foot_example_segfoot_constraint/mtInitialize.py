@@ -102,7 +102,7 @@ def create_biped(motionName='wd2_n_kick.bvh', SEGMENT_FOOT=True, SEGMENT_FOOT_MA
 
         motion.translateByOffset((0, 0.06, 0))
         del motion[:270]
-        for i in range(200):
+        for i in range(2000):
             motion.data.insert(0, copy.deepcopy(motion[0]))
 
     # world, model
@@ -471,7 +471,7 @@ def create_biped(motionName='wd2_n_kick.bvh', SEGMENT_FOOT=True, SEGMENT_FOOT_MA
                          'Spine':.6, 'Spine1':.6, 'RightFoot':.2, 'LeftFoot':.2, 'Hips':0.5,
                          'RightUpLeg':.1, 'RightLeg':.3, 'LeftUpLeg':.1, 'LeftLeg':.3}
     if SEGMENT_FOOT:
-        segfoot_weight = 1000.
+        segfoot_weight = 10.
         # segfoot_weight = .1
         config['weightMap']={'RightArm':.2, 'RightForeArm':.2, 'LeftArm':.2, 'LeftForeArm':.2,
                              'Spine':.6, 'Spine1':.6, 'RightFoot':.2, 'LeftFoot':.2, 'Hips':0.5,

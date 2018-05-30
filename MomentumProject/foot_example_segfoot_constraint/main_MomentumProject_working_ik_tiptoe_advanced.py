@@ -58,6 +58,7 @@ def main():
     np.set_printoptions(precision=5, threshold=np.inf, suppress=True, linewidth=3000)
 
     motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped('wd2_tiptoe.bvh')
+    # motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_jump_biped()
 
     vpWorld = cvw.VpWorld(wcfg)
@@ -316,6 +317,9 @@ def main():
     def getParamVals(paramnames):
         return (getParamVal(name) for name in paramnames)
 
+    def setParamVal(paramname, val):
+        viewer.objectInfoWnd.setVal(paramname, val)
+
     idDic = dict()
     for i in range(motion[0].skeleton.getJointNum()):
         idDic[motion[0].skeleton.getJointName(i)] = i
@@ -370,6 +374,19 @@ def main():
         # print(frame)
         # print(motion[frame].getJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0']))
 
+        if frame == 100:
+            setParamVal('tiptoe angle', 0.3)
+        elif 110 < frame < 140:
+            setParamVal('com Y offset', 0.06/30. * (frame-110))
+        elif frame == 200:
+            setParamVal('com Y offset', 0.)
+            setParamVal('tiptoe angle', 0.)
+        elif frame == 230:
+            foot_viewer.check_all_seg()
+            setParamVal('SupKt', 30.)
+        elif frame == 300:
+            setParamVal('SupKt', 17.)
+
         hfi.footAdjust(motion[frame], idDic, SEGMENT_FOOT_MAG=.03, SEGMENT_FOOT_RAD=.015, baseHeight=0.02)
 
         if getParamVal('tiptoe angle') > 0.001:
@@ -380,6 +397,8 @@ def main():
             motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1_0'], mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
             motion[frame].mulJointOrientationLocal(idDic['LeftFoot'], mm.exp(mm.unitX(), math.pi * tiptoe_angle * 0.95))
             motion[frame].mulJointOrientationLocal(idDic['RightFoot'], mm.exp(mm.unitX(), math.pi * tiptoe_angle * 0.95))
+            # motion[frame].mulJointOrientationLocal(idDic['LeftFoot'], mm.exp(mm.unitX(), math.pi * tiptoe_angle * 0.75))
+            # motion[frame].mulJointOrientationLocal(idDic['RightFoot'], mm.exp(mm.unitX(), math.pi * tiptoe_angle * 0.75))
         if getParamVal('left tilt angle') > 0.001:
             left_tilt_angle = getParamVal('left tilt angle')
             motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1'], mm.exp(mm.unitZ(), -math.pi * left_tilt_angle))
@@ -389,6 +408,7 @@ def main():
             motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1'], mm.exp(mm.unitZ(), math.pi * right_tilt_angle))
             motion[frame].mulJointOrientationLocal(idDic['RightFoot'], mm.exp(mm.unitZ(), -math.pi * right_tilt_angle))
         motionModel.update(motion[frame])
+        motionModel.translateByOffset(np.array([getParamVal('com X offset'), getParamVal('com Y offset'), getParamVal('com Z offset')]))
         controlModel_ik.set_q(controlModel.get_q())
 
         global g_initFlag
@@ -514,8 +534,9 @@ def main():
         #     hull = ConvexHull(ref_body_pos)
         footCenter_ref[1] = 0.
 
-        footCenter[0] = footCenter[0] + getParamVal('com X offset')
-        footCenter[2] = footCenter[2] + getParamVal('com Z offset')
+        # footCenter[0] = footCenter[0] + getParamVal('com X offset')
+        # footCenter[1] = footCenter[0] + getParamVal('com Y offset')
+        # footCenter[2] = footCenter[2] + getParamVal('com Z offset')
 
         # initialization
         if g_initFlag == 0:
@@ -537,7 +558,9 @@ def main():
         # to do that, set joint velocities to vpModel
         CM_ref_plane = footCenter
         # CM_ref_plane = footCenter_ref
-        dL_des_plane = Kl * totalMass * (CM_ref_plane - CM_plane) - Dl * totalMass * dCM_plane
+        CM_ref = footCenter + np.array([getParamVal('com X offset'), motionModel.getCOM()[1] + getParamVal('com Y offset'), getParamVal('com Z offset')])
+        dL_des_plane = Kl * totalMass * (CM_ref - CM) - Dl * totalMass * dCM
+        # dL_des_plane = Kl * totalMass * (CM_ref_plane - CM_plane) - Dl * totalMass * dCM_plane
         # dL_des_plane[1] = 0.
         # print('dCM_plane : ', np.linalg.norm(dCM_plane))
 
@@ -592,8 +615,10 @@ def main():
         # a_ori = np.dot(body_ori, mm.qdd2accel(body_ddq, body_dq, body_q))
 
         # a_oris = list(map(mm.logSO3, [mm.getSO3FromVectors(np.dot(body_ori, mm.unitY()), mm.unitY()) for body_ori in contact_body_ori]))
-        a_sups = [np.append(kt_sup*(ref_body_pos[i] - contact_body_pos[i] + contMotionOffset) + dt_sup*(ref_body_vel[i] - contact_body_vel[i]),
-                            kt_sup*a_oris[i]+dt_sup*(ref_body_angvel[i]-contact_body_angvel[i])) for i in range(len(a_oris))]
+        # a_sups = [np.append(kt_sup*(ref_body_pos[i] - contact_body_pos[i] + contMotionOffset) + dt_sup*(ref_body_vel[i] - contact_body_vel[i]),
+        #                     kt_sup*a_oris[i]+dt_sup*(ref_body_angvel[i]-contact_body_angvel[i])) for i in range(len(a_oris))]
+        a_sups = [np.append(kt_sup*(ref_body_pos[i] - contact_body_pos[i] + contMotionOffset) - dt_sup * contact_body_vel[i],
+                            kt_sup*a_oris[i] - dt_sup * contact_body_angvel[i]) for i in range(len(a_oris))]
 
         # momentum matrix
         RS = np.dot(P, Jsys)
@@ -764,6 +789,10 @@ def main():
 
     foot_viewer = FootWindow(viewer.x() + viewer.w() + 20, viewer.y(), 300, 500, 'foot contact modifier', controlModel)
     foot_viewer.show()
+    foot_viewer.check_op_l.value(True)
+    foot_viewer.check_ip_l.value(True)
+    foot_viewer.check_op_r.value(True)
+    foot_viewer.check_ip_r.value(True)
 
     Fl.run()
 

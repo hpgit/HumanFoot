@@ -25,7 +25,7 @@ from PyCommon.modules.GUI import hpSimpleViewer as hsv
 import mtOptimize as mot
 import mtInitialize as mit
 
-from PyCommon.modules import pydart2 as pydart
+import pydart2 as pydart
 from PyCommon.modules.Simulator import csDartModel as cdm
 
 from PyCommon.modules.ArticulatedBody import hpInvKineDart as hikd

@@ -284,7 +284,7 @@ def main():
     viewer.objectInfoWnd.add1DSlider("com X offset", -1., 1., 0.01, initComX)
     viewer.objectInfoWnd.add1DSlider("com Y offset", -1., 1., 0.01, initComY)
     viewer.objectInfoWnd.add1DSlider("com Z offset", -1., 1., 0.01, initComZ)
-    viewer.objectInfoWnd.add1DSlider("tiptoe angle", .0, .5, 0.001, 0.)
+    viewer.objectInfoWnd.add1DSlider("tiptoe angle", -.5, .5, 0.001, 0.)
     viewer.objectInfoWnd.add1DSlider("left tilt angle", .0, .5, 0.001, 0.)
     viewer.objectInfoWnd.add1DSlider("right tilt angle", .0, .5, 0.001, 0.)
 
@@ -326,6 +326,9 @@ def main():
 
     def getParamVals(paramnames):
         return (getParamVal(name) for name in paramnames)
+
+    def setParamVal(paramname, val):
+        viewer.objectInfoWnd.setVal(paramname, val)
 
     extendedFootName = ['Foot_foot_0_0', 'Foot_foot_0_1', 'Foot_foot_0_0_0', 'Foot_foot_0_1_0', 'Foot_foot_1_0']
     lIDdic = {'Left'+name: motion[0].skeleton.getJointIndex('Left'+name) for name in extendedFootName}
@@ -374,22 +377,40 @@ def main():
     # simulate
     ###################################
     def simulateCallback(frame):
-        # print(frame)
+        print(frame)
+
+        if frame == 100:
+            setParamVal('tiptoe angle', -0.4)
+        elif frame == 130:
+            foot_viewer.check_all_seg()
+            setParamVal('SupKt', 30.)
+        elif frame == 200:
+            setParamVal('SupKt', 17.)
+        elif frame == 350:
+            setParamVal('com X offset', -0.04)
+        elif frame == 400:
+            setParamVal('com X offset', -0.08)
+        elif False and frame == 500:
+            setParamVal('com X offset', 0.)
+            setParamVal('tiptoe angle', 0.)
+            foot_viewer.check_tiptoe_all()
+
         # print(motion[frame].getJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0']))
-        if getParamVal('tiptoe angle') > 0.001:
+        if getParamVal('tiptoe angle') > 0.001 or getParamVal('tiptoe angle') < -0.001:
             tiptoe_angle = getParamVal('tiptoe angle')
             motion[frame].mulJointOrientationLocal(footIdDic['LeftFoot_foot_0_0_0'], mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
             motion[frame].mulJointOrientationLocal(footIdDic['LeftFoot_foot_0_1_0'], mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
             motion[frame].mulJointOrientationLocal(footIdDic['RightFoot_foot_0_0_0'], mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
             motion[frame].mulJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0'], mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
-            motion[frame].mulJointOrientationLocal(supL, mm.exp(mm.unitX(), math.pi * tiptoe_angle))
-            motion[frame].mulJointOrientationLocal(supR, mm.exp(mm.unitX(), math.pi * tiptoe_angle))
+            motion[frame].mulJointOrientationLocal(supL, mm.exp(mm.unitX(), math.pi * tiptoe_angle * 0.95))
+            motion[frame].mulJointOrientationLocal(supR, mm.exp(mm.unitX(), math.pi * tiptoe_angle * 0.95))
         if getParamVal('left tilt angle') > 0.001:
             left_tilt_angle = getParamVal('left tilt angle')
             motion[frame].mulJointOrientationLocal(footIdDic['LeftFoot_foot_0_1'], mm.exp(mm.unitZ(), -math.pi * left_tilt_angle))
         if getParamVal('right tilt angle') > 0.001:
             right_tilt_angle = getParamVal('right tilt angle')
             motion[frame].mulJointOrientationLocal(footIdDic['RightFoot_foot_0_1'], mm.exp(mm.unitZ(), math.pi * right_tilt_angle))
+
         motionModel.update(motion[frame])
         controlModel_ik.set_q(controlModel.get_q())
 
@@ -517,6 +538,7 @@ def main():
         footCenter_ref[1] = 0.
 
         footCenter[0] = footCenter[0] + getParamVal('com X offset')
+        footCenter[2] = footCenter[2] + getParamVal('com Z offset')
 
         # initialization
         if g_initFlag == 0:
@@ -593,8 +615,10 @@ def main():
         # a_ori = np.dot(body_ori, mm.qdd2accel(body_ddq, body_dq, body_q))
 
         # a_oris = list(map(mm.logSO3, [mm.getSO3FromVectors(np.dot(body_ori, mm.unitY()), mm.unitY()) for body_ori in contact_body_ori]))
-        a_sups = [np.append(kt_sup*(ref_body_pos[i] - contact_body_pos[i] + contMotionOffset) + dt_sup*(ref_body_vel[i] - contact_body_vel[i]),
-                            kt_sup*a_oris[i]+dt_sup*(ref_body_angvel[i]-contact_body_angvel[i])) for i in range(len(a_oris))]
+        # a_sups = [np.append(kt_sup*(ref_body_pos[i] - contact_body_pos[i] + contMotionOffset) + dt_sup*(ref_body_vel[i] - contact_body_vel[i]),
+        #                     kt_sup*a_oris[i]+dt_sup*(ref_body_angvel[i]-contact_body_angvel[i])) for i in range(len(a_oris))]
+        a_sups = [np.append(kt_sup*(ref_body_pos[i] - contact_body_pos[i] + contMotionOffset) - dt_sup * contact_body_vel[i],
+                            kt_sup*a_oris[i] - dt_sup * contact_body_angvel[i]) for i in range(len(a_oris))]
 
         # momentum matrix
         RS = np.dot(P, Jsys)

@@ -212,3 +212,33 @@ class FootWindow(Fl_Window):
 
         self.end()
 
+    def check_left_seg(self):
+        self.check_op_l.value(True)
+        self.check_ip_l.value(True)
+        self.check_om_l.value(True)
+        self.check_im_l.value(True)
+        self.check_h_l.value(True)
+
+    def check_right_seg(self):
+        self.check_op_r.value(True)
+        self.check_ip_r.value(True)
+        self.check_om_r.value(True)
+        self.check_im_r.value(True)
+        self.check_h_r.value(True)
+
+    def check_all_seg(self):
+        self.check_left_seg()
+        self.check_right_seg()
+
+    def check_tiptoe_all(self):
+        self.check_op_l.value(True)
+        self.check_ip_l.value(True)
+        self.check_om_l.value(False)
+        self.check_im_l.value(False)
+        self.check_h_l.value(True)
+
+        self.check_op_r.value(True)
+        self.check_ip_r.value(True)
+        self.check_om_r.value(False)
+        self.check_im_r.value(False)
+        self.check_h_r.value(False)

@@ -142,9 +142,15 @@ class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):
 
     def getNameAndVals(self):
         objValDict = dict()
-        for k, v in self.valObjects.iteritems():
+        for k, v in self.valObjects.items():
             objValDict[k] = v.value()
         return objValDict
+
+    def setVal(self, name, val):
+        try:
+            self.valObjects[name].value(val)
+        except Exception as e:
+            print(e)
 
     def addBtn(self, name, callback):
         self.begin()
