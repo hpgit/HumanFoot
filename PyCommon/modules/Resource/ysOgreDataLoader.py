@@ -255,7 +255,7 @@ if __name__=='__main__':
                 for i in range(ele.attributes.length):
                     s += ele.attributes.item(i).name + ', '
             s += ']'
-            print s 
+            print(s)
                     
             for child in ele.childNodes:
                 _print(child, depth+2)
@@ -267,11 +267,11 @@ if __name__=='__main__':
     def test_sax():
         class TestSaxHandler(xml.sax.handler.ContentHandler):
             def startDocument(self):
-                print 'startDocument: '
+                print('startDocument: ')
             def startElement(self, name, attrs):
-                print 'startElement: ', name
+                print('startElement: ', name)
             def endElement(self, name):
-                print 'endElement: ', name
+                print('endElement: ', name)
                 
         xmlFilePath = '../samples/test.xml'
         parser = xml.sax.make_parser()   

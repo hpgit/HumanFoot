@@ -5,15 +5,19 @@ from OpenGL.GL import *
 from PyCommon.modules.Renderer import ysRenderer as yr
 from PyCommon.modules.Math import mmMath as mm
 
+
 class PressureFrameInfo:
     def __init__(self):
         self.contact_seg_idx = []
         self.contact_seg_position_local = []
         self.contact_seg_forces = []
 
+
+
 class FootPressureGlWindow(Fl_Gl_Window):
     def __init__(self, x, y, w, h, model):
         Fl_Gl_Window.__init__(self, x, y, w, h)
+
         self.initGL()
         self.rc = yr.RenderContext()
         self.model = model
@@ -185,6 +189,8 @@ class FootWindow(Fl_Window):
         Fl_Window.__init__(self, x, y, w, h, title)
         y_padding = 20
 
+        self.ENABLE_INSIDE_METATARSAL = False
+
         self.model = model
 
         self.begin()
@@ -192,13 +198,17 @@ class FootWindow(Fl_Window):
         self.check_op_l = Fl_Check_Button(10, 10, 30, 30, 'OP')
         self.check_ip_l = Fl_Check_Button(50, 10, 30, 30, 'IP')
         self.check_om_l = Fl_Check_Button(10, 50, 30, 30, 'OM')
-        self.check_im_l = Fl_Check_Button(50, 50, 30, 30, 'IM')
+        self.check_im_l = None
+        if self.ENABLE_INSIDE_METATARSAL:
+            self.check_im_l = Fl_Check_Button(50, 50, 30, 30, 'IM')
         self.check_h_l = Fl_Check_Button(30, 90, 30, 30, 'H')
 
         self.check_op_r = Fl_Check_Button(150, 10, 30, 30, 'OP')
         self.check_ip_r = Fl_Check_Button(110, 10, 30, 30, 'IP')
         self.check_om_r = Fl_Check_Button(150, 50, 30, 30, 'OM')
-        self.check_im_r = Fl_Check_Button(110, 50, 30, 30, 'IM')
+        self.check_im_r = None
+        if self.ENABLE_INSIDE_METATARSAL:
+            self.check_im_r = Fl_Check_Button(110, 50, 30, 30, 'IM')
         self.check_h_r = Fl_Check_Button(130, 90, 30, 30, 'H')
 
         self.foot_pressure_gl_window = FootPressureGlWindow(50, 150, 200, 200, model)
@@ -216,29 +226,83 @@ class FootWindow(Fl_Window):
         self.check_op_l.value(True)
         self.check_ip_l.value(True)
         self.check_om_l.value(True)
-        self.check_im_l.value(True)
+        if self.ENABLE_INSIDE_METATARSAL:
+            self.check_im_l.value(True)
         self.check_h_l.value(True)
 
     def check_right_seg(self):
         self.check_op_r.value(True)
         self.check_ip_r.value(True)
         self.check_om_r.value(True)
-        self.check_im_r.value(True)
+        if self.ENABLE_INSIDE_METATARSAL:
+            self.check_im_r.value(True)
         self.check_h_r.value(True)
 
     def check_all_seg(self):
         self.check_left_seg()
         self.check_right_seg()
 
+    def check_not_left_seg(self):
+        self.check_op_l.value(False)
+        self.check_ip_l.value(False)
+        self.check_om_l.value(False)
+        if self.ENABLE_INSIDE_METATARSAL:
+            self.check_im_l.value(False)
+        self.check_h_l.value(False)
+
+    def check_not_right_seg(self):
+        self.check_op_r.value(False)
+        self.check_ip_r.value(False)
+        self.check_om_r.value(False)
+        if self.ENABLE_INSIDE_METATARSAL:
+            self.check_im_r.value(False)
+        self.check_h_r.value(False)
+
+    def check_not_all_seg(self):
+        self.check_not_left_seg()
+        self.check_not_right_seg()
+
     def check_tiptoe_all(self):
         self.check_op_l.value(True)
         self.check_ip_l.value(True)
         self.check_om_l.value(False)
-        self.check_im_l.value(False)
-        self.check_h_l.value(True)
+        if self.ENABLE_INSIDE_METATARSAL:
+            self.check_im_l.value(False)
+        self.check_h_l.value(False)
 
         self.check_op_r.value(True)
         self.check_ip_r.value(True)
         self.check_om_r.value(False)
-        self.check_im_r.value(False)
+        if self.ENABLE_INSIDE_METATARSAL:
+            self.check_im_r.value(False)
+        self.check_h_r.value(False)
+
+    def check_tilt_left_all(self):
+        self.check_op_l.value(True)
+        self.check_ip_l.value(False)
+        self.check_om_l.value(True)
+        if self.ENABLE_INSIDE_METATARSAL:
+            self.check_im_l.value(False)
+        self.check_h_l.value(False)
+
+        self.check_op_r.value(False)
+        self.check_ip_r.value(True)
+        self.check_om_r.value(False)
+        if self.ENABLE_INSIDE_METATARSAL:
+            self.check_im_r.value(True)
+        self.check_h_r.value(False)
+
+    def check_tilt_right_all(self):
+        self.check_op_l.value(False)
+        self.check_ip_l.value(True)
+        self.check_om_l.value(False)
+        if self.ENABLE_INSIDE_METATARSAL:
+            self.check_im_l.value(True)
+        self.check_h_l.value(False)
+
+        self.check_op_r.value(True)
+        self.check_ip_r.value(False)
+        self.check_om_r.value(True)
+        if self.ENABLE_INSIDE_METATARSAL:
+            self.check_im_r.value(False)
         self.check_h_r.value(False)

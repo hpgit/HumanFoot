@@ -10,7 +10,8 @@ sys.path.append('../PyCommon/modules')
 sys.path.append('..')
 
 # from PyCommon.modules.pydart import pydart
-from PyCommon.modules import pydart2 as pydart
+# from PyCommon.modules import pydart2 as pydart
+import pydart2 as pydart
 
 import math
 import PyCommon.modules.Math.mmMath as mm

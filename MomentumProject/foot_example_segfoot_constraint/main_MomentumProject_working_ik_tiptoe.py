@@ -379,24 +379,25 @@ def main():
     def simulateCallback(frame):
         print(frame)
 
-        if frame == 100:
-            setParamVal('tiptoe angle', -0.4)
-        elif frame == 130:
-            foot_viewer.check_all_seg()
-            setParamVal('SupKt', 30.)
-        elif frame == 200:
-            setParamVal('SupKt', 17.)
-        elif frame == 350:
-            setParamVal('com X offset', -0.04)
-        elif frame == 400:
-            setParamVal('com X offset', -0.08)
-        elif False and frame == 500:
-            setParamVal('com X offset', 0.)
-            setParamVal('tiptoe angle', 0.)
-            foot_viewer.check_tiptoe_all()
+        if True:
+            if frame == 100:
+                setParamVal('tiptoe angle', -0.4)
+            elif frame == 130:
+                foot_viewer.check_all_seg()
+                setParamVal('SupKt', 30.)
+            elif frame == 200:
+                setParamVal('SupKt', 17.)
+            elif frame == 350:
+                setParamVal('com X offset', -0.04)
+            elif frame == 400:
+                setParamVal('com X offset', -0.08)
+            elif False and frame == 500:
+                setParamVal('com X offset', 0.)
+                setParamVal('tiptoe angle', 0.)
+                foot_viewer.check_tiptoe_all()
 
         # print(motion[frame].getJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0']))
-        if getParamVal('tiptoe angle') > 0.001 or getParamVal('tiptoe angle') < -0.001:
+        if abs(getParamVal('tiptoe angle')) > 0.001:
             tiptoe_angle = getParamVal('tiptoe angle')
             motion[frame].mulJointOrientationLocal(footIdDic['LeftFoot_foot_0_0_0'], mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
             motion[frame].mulJointOrientationLocal(footIdDic['LeftFoot_foot_0_1_0'], mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
@@ -404,12 +405,26 @@ def main():
             motion[frame].mulJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0'], mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
             motion[frame].mulJointOrientationLocal(supL, mm.exp(mm.unitX(), math.pi * tiptoe_angle * 0.95))
             motion[frame].mulJointOrientationLocal(supR, mm.exp(mm.unitX(), math.pi * tiptoe_angle * 0.95))
+
         if getParamVal('left tilt angle') > 0.001:
             left_tilt_angle = getParamVal('left tilt angle')
             motion[frame].mulJointOrientationLocal(footIdDic['LeftFoot_foot_0_1'], mm.exp(mm.unitZ(), -math.pi * left_tilt_angle))
+            motion[frame].mulJointOrientationLocal(footIdDic['LeftFoot'], mm.exp(mm.unitZ(), math.pi * left_tilt_angle))
+        elif getParamVal('left tilt angle') < -0.001:
+            left_tilt_angle = getParamVal('left tilt angle')
+            motion[frame].mulJointOrientationLocal(footIdDic['LeftFoot_foot_0_0'], mm.exp(mm.unitZ(), -math.pi * left_tilt_angle))
+            motion[frame].mulJointOrientationLocal(footIdDic['LeftFoot_foot_0_1'], mm.exp(mm.unitZ(), math.pi * left_tilt_angle))
+            motion[frame].mulJointOrientationLocal(footIdDic['LeftFoot'], mm.exp(mm.unitZ(), math.pi * left_tilt_angle))
+
         if getParamVal('right tilt angle') > 0.001:
             right_tilt_angle = getParamVal('right tilt angle')
             motion[frame].mulJointOrientationLocal(footIdDic['RightFoot_foot_0_1'], mm.exp(mm.unitZ(), math.pi * right_tilt_angle))
+            motion[frame].mulJointOrientationLocal(footIdDic['RightFoot'], mm.exp(mm.unitZ(), -math.pi * right_tilt_angle))
+        elif getParamVal('right tilt angle') < -0.001:
+            right_tilt_angle = getParamVal('right tilt angle')
+            motion[frame].mulJointOrientationLocal(footIdDic['RightFoot_foot_0_0'], mm.exp(mm.unitZ(), math.pi * right_tilt_angle))
+            motion[frame].mulJointOrientationLocal(footIdDic['RightFoot_foot_0_1'], mm.exp(mm.unitZ(), -math.pi * right_tilt_angle))
+            motion[frame].mulJointOrientationLocal(footIdDic['RightFoot'], mm.exp(mm.unitZ(), -math.pi * right_tilt_angle))
 
         motionModel.update(motion[frame])
         controlModel_ik.set_q(controlModel.get_q())

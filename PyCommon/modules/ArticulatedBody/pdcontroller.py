@@ -3,7 +3,8 @@ from numpy.linalg import inv
 import sys
 if ".." not in sys.path:
     sys.path.append("..")
-from PyCommon.modules import pydart2 as pydart
+# from PyCommon.modules import pydart2 as pydart
+import pydart2 as pydart
 from PyCommon.modules.Math import mmMath as mm
 import math
 

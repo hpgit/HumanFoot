@@ -1,7 +1,8 @@
 import numpy as np
 from numpy.linalg import inv
 # import pydart
-from PyCommon.modules import pydart2 as pydart
+# from PyCommon.modules import pydart2 as pydart
+import pydart2 as pydart
 
 
 class PDController:

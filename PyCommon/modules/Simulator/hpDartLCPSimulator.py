@@ -8,7 +8,8 @@ from copy import deepcopy
 import PyCommon.modules.Optimization.csQPOASES as cqp
 
 from PyCommon.modules.Simulator import csDartModel as cdm
-import PyCommon.modules.pydart2 as pydart
+# import PyCommon.modules.pydart2 as pydart
+import pydart2 as pydart
 
 from PyCommon.modules.Motion import ysMotion as ym
 

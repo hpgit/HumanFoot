@@ -1456,7 +1456,7 @@ class RenderContext:
         gluCylinder(self.quad, radius, radius, length_z, 16, 1)
 
     def drawCapsule(self, radius, length_z):
-        _SLICE_SIZE = 4
+        _SLICE_SIZE = 32
         glPushMatrix()
         glTranslatef(0., 0., -length_z/2.)
         gluSphere(self.quad2, radius, _SLICE_SIZE, _SLICE_SIZE)

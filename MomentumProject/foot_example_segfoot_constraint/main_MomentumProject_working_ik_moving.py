@@ -81,6 +81,7 @@ def main():
     controlModel_ik = cvm.VpControlModel(vpWorld_ik, motion[0], mcfg)
     vpWorld_ik.initialize()
     controlModel_ik.set_q(controlModel.get_q())
+    controlModel_ik.set_q(np.zeros_like(controlModel.get_q()))
 
     totalDOF = controlModel.getTotalDOF()
     DOFs = controlModel.getDOFs()
@@ -252,7 +253,8 @@ def main():
     # foot_viewer = FootWindow(viewer.x() + viewer.w() + 20, viewer.y(), 300, 400, 'foot contact modifier', controlModel)
     foot_viewer = None  # type: FootWindow
 
-    initKt = 25
+    initKt = 25.
+    # initKt = 60.
     initKl = 100.
     initKh = 100.
 
@@ -277,9 +279,9 @@ def main():
     viewer.objectInfoWnd.add1DSlider("com X offset", -1., 1., 0.01, initComX)
     viewer.objectInfoWnd.add1DSlider("com Y offset", -1., 1., 0.01, initComY)
     viewer.objectInfoWnd.add1DSlider("com Z offset", -1., 1., 0.01, initComZ)
-    viewer.objectInfoWnd.add1DSlider("tiptoe angle", .0, .5, 0.001, 0.)
-    viewer.objectInfoWnd.add1DSlider("left tilt angle", .0, .5, 0.001, 0.)
-    viewer.objectInfoWnd.add1DSlider("right tilt angle", .0, .5, 0.001, 0.)
+    viewer.objectInfoWnd.add1DSlider("tiptoe angle", -0.5, .5, 0.001, 0.)
+    viewer.objectInfoWnd.add1DSlider("left tilt angle", -0.5, .5, 0.001, 0.)
+    viewer.objectInfoWnd.add1DSlider("right tilt angle", -0.5, .5, 0.001, 0.)
 
     viewer.force_on = False
 
@@ -370,6 +372,8 @@ def main():
 
         return fixed_nested_dof_values
 
+    start_frame = 60
+
     ###################################
     # simulate
     ###################################
@@ -378,21 +382,55 @@ def main():
         # print(motion[frame].getJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0']))
 
         if True:
-            if frame == 100:
-                if motionFile == 'wd2_tiptoe.bvh':
-                    setParamVal('tiptoe angle', 0.3)
-                if motionFile == 'wd2_tiptoe_zygote.bvh':
-                    setParamVal('tiptoe angle', 0.15)
-            elif 110 < frame < 140:
-                setParamVal('com Y offset', 0.06/30. * (frame-110))
-            elif frame == 300:
-                setParamVal('com Y offset', 0.)
-                setParamVal('tiptoe angle', 0.)
-            elif frame == 330:
+            if frame == 0:
                 foot_viewer.check_all_seg()
-                # setParamVal('SupKt', 30.)
-            # elif frame == 400:
+                if motionFile == 'wd2_tiptoe_zygote.bvh':
+                    setParamVal('com Y offset', -0.01)
+            elif frame == start_frame:
+                foot_viewer.check_tilt_left_all()
+                setParamVal('left tilt angle', -0.15)
+                setParamVal('right tilt angle', 0.15)
+            elif frame == start_frame + 50:
+                setParamVal('left tilt angle', 0.)
+                setParamVal('right tilt angle', 0.)
+                foot_viewer.check_not_all_seg()
+                foot_viewer.check_op_l.value(True)
+                foot_viewer.check_ip_r.value(True)
+
+            elif frame == start_frame + 60:
+                foot_viewer.check_tiptoe_all()
+
+            elif frame == start_frame + 80:
+                setParamVal('tiptoe angle', 0.2)
+
+            elif frame == start_frame + 100:
+                setParamVal('tiptoe angle', 0.)
+                foot_viewer.check_not_all_seg()
+                foot_viewer.check_ip_l.value(True)
+                foot_viewer.check_op_r.value(True)
+
+            elif frame == start_frame + 115:
+                foot_viewer.check_tilt_right_all()
+                setParamVal('left tilt angle', 0.15)
+                setParamVal('right tilt angle', -0.15)
+            elif frame == start_frame + 150:
+                setParamVal('left tilt angle', 0.)
+                setParamVal('right tilt angle', 0.)
+            elif frame == start_frame + 180:
+                foot_viewer.check_all_seg()
+                # setParamVal('SupKt', 21.)
+            # elif frame == start_frame + 200:
             #     setParamVal('SupKt', 17.)
+
+            # elif frame == 250:
+            #     setParamVal('left tilt angle', 0.)
+            #     setParamVal('right tilt angle', 0.)
+            #     setParamVal('tiptoe angle', 0.2)
+            #     foot_viewer.check_tiptoe_all()
+            # elif frame == 300:
+            #     setParamVal('left tilt angle', 0.2)
+            #     setParamVal('right tilt angle', -0.2)
+            #     foot_viewer.check_tilt_right_all()
 
         hfi.footAdjust(motion[frame], idDic, SEGMENT_FOOT_MAG=.03, SEGMENT_FOOT_RAD=.015, baseHeight=0.02)
 
@@ -458,8 +496,10 @@ def main():
         ddth_r = motion.getDOFAccelerations(frame)
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
 
-        ype.flatten(fix_dofs(DOFs, ddth_des, mcfg, joint_names), ddth_des_flat)
-        ype.flatten(fix_dofs(DOFs, dth, mcfg, joint_names), dth_flat)
+        # ype.flatten(fix_dofs(DOFs, ddth_des, mcfg, joint_names), ddth_des_flat)
+        # ype.flatten(fix_dofs(DOFs, dth, mcfg, joint_names), dth_flat)
+        ype.flatten(ddth_des, ddth_des_flat)
+        ype.flatten(dth, dth_flat)
 
         #################################################
         # jacobian

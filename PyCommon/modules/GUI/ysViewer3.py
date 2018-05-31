@@ -27,7 +27,7 @@ VIEW_TOP = 2
 VIEW_PERSPECTIVE = 3
 
 #Define
-FLAG_SHADOW = 1
+FLAG_SHADOW = 0
 
 #class StateObject:
 #    def getState(self):
