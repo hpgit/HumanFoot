@@ -310,12 +310,24 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 //	if (len_joint_children > 0 && _config.attr("hasNode")(joint_name))
 	if (_config.attr("hasNode")(joint_name))
 	{
-
 		Vec3 offset(0);
-		for( int i=0 ; i<len_joint_children; ++i)
-			offset += pyVec3_2_Vec3(joint.attr("children")[i].attr("offset"));
 
-        offset *= (1./len_joint_children);
+		object cfgNode = _config.attr("getNode")(joint_name);
+
+		if (object() != cfgNode.attr("bone_dir_child"))
+		{
+		    string bone_dir_child_name = XS(cfgNode.attr("bone_dir_child"));
+		    int child_joint_index = XI(posture.attr("skeleton").attr("getJointIndex")(bone_dir_child_name));
+		    offset += pyVec3_2_Vec3(posture.attr("skeleton").attr("getJoint")(child_joint_index).attr("offset"));
+//		    std::cout << joint_name << " " << offset <<std::endl;
+		}
+		else
+		{
+            for( int i=0 ; i<len_joint_children; ++i)
+                offset += pyVec3_2_Vec3(joint.attr("children")[i].attr("offset"));
+
+            offset *= (1./len_joint_children);
+		}
 
 		SE3 boneT(offset*.5);
 
@@ -329,7 +341,6 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 
 		_nodes[joint_index]->offset_from_parent = pyVec3_2_Vec3(joint.attr("offset"));
 
-		object cfgNode = _config.attr("getNode")(joint_name);
 		///*
 		int numGeom = len(cfgNode.attr("geoms"));
 		if (numGeom != 0)
@@ -357,7 +368,8 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 					if(cfgNode.attr("geomTs")[i])
 					{
 						geomT = pySO3_2_SE3(cfgNode.attr("geomTs")[i][1]);
-						geomT.SetPosition(geomT*pyVec3_2_Vec3(cfgNode.attr("geomTs")[i][0]));
+//						geomT.SetPosition(geomT*pyVec3_2_Vec3(cfgNode.attr("geomTs")[i][0]));
+						geomT.SetPosition(pyVec3_2_Vec3(cfgNode.attr("geomTs")[i][0]));
 					}
 					else
 						std::cout << "there is no geom Ts!" << std::endl;

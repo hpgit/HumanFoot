@@ -13,7 +13,7 @@ ROOT root
             CHANNELS 3 Zrotation Xrotation Yrotation
             End Site
             {
-                OFFSET 0 0 1.8
+                OFFSET 0 0 2.1
             }
         }
         JOINT foot_0_1

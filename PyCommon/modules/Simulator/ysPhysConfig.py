@@ -107,6 +107,7 @@ class Node:
     :type length : float
     :type width : float
     :type geom : str
+    :type bone_dir_child : str
     :type jointType : str
     :type jointAxes : list[list[float]]
     :type geoms : list[str]
@@ -149,6 +150,8 @@ class Node:
         self.geoms = []
         self.geomTs = []
         self.geomMaterial = []
+
+        self.bone_dir_child = None
 
     def addGeom(self, geom, geomT, material):
         self.geoms.append(geom)

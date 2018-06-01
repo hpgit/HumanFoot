@@ -386,32 +386,34 @@ def create_biped(motionName='wd2_n_kick.bvh', SEGMENT_FOOT=True, SEGMENT_FOOT_MA
             node.jointType = 'B'
 
         elif SEGMENT_FOOT_OUTSIDE_JOINT_FIRST and SEGMENT_FOOT_ARC:
-            FIRST_METATARSAL_ANGLE = mm.deg2Rad(60.)
-            SECOND_METATARSAL_ANGLE = mm.deg2Rad(15.)
-            THIRD_METATARSAL_ANGLE = mm.deg2Rad(8.)
+            FIRST_METATARSAL_ANGLE = mm.deg2Rad(30.)
+            SECOND_METATARSAL_ANGLE = mm.deg2Rad(20.)
+            THIRD_METATARSAL_ANGLE = mm.deg2Rad(15.)
 
             # RightFoot_foot_0_0 : outside metatarsals
             capsulize('RightFoot_foot_0_0')
             node = mcfg.getNode('RightFoot_foot_0_0')
+            node.bone_dir_child = 'RightFoot_foot_0_0_0'
             # third
-            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([-SEGMENT_BETWEEN_SPACE/4., 0., SEGMENT_METATARSAL_LEN*0.25]),
-                                     mm.exp([0., -math.atan2(SEGMENT_BETWEEN_SPACE, SEGMENT_METATARSAL_LEN), 0.])],
-                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*SEGMENT_METATARSAL_LEN + 2.*SEGMENT_FOOT_RAD))
+            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([0., .5*SEGMENT_METATARSAL_LEN*math.tan(THIRD_METATARSAL_ANGLE), 0.]),
+                                     mm.exp(THIRD_METATARSAL_ANGLE * mm.unitX())],
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * SEGMENT_METATARSAL_LEN / math.cos(THIRD_METATARSAL_ANGLE) + 2.*SEGMENT_FOOT_RAD))
             # fourth
-            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([-SEGMENT_BETWEEN_SPACE/4.-SEGMENT_BETWEEN_SPACE, 0., SEGMENT_METATARSAL_LEN*0.25]),
-                                     mm.exp([0., -math.atan2(SEGMENT_BETWEEN_SPACE, SEGMENT_METATARSAL_LEN), 0.])],
-                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*SEGMENT_METATARSAL_LEN + 2.*SEGMENT_FOOT_RAD))
+            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([-SEGMENT_BETWEEN_SPACE, 0., 0.]),
+                                     mm.exp([0., 0., 0.])],
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             # node.jointType = footJointType
             node.jointType = 'B'
 
             capsulize('LeftFoot_foot_0_0')
             node = mcfg.getNode('LeftFoot_foot_0_0')
-            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([SEGMENT_BETWEEN_SPACE/4., 0., SEGMENT_METATARSAL_LEN*0.25]),
-                                     mm.exp([0., math.atan2(SEGMENT_BETWEEN_SPACE, SEGMENT_METATARSAL_LEN), 0.])],
-                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*SEGMENT_METATARSAL_LEN+2.*SEGMENT_FOOT_RAD))
-            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([SEGMENT_BETWEEN_SPACE/4.+SEGMENT_BETWEEN_SPACE, 0., SEGMENT_METATARSAL_LEN*0.25]),
-                                     mm.exp([0., math.atan2(SEGMENT_BETWEEN_SPACE, SEGMENT_METATARSAL_LEN), 0.])],
-                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*SEGMENT_METATARSAL_LEN+2.*SEGMENT_FOOT_RAD))
+            node.bone_dir_child = 'LeftFoot_foot_0_0_0'
+            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([0., .5*SEGMENT_METATARSAL_LEN*math.tan(THIRD_METATARSAL_ANGLE), 0.]),
+                                     mm.exp(THIRD_METATARSAL_ANGLE * mm.unitX())],
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * SEGMENT_METATARSAL_LEN / math.cos(THIRD_METATARSAL_ANGLE) + 2.*SEGMENT_FOOT_RAD))
+            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([SEGMENT_BETWEEN_SPACE, 0., 0.]),
+                                     mm.exp([0., 0., 0.])],
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             # node.jointType = footJointType
             node.jointType = 'B'
 

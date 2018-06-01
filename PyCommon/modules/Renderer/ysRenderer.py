@@ -700,7 +700,7 @@ class JointMotionRenderer(Renderer):
 
 
 class BasicSkeletonRenderer(Renderer):
-    def __init__(self, Ts, color=(255, 255, 255), offset_Y=0.):
+    def __init__(self, Ts, color=(255, 255, 255), offset_draw=(0., 0., 0.)):
         """
         Ts should be dict type.
         pelvis, spine_ribs, head, thigh_R, shin_R, foot_R, upper_limb_R, lower_limb_R
@@ -726,11 +726,18 @@ class BasicSkeletonRenderer(Renderer):
         self.offset['thigh_R'] = numpy.array([-0.08931, -0.031, 0.01779])
         self.offset['shin_R'] = numpy.array([-0.007, -0.40402, -0.00173])
         self.offset['foot_R'] = numpy.array([0.01482, -0.46019, -0.02403])
+        self.offset['foot_heel_R'] = numpy.array([0.01482, -0.46019, -0.02403])
         self.offset['upper_limb_R'] = numpy.array([-0.19431, 0.40374, 0.01608])
         self.offset['lower_limb_R'] = numpy.array([-0.327, 0.01339, -0.0251])
         self.offset['thigh_L'] = numpy.array([0.08931, -0.031, 0.01779])
         self.offset['shin_L'] = numpy.array([0.007, -0.40402, -0.00173])
         self.offset['foot_L'] = numpy.array([-0.01482, -0.46019, -0.02403])
+        self.offset['foot_heel_L'] = numpy.array([-0.01482, -0.46019, -0.02403])
+        self.offset['outside_metatarsal_L'] = numpy.array([0.02714, -0.05689, 0.])
+        self.offset['outside_phalanges_L'] = numpy.array([0., 0., 0.09059])
+        self.offset['inside_metatarsal_L'] = numpy.array([-0.01409, 0., 0.])
+        self.offset['inside_phalanges_L'] = numpy.array([0., 0.00762, 0.11214])
+
         self.offset['upper_limb_L'] = numpy.array([0.19431, 0.40374, 0.01608])
         self.offset['lower_limb_L'] = numpy.array([0.327, 0.01339, -0.0251])
 
@@ -739,17 +746,26 @@ class BasicSkeletonRenderer(Renderer):
         self.children['spine_ribs'] = ['head', 'upper_limb_R', 'upper_limb_L']
         self.children['head'] = []
         self.children['thigh_R'] = ['shin_R']
-        self.children['shin_R'] = ['foot_R']
+        self.children['shin_R'] = ['foot_heel_R']
+        # self.children['shin_R'] = ['foot_R']
+        self.children['foot_heel_R'] = []
         self.children['foot_R'] = []
         self.children['upper_limb_R'] = ['lower_limb_R']
         self.children['lower_limb_R'] = []
         self.children['thigh_L'] = ['shin_L']
-        self.children['shin_L'] = ['foot_L']
+        self.children['shin_L'] = ['foot_heel_L']
+        # self.children['shin_L'] = ['foot_L']
+        self.children['foot_heel_L'] = ['outside_metatarsal_L']
+        self.children['outside_metatarsal_L'] = ['inside_metatarsal_L', 'outside_phalanges_L']
+        self.children['outside_phalanges_L'] = []
+        self.children['inside_metatarsal_L'] = ['inside_phalanges_L']
+        self.children['inside_phalanges_L'] = []
+
         self.children['foot_L'] = []
         self.children['upper_limb_L'] = ['lower_limb_L']
         self.children['lower_limb_L'] = []
 
-        self.offset_Y = offset_Y
+        self.offset_draw = copy.deepcopy(offset_draw)
 
         self.isInit = False
 
@@ -769,7 +785,7 @@ class BasicSkeletonRenderer(Renderer):
         :return:
         """
         glPushMatrix()
-        glTranslatef(0., self.offset_Y, 0.)
+        glTranslatef(self.offset_draw[0], self.offset_draw[1], self.offset_draw[2])
         self._render('pelvis', state)
         glPopMatrix()
 
@@ -1456,7 +1472,7 @@ class RenderContext:
         gluCylinder(self.quad, radius, radius, length_z, 16, 1)
 
     def drawCapsule(self, radius, length_z):
-        _SLICE_SIZE = 32
+        _SLICE_SIZE = 4
         glPushMatrix()
         glTranslatef(0., 0., -length_z/2.)
         gluSphere(self.quad2, radius, _SLICE_SIZE, _SLICE_SIZE)

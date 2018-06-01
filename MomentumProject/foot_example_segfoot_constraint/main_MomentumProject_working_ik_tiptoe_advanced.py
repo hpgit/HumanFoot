@@ -223,7 +223,7 @@ def main():
     skeleton_renderer = None
     if SKELETON_ON:
         # skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), offset_Y=-0.08)
-        skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), offset_Y=-0.02)
+        skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), offset_draw=(0.,-0.02, 0.))
         viewer.doc.addRenderer('skeleton', skeleton_renderer)
     viewer.doc.addRenderer('rd_footCenter', yr.PointsRenderer(rd_footCenter))
     viewer.doc.addRenderer('rd_footCenter_ref', yr.PointsRenderer(rd_footCenter_ref))

@@ -58,7 +58,7 @@ def main():
 
     motionFile = 'wd2_tiptoe.bvh'
     motionFile = 'wd2_tiptoe_zygote.bvh'
-    motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped(motionFile, SEGMENT_FOOT_RAD=0.01)
+    motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped(motionFile, SEGMENT_FOOT_RAD=0.008)
     # motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_jump_biped()
 
@@ -81,7 +81,6 @@ def main():
     controlModel_ik = cvm.VpControlModel(vpWorld_ik, motion[0], mcfg)
     vpWorld_ik.initialize()
     controlModel_ik.set_q(controlModel.get_q())
-    controlModel_ik.set_q(np.zeros_like(controlModel.get_q()))
 
     totalDOF = controlModel.getTotalDOF()
     DOFs = controlModel.getDOFs()
@@ -200,12 +199,19 @@ def main():
         Ts['head'] = init
         Ts['thigh_R'] = init
         Ts['shin_R'] = init
-        Ts['foot_R'] = init
+        Ts['foot_heel_R'] = init
+        # Ts['foot_R'] = init
         Ts['upper_limb_R'] = init
         Ts['lower_limb_R'] = init
         Ts['thigh_L'] = init
         Ts['shin_L'] = init
-        Ts['foot_L'] = init
+        Ts['foot_heel_L'] = init
+        # Ts['foot_L'] = init
+        Ts['outside_metatarsal_L'] = init
+        Ts['outside_phalanges_L'] = init
+        Ts['inside_metatarsal_L'] = init
+        Ts['inside_phalanges_L'] = init
+
         Ts['upper_limb_L'] = init
         Ts['lower_limb_L'] = init
 
@@ -224,7 +230,7 @@ def main():
     skeleton_renderer = None
     if SKELETON_ON:
         # skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), offset_Y=-0.08)
-        skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), offset_Y=-0.02)
+        skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), offset_draw=(0.8, -0.02, 0.))
         viewer.doc.addRenderer('skeleton', skeleton_renderer)
     viewer.doc.addRenderer('rd_footCenter', yr.PointsRenderer(rd_footCenter))
     viewer.doc.addRenderer('rd_footCenter_ref', yr.PointsRenderer(rd_footCenter_ref))
@@ -236,10 +242,13 @@ def main():
     # viewer.doc.addRenderer('rd_grf_des', yr.ForcesRenderer(rd_grf_des, rd_CP_des, (0,255,0), .001))
     viewer.doc.addRenderer('rd_CF', yr.VectorsRenderer(rd_CF, rd_CF_pos, (255,255,0)))
     viewer.doc.addRenderer('rd_foot_ori', yr.OrientationsRenderer(rd_foot_ori, rd_foot_pos, (255,255,0)))
+    viewer.doc.setRendererVisible('rd_foot_ori', False)
 
     viewer.doc.addRenderer('rd_root_ori', yr.OrientationsRenderer(rd_root_ori, rd_root_pos, (255,255,0)))
+    viewer.doc.setRendererVisible('rd_root_ori', False)
 
     viewer.doc.addRenderer('extraForce', yr.VectorsRenderer(rd_exf_des, extraForcePos, (0,255,0)))
+    viewer.doc.setRendererVisible('extraForce', False)
     viewer.doc.addRenderer('extraForceEnable', yr.VectorsRenderer(rd_exfen_des, extraForcePos, (255,0,0)))
 
     # viewer.doc.addRenderer('right_foot_oriX', yr.VectorsRenderer(rightFootVectorX, rightFootPos, (255,0,0)))
@@ -827,14 +836,20 @@ def main():
             Ts['pelvis'] = controlModel.getJointTransform(idDic['Hips'])
             Ts['thigh_R'] = controlModel.getJointTransform(idDic['RightUpLeg'])
             Ts['shin_R'] = controlModel.getJointTransform(idDic['RightLeg'])
-            Ts['foot_R'] = controlModel.getJointTransform(idDic['RightFoot'])
+            # Ts['foot_R'] = controlModel.getJointTransform(idDic['RightFoot'])
+            Ts['foot_heel_R'] = controlModel.getJointTransform(idDic['RightFoot'])
             Ts['spine_ribs'] = controlModel.getJointTransform(idDic['Spine'])
             Ts['head'] = controlModel.getJointTransform(idDic['Spine1'])
             Ts['upper_limb_R'] = controlModel.getJointTransform(idDic['RightArm'])
             Ts['lower_limb_R'] = controlModel.getJointTransform(idDic['RightForeArm'])
             Ts['thigh_L'] = controlModel.getJointTransform(idDic['LeftUpLeg'])
             Ts['shin_L'] = controlModel.getJointTransform(idDic['LeftLeg'])
-            Ts['foot_L'] = controlModel.getJointTransform(idDic['LeftFoot'])
+            # Ts['foot_L'] = controlModel.getJointTransform(idDic['LeftFoot'])
+            Ts['foot_heel_L'] = controlModel.getJointTransform(idDic['LeftFoot'])
+            Ts['outside_metatarsal_L'] = controlModel.getJointTransform(idDic['LeftFoot_foot_0_0'])
+            Ts['outside_phalanges_L'] = controlModel.getJointTransform(idDic['LeftFoot_foot_0_0_0'])
+            Ts['inside_metatarsal_L'] = controlModel.getJointTransform(idDic['LeftFoot_foot_0_1'])
+            Ts['inside_phalanges_L'] = controlModel.getJointTransform(idDic['LeftFoot_foot_0_1_0'])
             Ts['upper_limb_L'] = controlModel.getJointTransform(idDic['LeftArm'])
             Ts['lower_limb_L'] = controlModel.getJointTransform(idDic['LeftForeArm'])
 

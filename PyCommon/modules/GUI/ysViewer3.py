@@ -26,8 +26,8 @@ VIEW_RIGHT = 1
 VIEW_TOP = 2
 VIEW_PERSPECTIVE = 3
 
-#Define
-FLAG_SHADOW = 0
+# Define
+FLAG_SHADOW = 1
 
 #class StateObject:
 #    def getState(self):
