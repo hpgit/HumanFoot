@@ -727,6 +727,10 @@ class BasicSkeletonRenderer(Renderer):
         self.offset['shin_R'] = numpy.array([-0.007, -0.40402, -0.00173])
         self.offset['foot_R'] = numpy.array([0.01482, -0.46019, -0.02403])
         self.offset['foot_heel_R'] = numpy.array([0.01482, -0.46019, -0.02403])
+        self.offset['outside_metatarsal_R'] = numpy.array([-0.02714, -0.05689, 0.])
+        self.offset['outside_phalanges_R'] = numpy.array([0., 0., 0.09059])
+        self.offset['inside_metatarsal_R'] = numpy.array([0.01409, 0., 0.])
+        self.offset['inside_phalanges_R'] = numpy.array([0., 0.00762, 0.11214])
         self.offset['upper_limb_R'] = numpy.array([-0.19431, 0.40374, 0.01608])
         self.offset['lower_limb_R'] = numpy.array([-0.327, 0.01339, -0.0251])
         self.offset['thigh_L'] = numpy.array([0.08931, -0.031, 0.01779])
@@ -748,7 +752,11 @@ class BasicSkeletonRenderer(Renderer):
         self.children['thigh_R'] = ['shin_R']
         self.children['shin_R'] = ['foot_heel_R']
         # self.children['shin_R'] = ['foot_R']
-        self.children['foot_heel_R'] = []
+        self.children['foot_heel_R'] = ['outside_metatarsal_R']
+        self.children['outside_metatarsal_R'] = ['inside_metatarsal_R', 'outside_phalanges_R']
+        self.children['outside_phalanges_R'] = []
+        self.children['inside_metatarsal_R'] = ['inside_phalanges_R']
+        self.children['inside_phalanges_R'] = []
         self.children['foot_R'] = []
         self.children['upper_limb_R'] = ['lower_limb_R']
         self.children['lower_limb_R'] = []

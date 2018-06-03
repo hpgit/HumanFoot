@@ -201,6 +201,10 @@ def main():
         Ts['shin_R'] = init
         Ts['foot_heel_R'] = init
         # Ts['foot_R'] = init
+        Ts['outside_metatarsal_R'] = init
+        Ts['outside_phalanges_R'] = init
+        Ts['inside_metatarsal_R'] = init
+        Ts['inside_phalanges_R'] = init
         Ts['upper_limb_R'] = init
         Ts['lower_limb_R'] = init
         Ts['thigh_L'] = init
@@ -838,6 +842,10 @@ def main():
             Ts['shin_R'] = controlModel.getJointTransform(idDic['RightLeg'])
             # Ts['foot_R'] = controlModel.getJointTransform(idDic['RightFoot'])
             Ts['foot_heel_R'] = controlModel.getJointTransform(idDic['RightFoot'])
+            Ts['outside_metatarsal_R'] = controlModel.getJointTransform(idDic['RightFoot_foot_0_0'])
+            Ts['outside_phalanges_R'] = controlModel.getJointTransform(idDic['RightFoot_foot_0_0_0'])
+            Ts['inside_metatarsal_R'] = controlModel.getJointTransform(idDic['RightFoot_foot_0_1'])
+            Ts['inside_phalanges_R'] = controlModel.getJointTransform(idDic['RightFoot_foot_0_1_0'])
             Ts['spine_ribs'] = controlModel.getJointTransform(idDic['Spine'])
             Ts['head'] = controlModel.getJointTransform(idDic['Spine1'])
             Ts['upper_limb_R'] = controlModel.getJointTransform(idDic['RightArm'])
