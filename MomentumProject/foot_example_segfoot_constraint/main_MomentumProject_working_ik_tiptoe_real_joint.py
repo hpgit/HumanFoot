@@ -247,9 +247,12 @@ def main():
     viewer.doc.addRenderer('rd_CP', yr.PointsRenderer(rd_CP, (0,255,0)))
     viewer.doc.addRenderer('rd_CP_des', yr.PointsRenderer(rd_CP_des, (255,0,255)))
     viewer.doc.addRenderer('rd_dL_des_plane', yr.VectorsRenderer(rd_dL_des_plane, rd_CM, (255,255,0)))
+    viewer.doc.setRendererVisible('rd_dL_des_plane', False)
     viewer.doc.addRenderer('rd_dH_des', yr.VectorsRenderer(rd_dH_des, rd_CM, (0,255,0)))
+    viewer.doc.setRendererVisible('rd_dH_des', False)
     # viewer.doc.addRenderer('rd_grf_des', yr.ForcesRenderer(rd_grf_des, rd_CP_des, (0,255,0), .001))
     viewer.doc.addRenderer('rd_CF', yr.VectorsRenderer(rd_CF, rd_CF_pos, (255,255,0)))
+    viewer.doc.setRendererVisible('rd_CF', False)
     viewer.doc.addRenderer('rd_foot_ori', yr.OrientationsRenderer(rd_foot_ori, rd_foot_pos, (255,255,0)))
     viewer.doc.setRendererVisible('rd_foot_ori', False)
 
@@ -404,58 +407,41 @@ def main():
     def simulateCallback(frame):
         # print(frame)
         # print(motion[frame].getJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0']))
-
         if True:
-            if frame == 0:
-                foot_viewer.check_all_seg()
+            if frame == 200:
+                if motionFile == 'wd2_tiptoe.bvh':
+                    setParamVal('tiptoe angle', 0.3)
                 if motionFile == 'wd2_tiptoe_zygote.bvh':
-                    setParamVal('com Y offset', -0.01)
-            elif frame == start_frame:
-                foot_viewer.check_tilt_left_all()
-            # elif frame == start_frame+10:
-                setParamVal('left tilt angle', -0.15)
-                setParamVal('right tilt angle', 0.15)
-            elif frame == start_frame + 50:
-                setParamVal('left tilt angle', 0.)
-                setParamVal('right tilt angle', 0.)
-                foot_viewer.check_not_all_seg()
-                foot_viewer.check_op_l.value(True)
-                foot_viewer.check_ip_r.value(True)
-                foot_viewer.check_om_l.value(True)
-
-            elif frame == start_frame + 60:
-                foot_viewer.check_tiptoe_all()
-
-            elif frame == start_frame + 100:
-                setParamVal('tiptoe angle', 0.3)
-                setParamVal('com Y offset', 0.01)
-
-            elif frame == start_frame + 130:
+                    setParamVal('tiptoe angle', 0.3)
+            # elif 210 < frame < 240:
+                # if motionFile == 'wd2_tiptoe_zygote.bvh':
+                #     setParamVal('com Y offset', 0.01/30. * (frame-110))
+            elif frame == 400:
+                setParamVal('com Y offset', 0.)
                 setParamVal('tiptoe angle', 0.)
-                foot_viewer.check_not_all_seg()
-                foot_viewer.check_ip_l.value(True)
-                foot_viewer.check_op_r.value(True)
-
-            elif frame == start_frame + 145:
-                foot_viewer.check_tilt_right_all()
-                setParamVal('left tilt angle', 0.15)
-                setParamVal('right tilt angle', -0.15)
-            elif frame == start_frame + 180:
-                setParamVal('left tilt angle', 0.)
-                setParamVal('right tilt angle', 0.)
-            elif frame == start_frame + 210:
+            elif frame == 430:
                 foot_viewer.check_all_seg()
+                # setParamVal('SupKt', 30.)
+            # elif frame == 400:
+            #     setParamVal('SupKt', 17.)
+
 
         # hfi.footAdjust(motion[frame], idDic, SEGMENT_FOOT_MAG=.03, SEGMENT_FOOT_RAD=.015, baseHeight=0.02)
 
         if abs(getParamVal('tiptoe angle')) > 0.001:
             tiptoe_angle = getParamVal('tiptoe angle')
-            motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_0_0'], mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
-            motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1_0'], mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
-            motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_0_0'], mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
-            motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1_0'], mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
-            motion[frame].mulJointOrientationLocal(idDic['LeftFoot'], mm.exp(mm.unitX(), math.pi * tiptoe_angle * 0.95))
-            motion[frame].mulJointOrientationLocal(idDic['RightFoot'], mm.exp(mm.unitX(), math.pi * tiptoe_angle * 0.95))
+            motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_0_0'],
+                                                   mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
+            motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1_0'],
+                                                   mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
+            motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_0_0'],
+                                                   mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
+            motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1_0'],
+                                                   mm.exp(mm.unitX(), -math.pi * tiptoe_angle))
+            # motion[frame].mulJointOrientationLocal(idDic['LeftFoot'], mm.exp(mm.unitX(), math.pi * tiptoe_angle * 0.95))
+            # motion[frame].mulJointOrientationLocal(idDic['RightFoot'], mm.exp(mm.unitX(), math.pi * tiptoe_angle * 0.95))
+            motion[frame].mulJointOrientationLocal(idDic['LeftFoot'], mm.exp(mm.unitX(), math.pi * tiptoe_angle))
+            motion[frame].mulJointOrientationLocal(idDic['RightFoot'], mm.exp(mm.unitX(), math.pi * tiptoe_angle))
 
         if getParamVal('left tilt angle') > 0.001:
             left_tilt_angle = getParamVal('left tilt angle')

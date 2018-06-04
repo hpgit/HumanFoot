@@ -754,12 +754,12 @@ class BasicSkeletonRenderer(Renderer):
 
         if REAL_JOINT:
             self.offset['outside_metatarsal_R'] = numpy.array([-0.02784, -0.03463, 0.0452])
-            self.offset['outside_phalanges_R'] = numpy.array([-0.00773, -0.01936, 0.05216])
-            self.offset['inside_phalanges_R'] = numpy.array([0.01823, -0.05399, 0.11057])
+            self.offset['outside_phalanges_R'] = numpy.array([-0.00773, -0.01936, 0.05877])
+            self.offset['inside_phalanges_R'] = numpy.array([-0.01823, -0.05399, 0.10397])
 
             self.offset['outside_metatarsal_L'] = numpy.array([0.02784, -0.03463, 0.0452])
-            self.offset['outside_phalanges_L'] = numpy.array([0.00773, -0.01936, 0.05216])
-            self.offset['inside_phalanges_L'] = numpy.array([-0.01823, -0.05399, 0.11057])
+            self.offset['outside_phalanges_L'] = numpy.array([0.00773, -0.01936, 0.05877])
+            self.offset['inside_phalanges_L'] = numpy.array([0.01823, -0.05399, 0.10397])
         else:
             self.offset['outside_metatarsal_R'] = numpy.array([-0.02714, -0.05689, 0.])
             self.offset['outside_phalanges_R'] = numpy.array([0., 0., 0.09059])
@@ -811,6 +811,30 @@ class BasicSkeletonRenderer(Renderer):
             self.children['outside_phalanges_L'] = []
             self.children['inside_metatarsal_L'] = ['inside_phalanges_L']
             self.children['inside_phalanges_L'] = []
+
+        def get_offset_from_root(offset_dict, child_dict, link_name):
+            """
+
+            :param offset_dict:
+            :param child_dict:
+            :type child_dict: dict
+            :param link_name:
+            :return:
+            """
+            parent_dict = dict()
+            for parent, child_list in child_dict.items():
+                for child in child_list:
+                    parent_dict[child] = parent
+
+            offset = numpy.zeros(3)
+            while link_name != 'pelvis':
+                offset = offset + offset_dict[link_name]
+                link_name = parent_dict[link_name]
+
+            return offset
+
+        # for link_name in self.objs.keys():
+        #     print(link_name, get_offset_from_root(self.offset, self.children, link_name))
 
         self.offset_draw = copy.deepcopy(offset_draw)
 

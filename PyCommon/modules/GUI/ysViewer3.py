@@ -844,7 +844,8 @@ class MotionViewer(Fl_Window):
         if self.playing:
             if self.dumping:
                 if self.dumping_start_frame <= self.frame <= self.dumping_end_frame:
-                    dump_png(self.dumping_session + '/' + '{:04d}'.format(self.frame-1) + ".png", 1280, 720)
+                    # dump_png(self.dumping_session + '/' + '{:04d}'.format(self.frame-1) + ".png", 1280, 720)
+                    dump_png(self.dumping_session + '/' + '{:04d}'.format(self.frame-1-self.dumping_start_frame) + ".png", 1280, 720)
 
                 if self.dumping_end_frame == self.frame:
                     self.dumping = False
