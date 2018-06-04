@@ -7,9 +7,7 @@ try:
 except:
     # for python2.7
     import cPickle as pickle
-import OpenGL.GL as gl
-from PIL import Image as im
-import numpy as np
+
 
 class hpSimpleViewer(ysvOri.SimpleViewer):
     def __init__(self, rect=None, title='hpSimpleViewer', viewForceWnd=True):
@@ -52,52 +50,6 @@ class hpMotionViewWnd(ysvOri.MotionViewWnd):
         super(hpMotionViewWnd, self).goToFrame(frame)
         if self.cForceWnd is not None:
             self.cForceWnd.redraw()
-
-    def onTimer(self):
-        if self.playing:
-            self.frame += 1
-            if self.frame > self.maxFrame:
-                self.frame = 0
-            self.onFrame(self.frame)
-            if self.mov:
-                self.dump(self, "_movtmp/tmp"+str(self.frame)+".png")
-
-        if self.timeInterval:
-            fltk.Fl.repeat_timeout(self.timeInterval, self.onTimer)
-
-    def dump(self, ptr, outfile="output.png"):
-        gl.glPixelStorei(gl.GL_PACK_ALIGNMENT, 1)
-        gl.glReadBuffer(gl.GL_BACK_LEFT)
-        image = None
-        if self.w() > 1000:
-            image = np.array(255*gl.glReadPixelsf(0, 0, 2000, 2000, gl.GL_RGB))
-        else:
-            image = np.array(255*gl.glReadPixelsf(0, 0, 1000, 1000, gl.GL_RGB))
-        #  image = [img_line.flatten() for img_line in image]
-
-        img = im.new('RGB', (self.w(), self.h()-56))
-        pix = img.load()
-        for i in range(self.w()):
-            for j in range(56, self.h()):
-                pix[i, j-56] = tuple(image[self.h()-j, i])
-        img.save(outfile, "PNG")
-        # f = open('image.png', 'wb')
-        # w = png.Writer(self.h()-10, self.w())
-        # w.write(f, image)
-        # f.close()
-
-    def dumpMov(self, ptr):
-        if self.mov:
-            self.mov = False
-        else:
-            self.mov = True
-
-        # import os
-        # os.mkdir("_movtmp")
-        # for i in range(110, 120):
-        #     self.onFrame(i)
-        #
-        #     self.dump(ptr, "_movtmp/tmp"+str(self.frame)+".png")
 
 
 class hpObjectInfoWnd(ysvOri.ObjectInfoWnd):

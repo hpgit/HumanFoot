@@ -290,7 +290,7 @@ class FootWindow(Fl_Window):
         self.check_om_r.value(False)
         if self.ENABLE_INSIDE_METATARSAL:
             self.check_im_r.value(True)
-        self.check_h_r.value(False)
+        self.check_h_r.value(True)
 
     def check_tilt_right_all(self):
         self.check_op_l.value(False)
@@ -298,7 +298,7 @@ class FootWindow(Fl_Window):
         self.check_om_l.value(False)
         if self.ENABLE_INSIDE_METATARSAL:
             self.check_im_l.value(True)
-        self.check_h_l.value(False)
+        self.check_h_l.value(True)
 
         self.check_op_r.value(True)
         self.check_ip_r.value(False)

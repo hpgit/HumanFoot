@@ -282,8 +282,9 @@ class VpModelRenderer(Renderer):
             glPolygonMode(GL_FRONT, GL_LINE)
         glLineWidth(self._lineWidth)
 
-        # glEnable(GL_BLEND)
-        # glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        if renderType != RENDER_SHADOW:
+            glEnable(GL_BLEND)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         for i in range(self._model.getBodyNum()):
             if renderType == RENDER_SHADOW:
@@ -708,77 +709,115 @@ class BasicSkeletonRenderer(Renderer):
         :param Ts:
         :param color:
         """
+        REAL_JOINT = True
+
         from glob import glob
         Renderer.__init__(self, Ts, color)
         self.Ts_init = Ts
         # self.savedState.append(Ts)
         self.objs = dict()  # type: dict[str, ObjImporter]
-        for path in glob('../../data/obj/zygote_skeleton_basic/*.obj'):
+
+        for path in glob('../../data/obj/zygote_skeleton_common/*.obj'):
             filename = path.split('/')[-1].split('.')[0]
             self.objs[filename] = ObjImporter()
             self.objs[filename].import_obj(path, 0.01)
+
+        if REAL_JOINT:
+            for path in glob('../../data/obj/zygote_skeleton_real_joint/*.obj'):
+                filename = path.split('/')[-1].split('.')[0]
+                self.objs[filename] = ObjImporter()
+                self.objs[filename].import_obj(path, 0.01)
+        else:
+            for path in glob('../../data/obj/zygote_skeleton_basic/*.obj'):
+                filename = path.split('/')[-1].split('.')[0]
+                self.objs[filename] = ObjImporter()
+                self.objs[filename].import_obj(path, 0.01)
 
         self.offset = dict()  # type: dict[str, numpy.ndarray]
         self.offset['pelvis'] = numpy.array([0., 0., 0.])
         self.offset['spine_ribs'] = numpy.array([0., 0.0577, -0.01791])
         self.offset['head'] = numpy.array([0., 0.57875, 0.04319])
+        self.offset['upper_limb_R'] = numpy.array([-0.19431, 0.40374, 0.01608])
+        self.offset['lower_limb_R'] = numpy.array([-0.327, 0.01339, -0.0251])
+        self.offset['upper_limb_L'] = numpy.array([0.19431, 0.40374, 0.01608])
+        self.offset['lower_limb_L'] = numpy.array([0.327, 0.01339, -0.0251])
 
         self.offset['thigh_R'] = numpy.array([-0.08931, -0.031, 0.01779])
         self.offset['shin_R'] = numpy.array([-0.007, -0.40402, -0.00173])
         self.offset['foot_R'] = numpy.array([0.01482, -0.46019, -0.02403])
         self.offset['foot_heel_R'] = numpy.array([0.01482, -0.46019, -0.02403])
-        self.offset['outside_metatarsal_R'] = numpy.array([-0.02714, -0.05689, 0.])
-        self.offset['outside_phalanges_R'] = numpy.array([0., 0., 0.09059])
-        self.offset['inside_metatarsal_R'] = numpy.array([0.01409, 0., 0.])
-        self.offset['inside_phalanges_R'] = numpy.array([0., 0.00762, 0.11214])
-        self.offset['upper_limb_R'] = numpy.array([-0.19431, 0.40374, 0.01608])
-        self.offset['lower_limb_R'] = numpy.array([-0.327, 0.01339, -0.0251])
+
         self.offset['thigh_L'] = numpy.array([0.08931, -0.031, 0.01779])
         self.offset['shin_L'] = numpy.array([0.007, -0.40402, -0.00173])
         self.offset['foot_L'] = numpy.array([-0.01482, -0.46019, -0.02403])
         self.offset['foot_heel_L'] = numpy.array([-0.01482, -0.46019, -0.02403])
-        self.offset['outside_metatarsal_L'] = numpy.array([0.02714, -0.05689, 0.])
-        self.offset['outside_phalanges_L'] = numpy.array([0., 0., 0.09059])
-        self.offset['inside_metatarsal_L'] = numpy.array([-0.01409, 0., 0.])
-        self.offset['inside_phalanges_L'] = numpy.array([0., 0.00762, 0.11214])
 
-        self.offset['upper_limb_L'] = numpy.array([0.19431, 0.40374, 0.01608])
-        self.offset['lower_limb_L'] = numpy.array([0.327, 0.01339, -0.0251])
+        if REAL_JOINT:
+            self.offset['outside_metatarsal_R'] = numpy.array([-0.02784, -0.03463, 0.0452])
+            self.offset['outside_phalanges_R'] = numpy.array([-0.00773, -0.01936, 0.05216])
+            self.offset['inside_phalanges_R'] = numpy.array([0.01823, -0.05399, 0.11057])
+
+            self.offset['outside_metatarsal_L'] = numpy.array([0.02784, -0.03463, 0.0452])
+            self.offset['outside_phalanges_L'] = numpy.array([0.00773, -0.01936, 0.05216])
+            self.offset['inside_phalanges_L'] = numpy.array([-0.01823, -0.05399, 0.11057])
+        else:
+            self.offset['outside_metatarsal_R'] = numpy.array([-0.02714, -0.05689, 0.])
+            self.offset['outside_phalanges_R'] = numpy.array([0., 0., 0.09059])
+            self.offset['inside_metatarsal_R'] = numpy.array([0.01409, 0., 0.])
+            self.offset['inside_phalanges_R'] = numpy.array([0., 0.00762, 0.11214])
+
+            self.offset['outside_metatarsal_L'] = numpy.array([0.02714, -0.05689, 0.])
+            self.offset['outside_phalanges_L'] = numpy.array([0., 0., 0.09059])
+            self.offset['inside_metatarsal_L'] = numpy.array([-0.01409, 0., 0.])
+            self.offset['inside_phalanges_L'] = numpy.array([0., 0.00762, 0.11214])
 
         self.children = dict()
         self.children['pelvis'] = ['spine_ribs', 'thigh_R', 'thigh_L']
         self.children['spine_ribs'] = ['head', 'upper_limb_R', 'upper_limb_L']
+        self.children['upper_limb_R'] = ['lower_limb_R']
+        self.children['lower_limb_R'] = []
+        self.children['upper_limb_L'] = ['lower_limb_L']
+        self.children['lower_limb_L'] = []
         self.children['head'] = []
+
         self.children['thigh_R'] = ['shin_R']
         self.children['shin_R'] = ['foot_heel_R']
         # self.children['shin_R'] = ['foot_R']
-        self.children['foot_heel_R'] = ['outside_metatarsal_R']
-        self.children['outside_metatarsal_R'] = ['inside_metatarsal_R', 'outside_phalanges_R']
-        self.children['outside_phalanges_R'] = []
-        self.children['inside_metatarsal_R'] = ['inside_phalanges_R']
-        self.children['inside_phalanges_R'] = []
         self.children['foot_R'] = []
-        self.children['upper_limb_R'] = ['lower_limb_R']
-        self.children['lower_limb_R'] = []
+
         self.children['thigh_L'] = ['shin_L']
         self.children['shin_L'] = ['foot_heel_L']
         # self.children['shin_L'] = ['foot_L']
-        self.children['foot_heel_L'] = ['outside_metatarsal_L']
-        self.children['outside_metatarsal_L'] = ['inside_metatarsal_L', 'outside_phalanges_L']
-        self.children['outside_phalanges_L'] = []
-        self.children['inside_metatarsal_L'] = ['inside_phalanges_L']
-        self.children['inside_phalanges_L'] = []
-
         self.children['foot_L'] = []
-        self.children['upper_limb_L'] = ['lower_limb_L']
-        self.children['lower_limb_L'] = []
+
+        if REAL_JOINT:
+            self.children['foot_heel_R'] = ['outside_metatarsal_R', 'inside_phalanges_R']
+            self.children['outside_metatarsal_R'] = ['outside_phalanges_R']
+            self.children['outside_phalanges_R'] = []
+            self.children['inside_phalanges_R'] = []
+
+            self.children['foot_heel_L'] = ['outside_metatarsal_L', 'inside_phalanges_L']
+            self.children['outside_metatarsal_L'] = ['outside_phalanges_L']
+            self.children['outside_phalanges_L'] = []
+            self.children['inside_phalanges_L'] = []
+        else:
+            self.children['foot_heel_R'] = ['outside_metatarsal_R']
+            self.children['outside_metatarsal_R'] = ['inside_metatarsal_R', 'outside_phalanges_R']
+            self.children['outside_phalanges_R'] = []
+            self.children['inside_metatarsal_R'] = ['inside_phalanges_R']
+            self.children['inside_phalanges_R'] = []
+            self.children['foot_heel_L'] = ['outside_metatarsal_L']
+            self.children['outside_metatarsal_L'] = ['inside_metatarsal_L', 'outside_phalanges_L']
+            self.children['outside_phalanges_L'] = []
+            self.children['inside_metatarsal_L'] = ['inside_phalanges_L']
+            self.children['inside_phalanges_L'] = []
 
         self.offset_draw = copy.deepcopy(offset_draw)
 
         self.isInit = False
 
-    def appendFrameState(self, Ts):
-        self.savedState.append(Ts)
+    def appendFrameState(self, Ts, body_color={}):
+        self.savedState.append((Ts, body_color))
 
     def render(self, renderType=RENDER_OBJECT):
         print("Renderer.render() : Must subclass me")
@@ -788,28 +827,37 @@ class BasicSkeletonRenderer(Renderer):
         """
 
         :param state:
-        :type state: dict[str, np.ndarray]
+        :type state: tuple[dict[str, np.ndarray], dict[str, tuple[int, int, int]]]
         :param renderType:
         :return:
         """
+        # glEnable(GL_LIGHTING)
         glPushMatrix()
         glTranslatef(self.offset_draw[0], self.offset_draw[1], self.offset_draw[2])
-        self._render('pelvis', state)
+        self._render('pelvis', state, renderType)
         glPopMatrix()
+        # glDisable(GL_LIGHTING)
 
-    def _render(self, body_name, state):
+    def _render(self, body_name, state, renderType=RENDER_OBJECT):
         glPushMatrix()
         offset = self.offset[body_name]
         glTranslatef(offset[0], offset[1], offset[2])
-        glMultMatrixf(state[body_name].T)
+        glMultMatrixf(state[0][body_name].T)
+        if renderType == RENDER_OBJECT:
+            if body_name in state[1].keys():
+                glColor3ubv(state[1][body_name])
+            else:
+                glColor3ubv(self.totalColor)
+        elif renderType == RENDER_SHADOW:
+            glColor3ub(90, 90, 90)
         self.objs[body_name].draw()
         for child_name in self.children[body_name]:
-            self._render(child_name, state)
+            self._render(child_name, state, renderType)
         glPopMatrix()
 
     def renderFrame(self, frame, renderType=RENDER_OBJECT):
         if frame == -1:
-            self.renderState(self.Ts_init, renderType)
+            self.renderState((self.Ts_init, dict()), renderType)
         elif frame == self.get_max_saved_frame() + 1:
             self.saveState()
             self.renderState(self.savedState[frame], renderType)

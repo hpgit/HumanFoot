@@ -1,5 +1,9 @@
 .PHONY: all
-all: Math Simulator Renderer Optimization VirtualPhysics
+all: GUI Math Simulator Renderer Optimization VirtualPhysics
+
+.PHONY: GUI
+GUI:
+	make --directory="GUI/" --file=GUI.makefile
 
 .PHONY: Math
 Math:
@@ -28,6 +32,7 @@ VirtualPhysics:
 .PHONY: clean
 clean:
 	rm -rf Math/build
+	rm -rf GUI/build
 	rm -rf Renderer/build
 	rm -rf Simulator/build
 	rm -rf Optimization/build

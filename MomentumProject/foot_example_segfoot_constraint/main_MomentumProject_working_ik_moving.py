@@ -58,7 +58,8 @@ def main():
 
     motionFile = 'wd2_tiptoe.bvh'
     motionFile = 'wd2_tiptoe_zygote.bvh'
-    motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped(motionFile, SEGMENT_FOOT_RAD=0.008)
+    # motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped(motionFile, SEGMENT_FOOT_RAD=0.008)
+    motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped(motionFile, SEGMENT_FOOT_MAG=0.01, SEGMENT_FOOT_RAD=0.008)
     # motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_jump_biped()
 
@@ -80,7 +81,9 @@ def main():
     vpWorld_ik = cvw.VpWorld(wcfg_ik)
     controlModel_ik = cvm.VpControlModel(vpWorld_ik, motion[0], mcfg)
     vpWorld_ik.initialize()
-    controlModel_ik.set_q(controlModel.get_q())
+    controlModel_ik.set_q(np.zeros_like(controlModel.get_q()))
+
+
 
     totalDOF = controlModel.getTotalDOF()
     DOFs = controlModel.getDOFs()
@@ -222,7 +225,8 @@ def main():
         return Ts
 
     # viewer = ysv.SimpleViewer()
-    viewer = hsv.hpSimpleViewer(rect=[0, 0, 1024, 768], viewForceWnd=False)
+    # viewer = hsv.hpSimpleViewer(rect=[0, 0, 1024, 768], viewForceWnd=False)
+    viewer = hsv.hpSimpleViewer(rect=[0, 0, 1280+300, 1+720+55], viewForceWnd=False)
     # viewer.record(False)
     # viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,255,255), yr.LINK_BONE))
     viewer.doc.addObject('motion', motion)
@@ -234,7 +238,8 @@ def main():
     skeleton_renderer = None
     if SKELETON_ON:
         # skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), offset_Y=-0.08)
-        skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), offset_draw=(0.8, -0.02, 0.))
+        # skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), color=(230, 230, 230), offset_draw=(0.8, -0.02, 0.))
+        skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), color=(230, 230, 230), offset_draw=(0., -0.0, 0.))
         viewer.doc.addRenderer('skeleton', skeleton_renderer)
     viewer.doc.addRenderer('rd_footCenter', yr.PointsRenderer(rd_footCenter))
     viewer.doc.addRenderer('rd_footCenter_ref', yr.PointsRenderer(rd_footCenter_ref))
@@ -342,7 +347,8 @@ def main():
     for i in range(motion[0].skeleton.getJointNum()):
         idDic[motion[0].skeleton.getJointName(i)] = i
 
-    extendedFootName = ['Foot_foot_0_0', 'Foot_foot_0_1', 'Foot_foot_0_0_0', 'Foot_foot_0_1_0', 'Foot_foot_1_0']
+    # extendedFootName = ['Foot_foot_0_0', 'Foot_foot_0_1', 'Foot_foot_0_0_0', 'Foot_foot_0_1_0', 'Foot_foot_1_0']
+    extendedFootName = ['Foot_foot_0_0', 'Foot_foot_0_0_0', 'Foot_foot_0_1_0', 'Foot_foot_1_0']
     lIDdic = {'Left'+name: motion[0].skeleton.getJointIndex('Left'+name) for name in extendedFootName}
     rIDdic = {'Right'+name: motion[0].skeleton.getJointIndex('Right'+name) for name in extendedFootName}
     footIdDic = lIDdic.copy()
@@ -385,7 +391,12 @@ def main():
 
         return fixed_nested_dof_values
 
-    start_frame = 60
+    start_frame = 100
+
+    up_vec_in_each_link = dict()
+    for foot_id in footIdlist:
+        up_vec_in_each_link[foot_id] = controlModel_ik.getBodyOrientationGlobal(foot_id)[1, :]
+    controlModel_ik.set_q(controlModel.get_q())
 
     ###################################
     # simulate
@@ -401,6 +412,7 @@ def main():
                     setParamVal('com Y offset', -0.01)
             elif frame == start_frame:
                 foot_viewer.check_tilt_left_all()
+            # elif frame == start_frame+10:
                 setParamVal('left tilt angle', -0.15)
                 setParamVal('right tilt angle', 0.15)
             elif frame == start_frame + 50:
@@ -409,43 +421,32 @@ def main():
                 foot_viewer.check_not_all_seg()
                 foot_viewer.check_op_l.value(True)
                 foot_viewer.check_ip_r.value(True)
+                foot_viewer.check_om_l.value(True)
 
             elif frame == start_frame + 60:
                 foot_viewer.check_tiptoe_all()
 
-            elif frame == start_frame + 80:
-                setParamVal('tiptoe angle', 0.2)
-
             elif frame == start_frame + 100:
-                setParamVal('tiptoe angle', 0.)
-                foot_viewer.check_not_all_seg()
-                foot_viewer.check_ip_l.value(True)
-                foot_viewer.check_op_r.value(True)
+                setParamVal('tiptoe angle', 0.15)
+                setParamVal('com Y offset', 0.01)
 
-            elif frame == start_frame + 115:
-                foot_viewer.check_tilt_right_all()
-                setParamVal('left tilt angle', 0.15)
-                setParamVal('right tilt angle', -0.15)
-            elif frame == start_frame + 150:
-                setParamVal('left tilt angle', 0.)
-                setParamVal('right tilt angle', 0.)
-            elif frame == start_frame + 180:
-                foot_viewer.check_all_seg()
-                # setParamVal('SupKt', 21.)
-            # elif frame == start_frame + 200:
-            #     setParamVal('SupKt', 17.)
-
-            # elif frame == 250:
+            # elif frame == start_frame + 100:
+            #     setParamVal('tiptoe angle', 0.)
+            #     foot_viewer.check_not_all_seg()
+            #     foot_viewer.check_ip_l.value(True)
+            #     foot_viewer.check_op_r.value(True)
+            #
+            # elif frame == start_frame + 115:
+            #     foot_viewer.check_tilt_right_all()
+            #     setParamVal('left tilt angle', 0.15)
+            #     setParamVal('right tilt angle', -0.15)
+            # elif frame == start_frame + 150:
             #     setParamVal('left tilt angle', 0.)
             #     setParamVal('right tilt angle', 0.)
-            #     setParamVal('tiptoe angle', 0.2)
-            #     foot_viewer.check_tiptoe_all()
-            # elif frame == 300:
-            #     setParamVal('left tilt angle', 0.2)
-            #     setParamVal('right tilt angle', -0.2)
-            #     foot_viewer.check_tilt_right_all()
+            # elif frame == start_frame + 180:
+            #     foot_viewer.check_all_seg()
 
-        hfi.footAdjust(motion[frame], idDic, SEGMENT_FOOT_MAG=.03, SEGMENT_FOOT_RAD=.015, baseHeight=0.02)
+        # hfi.footAdjust(motion[frame], idDic, SEGMENT_FOOT_MAG=.03, SEGMENT_FOOT_RAD=.015, baseHeight=0.02)
 
         if abs(getParamVal('tiptoe angle')) > 0.001:
             tiptoe_angle = getParamVal('tiptoe angle')
@@ -458,22 +459,35 @@ def main():
 
         if getParamVal('left tilt angle') > 0.001:
             left_tilt_angle = getParamVal('left tilt angle')
-            motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1'], mm.exp(mm.unitZ(), -math.pi * left_tilt_angle))
+            if motion[0].skeleton.getJointIndex('LeftFoot_foot_0_1') is not None:
+                motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1'], mm.exp(mm.unitZ(), -math.pi * left_tilt_angle))
+            else:
+                motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1_0'], mm.exp(mm.unitZ(), -math.pi * left_tilt_angle))
             motion[frame].mulJointOrientationLocal(idDic['LeftFoot'], mm.exp(mm.unitZ(), math.pi * left_tilt_angle))
+
         elif getParamVal('left tilt angle') < -0.001:
             left_tilt_angle = getParamVal('left tilt angle')
             motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_0'], mm.exp(mm.unitZ(), -math.pi * left_tilt_angle))
-            motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1'], mm.exp(mm.unitZ(), math.pi * left_tilt_angle))
+            if motion[0].skeleton.getJointIndex('LeftFoot_foot_0_1') is not None:
+                motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1'], mm.exp(mm.unitZ(), math.pi * left_tilt_angle))
+            else:
+                motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1_0'], mm.exp(mm.unitZ(), math.pi * left_tilt_angle))
             motion[frame].mulJointOrientationLocal(idDic['LeftFoot'], mm.exp(mm.unitZ(), math.pi * left_tilt_angle))
 
         if getParamVal('right tilt angle') > 0.001:
             right_tilt_angle = getParamVal('right tilt angle')
-            motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1'], mm.exp(mm.unitZ(), math.pi * right_tilt_angle))
+            if motion[0].skeleton.getJointIndex('RightFoot_foot_0_1') is not None:
+                motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1'], mm.exp(mm.unitZ(), math.pi * right_tilt_angle))
+            else:
+                motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1_0'], mm.exp(mm.unitZ(), math.pi * right_tilt_angle))
             motion[frame].mulJointOrientationLocal(idDic['RightFoot'], mm.exp(mm.unitZ(), -math.pi * right_tilt_angle))
         elif getParamVal('right tilt angle') < -0.001:
             right_tilt_angle = getParamVal('right tilt angle')
             motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_0'], mm.exp(mm.unitZ(), math.pi * right_tilt_angle))
-            motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1'], mm.exp(mm.unitZ(), -math.pi * right_tilt_angle))
+            if motion[0].skeleton.getJointIndex('RightFoot_foot_0_1') is not None:
+                motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1'], mm.exp(mm.unitZ(), -math.pi * right_tilt_angle))
+            # else:
+            #     motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1_0'], mm.exp(mm.unitZ(), -math.pi * right_tilt_angle))
             motion[frame].mulJointOrientationLocal(idDic['RightFoot'], mm.exp(mm.unitZ(), -math.pi * right_tilt_angle))
 
         motionModel.update(motion[frame])
@@ -671,7 +685,8 @@ def main():
         # logSO3 is just q'', not acceleration.
         # To make a_oris acceleration, q'' -> a will be needed
         # body_ddqs = list(map(mm.logSO3, [mm.getSO3FromVectors(np.dot(body_ori, mm.unitY()), mm.unitY()) for body_ori in contact_body_ori]))
-        body_ddqs = list(map(mm.logSO3, [np.dot(contact_body_ori[i].T, np.dot(ref_body_ori[i], mm.getSO3FromVectors(np.dot(ref_body_ori[i], mm.unitY()), mm.unitY()))) for i in range(len(contact_body_ori))]))
+        # body_ddqs = list(map(mm.logSO3, [np.dot(contact_body_ori[i].T, np.dot(ref_body_ori[i], mm.getSO3FromVectors(np.dot(ref_body_ori[i], mm.unitY()), mm.unitY()))) for i in range(len(contact_body_ori))]))
+        body_ddqs = list(map(mm.logSO3, [np.dot(contact_body_ori[i].T, np.dot(ref_body_ori[i], mm.getSO3FromVectors(np.dot(ref_body_ori[i], up_vec_in_each_link[contact_ids[i]]), mm.unitY()))) for i in range(len(contact_body_ori))]))
         body_qs = list(map(mm.logSO3, contact_body_ori))
         body_angs = [np.dot(contact_body_ori[i], contact_body_angvel[i]) for i in range(len(contact_body_ori))]
         body_dqs = [mm.vel2qd(body_angs[i], body_qs[i]) for i in range(len(body_angs))]
@@ -844,7 +859,8 @@ def main():
             Ts['foot_heel_R'] = controlModel.getJointTransform(idDic['RightFoot'])
             Ts['outside_metatarsal_R'] = controlModel.getJointTransform(idDic['RightFoot_foot_0_0'])
             Ts['outside_phalanges_R'] = controlModel.getJointTransform(idDic['RightFoot_foot_0_0_0'])
-            Ts['inside_metatarsal_R'] = controlModel.getJointTransform(idDic['RightFoot_foot_0_1'])
+            # Ts['inside_metatarsal_R'] = controlModel.getJointTransform(idDic['RightFoot_foot_0_1'])
+            Ts['inside_metatarsal_R'] = np.eye(4)
             Ts['inside_phalanges_R'] = controlModel.getJointTransform(idDic['RightFoot_foot_0_1_0'])
             Ts['spine_ribs'] = controlModel.getJointTransform(idDic['Spine'])
             Ts['head'] = controlModel.getJointTransform(idDic['Spine1'])
@@ -856,7 +872,8 @@ def main():
             Ts['foot_heel_L'] = controlModel.getJointTransform(idDic['LeftFoot'])
             Ts['outside_metatarsal_L'] = controlModel.getJointTransform(idDic['LeftFoot_foot_0_0'])
             Ts['outside_phalanges_L'] = controlModel.getJointTransform(idDic['LeftFoot_foot_0_0_0'])
-            Ts['inside_metatarsal_L'] = controlModel.getJointTransform(idDic['LeftFoot_foot_0_1'])
+            # Ts['inside_metatarsal_L'] = controlModel.getJointTransform(idDic['LeftFoot_foot_0_1'])
+            Ts['inside_metatarsal_L'] = np.eye(4)
             Ts['inside_phalanges_L'] = controlModel.getJointTransform(idDic['LeftFoot_foot_0_1_0'])
             Ts['upper_limb_L'] = controlModel.getJointTransform(idDic['LeftArm'])
             Ts['lower_limb_L'] = controlModel.getJointTransform(idDic['LeftForeArm'])
@@ -874,6 +891,7 @@ def main():
     foot_viewer.check_ip_l.value(True)
     foot_viewer.check_op_r.value(True)
     foot_viewer.check_ip_r.value(True)
+    viewer.motionViewWnd.goToFrame(0)
 
     Fl.run()
 

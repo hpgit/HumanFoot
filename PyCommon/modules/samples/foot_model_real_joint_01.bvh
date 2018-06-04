@@ -1,39 +1,34 @@
 HIERARCHY
 ROOT root
 {
-    OFFSET 0 2.5 0
+    OFFSET 0 5.399 0
     CHANNELS 6 Xposition Yposition Zposition Zrotation Xrotation Yrotation
     JOINT foot_0_0
     {
-        OFFSET -1.0 -2.5 1.5
+        OFFSET -2.784 -3.463 4.52
         CHANNELS 3 Zrotation Xrotation Yrotation
         JOINT foot_0_0_0
         {
-            OFFSET 0 0 2.5
+            OFFSET -0.773 -1.936 5.216
             CHANNELS 3 Zrotation Xrotation Yrotation
             End Site
             {
-                OFFSET 0 0 2.1
+                OFFSET 0 0 5.25
             }
         }
-        JOINT foot_0_1
+    }
+    JOINT foot_0_1_0
+    {
+        OFFSET -1.823 -5.399 11.057
+        CHANNELS 3 Zrotation Xrotation Yrotation
+        End Site
         {
-            OFFSET 0.6 0 0
-            CHANNELS 3 Zrotation Xrotation Yrotation
-            JOINT foot_0_1_0
-            {
-                OFFSET 0 0 2.5
-                CHANNELS 3 Zrotation Xrotation Yrotation
-                End Site
-                {
-                    OFFSET 0 0 2.5
-                }
-            }
+            OFFSET 0 0 6.5
         }
     }
     JOINT foot_1_0
     {
-        OFFSET 0.0 -2.5 -0.5
+        OFFSET 0.0 -5.399 -0.5
         CHANNELS 3 Zrotation Xrotation Yrotation
         End Site
         {

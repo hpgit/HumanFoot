@@ -18,6 +18,10 @@ from PyCommon.modules.Math import mmMath as mmMath
 from PyCommon.modules.GUI import tree as tree
 from PyCommon.modules.Renderer import ysRenderer as yr
 
+from time import gmtime, strftime
+from PyCommon.modules.GUI.csDump import dump_png
+from PIL import Image as im
+
 POLYGON_LINE = 0
 POLYGON_FILL = 1
 
@@ -776,6 +780,11 @@ class MotionViewer(Fl_Window):
         
         self.initialize()
 
+        self.dumping = False
+        self.dumping_start_frame = 0
+        self.dumping_end_frame = 0
+        self.dumping_session = ''
+
     def initialize(self):
         self.playing = False
         self.recording = True
@@ -796,6 +805,7 @@ class MotionViewer(Fl_Window):
         self.panel.updateAll()     
         
         self.initialUpdate = True
+
 
     def setRenderers(self, renderers):
         self.glWindow.renderers = renderers
@@ -832,11 +842,19 @@ class MotionViewer(Fl_Window):
 #            self.initialUpdate = False
             
         if self.playing:
+            if self.dumping:
+                if self.dumping_start_frame <= self.frame <= self.dumping_end_frame:
+                    dump_png(self.dumping_session + '/' + '{:04d}'.format(self.frame-1) + ".png", 1280, 720)
+
+                if self.dumping_end_frame == self.frame:
+                    self.dumping = False
+                    self.pause()
+
             self.frame += 1
             if self.frame > self.maxFrame:
                 self.frame = 0
             self.onFrame(self.frame)
-                
+
         if self.timeInterval:
             Fl.repeat_timeout(self.timeInterval, self.onTimer)
             
@@ -961,6 +979,23 @@ class MotionViewer(Fl_Window):
         else:
             self.onFrame(frame)
 
+    def dump(self, ptr, outfile="output.png"):
+        # slow. use csDump instead.
+        glPixelStorei(GL_PACK_ALIGNMENT, 1)
+        glReadBuffer(GL_BACK_LEFT)
+        image = None
+        if self.w() > 1000:
+            image = glReadPixelsui(0, 0, 2000, 2000, GL_RGB)
+        else:
+            image = glReadPixelsui(0, 0, 1000, 1000, GL_RGB)
+
+        img = im.new('RGB', (self.w(), self.h()-56))
+        pix = img.load()
+        for i in range(self.w()):
+            for j in range(56, self.h()):
+                pix[i, j-56] = tuple(image[self.h()-j, i])
+        img.save(outfile, "PNG")
+
 
 class ControlPanel(Fl_Window):
     def __init__(self, x, y, w, h, parent):
@@ -1014,7 +1049,16 @@ class ControlPanel(Fl_Window):
         self.resetRec.callback(self.onClickResetRec)
         self.resetRecFromCurrent = Fl_Button(xPos+blank*2+width*2+40, height, width, 20, 'r.c.')
         self.resetRecFromCurrent.callback(self.onClickResetRecFromCurrent)
-                
+
+        self.dump_start = Fl_Button(xPos+blank*2+width*4+40, height, width, 20, 'dump')
+        self.dump_start.callback(self.onClickDumpStart)
+        self.dump_start_frame = Fl_Value_Input(xPos+blank*2+width*7+40, height, 40, 20, 's')
+        self.dump_start_frame.value(1)
+        self.dump_end_frame = Fl_Value_Input(xPos+blank*2+width*9+40, height, 40, 20, 'e')
+        self.dump_end_frame.value(300)
+        self.dump_name = Fl_Input(xPos+blank*2+width*12+40, height, 60, 20, 'name')
+        self.dump_name.value('_movtmp')
+
         self.end()
         
         self.play.take_focus()
@@ -1100,3 +1144,16 @@ class ControlPanel(Fl_Window):
         self.slider.redraw()
         self.recordSlider.redraw()
 
+    def onClickDumpStart(self, ptr):
+        session_name = self.dump_name.value()
+        if len(session_name) == 0:
+            session_name = '_movtmp'
+        self.parent.dumping_session = session_name + strftime("%Y%m%d%H%M")
+        if not os.path.exists(self.parent.dumping_session):
+            os.makedirs(self.parent.dumping_session)
+
+        self.parent.dumping_start_frame = int(self.dump_start_frame.value())
+        self.parent.dumping_end_frame = int(self.dump_end_frame.value())
+        self.parent.goToFrame(self.parent.dumping_start_frame-1)
+        self.parent.dumping = True
+        self.parent.play()
