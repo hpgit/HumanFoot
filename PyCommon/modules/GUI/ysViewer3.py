@@ -355,7 +355,7 @@ class GlWindow(Fl_Gl_Window):
             for y in range(0,nSquares):
                 if i % 2 == 1:
                     # glColor4f(0.58, 0.58, 0.58, 0.5)
-                    glColor4f(0.2, 0.2, 0.2, 0.5)
+                    glColor4f(0.3, 0.3, 0.3, 0.5)
                 else:
                     # glColor4f(0.9, 0.9, 0.9, 0.5)
                     glColor4f(0.5, 0.5, 0.5, 0.5)
@@ -461,7 +461,8 @@ class GlWindow(Fl_Gl_Window):
             self.initGL()
             self.initGLFlag = False
 
-        glClearColor(.8, .8, .8, .8)
+        # glClearColor(.8, .8, .8, .8)
+        glClearColor(.1, .1, .1, .8)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         if self.projectionChanged:
@@ -486,10 +487,10 @@ class GlWindow(Fl_Gl_Window):
         glLightfv(GL_LIGHT0, GL_POSITION, (.5,1.,.5,0))
                 
         glLineWidth(1.)
-        self.drawGround()
-        self.drawAxis()
+        # self.drawGround()
+        # self.drawAxis()
         # self.drawCoordinate((0, 0, 0))
-        # self.drawGround_color()
+        self.drawGround_color()
 
         # self.drawGroundFilled()
         # self.drawGround_grey()
@@ -777,7 +778,7 @@ class MotionViewer(Fl_Window):
         self.panel = ControlPanel(0, h-55, w, 55, self)
         self.end()
         self.resizable(self.glWindow)
-        
+
         self.initialize()
 
         self.dumping = False
@@ -845,7 +846,7 @@ class MotionViewer(Fl_Window):
             if self.dumping:
                 if self.dumping_start_frame <= self.frame <= self.dumping_end_frame:
                     # dump_png(self.dumping_session + '/' + '{:04d}'.format(self.frame-1) + ".png", 1280, 720)
-                    dump_png('dump/' + self.dumping_session + '/' + '{:04d}'.format(self.frame-self.dumping_start_frame) + ".png", 1280, 720)
+                    dump_png('dump/' + self.dumping_session + '/' + '{:04d}'.format(self.frame-self.dumping_start_frame) + ".png", self.w(), self.h()-56)
 
                 if self.dumping_end_frame == self.frame:
                     self.dumping = False

@@ -55,6 +55,8 @@ RENDER_OBJECT = 0
 RENDER_SHADOW = 1
 RENDER_REFLECTION = 2
 
+shadow_color = (50, 50, 50)
+
 class Renderer:
     """
 
@@ -282,13 +284,14 @@ class VpModelRenderer(Renderer):
             glPolygonMode(GL_FRONT, GL_LINE)
         glLineWidth(self._lineWidth)
 
-        if renderType != RENDER_SHADOW:
-            glEnable(GL_BLEND)
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        # if renderType != RENDER_SHADOW:
+        #     glEnable(GL_BLEND)
+        #     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         for i in range(self._model.getBodyNum()):
             if renderType == RENDER_SHADOW:
-                glColor3ub(90, 90, 90)
+                # glColor3ub(90, 90, 90)
+                glColor3ubv(shadow_color)
             else:
                 glColor3ubv(self.body_colors[i])
             self.renderVpBody(i)
@@ -358,7 +361,8 @@ class VpModelRenderer(Renderer):
             if renderType == RENDER_OBJECT:
                 glColor3ubv(color)
             elif renderType == RENDER_SHADOW:
-                glColor3ub(90, 90, 90)
+                # glColor3ub(90, 90, 90)
+                glColor3ubv(shadow_color)
 
             glPushMatrix()
             glMultMatrixd(_T.T)
@@ -873,7 +877,8 @@ class BasicSkeletonRenderer(Renderer):
             else:
                 glColor3ubv(self.totalColor)
         elif renderType == RENDER_SHADOW:
-            glColor3ub(90, 90, 90)
+            # glColor3ub(90, 90, 90)
+            glColor3ubv(shadow_color)
         self.objs[body_name].draw()
         for child_name in self.children[body_name]:
             self._render(child_name, state, renderType)
