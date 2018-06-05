@@ -263,6 +263,10 @@ class FootWindow(Fl_Window):
         self.check_not_right_seg()
 
     def check_tiptoe_all(self):
+        self.check_tiptoe_left()
+        self.check_tiptoe_right()
+
+    def check_tiptoe_left(self):
         self.check_op_l.value(True)
         self.check_ip_l.value(True)
         self.check_om_l.value(False)
@@ -270,6 +274,7 @@ class FootWindow(Fl_Window):
             self.check_im_l.value(False)
         self.check_h_l.value(False)
 
+    def check_tiptoe_right(self):
         self.check_op_r.value(True)
         self.check_ip_r.value(True)
         self.check_om_r.value(False)
@@ -310,3 +315,10 @@ class FootWindow(Fl_Window):
     def check_heel_off(self):
         self.check_h_l.value(False)
         self.check_h_r.value(False)
+
+    def get_contact_state(self):
+        contact = 0
+        contact = contact+1 if self.check_h_r.value() or self.check_op_r.value() or self.check_om_r.value() or self.check_ip_r.value() else contact+0
+        contact = contact+2 if self.check_h_l.value() or self.check_op_l.value() or self.check_om_l.value() or self.check_ip_l.value() else contact+0
+
+        return contact

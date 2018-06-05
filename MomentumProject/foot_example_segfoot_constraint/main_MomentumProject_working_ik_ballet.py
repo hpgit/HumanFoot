@@ -43,13 +43,14 @@ JconstPre = 0
 
 contactChangeCount = 0
 contactChangeType = 0
-contact = 0
-maxContactChangeCount = 30
+contact = 3
+pre_contact = 0
+maxContactChangeCount = 15
 
 preFootCenter = [None]
 
 DART_CONTACT_ON = False
-SKELETON_ON = True
+SKELETON_ON = False
 
 
 def main():
@@ -231,7 +232,7 @@ def main():
     # viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,255,255), yr.LINK_BONE))
     viewer.doc.addObject('motion', motion)
     viewer.doc.addRenderer('motionModel', yr.VpModelRenderer(motionModel, (150,150,255), yr.POLYGON_FILL))
-    viewer.doc.setRendererVisible('motionModel', False)
+    # viewer.doc.setRendererVisible('motionModel', False)
     viewer.doc.addRenderer('ikModel', yr.VpModelRenderer(controlModel_ik, (150,150,255), yr.POLYGON_LINE))
     viewer.doc.setRendererVisible('ikModel', False)
     # viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_LINE))
@@ -407,17 +408,20 @@ def main():
     # simulate
     ###################################
     def simulateCallback(frame):
+        global pre_contact
+        global contact
+        global maxContactChangeCount
+        global contactChangeCount
+        global contactChangeType
+
         # print(frame)
         # print(motion[frame].getJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0']))
         if True:
-            if frame == 200:
-                if motionFile == 'wd2_tiptoe.bvh':
-                    setParamVal('tiptoe angle', 0.3)
-                if motionFile == 'wd2_tiptoe_zygote.bvh':
-                    setParamVal('tiptoe angle', 0.3)
+            # if frame == 150:
+            #     setParamVal('tiptoe angle', 0.3)
             # elif 210 < frame < 240:
-                # if motionFile == 'wd2_tiptoe_zygote.bvh':
-                #     setParamVal('com Y offset', 0.01/30. * (frame-110))
+            #     if motionFile == 'wd2_tiptoe_zygote.bvh':
+            #         setParamVal('com Y offset', 0.01/30. * (frame-110))
             # elif frame == 400:
             #     setParamVal('com Y offset', 0.)
             #     setParamVal('tiptoe angle', 0.)
@@ -426,6 +430,28 @@ def main():
             #     setParamVal('SupKt', 30.)
             # elif frame == 400:
             #     setParamVal('SupKt', 17.)
+            if frame > 15 + start_frame:
+                motion[frame].mulJointOrientationGlobal(idDic['RightUpLeg'], mm.exp(mm.unitY(), -math.pi/4.))
+                foot_viewer.check_not_right_seg()
+
+            if frame > 30 + start_frame:
+                # motion[frame].mulJointOrientationGlobal(idDic['RightUpLeg'], mm.exp(mm.unitY(), math.pi/4.))
+                foot_viewer.check_tiptoe_right()
+                # foot_viewer.check_not_left_seg()
+
+            # if frame > 90 + start_frame:
+            #     motion[frame].mulJointOrientationGlobal(idDic['Hips'], mm.exp(mm.unitY(), -math.pi/6.))
+            #     motion[frame].mulJointOrientationGlobal(idDic['LeftUpLeg'], mm.exp(mm.unitY(), math.pi/6.))
+            # if frame > 120 + start_frame:
+            #     motion[frame].mulJointOrientationGlobal(idDic['LeftUpLeg'], mm.exp(mm.unitY(), -math.pi/6.))
+            # if frame > 150 + start_frame:
+            #     motion[frame].mulJointOrientationGlobal(idDic['Hips'], mm.exp(mm.unitY(), -math.pi/6.))
+            #     motion[frame].mulJointOrientationGlobal(idDic['LeftUpLeg'], mm.exp(mm.unitY(), math.pi/6.))
+            # if frame > 180 + start_frame:
+            #     motion[frame].mulJointOrientationGlobal(idDic['LeftUpLeg'], mm.exp(mm.unitY(), -math.pi/6.))
+
+        pre_contact = contact
+        contact = foot_viewer.get_contact_state()
 
 
         # hfi.footAdjust(motion[frame], idDic, SEGMENT_FOOT_MAG=.03, SEGMENT_FOOT_RAD=.015, baseHeight=0.02)
@@ -492,10 +518,6 @@ def main():
         global JconstPre
 
         global preFootCenter
-        global maxContactChangeCount
-        global contactChangeCount
-        global contact
-        global contactChangeType
 
         Kt, Kl, Kh, Bl, Bh, kt_sup = getParamVals(['Kt', 'Kl', 'Kh', 'Bl', 'Bh', 'SupKt'])
         Dt = 2*(Kt**.5)
@@ -619,6 +641,8 @@ def main():
 
         # if contactChangeCount == 0 and np.linalg.norm(footCenter - preFootCenter[0]) > 0.01:
         #     contactChangeCount += 30
+        if contactChangeCount == 0 and pre_contact != contact:
+            contactChangeCount = maxContactChangeCount
         if contactChangeCount > 0:
             # change footcenter gradually
             footCenter = preFootCenter[0] + (maxContactChangeCount - contactChangeCount)*(footCenter-preFootCenter[0])/maxContactChangeCount
@@ -632,15 +656,15 @@ def main():
         # to do that, set joint velocities to vpModel
         CM_ref_plane = footCenter
         # CM_ref_plane = footCenter_ref
-        CM_ref = footCenter + np.array([getParamVal('com X offset'), motionModel.getCOM()[1] + getParamVal('com Y offset'), getParamVal('com Z offset')])
+        CM_ref = footCenter_ref + np.array([getParamVal('com X offset'), motionModel.getCOM()[1] + getParamVal('com Y offset'), getParamVal('com Z offset')])
         dL_des_plane = Kl * totalMass * (CM_ref - CM) - Dl * totalMass * dCM
         # dL_des_plane = Kl * totalMass * (CM_ref_plane - CM_plane) - Dl * totalMass * dCM_plane
         # dL_des_plane[1] = 0.
         # print('dCM_plane : ', np.linalg.norm(dCM_plane))
 
         # angular momentum
-        CP_ref = footCenter
-        # CP_ref = footCenter_ref
+        # CP_ref = footCenter
+        CP_ref = footCenter_ref
         bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
         CP = yrp.getCP(contactPositions, contactForces)
         if CP_old[0] is None or CP is None:
@@ -689,7 +713,8 @@ def main():
         # body_dq = mm.vel2qd(body_ang, body_q)
         # a_ori = np.dot(body_ori, mm.qdd2accel(body_ddq, body_dq, body_q))
 
-        KT_SUP = np.diag([kt_sup/10., kt_sup, kt_sup/10.])
+        # KT_SUP = np.diag([kt_sup/10., kt_sup, kt_sup/10.])
+        KT_SUP = np.diag([kt_sup, kt_sup, kt_sup])
 
         # a_oris = list(map(mm.logSO3, [mm.getSO3FromVectors(np.dot(body_ori, mm.unitY()), mm.unitY()) for body_ori in contact_body_ori]))
         # a_sups = [np.append(kt_sup*(ref_body_pos[i] - contact_body_pos[i] + contMotionOffset) + dt_sup*(ref_body_vel[i] - contact_body_vel[i]),
@@ -734,8 +759,11 @@ def main():
 
         mot.addTrackingTerms(problem, totalDOF, Bt, w, ddth_des_flat)
         if dH_des is not None:
-            mot.addLinearTerms(problem, totalDOF, Bl, dL_des_plane, R, r_bias)
-            mot.addAngularTerms(problem, totalDOF, Bh, dH_des, S, s_bias)
+
+            if contact == 3 or contactChangeCount == 0:
+            # if contactChangeCount == 0:
+                mot.addLinearTerms(problem, totalDOF, Bl, dL_des_plane, R, r_bias)
+                mot.addAngularTerms(problem, totalDOF, Bh, dH_des, S, s_bias)
 
             if True:
                 for c_idx in range(len(contact_ids)):
@@ -744,7 +772,7 @@ def main():
         if contactChangeCount > 0:
             contactChangeCount = contactChangeCount - 1
             if contactChangeCount == 0:
-                maxContactChangeCount = 30
+                # maxContactChangeCount = 30
                 contactChangeType = 0
 
         r = problem.solve()
@@ -880,10 +908,9 @@ def main():
 
     foot_viewer = FootWindow(viewer.x() + viewer.w() + 20, viewer.y(), 300, 500, 'foot contact modifier', controlModel)
     foot_viewer.show()
-    foot_viewer.check_op_l.value(True)
-    foot_viewer.check_ip_l.value(True)
-    foot_viewer.check_op_r.value(True)
-    foot_viewer.check_ip_r.value(True)
+    foot_viewer.check_right_seg()
+    foot_viewer.check_left_seg()
+    foot_viewer.check_heel_off()
     viewer.motionViewWnd.goToFrame(0)
 
     Fl.run()
