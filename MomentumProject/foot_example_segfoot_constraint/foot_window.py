@@ -306,3 +306,7 @@ class FootWindow(Fl_Window):
         if self.ENABLE_INSIDE_METATARSAL:
             self.check_im_r.value(False)
         self.check_h_r.value(False)
+
+    def check_heel_off(self):
+        self.check_h_l.value(False)
+        self.check_h_r.value(False)

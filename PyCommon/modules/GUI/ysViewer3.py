@@ -664,24 +664,24 @@ class GlWindow(Fl_Gl_Window):
                 self.viewFromTop()
             elif Fl.event_key()==ord('$'):
                 self.viewPerspective()
-            elif Fl.event_key()==ord('a'):
-                self.cameraMode ^= True
-            elif Fl.event_key()==ord('q'):
-                self.viewFromFront()
-            elif Fl.event_key()==ord('w'):
-                self.viewFromRight()
-            elif Fl.event_key()==ord('e'):
-                self.viewFromTop()
-            elif Fl.event_key()==ord('r'):
-                self.viewPerspective()
+            # elif Fl.event_key()==ord('a'):
+            #     self.cameraMode ^= True
+            # elif Fl.event_key()==ord('q'):
+            #     self.viewFromFront()
+            # elif Fl.event_key()==ord('w'):
+            #     self.viewFromRight()
+            # elif Fl.event_key()==ord('e'):
+            #     self.viewFromTop()
+            # elif Fl.event_key()==ord('r'):
+            #     self.viewPerspective()
 
-            elif Fl.event_key()==ord('v'):
-                self.force = [0, -self.forceMag/4., self.forceMag]
-                #self.force = [self.forceMag, -self.forceMag/2, self.forceMag]
-                self.forceDir = 1
-            elif Fl.event_key()==ord('f'):
-                self.force = [0, 0, 0]
-                self.forceDir = 0            
+            # elif Fl.event_key()==ord('v'):
+            #     self.force = [0, -self.forceMag/4., self.forceMag]
+            #     #self.force = [self.forceMag, -self.forceMag/2, self.forceMag]
+            #     self.forceDir = 1
+            # elif Fl.event_key()==ord('f'):
+            #     self.force = [0, 0, 0]
+            #     self.forceDir = 0
             '''
             elif Fl.event_key()==ord('p'):
                 self.forceMag += 1.0
@@ -845,10 +845,12 @@ class MotionViewer(Fl_Window):
             if self.dumping:
                 if self.dumping_start_frame <= self.frame <= self.dumping_end_frame:
                     # dump_png(self.dumping_session + '/' + '{:04d}'.format(self.frame-1) + ".png", 1280, 720)
-                    dump_png(self.dumping_session + '/' + '{:04d}'.format(self.frame-1-self.dumping_start_frame) + ".png", 1280, 720)
+                    dump_png('dump/' + self.dumping_session + '/' + '{:04d}'.format(self.frame-self.dumping_start_frame) + ".png", 1280, 720)
 
                 if self.dumping_end_frame == self.frame:
                     self.dumping = False
+                    os.system('ffmpeg -loglevel 0 -framerate 30 -s 1280x720 -i dump/'+self.dumping_session+'/%04d.png -vcodec libx264 -crf 20 -pix_fmt yuv420p dump/' + self.dumping_session+'.mp4')
+                    os.system('ffplay -loglevel 0 dump/'+self.dumping_session+'.mp4')
                     self.pause()
 
             self.frame += 1
@@ -1057,7 +1059,7 @@ class ControlPanel(Fl_Window):
         self.dump_start_frame.value(1)
         self.dump_end_frame = Fl_Value_Input(xPos+blank*2+width*9+40, height, 40, 20, 'e')
         self.dump_end_frame.value(300)
-        self.dump_name = Fl_Input(xPos+blank*2+width*12+40, height, 60, 20, 'name')
+        self.dump_name = Fl_Input(xPos+blank*2+width*12+40, height, 100, 20, 'name')
         self.dump_name.value('_movtmp')
 
         self.end()
@@ -1151,7 +1153,7 @@ class ControlPanel(Fl_Window):
             session_name = '_movtmp'
         self.parent.dumping_session = session_name + strftime("%Y%m%d%H%M")
         if not os.path.exists(self.parent.dumping_session):
-            os.makedirs(self.parent.dumping_session)
+            os.makedirs('dump/'+self.parent.dumping_session)
 
         self.parent.dumping_start_frame = int(self.dump_start_frame.value())
         self.parent.dumping_end_frame = int(self.dump_end_frame.value())
