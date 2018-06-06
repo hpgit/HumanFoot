@@ -236,7 +236,7 @@ class GlWindow(Fl_Gl_Window):
         else:
             glCallList(self.groundList)
         #'''
-        glColor3f(0.4,0.4,0.4)
+        glColor3f(0.3,0.3,0.3)
         glBegin(GL_LINES)
         l = 20
         h = .1
@@ -358,7 +358,8 @@ class GlWindow(Fl_Gl_Window):
                     glColor4f(0.3, 0.3, 0.3, 0.5)
                 else:
                     # glColor4f(0.9, 0.9, 0.9, 0.5)
-                    glColor4f(0.5, 0.5, 0.5, 0.5)
+                    # glColor4f(0.5, 0.5, 0.5, 0.5)
+                    glColor4f(0.3, 0.3, 0.3, 0.5)
                 glVertex3d(xp,      self.planeHeight-h, yp)
                 glVertex3d(xp,      self.planeHeight-h, yp + yd)
                 glVertex3d(xp + xd, self.planeHeight-h, yp + yd)
@@ -491,6 +492,7 @@ class GlWindow(Fl_Gl_Window):
         # self.drawAxis()
         # self.drawCoordinate((0, 0, 0))
         self.drawGround_color()
+        # self.drawGround()
 
         # self.drawGroundFilled()
         # self.drawGround_grey()

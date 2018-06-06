@@ -371,14 +371,16 @@ class VpModelRenderer(Renderer):
                 # box case
                 data = geom_size
                 glTranslated(-.5*data[0], -.5*data[1], -.5*data[2])
-                self.rc.drawBox(data[0], data[1], data[2])
+                # self.rc.drawBox(data[0], data[1], data[2])
             elif geom_type in ('C', 'D', 'E'):
                 # capsule case
                 data = geom_size.copy()
                 # data.append(pGeom.GetRadius())
                 # data.append(pGeom.GetHeight())
                 data[1] -= 2. * data[0]
-                self.rc.drawCapsule(data[0], data[1])
+                body_name = self._model.index2name(body_idx)
+                if True or 'L' in body_name:
+                    self.rc.drawCapsule(data[0], data[1])
             elif geom_type == 'S':
                 data = geom_size
                 self.rc.drawSphere(data[0])
@@ -879,7 +881,9 @@ class BasicSkeletonRenderer(Renderer):
         elif renderType == RENDER_SHADOW:
             # glColor3ub(90, 90, 90)
             glColor3ubv(shadow_color)
-        self.objs[body_name].draw()
+        if True and body_name in ('foot_heel_R', 'outside_metatarsal_R', 'outside_phalanges_R', 'inside_phalanges_R', 'foot_heel_L', 'outside_metatarsal_L', 'outside_phalanges_L', 'inside_phalanges_L'):
+        # if True and body_name in ('foot_heel_L', 'outside_metatarsal_L', 'outside_phalanges_L', 'inside_phalanges_L'):
+            self.objs[body_name].draw()
         for child_name in self.children[body_name]:
             self._render(child_name, state, renderType)
         glPopMatrix()
@@ -1194,18 +1198,49 @@ class WideArrowRenderer(Renderer):
         self.heightRatio = heightRatio
         self.rc.setPolygonStyle(polygonStyle)
         self.rc.setNormalStyle(NORMAL_SMOOTH)
+        self.state_init = [[None], [None]]
+
     def render(self, renderType=RENDER_OBJECT):
-        if renderType==RENDER_OBJECT:
+        if renderType == RENDER_OBJECT:
             self.rc.beginDraw()
             glColor3ubv(self.totalColor)
             for i in range(len(self.forces)):
-                if self.forces[i]!=None and self.points[i]!=None:
+                if self.forces[i] is not None and self.points[i] is not None:
                     glPushMatrix()
-                    glScalef(1,self.heightRatio,1)
+                    # glScalef(1, self.heightRatio, 1)
                     if self.fromPoint==False:
                         self.rc.drawArrow(None, self.points[i], mm.v3_scale(self.forces[i], self.ratio), self.lineWidth)
                     else:
                         self.rc.drawArrow(self.points[i], None, mm.v3_scale(self.forces[i], self.ratio), self.lineWidth)
+                    glPopMatrix()
+
+    def getState(self):
+        return [copy.deepcopy(self.forces), copy.deepcopy(self.points)]
+
+    def renderFrame(self, frame, renderType=RENDER_OBJECT):
+        if frame == -1:
+            self.renderState(self.state_init, renderType)
+        elif frame == self.get_max_saved_frame() + 1:
+            self.saveState()
+            self.renderState(self.savedState[frame], renderType)
+        elif frame <= self.get_max_saved_frame():
+            self.renderState(self.savedState[frame], renderType)
+        else:
+            self.renderState(self.savedState[-1], renderType)
+
+    def renderState(self, state, renderType=RENDER_OBJECT):
+        forces, points = state[0], state[1]
+        if renderType == RENDER_OBJECT:
+            self.rc.beginDraw()
+            glColor3ubv(self.totalColor)
+            for i in range(len(forces)):
+                if forces[i] is not None and points[i] is not None:
+                    glPushMatrix()
+                    # glScalef(1, self.heightRatio, 1)
+                    if self.fromPoint==False:
+                        self.rc.drawArrow(None, points[i], mm.v3_scale(forces[i], self.ratio), self.lineWidth)
+                    else:
+                        self.rc.drawArrow(points[i], None, mm.v3_scale(forces[i], self.ratio), self.lineWidth)
                     glPopMatrix()
 
 class TorquesRenderer(Renderer):
@@ -1557,7 +1592,7 @@ class RenderContext:
         gluCylinder(self.quad, radius, radius, length_z, 16, 1)
 
     def drawCapsule(self, radius, length_z):
-        _SLICE_SIZE = 4
+        _SLICE_SIZE = 32
         glPushMatrix()
         glTranslatef(0., 0., -length_z/2.)
         gluSphere(self.quad2, radius, _SLICE_SIZE, _SLICE_SIZE)
@@ -1687,7 +1722,7 @@ class RenderContext:
             vector = [endPos[i]-startPos[i] for i in range(3)]
         elif startPos is None:
             startPos = [endPos[i]-vector[i] for i in range(3)]
-        
+
         length = mm.length(vector)
         if length==0.: return
 
@@ -1695,13 +1730,15 @@ class RenderContext:
         
         arrowT = mm.Rp2T(mm.getSO3FromVectors((length,0,0), vector), startPos)
         glMultMatrixf(arrowT.transpose())
-        
-        triWidth = lineWidth * 3
+
+        # triWidth = lineWidth * 3
+        # triLength = triWidth * 1.2
+        triWidth = lineWidth * 1.5
         triLength = triWidth * 1.2
-        
+
         # line + cone all parts
-#        glePolyCone(((0,0,0), (0,0,0), (length-triLength,0,0), (length-triLength,0,0), (length,0,0), (length,0,0)), None, 
-#                    (lineWidth/2., lineWidth/2., lineWidth/2., triWidth/2., 0, 0))
+        glePolyCone(((0,0,0), (0,0,0), (length-triLength,0,0), (length-triLength,0,0), (length,0,0), (length,0,0)), None,
+                   (lineWidth/2., lineWidth/2., lineWidth/2., triWidth/2., 0, 0))
         
         glPopMatrix()
     

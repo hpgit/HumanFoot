@@ -43,7 +43,7 @@ def main():
     np.set_printoptions(precision=4, linewidth=200)
 
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_5()
-    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
+    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped_zygote()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_jump_biped()
 
     vpWorld = cvw.VpWorld(wcfg)
@@ -74,8 +74,8 @@ def main():
     supL = motion[0].skeleton.getJointIndex(config['supLink1'])
     supR = motion[0].skeleton.getJointIndex(config['supLink2'])
 
-    selectedBody = motion[0].skeleton.getJointIndex(config['end'])
-    # selectedBody = motion[0].skeleton.getJointIndex('Hips')
+    # selectedBody = motion[0].skeleton.getJointIndex(config['end'])
+    selectedBody = motion[0].skeleton.getJointIndex('Spine')
     constBody = motion[0].skeleton.getJointIndex('RightFoot')
 
     # jacobian
@@ -160,24 +160,34 @@ def main():
     rightPos = [None]
 
     # viewer = ysv.SimpleViewer()
-    viewer = hsv.hpSimpleViewer(viewForceWnd=False)
+    viewer = hsv.hpSimpleViewer(rect=(0, 0, 960+300, 1080+56), viewForceWnd=False)
     # viewer.record(False)
     # viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,255,255), yr.LINK_BONE))
     viewer.doc.addObject('motion', motion)
     viewer.doc.addRenderer('motionModel', yr.VpModelRenderer(motionModel, (150,150,255), yr.POLYGON_FILL))
+    viewer.doc.setRendererVisible('motionModel', False)
     # viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_LINE))
     viewer.doc.addRenderer('controlModel', yr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_FILL))
     viewer.doc.addRenderer('rd_footCenter', yr.PointsRenderer(rd_footCenter))
+    viewer.doc.setRendererVisible('rd_footCenter', False)
     viewer.doc.addRenderer('rd_CM_plane', yr.PointsRenderer(rd_CM_plane, (255,255,0)))
+    viewer.doc.setRendererVisible('rd_CM_plane', False)
     viewer.doc.addRenderer('rd_CP', yr.PointsRenderer(rd_CP, (0,255,0)))
+    viewer.doc.setRendererVisible('rd_CP', False)
     viewer.doc.addRenderer('rd_CP_des', yr.PointsRenderer(rd_CP_des, (255,0,255)))
+    viewer.doc.setRendererVisible('rd_CP_des', False)
     viewer.doc.addRenderer('rd_dL_des_plane', yr.VectorsRenderer(rd_dL_des_plane, rd_CM, (255,255,0)))
+    viewer.doc.setRendererVisible('rd_dL_des_plane', False)
     viewer.doc.addRenderer('rd_dH_des', yr.VectorsRenderer(rd_dH_des, rd_CM, (0,255,0)))
+    viewer.doc.setRendererVisible('rd_dH_des', False)
     # viewer.doc.addRenderer('rd_grf_des', yr.ForcesRenderer(rd_grf_des, rd_CP_des, (0,255,0), .001))
     viewer.doc.addRenderer('rd_CF', yr.VectorsRenderer(rd_CF, rd_CF_pos, (255,255,0)))
+    viewer.doc.setRendererVisible('rd_CF', False)
 
     viewer.doc.addRenderer('extraForce', yr.VectorsRenderer(rd_exf_des, extraForcePos, (0,255,0)))
-    viewer.doc.addRenderer('extraForceEnable', yr.VectorsRenderer(rd_exfen_des, extraForcePos, (255,0,0)))
+    viewer.doc.setRendererVisible('extraForce', False)
+    # viewer.doc.addRenderer('extraForceEnable', yr.VectorsRenderer(rd_exfen_des, extraForcePos, (255,0,0)))
+    viewer.doc.addRenderer('extraForceEnable', yr.WideArrowRenderer(rd_exfen_des, extraForcePos, (255,0,0), lineWidth=.05, fromPoint=False))
 
     # viewer.doc.addRenderer('right_foot_oriX', yr.VectorsRenderer(rightFootVectorX, rightFootPos, (255,0,0)))
     # viewer.doc.addRenderer('right_foot_oriY', yr.VectorsRenderer(rightFootVectorY, rightFootPos, (0,255,0)))
@@ -251,7 +261,7 @@ def main():
     viewer.objectInfoWnd.add1DSlider("Bl", 0., 1., .001, initBl)
     viewer.objectInfoWnd.add1DSlider("Bh", 0., 1., .001, initBh)
     viewer.objectInfoWnd.add1DSlider("SupKt", 0., 100., 0.1, initSupKt)
-    viewer.objectInfoWnd.add1DSlider("Fm", 0., 1000., 10., initFm)
+    viewer.objectInfoWnd.add1DSlider("Fm", 0., 1000., 1., initFm)
     viewer.objectInfoWnd.add1DSlider("com X offset", -1., 1., 0.01, initComX)
     viewer.objectInfoWnd.add1DSlider("com Y offset", -1., 1., 0.01, initComY)
     viewer.objectInfoWnd.add1DSlider("com Z offset", -1., 1., 0.01, initComZ)
@@ -280,10 +290,10 @@ def main():
     viewer.objectInfoWnd.labelForceY.value(0)
 
     viewer.objectInfoWnd.labelForceZ = Fl_Value_Input(140, 30+offset*9, 40, 20, 'Z')
-    viewer.objectInfoWnd.labelForceZ.value(1)
+    viewer.objectInfoWnd.labelForceZ.value(-1)
 
     viewer.objectInfoWnd.labelForceDur = Fl_Value_Input(220, 30+offset*9, 40, 20, 'Dur')
-    viewer.objectInfoWnd.labelForceDur.value(0.1)
+    viewer.objectInfoWnd.labelForceDur.value(0.4)
 
     viewer.objectInfoWnd.end()
 
@@ -299,6 +309,9 @@ def main():
     # simulate
     ###################################
     def simulateCallback(frame):
+        if frame == 200:
+            viewer.force_on = True
+
         motionModel.update(motion[frame])
 
         global g_initFlag
@@ -365,6 +378,8 @@ def main():
         refFootVelR = motionModel.getBodyVelocityGlobal(supR)
         refFootAngVelL = motionModel.getBodyAngVelocityGlobal(supL)
         refFootAngVelR = motionModel.getBodyAngVelocityGlobal(supR)
+        refFootOriL = motionModel.getBodyOrientationGlobal(supL)
+        refFootOriR = motionModel.getBodyOrientationGlobal(supR)
 
         refFootJointVelR = motion.getJointVelocityGlobal(supR, frame)
         refFootJointAngVelR = motion.getJointAngVelocityGlobal(supR, frame)
@@ -505,6 +520,7 @@ def main():
         # add getBodyPositionGlobal and getBodyPositionsGlobal in csVpModel!
         # todo that, set joint velocities to vpModel
         CM_ref_plane = footCenter
+        # CM_ref_plane[1] += motionModel.getCOM()[1]
         dL_des_plane = Kl*totalMass*(CM_ref_plane - CM_plane) - Dl*totalMass*dCM_plane
         # dL_des_plane[1] = 0.
 
@@ -564,6 +580,24 @@ def main():
 
 
         #set up equality constraint
+        footBodyOriL
+        L_ddq = mm.logSO3(np.dot(footBodyOriL.T, np.dot(refFootOriL, mm.getSO3FromVectors(np.dot(refFootOriL, mm.unitY()), mm.unitY()))))
+        R_ddq = mm.logSO3(np.dot(footBodyOriR.T, np.dot(refFootOriR, mm.getSO3FromVectors(np.dot(refFootOriR, mm.unitY()), mm.unitY()))))
+        L_q = mm.logSO3(footBodyOriL)
+        R_q = mm.logSO3(footBodyOriR)
+        L_ang = np.dot(footBodyOriL, footBodyAngVelL)
+        R_ang = np.dot(footBodyOriR, footBodyAngVelR)
+        L_dq = mm.vel2qd(L_ang, L_q)
+        R_dq = mm.vel2qd(R_ang, R_q)
+        a_oriL = np.dot(footBodyOriL, mm.qdd2accel(L_dq, L_dq, L_q))
+        a_oriR = np.dot(footBodyOriR, mm.qdd2accel(R_dq, R_dq, R_q))
+
+        # body_ddqs = list(map(mm.logSO3, [np.dot(contact_body_ori[i].T, np.dot(ref_body_ori[i], mm.getSO3FromVectors(np.dot(ref_body_ori[i], up_vec_in_each_link[contact_ids[i]]), mm.unitY()))) for i in range(len(contact_body_ori))]))
+        # body_qs = list(map(mm.logSO3, contact_body_ori))
+        # body_angs = [np.dot(contact_body_ori[i], contact_body_angvel[i]) for i in range(len(contact_body_ori))]
+        # body_dqs = [mm.vel2qd(body_angs[i], body_qs[i]) for i in range(len(body_angs))]
+        # a_oris = [np.dot(contact_body_ori[i], mm.qdd2accel(body_ddqs[i], body_dqs[i], body_qs[i])) for i in range(len(contact_body_ori))]
+        #
         a_oriL = mm.logSO3(mm.getSO3FromVectors(np.dot(footBodyOriL, np.array([0,1,0])), np.array([0,1,0])))
         a_oriR = mm.logSO3(mm.getSO3FromVectors(np.dot(footBodyOriR, np.array([0,1,0])), np.array([0,1,0])))
 
@@ -575,49 +609,9 @@ def main():
         # a_supL = np.append(kt_sup*(refFootL - footCenterL + contMotionOffset) + dt_sup*(refFootVelL - footBodyVelL), kt_sup*a_oriL+dt_sup*(refFootAngVelL-footBodyAngVelL))
         # a_supR = np.append(kt_sup*(refFootR - footCenterR + contMotionOffset) + dt_sup*(refFootVelR - footBodyVelR), kt_sup*a_oriR+dt_sup*(refFootAngVelR-footBodyAngVelR))
         a_supL = np.append(kt_sup*(refFootL - footCenterL + contMotionOffset) - dt_sup*footBodyVelL, kt_sup*a_oriL-dt_sup*footBodyAngVelL)
+        a_supL[1] = -kt_sup*footCenterL[1] -dt_sup*footBodyVelL[1]
         a_supR = np.append(kt_sup*(refFootR - footCenterR + contMotionOffset) - dt_sup*footBodyVelR, kt_sup*a_oriR-dt_sup*footBodyAngVelR)
-
-        if contactChangeCount > 0 and contactChangeType == 'DtoS':
-            #refFootR += (footCenter-CM_plane)/2.
-            #refFootR[1] = 0
-            #pre contact value are needed
-            #if contact == 2:
-                ##refFootR[0] += 0.2
-                ##refFootR[2] -= 0.05
-                #offsetDropR = (footCenter-CM_plane)/2.
-                #refFootR += offsetDropR
-                #refFootR[1] = 0.
-                ##refFootR[2] = footCenterR[2] - contMotionOffset[2]
-                ##refFootR[0] = footCenterR[0] - contMotionOffset[0]
-                #refFootL[0] += 0.05
-                #refFootL[2] -= 0.05
-            #elif contact == 1:
-                #offsetDropL = (footCenter-CM_plane)/2.
-                #refFootL += offsetDropL
-                #refFootL[1] = 0.
-            #a_supL = np.append(kt_sup*(refFootL - footCenterL + contMotionOffset) + dt_sup*(refFootVelL - footBodyVelL), kt_sup*a_oriL+dt_sup*(refFootAngVelL-footBodyAngVelL))
-            #a_supR = np.append(kt_sup*(refFootR - footCenterR + contMotionOffset) + dt_sup*(refFootVelR - footBodyVelR), kt_sup*a_oriR+dt_sup*(refFootAngVelR-footBodyAngVelR))
-            #a_supL = np.append(kt_sup*(refFootL - footCenterL + contMotionOffset) + dt_sup*(refFootVelL - footBodyVelL), 16*kt_sup*a_oriL+4*dt_sup*(refFootAngVelL-footBodyAngVelL))
-            #a_supR = np.append(kt_sup*(refFootR - footCenterR + contMotionOffset) + dt_sup*(refFootVelR - footBodyVelR), 16*kt_sup*a_oriR+4*dt_sup*(refFootAngVelR-footBodyAngVelR))
-            a_supL = np.append(kt_sup*(refFootL - footCenterL + contMotionOffset) + dt_sup*(refFootVelL - footBodyVelL), 4*kt_sup*a_oriL+2*dt_sup*(refFootAngVelL-footBodyAngVelL))
-            a_supR = np.append(kt_sup*(refFootR - footCenterR + contMotionOffset) + dt_sup*(refFootVelR - footBodyVelR), 4*kt_sup*a_oriR+2*dt_sup*(refFootAngVelR-footBodyAngVelR))
-        elif contactChangeCount > 0 and contactChangeType == 'StoD':
-            #refFootR[0] +=0.05
-            #refFootR[2] +=0.05
-            linkt = (13.*contactChangeCount)/(maxContactChangeCount)+1.
-            lindt = 2*(linkt**.5)
-            angkt = (13.*contactChangeCount)/(maxContactChangeCount)+1.
-            angdt = 2*(angkt**.5)
-            #a_supL = np.append(4*kt_sup*(refFootL - footCenterL + contMotionOffset) + 2*dt_sup*(refFootVelL - footBodyVelL), 16*kt_sup*a_oriL+4*dt_sup*(refFootAngVelL-footBodyAngVelL))
-            #a_supR = np.append(4*kt_sup*(refFootR - footCenterR + contMotionOffset) + 2*dt_sup*(refFootVelR - footBodyVelR), 16*kt_sup*a_oriR+4*dt_sup*(refFootAngVelR-footBodyAngVelR))
-            a_supL = np.append(linkt*kt_sup*(refFootL - footCenterL + contMotionOffset) + lindt*dt_sup*(refFootVelL - footBodyVelL), angkt*kt_sup*a_oriL+angdt*dt_sup*(refFootAngVelL-footBodyAngVelL))
-            a_supR = np.append(linkt*kt_sup*(refFootR - footCenterR + contMotionOffset) + lindt*dt_sup*(refFootVelR - footBodyVelR), angkt*kt_sup*a_oriR+angdt*dt_sup*(refFootAngVelR-footBodyAngVelR))
-            #a_supL = np.append(16*kt_sup*(refFootL - footCenterL + contMotionOffset) + 4*dt_sup*(refFootVelL - footBodyVelL), 16*kt_sup*a_oriL+4*dt_sup*(refFootAngVelL-footBodyAngVelL))
-            #a_supR = np.append(16*kt_sup*(refFootR - footCenterR + contMotionOffset) + 4*dt_sup*(refFootVelR - footBodyVelR), 16*kt_sup*a_oriR+4*dt_sup*(refFootAngVelR-footBodyAngVelR))
-            #a_supL = np.append(4*kt_sup*(refFootL - footCenterL + contMotionOffset) + 2*dt_sup*(refFootVelL - footBodyVelL), 32*kt_sup*a_oriL+5.6*dt_sup*(refFootAngVelL-footBodyAngVelL))
-            #a_supR = np.append(4*kt_sup*(refFootR - footCenterR + contMotionOffset) + 2*dt_sup*(refFootVelR - footBodyVelR), 32*kt_sup*a_oriR+5.6*dt_sup*(refFootAngVelR-footBodyAngVelR))
-            #a_supL[1] = kt_sup*(refFootL[1] - footCenterL[1] + contMotionOffset[1]) + dt_sup*(refFootVelL[1] - footBodyVelL[1])
-            #a_supR[1] = kt_sup*(refFootR[1] - footCenterR[1] + contMotionOffset[1]) + dt_sup*(refFootVelR[1] - footBodyVelR[1])
+        a_supR[1] = -kt_sup*footCenterR[1] -dt_sup*footBodyVelR[1]
 
         ##if contact == 2:
         #if refFootR[1] <doubleTosingleOffset :
@@ -758,7 +752,7 @@ def main():
             rd_exf_des[0] = [extraForce[0][0]/100, extraForce[0][1]/100, extraForce[0][2]/100]
             rd_exfen_des[0] = [0,0,0]
 
-        extraForcePos[0] = controlModel.getBodyPositionGlobal(selectedBody)
+        extraForcePos[0] = controlModel.getBodyPositionGlobal(selectedBody) - 0.1 * np.array([viewer.objectInfoWnd.labelForceX.value(), 0., viewer.objectInfoWnd.labelForceZ.value()])
 
 
     viewer.setSimulateCallback(simulateCallback)
