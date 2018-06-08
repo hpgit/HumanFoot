@@ -203,7 +203,8 @@ def main():
         Ts['thigh_R'] = init
         Ts['shin_R'] = init
         Ts['foot_heel_R'] = init
-        # Ts['foot_R'] = init
+        Ts['foot_R'] = init
+        Ts['heel_R'] = init
         Ts['outside_metatarsal_R'] = init
         Ts['outside_phalanges_R'] = init
         Ts['inside_metatarsal_R'] = init
@@ -213,7 +214,8 @@ def main():
         Ts['thigh_L'] = init
         Ts['shin_L'] = init
         Ts['foot_heel_L'] = init
-        # Ts['foot_L'] = init
+        Ts['foot_L'] = init
+        Ts['heel_L'] = init
         Ts['outside_metatarsal_L'] = init
         Ts['outside_phalanges_L'] = init
         Ts['inside_metatarsal_L'] = init
@@ -226,7 +228,7 @@ def main():
 
     # viewer = ysv.SimpleViewer()
     # viewer = hsv.hpSimpleViewer(rect=[0, 0, 1024, 768], viewForceWnd=False)
-    viewer = hsv.hpSimpleViewer(rect=[0, 0, 1280+300, 1+720+55], viewForceWnd=False)
+    viewer = hsv.hpSimpleViewer(rect=[0, 0, 960+300, 1+1080+55], viewForceWnd=False)
     # viewer.record(False)
     # viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,255,255), yr.LINK_BONE))
     viewer.doc.addObject('motion', motion)
@@ -684,6 +686,7 @@ def main():
         body_angs = [np.dot(contact_body_ori[i], contact_body_angvel[i]) for i in range(len(contact_body_ori))]
         body_dqs = [mm.vel2qd(body_angs[i], body_qs[i]) for i in range(len(body_angs))]
         a_oris = [np.dot(contact_body_ori[i], mm.qdd2accel(body_ddqs[i], body_dqs[i], body_qs[i])) for i in range(len(contact_body_ori))]
+        a_oris = list(map(mm.logSO3, [np.dot(np.dot(ref_body_ori[i], mm.getSO3FromVectors(np.dot(ref_body_ori[i], up_vec_in_each_link[contact_ids[i]]), mm.unitY())), contact_body_ori[i].T) for i in range(len(contact_body_ori))]))
 
         # body_ddq = body_ddqs[0]
         # body_ori = contact_body_ori[0]
@@ -693,7 +696,7 @@ def main():
         # body_dq = mm.vel2qd(body_ang, body_q)
         # a_ori = np.dot(body_ori, mm.qdd2accel(body_ddq, body_dq, body_q))
 
-        KT_SUP = np.diag([kt_sup/10., kt_sup, kt_sup/10.])
+        KT_SUP = np.diag([kt_sup/5., kt_sup, kt_sup/5.])
 
         # a_oris = list(map(mm.logSO3, [mm.getSO3FromVectors(np.dot(body_ori, mm.unitY()), mm.unitY()) for body_ori in contact_body_ori]))
         # a_sups = [np.append(kt_sup*(ref_body_pos[i] - contact_body_pos[i] + contMotionOffset) + dt_sup*(ref_body_vel[i] - contact_body_vel[i]),
@@ -852,8 +855,9 @@ def main():
             Ts['pelvis'] = controlModel.getJointTransform(idDic['Hips'])
             Ts['thigh_R'] = controlModel.getJointTransform(idDic['RightUpLeg'])
             Ts['shin_R'] = controlModel.getJointTransform(idDic['RightLeg'])
-            # Ts['foot_R'] = controlModel.getJointTransform(idDic['RightFoot'])
+            Ts['foot_R'] = controlModel.getJointTransform(idDic['RightFoot'])
             Ts['foot_heel_R'] = controlModel.getJointTransform(idDic['RightFoot'])
+            Ts['heel_R'] = np.eye(4)
             Ts['outside_metatarsal_R'] = controlModel.getJointTransform(idDic['RightFoot_foot_0_0'])
             Ts['outside_phalanges_R'] = controlModel.getJointTransform(idDic['RightFoot_foot_0_0_0'])
             # Ts['inside_metatarsal_R'] = controlModel.getJointTransform(idDic['RightFoot_foot_0_1'])
@@ -865,8 +869,9 @@ def main():
             Ts['lower_limb_R'] = controlModel.getJointTransform(idDic['RightForeArm'])
             Ts['thigh_L'] = controlModel.getJointTransform(idDic['LeftUpLeg'])
             Ts['shin_L'] = controlModel.getJointTransform(idDic['LeftLeg'])
-            # Ts['foot_L'] = controlModel.getJointTransform(idDic['LeftFoot'])
+            Ts['foot_L'] = controlModel.getJointTransform(idDic['LeftFoot'])
             Ts['foot_heel_L'] = controlModel.getJointTransform(idDic['LeftFoot'])
+            Ts['heel_L'] = np.eye(4)
             Ts['outside_metatarsal_L'] = controlModel.getJointTransform(idDic['LeftFoot_foot_0_0'])
             Ts['outside_phalanges_L'] = controlModel.getJointTransform(idDic['LeftFoot_foot_0_0_0'])
             # Ts['inside_metatarsal_L'] = controlModel.getJointTransform(idDic['LeftFoot_foot_0_1'])

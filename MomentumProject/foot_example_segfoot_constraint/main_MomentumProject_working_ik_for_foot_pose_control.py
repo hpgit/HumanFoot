@@ -24,7 +24,7 @@ from MomentumProject.foot_example_segfoot_constraint import mtOptimize as mot
 from MomentumProject.foot_example_segfoot_constraint import mtInitialize as mit
 from MomentumProject.foot_example_segfoot_constraint.foot_window import FootWindow
 
-from PyCommon.modules.ArticulatedBody import hpFootIK as hfi
+from PyCommon.modules.ArticulatedBody import hpFootIK_v2 as hfi
 # from scipy.spatial import Delaunay
 
 # import pydart2 as pydart
@@ -49,7 +49,7 @@ maxContactChangeCount = 30
 preFootCenter = [None]
 
 DART_CONTACT_ON = False
-SKELETON_ON = True
+SKELETON_ON = False
 
 
 def main():
@@ -62,6 +62,7 @@ def main():
     motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped(motionFile, SEGMENT_FOOT_MAG=0.01, SEGMENT_FOOT_RAD=0.008)
     # motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_jump_biped()
+    motion.translateByOffset((0, -0.11, 0))
 
     vpWorld = cvw.VpWorld(wcfg)
     vpWorld.SetGlobalDamping(0.999)
@@ -86,9 +87,6 @@ def main():
     controlModel_q = np.zeros_like(controlModel.get_q())
     controlModel_q[4] = controlModel_q[4]+1.2 - 0.24
     controlModel.set_q(controlModel_q)
-    print(controlModel.getBodyPositionGlobal(motion[0].skeleton.getJointIndex('RightFoot_foot_1_0')))
-
-
 
     totalDOF = controlModel.getTotalDOF()
     DOFs = controlModel.getDOFs()
@@ -233,24 +231,25 @@ def main():
 
     # viewer = ysv.SimpleViewer()
     # viewer = hsv.hpSimpleViewer(rect=[0, 0, 1024, 768], viewForceWnd=False)
-    viewer = hsv.hpSimpleViewer(rect=[0, 0, 1620+300, 1+1080+55], viewForceWnd=False)
+    viewer = hsv.hpSimpleViewer(rect=[0, 0, 1920+300, 1+1080+55], viewForceWnd=False)
     # viewer.record(False)
     # viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,255,255), yr.LINK_BONE))
     viewer.doc.addObject('motion', motion)
     viewer.doc.addRenderer('motionModel', yr.VpModelRenderer(motionModel, (150,150,255), yr.POLYGON_FILL))
-    viewer.doc.setRendererVisible('motionModel', False)
+    viewer.doc.setRendererVisible('motionModel', True)
     viewer.doc.addRenderer('ikModel', yr.VpModelRenderer(controlModel_ik, (150,150,255), yr.POLYGON_LINE))
     viewer.doc.setRendererVisible('ikModel', False)
     # viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_LINE))
-    control_model_renderer = yr.VpModelRenderer(controlModel, (230,230,230), yr.POLYGON_FILL)
+    control_model_renderer = yr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_FILL)
     viewer.doc.addRenderer('controlModel', control_model_renderer)
+    viewer.doc.setRendererVisible('controlModel', False)
     skeleton_renderer = None
     if SKELETON_ON:
         # skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), offset_Y=-0.08)
         # skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), color=(230, 230, 230), offset_draw=(0.8, -0.02, 0.))
-        skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), color=(230, 230, 230), offset_draw=(-0.2, 0., 0.))
+        skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), color=(230, 230, 230), offset_draw=(0., -0.0, 0.))
         viewer.doc.addRenderer('skeleton', skeleton_renderer)
-        # viewer.doc.setRendererVisible('skeleton', False)
+        viewer.doc.setRendererVisible('skeleton', False)
     viewer.doc.addRenderer('rd_footCenter', yr.PointsRenderer(rd_footCenter))
     viewer.doc.setRendererVisible('rd_footCenter', False)
     viewer.doc.addRenderer('rd_footCenter_ref', yr.PointsRenderer(rd_footCenter_ref))
@@ -269,7 +268,7 @@ def main():
     viewer.doc.addRenderer('rd_CF', yr.VectorsRenderer(rd_CF, rd_CF_pos, (255,255,0)))
     viewer.doc.setRendererVisible('rd_CF', False)
     viewer.doc.addRenderer('rd_foot_ori', yr.OrientationsRenderer(rd_foot_ori, rd_foot_pos, (255,255,0)))
-    viewer.doc.setRendererVisible('rd_foot_ori', False)
+    # viewer.doc.setRendererVisible('rd_foot_ori', False)
 
     viewer.doc.addRenderer('rd_root_ori', yr.OrientationsRenderer(rd_root_ori, rd_root_pos, (255,255,0)))
     viewer.doc.setRendererVisible('rd_root_ori', False)
@@ -420,30 +419,40 @@ def main():
     # simulate
     ###################################
     def preFrameCallback_Always(frame):
+        touch_body_idx = []
+        if foot_viewer.check_om_l.value():
+            touch_body_idx.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_0'))
+        if foot_viewer.check_op_l.value():
+            touch_body_idx.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_0_0'))
+        if foot_viewer.check_im_l is not None and foot_viewer.check_im_l.value():
+            touch_body_idx.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_1'))
+        if foot_viewer.check_ip_l.value():
+            touch_body_idx.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_1_0'))
+        if foot_viewer.check_h_l.value():
+            touch_body_idx.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_1_0'))
+
+        if foot_viewer.check_om_r.value():
+            touch_body_idx.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_0'))
+        if foot_viewer.check_op_r.value():
+            touch_body_idx.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_0_0'))
+        if foot_viewer.check_im_r is not None and foot_viewer.check_im_r.value():
+            touch_body_idx.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_1'))
+        if foot_viewer.check_ip_r.value():
+            touch_body_idx.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_1_0'))
+        if foot_viewer.check_h_r.value():
+            touch_body_idx.append(motion[0].skeleton.getJointIndex('RightFoot_foot_1_0'))
+
+        hfi.footAdjust(motion[frame], touch_body_idx, 0.01, 0.008, 0.)
         if frame < 120+start_frame:
-            viewer.doc.setRendererVisible('controlModel', True)
-            viewer.doc.setRendererVisible('skeleton', True)
-            viewer.motionViewWnd.glWindow.camera.rotateX = math.pi /180. * -90.
-            viewer.motionViewWnd.glWindow.camera.rotateY = math.pi
-            viewer.motionViewWnd.glWindow.camera.distance = .3
-            viewer.motionViewWnd.glWindow.camera.center = controlModel.getBodyPositionGlobal(idDic['RightFoot']) - 0.10*mm.unitX()
-            viewer.motionViewWnd.glWindow.projectionOrtho = True
-            viewer.motionViewWnd.glWindow.projectionChanged = True
-        else:
-            if 0 <= frame % 50 < 22:
-                viewer.doc.setRendererVisible('controlModel', True)
-                viewer.doc.setRendererVisible('skeleton', False)
-            elif 22 <= frame % 50 < 25:
-                viewer.doc.setRendererVisible('controlModel', False)
-                viewer.doc.setRendererVisible('skeleton', False)
-            elif 25 <= frame % 50 < 47:
-                viewer.doc.setRendererVisible('controlModel', False)
-                viewer.doc.setRendererVisible('skeleton', True)
-            elif 47 <= frame % 50 < 50:
-                viewer.doc.setRendererVisible('controlModel', False)
-                viewer.doc.setRendererVisible('skeleton', False)
+            viewer.motionViewWnd.glWindow.camera.rotateX = math.pi /180. * -25.
+            if frame > start_frame:
+                viewer.motionViewWnd.glWindow.camera.rotateY = mm.deg2Rad((frame-start_frame)*3+45.)
+            viewer.motionViewWnd.glWindow.camera.distance = .4
+            viewer.motionViewWnd.glWindow.camera.center = \
+                .5*(motionModel.getBodyPositionGlobal(idDic['RightFoot']) + motionModel.getBodyPositionGlobal(idDic['LeftFoot'])) + np.array([0., -0.05, 0.])
 
     def simulateCallback(frame):
+
         # print(frame)
         # print(motion[frame].getJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0']))
         if False:
@@ -633,35 +642,7 @@ def main():
         for contact_id in contact_ids:
             control_model_renderer.body_colors[contact_id] = (255, 0, 0)
 
-        pallete1 = list()
-        pallete1.append((84, 119, 123))
-        pallete1.append((193, 41, 66))
-        pallete1.append((217, 91, 68))
-        pallete1.append((235, 208, 119))
 
-        pallete2 = list()
-        pallete2.append((244, 198, 61))
-        pallete2.append((4, 105, 113))
-        pallete2.append((234, 219, 196))
-        pallete2.append((216, 1, 6))
-        pallete2.append((230, 230, 230))
-
-        pallete = pallete2
-
-        color = dict()
-        color['RightFoot'] = pallete[0]
-        color['RightFoot_foot_1_0'] = pallete[4]
-        color['RightFoot_foot_0_0'] = pallete[1]
-        color['RightFoot_foot_0_0_0'] = pallete[2]
-        color['RightFoot_foot_0_1_0'] = pallete[3]
-        color['LeftFoot'] = pallete[0]
-        color['LeftFoot_foot_1_0'] = pallete[4]
-        color['LeftFoot_foot_0_0'] = pallete[1]
-        color['LeftFoot_foot_0_0_0'] = pallete[2]
-        color['LeftFoot_foot_0_1_0'] = pallete[3]
-
-        for color_key in color.keys():
-            control_model_renderer.body_colors[idDic[color_key]] = color[color_key]
 
         rd_CM[0] = CM
 
@@ -670,13 +651,13 @@ def main():
 
         del rd_foot_ori[:]
         del rd_foot_pos[:]
-        # for seg_foot_id in footIdlist:
-        #     rd_foot_ori.append(controlModel.getJointOrientationGlobal(seg_foot_id))
-        #     rd_foot_pos.append(controlModel.getJointPositionGlobal(seg_foot_id))
-        rd_foot_ori.append(controlModel.getJointOrientationGlobal(supL))
-        rd_foot_ori.append(controlModel.getJointOrientationGlobal(supR))
-        rd_foot_pos.append(controlModel.getJointPositionGlobal(supL))
-        rd_foot_pos.append(controlModel.getJointPositionGlobal(supR))
+        for seg_foot_id in footIdlist:
+            rd_foot_ori.append(motion[frame].getJointOrientationGlobal(seg_foot_id))
+            rd_foot_pos.append(motion[frame].getJointPositionGlobal(seg_foot_id))
+        # rd_foot_ori.append(controlModel.getJointOrientationGlobal(supL))
+        # rd_foot_ori.append(controlModel.getJointOrientationGlobal(supR))
+        # rd_foot_pos.append(controlModel.getJointPositionGlobal(supL))
+        # rd_foot_pos.append(controlModel.getJointPositionGlobal(supR))
 
         rd_root_des[0] = rootPos[0]
         rd_root_ori[0] = controlModel.getBodyOrientationGlobal(0)
@@ -718,19 +699,7 @@ def main():
             Ts['upper_limb_L'] = controlModel.getJointTransform(idDic['LeftArm'])
             Ts['lower_limb_L'] = controlModel.getJointTransform(idDic['LeftForeArm'])
 
-            color = dict()
-            color['foot_R'] = pallete[0]
-            color['heel_R'] = pallete[4]
-            color['outside_metatarsal_R'] = pallete[1]
-            color['outside_phalanges_R'] = pallete[2]
-            color['inside_phalanges_R'] = pallete[3]
-            color['foot_L'] = pallete[0]
-            color['heel_L'] = pallete[4]
-            color['outside_metatarsal_L'] = pallete[1]
-            color['outside_phalanges_L'] = pallete[2]
-            color['inside_phalanges_L'] = pallete[3]
-
-            skeleton_renderer.appendFrameState(Ts, color)
+            skeleton_renderer.appendFrameState(Ts)
 
     viewer.setSimulateCallback(simulateCallback)
     viewer.setPreFrameCallback_Always(preFrameCallback_Always)

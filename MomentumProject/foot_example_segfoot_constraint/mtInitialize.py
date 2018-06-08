@@ -222,26 +222,59 @@ def create_biped(motionName='wd2_n_kick.bvh', SEGMENT_FOOT=True, SEGMENT_FOOT_MA
         if SEGMENT_FOOT_SEPARATE:
             node = mcfg.getNode('RightFoot')
             node.bone_dir_child = 'RightFoot_foot_0_1_0'
+            body_vector = np.array([-1.823, -5.399, 10.397])
+            body_ori = mm.getSO3FromVectors(mm.unitZ(), body_vector)
+            third_metatarsal_vector = np.array([-0.4, -3.4, 6.63])
+            node.addGeom('MyFoot5', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, 0.*mm.unitX() + body_vector/2. - third_metatarsal_vector/2.),
+                                     np.dot(body_ori.T, np.dot(mm.getSO3FromVectors(body_vector, third_metatarsal_vector), body_ori))],
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(third_metatarsal_vector) + 2*SEGMENT_FOOT_RAD))
+            second_metatarsal_vector = np.array([0., -3.8, 6.63])
+            node.addGeom('MyFoot5', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, 1.8*mm.unitX() + body_vector/2. - second_metatarsal_vector/2.),
+                                     np.dot(body_ori.T, np.dot(mm.getSO3FromVectors(body_vector, second_metatarsal_vector), body_ori))],
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(second_metatarsal_vector) + 2*SEGMENT_FOOT_RAD))
+            first_metatarsal_vector = np.array([0.2, -4.98, 6.63])
+            node.addGeom('MyFoot5', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, 3.6*mm.unitX() + body_vector/2. - first_metatarsal_vector/2.),
+                                     np.dot(body_ori.T, np.dot(mm.getSO3FromVectors(body_vector, first_metatarsal_vector), body_ori))],
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(first_metatarsal_vector) + 2*SEGMENT_FOOT_RAD))
+
             node = mcfg.getNode('LeftFoot')
             node.bone_dir_child = 'LeftFoot_foot_0_1_0'
+            body_vector = np.array([1.823, -5.399, 10.397])
+            body_ori = mm.getSO3FromVectors(mm.unitZ(), body_vector)
+            third_metatarsal_vector = np.array([0.4, -3.4, 6.63])
+            node.addGeom('MyFoot5', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, 0.*mm.unitX() + body_vector/2. - third_metatarsal_vector/2.),
+                                     np.dot(body_ori.T, np.dot(mm.getSO3FromVectors(body_vector, third_metatarsal_vector), body_ori))],
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(third_metatarsal_vector) + 2*SEGMENT_FOOT_RAD))
+            second_metatarsal_vector = np.array([0., -3.8, 6.63])
+            node.addGeom('MyFoot5', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, -1.8*mm.unitX() + body_vector/2. - second_metatarsal_vector/2.),
+                                     np.dot(body_ori.T, np.dot(mm.getSO3FromVectors(body_vector, second_metatarsal_vector), body_ori))],
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(second_metatarsal_vector) + 2*SEGMENT_FOOT_RAD))
+            first_metatarsal_vector = np.array([-0.2, -4.98, 6.63])
+            node.addGeom('MyFoot5', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, -3.6*mm.unitX() + body_vector/2. - first_metatarsal_vector/2.),
+                                    np.dot(body_ori.T, np.dot(mm.getSO3FromVectors(body_vector, first_metatarsal_vector), body_ori))],
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(first_metatarsal_vector) + 2*SEGMENT_FOOT_RAD))
 
             # RightFoot_foot_0_0 : outside metatarsals
             capsulize('RightFoot_foot_0_0')
             node = mcfg.getNode('RightFoot_foot_0_0')
-            body_offset = np.array([-0.773, -1.936, 5.877])
-            body_ori = mm.getSO3FromVectors(mm.unitZ(), body_offset)
+            body_vector = np.array([-0.773, -1.936, 5.877])
+            body_ori = mm.getSO3FromVectors(mm.unitZ(), body_vector)
             node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([0., 0., 0.]), mm.exp([0., 0., 0.])], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
-            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, np.array([-1.8, -0.968, 0.])), mm.exp([-math.atan2(1.936, 5.9276), 0., 0.])],
-                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * 5.9276 + 2*SEGMENT_FOOT_RAD))
+            fifth_metatarsal_vector = np.array([-0.773, 0., 5.877])
+            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, -1.8*mm.unitX() + body_vector/2. - fifth_metatarsal_vector/2.),
+                                     np.dot(body_ori.T, np.dot(mm.getSO3FromVectors(body_vector, fifth_metatarsal_vector), body_ori))],
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(fifth_metatarsal_vector) + 2*SEGMENT_FOOT_RAD))
             node.jointType = footJointType
 
             capsulize('LeftFoot_foot_0_0')
             node = mcfg.getNode('LeftFoot_foot_0_0')
-            body_offset = np.array([0.773, -1.936, 5.877])
-            body_ori = mm.getSO3FromVectors(mm.unitZ(), body_offset)
+            body_vector = np.array([0.773, -1.936, 5.877])
+            body_ori = mm.getSO3FromVectors(mm.unitZ(), body_vector)
             node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([0., 0., 0.]), mm.exp([0., 0., 0.])], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
-            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, np.array([1.8, -0.968, 0.])), mm.exp([-math.atan2(1.936, 5.9276), 0., 0.])],
-                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * 5.9276 + 2*SEGMENT_FOOT_RAD))
+            fifth_metatarsal_vector = np.array([0.773, 0., 5.877])
+            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, 1.8*mm.unitX() + body_vector/2. - fifth_metatarsal_vector/2.),
+                                     np.dot(body_ori.T, np.dot(mm.getSO3FromVectors(body_vector, fifth_metatarsal_vector), body_ori))],
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(fifth_metatarsal_vector) + 2*SEGMENT_FOOT_RAD))
             node.jointType = footJointType
 
             # RightFoot_foot_0_0_0 : outside phalanges

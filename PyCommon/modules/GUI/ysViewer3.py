@@ -358,8 +358,8 @@ class GlWindow(Fl_Gl_Window):
                     glColor4f(0.3, 0.3, 0.3, 0.5)
                 else:
                     # glColor4f(0.9, 0.9, 0.9, 0.5)
-                    # glColor4f(0.5, 0.5, 0.5, 0.5)
-                    glColor4f(0.3, 0.3, 0.3, 0.5)
+                    glColor4f(0.5, 0.5, 0.5, 0.5)
+                    # glColor4f(0.3, 0.3, 0.3, 0.5)
                 glVertex3d(xp,      self.planeHeight-h, yp)
                 glVertex3d(xp,      self.planeHeight-h, yp + yd)
                 glVertex3d(xp + xd, self.planeHeight-h, yp + yd)
@@ -853,7 +853,7 @@ class MotionViewer(Fl_Window):
                 if self.dumping_end_frame == self.frame:
                     self.dumping = False
                     os.system('ffmpeg -loglevel 0 -framerate 30 -s 1280x720 -i dump/'+self.dumping_session+'/%04d.png -vcodec libx264 -crf 20 -pix_fmt yuv420p dump/' + self.dumping_session+'.mp4')
-                    os.system('ffplay -loglevel 0 dump/'+self.dumping_session+'.mp4')
+                    os.system('ffplay -loglevel 0 dump/'+self.dumping_session+'.mp4 &')
                     self.pause()
 
             self.frame += 1

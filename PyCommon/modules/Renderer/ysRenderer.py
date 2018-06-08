@@ -57,6 +57,13 @@ RENDER_REFLECTION = 2
 
 shadow_color = (50, 50, 50)
 
+FOOT_RENDER_ONLY = False
+LEFT_FOOT_ONLY = False
+RIGHT_FOOT_ONLY = False
+
+CAPSULE_SLICE_SIZE = 4
+
+
 class Renderer:
     """
 
@@ -371,7 +378,8 @@ class VpModelRenderer(Renderer):
                 # box case
                 data = geom_size
                 glTranslated(-.5*data[0], -.5*data[1], -.5*data[2])
-                # self.rc.drawBox(data[0], data[1], data[2])
+                if not FOOT_RENDER_ONLY:
+                    self.rc.drawBox(data[0], data[1], data[2])
             elif geom_type in ('C', 'D', 'E'):
                 # capsule case
                 data = geom_size.copy()
@@ -379,7 +387,13 @@ class VpModelRenderer(Renderer):
                 # data.append(pGeom.GetHeight())
                 data[1] -= 2. * data[0]
                 body_name = self._model.index2name(body_idx)
-                if True or 'L' in body_name:
+                if LEFT_FOOT_ONLY:
+                    if 'L' in body_name:
+                        self.rc.drawCapsule(data[0], data[1])
+                elif RIGHT_FOOT_ONLY:
+                    if 'R' in body_name:
+                        self.rc.drawCapsule(data[0], data[1])
+                else:
                     self.rc.drawCapsule(data[0], data[1])
             elif geom_type == 'S':
                 data = geom_size
@@ -759,10 +773,12 @@ class BasicSkeletonRenderer(Renderer):
         self.offset['foot_heel_L'] = numpy.array([-0.01482, -0.46019, -0.02403])
 
         if REAL_JOINT:
+            self.offset['heel_R'] = numpy.array([0., 0., 0.])
             self.offset['outside_metatarsal_R'] = numpy.array([-0.02784, -0.03463, 0.0452])
             self.offset['outside_phalanges_R'] = numpy.array([-0.00773, -0.01936, 0.05877])
             self.offset['inside_phalanges_R'] = numpy.array([-0.01823, -0.05399, 0.10397])
 
+            self.offset['heel_L'] = numpy.array([0., 0., 0.])
             self.offset['outside_metatarsal_L'] = numpy.array([0.02784, -0.03463, 0.0452])
             self.offset['outside_phalanges_L'] = numpy.array([0.00773, -0.01936, 0.05877])
             self.offset['inside_phalanges_L'] = numpy.array([0.01823, -0.05399, 0.10397])
@@ -787,31 +803,34 @@ class BasicSkeletonRenderer(Renderer):
         self.children['head'] = []
 
         self.children['thigh_R'] = ['shin_R']
-        self.children['shin_R'] = ['foot_heel_R']
-        # self.children['shin_R'] = ['foot_R']
+        self.children['shin_R'] = ['foot_R']
         self.children['foot_R'] = []
 
         self.children['thigh_L'] = ['shin_L']
-        self.children['shin_L'] = ['foot_heel_L']
-        # self.children['shin_L'] = ['foot_L']
+        self.children['shin_L'] = ['foot_L']
         self.children['foot_L'] = []
 
         if REAL_JOINT:
-            self.children['foot_heel_R'] = ['outside_metatarsal_R', 'inside_phalanges_R']
+            self.children['foot_R'] = ['heel_R', 'outside_metatarsal_R', 'inside_phalanges_R']
+            self.children['heel_R'] = []
             self.children['outside_metatarsal_R'] = ['outside_phalanges_R']
             self.children['outside_phalanges_R'] = []
             self.children['inside_phalanges_R'] = []
 
-            self.children['foot_heel_L'] = ['outside_metatarsal_L', 'inside_phalanges_L']
+            self.children['foot_L'] = ['heel_L', 'outside_metatarsal_L', 'inside_phalanges_L']
+            self.children['heel_L'] = []
             self.children['outside_metatarsal_L'] = ['outside_phalanges_L']
             self.children['outside_phalanges_L'] = []
             self.children['inside_phalanges_L'] = []
         else:
+            self.children['shin_R'] = ['foot_heel_R']
             self.children['foot_heel_R'] = ['outside_metatarsal_R']
             self.children['outside_metatarsal_R'] = ['inside_metatarsal_R', 'outside_phalanges_R']
             self.children['outside_phalanges_R'] = []
             self.children['inside_metatarsal_R'] = ['inside_phalanges_R']
             self.children['inside_phalanges_R'] = []
+
+            self.children['shin_L'] = ['foot_heel_L']
             self.children['foot_heel_L'] = ['outside_metatarsal_L']
             self.children['outside_metatarsal_L'] = ['inside_metatarsal_L', 'outside_phalanges_L']
             self.children['outside_phalanges_L'] = []
@@ -881,8 +900,18 @@ class BasicSkeletonRenderer(Renderer):
         elif renderType == RENDER_SHADOW:
             # glColor3ub(90, 90, 90)
             glColor3ubv(shadow_color)
-        if True and body_name in ('foot_heel_R', 'outside_metatarsal_R', 'outside_phalanges_R', 'inside_phalanges_R', 'foot_heel_L', 'outside_metatarsal_L', 'outside_phalanges_L', 'inside_phalanges_L'):
-        # if True and body_name in ('foot_heel_L', 'outside_metatarsal_L', 'outside_phalanges_L', 'inside_phalanges_L'):
+        if FOOT_RENDER_ONLY:
+            if LEFT_FOOT_ONLY:
+                if body_name in ('foot_heel_L', 'foot_L', 'heel_L', 'outside_metatarsal_L', 'outside_phalanges_L', 'inside_phalanges_L'):
+                    self.objs[body_name].draw()
+            elif RIGHT_FOOT_ONLY:
+                if body_name in ('foot_heel_R', 'foot_R', 'heel_R', 'outside_metatarsal_R', 'outside_phalanges_R', 'inside_phalanges_R'):
+                    self.objs[body_name].draw()
+            else:
+                if body_name in ('foot_heel_R', 'foot_R', 'heel_R', 'outside_metatarsal_R', 'outside_phalanges_R', 'inside_phalanges_R',
+                                 'foot_heel_L', 'foot_L', 'heel_L', 'outside_metatarsal_L', 'outside_phalanges_L', 'inside_phalanges_L'):
+                    self.objs[body_name].draw()
+        else:
             self.objs[body_name].draw()
         for child_name in self.children[body_name]:
             self._render(child_name, state, renderType)
@@ -1592,7 +1621,7 @@ class RenderContext:
         gluCylinder(self.quad, radius, radius, length_z, 16, 1)
 
     def drawCapsule(self, radius, length_z):
-        _SLICE_SIZE = 32
+        _SLICE_SIZE = CAPSULE_SLICE_SIZE
         glPushMatrix()
         glTranslatef(0., 0., -length_z/2.)
         gluSphere(self.quad2, radius, _SLICE_SIZE, _SLICE_SIZE)

@@ -207,7 +207,8 @@ def main():
         Ts['thigh_R'] = init
         Ts['shin_R'] = init
         Ts['foot_heel_R'] = init
-        # Ts['foot_R'] = init
+        Ts['foot_R'] = init
+        Ts['heel_R'] = init
         Ts['outside_metatarsal_R'] = init
         Ts['outside_phalanges_R'] = init
         Ts['inside_metatarsal_R'] = init
@@ -217,7 +218,8 @@ def main():
         Ts['thigh_L'] = init
         Ts['shin_L'] = init
         Ts['foot_heel_L'] = init
-        # Ts['foot_L'] = init
+        Ts['foot_L'] = init
+        Ts['heel_L'] = init
         Ts['outside_metatarsal_L'] = init
         Ts['outside_phalanges_L'] = init
         Ts['inside_metatarsal_L'] = init
@@ -867,8 +869,9 @@ def main():
             Ts['pelvis'] = controlModel.getJointTransform(idDic['Hips'])
             Ts['thigh_R'] = controlModel.getJointTransform(idDic['RightUpLeg'])
             Ts['shin_R'] = controlModel.getJointTransform(idDic['RightLeg'])
-            # Ts['foot_R'] = controlModel.getJointTransform(idDic['RightFoot'])
+            Ts['foot_R'] = controlModel.getJointTransform(idDic['RightFoot'])
             Ts['foot_heel_R'] = controlModel.getJointTransform(idDic['RightFoot'])
+            Ts['heel_R'] = np.eye(4)
             Ts['outside_metatarsal_R'] = controlModel.getJointTransform(idDic['RightFoot_foot_0_0'])
             Ts['outside_phalanges_R'] = controlModel.getJointTransform(idDic['RightFoot_foot_0_0_0'])
             # Ts['inside_metatarsal_R'] = controlModel.getJointTransform(idDic['RightFoot_foot_0_1'])
@@ -880,8 +883,9 @@ def main():
             Ts['lower_limb_R'] = controlModel.getJointTransform(idDic['RightForeArm'])
             Ts['thigh_L'] = controlModel.getJointTransform(idDic['LeftUpLeg'])
             Ts['shin_L'] = controlModel.getJointTransform(idDic['LeftLeg'])
-            # Ts['foot_L'] = controlModel.getJointTransform(idDic['LeftFoot'])
+            Ts['foot_L'] = controlModel.getJointTransform(idDic['LeftFoot'])
             Ts['foot_heel_L'] = controlModel.getJointTransform(idDic['LeftFoot'])
+            Ts['heel_L'] = np.eye(4)
             Ts['outside_metatarsal_L'] = controlModel.getJointTransform(idDic['LeftFoot_foot_0_0'])
             Ts['outside_phalanges_L'] = controlModel.getJointTransform(idDic['LeftFoot_foot_0_0_0'])
             # Ts['inside_metatarsal_L'] = controlModel.getJointTransform(idDic['LeftFoot_foot_0_1'])
