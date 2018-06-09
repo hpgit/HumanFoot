@@ -6,6 +6,7 @@
 #include "csVpModel.h"
 #include "csVpWorld.h"
 #include "myGeom.h"
+#include <VP/PrimColDet.h>
 
 using boost::python::make_tuple;
 namespace np = boost::python::numpy;
@@ -22,6 +23,8 @@ BOOST_PYTHON_MODULE(csVpWorld)
 	    .def("self", &VpWorld::self, return_value_policy<reference_existing_object>())
 		.def("step", &VpWorld::step)
 		.def("initialize", &VpWorld::initialize)
+		.def("add_sphere_bump", &VpWorld::add_sphere_bump)
+		.def("get_sphere_bump_list", &VpWorld::get_sphere_bump_list)
 		.def("calcPenaltyForce", &VpWorld::calcPenaltyForce)
 		.def("applyPenaltyForce", &VpWorld::applyPenaltyForce)
 		.def("getBodyNum", &VpWorld::getBodyNum)
@@ -128,6 +131,40 @@ void VpWorld::setOpenMP()
 
 }
 
+void VpWorld::add_sphere_bump(const scalar radius, const object& pos)
+{
+    this->sphere_bump_radius.push_back(radius);
+    this->sphere_bump_pos.push_back(pyVec3_2_Vec3(pos));
+}
+
+
+bp::list VpWorld::get_sphere_bump_list()
+{
+    bp::list ls;
+    for(std::vector<scalar>::size_type i=0; i < this->sphere_bump_radius.size(); i++)
+        ls.append(bp::make_tuple(this->sphere_bump_radius[i], Vec3_2_pyVec3(this->sphere_bump_pos[i])));
+    return ls;
+}
+
+static bool ColDetCapsuleSphereOneSideOnly(const scalar &r0, const scalar &h, const SE3 &T0, const scalar &r1, const SE3 &T1, Vec3 &normal, Vec3 &point, scalar &penetration)
+{
+	Vec3 dir(&T0[6]);
+	Vec3 c1(&T1[9]);
+	Vec3 c0(&T0[9]);
+
+	scalar t = Inner(dir, c1 - c0);
+
+	if ( t > h ) t = h;
+	if ( t < -h+r0 ) t= -h+r0;
+
+	dir *= t;
+	c0 += dir;
+
+	return ColDetSphereSphere(r0, c0, r1, c1, normal, point, penetration);
+}
+
+
+
 // @return ( bodyIDs, positions, postionLocals, forces)
 boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, const bp::list& mus, scalar Ks, scalar Ds )
 {
@@ -141,6 +178,140 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 	Vec3 position, velocity, force, positionLocal;
 	SE3 bodyInvFrame;
 
+	scalar sphere_radius;
+	Vec3 sphere_pos;
+	SE3 sphere_T;
+
+	Vec3 normal;
+	scalar penetration;
+
+    //bool ColDetSphereBox(const scalar &r0, const SE3 &T0, const Vec3 &size, const SE3 &T1, Vec3 &normal, Vec3 &point, scalar &penetration)
+    // sphere to body check
+    for(std::vector<scalar>::size_type s=0; s < this->sphere_bump_radius.size(); s++)
+    {
+        sphere_radius = this->sphere_bump_radius[s];
+        sphere_pos = this->sphere_bump_pos[s];
+        sphere_T = SE3(sphere_pos);
+        for (int i=0; i<len(bodyIDsToCheck); i++)
+        {
+            bodyID = XI(bodyIDsToCheck[i]);
+            pBody = _world.GetBody(bodyID);
+            bodyInvFrame = Inv(pBody->GetFrame());
+
+            for (int j = 0; j<pBody->GetNumGeometry(); ++j)
+            {
+                pGeom = pBody->GetGeometry(j);
+
+                pGeom->GetShape(&type, data);
+                const SE3& geomFrame = pGeom->GetGlobalFrame();
+                if (type == 'B' || type == 'M' || type == 'N')
+                {
+                    // sphere view
+                    bool penentrated = ColDetSphereBox(sphere_radius, sphere_T, ((vpBox*)pGeom)->GetHalfSize(), geomFrame, normal, position, penetration);
+
+                    if (penentrated)
+                    {
+                        normal = -normal;
+                        positionLocal = geomFrame % position;
+                        velocity = pBody->GetLinVelocity(positionLocal);
+                        force = _calcPenaltyForceSphere(velocity, normal, penetration, Ks, Ds, XD(mus[i]));
+
+                        bodyIDs.append(bodyID);
+
+                        object pyPosition = O_Vec3.copy();
+                        Vec3_2_pyVec3(position, pyPosition);
+                        positions.append(pyPosition);
+
+                        object pyVelocity = O_Vec3.copy();
+                        Vec3_2_pyVec3(velocity, pyVelocity);
+                        velocities.append(pyVelocity);
+
+                        object pyForce = O_Vec3.copy();
+                        Vec3_2_pyVec3(force, pyForce);
+                        forces.append(pyForce);
+
+                        object pyPositionLocal = O_Vec3.copy();
+                        Vec3_2_pyVec3(positionLocal, pyPositionLocal);
+                        positionLocals.append(pyPositionLocal);
+                    }
+
+                    // box view
+                    for (int p = 0; p<8; ++p)
+                    {
+                        positionLocal[0] = (p & MAX_X) ? data[0] / 2. : -data[0] / 2.;
+                        positionLocal[1] = (p & MAX_Y) ? data[1] / 2. : -data[1] / 2.;
+                        positionLocal[2] = (p & MAX_Z) ? data[2] / 2. : -data[2] / 2.;
+                        position = geomFrame * positionLocal;
+
+                        normal = position - sphere_pos;
+                        penetration = sphere_radius - normal.Normalize();
+                        bool penentrated = penetration > 0.;
+                        if (penentrated)
+                        {
+                            velocity = pBody->GetLinVelocity(positionLocal);
+                            force = _calcPenaltyForceSphere(velocity, normal, penetration, Ks, Ds, XD(mus[i]));
+                            bodyIDs.append(bodyID);
+
+                            object pyPosition = O_Vec3.copy();
+                            Vec3_2_pyVec3(position, pyPosition);
+                            positions.append(pyPosition);
+
+                            object pyVelocity = O_Vec3.copy();
+                            Vec3_2_pyVec3(velocity, pyVelocity);
+                            velocities.append(pyVelocity);
+
+                            object pyForce = O_Vec3.copy();
+                            Vec3_2_pyVec3(force, pyForce);
+                            forces.append(pyForce);
+
+                            object pyPositionLocal = O_Vec3.copy();
+                            Vec3_2_pyVec3(positionLocal, pyPositionLocal);
+                            positionLocals.append(pyPositionLocal);
+                        }
+                    }
+                }
+                else if (type == 'C' || type == 'D' || type == 'E')
+                {
+                    scalar capsule_radius = ((vpCapsule*)pGeom)->GetRadius();
+                    scalar capsule_half_height = ((vpCapsule*)pGeom)->GetHeight()/2. - capsule_radius;
+
+                    bool penentrated =
+                        type == 'C'? ColDetCapsuleSphere(capsule_radius, capsule_half_height, geomFrame, sphere_radius, sphere_T, normal, position, penetration) :
+                        type == 'D'? ColDetCapsuleSphereOneSideOnly(capsule_radius, capsule_half_height, geomFrame, sphere_radius, sphere_T, normal, position, penetration) :
+                        false;
+
+                    if (penentrated)
+                    {
+                        positionLocal = geomFrame % position;
+                        velocity = pBody->GetLinVelocity(positionLocal);
+                        force = _calcPenaltyForceSphere(velocity, normal, penetration, Ks, Ds, XD(mus[i]));
+
+                        bodyIDs.append(bodyID);
+
+                        object pyPosition = O_Vec3.copy();
+                        Vec3_2_pyVec3(position, pyPosition);
+                        positions.append(pyPosition);
+
+                        object pyForce = O_Vec3.copy();
+                        Vec3_2_pyVec3(force, pyForce);
+                        forces.append(pyForce);
+
+                        object pyVelocity = O_Vec3.copy();
+                        Vec3_2_pyVec3(velocity, pyVelocity);
+                        velocities.append(pyVelocity);
+
+                        object pyPositionLocal = O_Vec3.copy();
+                        Vec3_2_pyVec3(positionLocal, pyPositionLocal);
+                        positionLocals.append(pyPositionLocal);
+                    }
+                }
+            }
+        }
+    }
+
+
+
+    // body to plane check
 	for (int i = 0; i<len(bodyIDsToCheck); ++i)
 	{
 		bodyID = XI(bodyIDsToCheck[i]);
@@ -152,7 +323,7 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 			pGeom = pBody->GetGeometry(j);
 			
 			pGeom->GetShape(&type, data);
-			if (type == 'B')
+			if (type == 'B' || type == 'M' || type == 'N')
 			{
 				const SE3& geomFrame = pGeom->GetGlobalFrame();
 
@@ -188,18 +359,14 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 					}
 				}
 			}
-			else if (type == 'C' || type == 'D' || type == 'E' || type == 'M' || type == 'N')
+			else if (type == 'C' || type == 'D' || type == 'E')
 			{
 				const vector<Vec3>& verticesLocal = type == 'C'? ((MyFoot3*)pGeom)->getVerticesLocal() :
 													type == 'D'? ((MyFoot4*)pGeom)->getVerticesLocal() :
-													type == 'E'? ((MyFoot5*)pGeom)->getVerticesLocal() :
-													type == 'M'? ((MyFoot1*)pGeom)->getVerticesLocal() :
-																 ((MyFoot2*)pGeom)->getVerticesLocal();
+													             ((MyFoot5*)pGeom)->getVerticesLocal();
 				const vector<Vec3>& verticesGlobal = type == 'C'? ((MyFoot3*)pGeom)->getVerticesGlobal() :
 													type == 'D'? ((MyFoot4*)pGeom)->getVerticesGlobal() :
-													type == 'E'? ((MyFoot5*)pGeom)->getVerticesGlobal() :
-													type == 'M'? ((MyFoot1*)pGeom)->getVerticesGlobal() :
-																 ((MyFoot2*)pGeom)->getVerticesGlobal();
+													             ((MyFoot5*)pGeom)->getVerticesGlobal();
 				for (std::vector<int>::size_type k = 0; k < verticesLocal.size(); ++k)
 				{
 
@@ -337,6 +504,44 @@ bool VpWorld::_calcPenaltyForce( const vpBody* pBody, const Vec3& position, cons
 		force = vNormalForce + vFrictionForce;
 		return true;
 	}
+}
+
+Vec3 VpWorld::_calcPenaltyForceSphere(const Vec3& velocity, const Vec3& vNormal, scalar penetration, scalar Ks, scalar Ds, scalar mu )
+{
+    Vec3 force;
+	Vec3 vRelVel, vNormalRelVel, vTangentialRelVel;
+	scalar normalRelVel, tangentialRelVel;
+	Vec3 vNormalForce, vFrictionForce;
+	scalar normalForce=0., frictionForce=0.;
+
+	vRelVel = velocity;
+	normalRelVel = Inner(vRelVel, vNormal);
+	vNormalRelVel = normalRelVel * vNormal;
+	vTangentialRelVel = vRelVel - vNormalRelVel;
+	tangentialRelVel = Norm(vTangentialRelVel);
+
+    // normal reaction force
+    normalForce = Ks*penetration;
+//		if(velocity[1]>0.)
+    normalForce -= Ds*Inner(vNormal, velocity);
+    if(normalForce<0.) normalForce = 0.;
+    vNormalForce = normalForce * vNormal;
+
+    // tangential reaction force
+    frictionForce = mu * normalForce;
+
+    // ?????? ????�� ?? ?̲??????? ???? ?????ϱ? ��??
+    // rigid body?̹Ƿ? point locking?? ????? ��???????? ?????? ???��?
+    // ?̲??????? ?????? ?ӵ??? ?ݴ?????��?? ū ???????? ?ۿ뿡 ??�� step??????
+    // ?ٽ? ?? ?ݴ?????��?? ???????? ?ۿ??ϸ鼭 ????�� ?ϸ? ?̲??????? ????
+    // ?̸? ?????ϱ? ��?? ??�� ?ӵ? ???Ͽ????? ???????? ??�� ??��?? ?????ϵ??? ?ӽ? ?ڵ?
+    if(tangentialRelVel < _lockingVel)
+        frictionForce *= tangentialRelVel/_lockingVel;
+
+    vFrictionForce = frictionForce * -Normalize(vTangentialRelVel);
+
+    force = vNormalForce + vFrictionForce;
+    return force;
 }
 
 void VpWorld::applyPenaltyForce( const bp::list& bodyIDs, const bp::list& positionLocals, const bp::list& forces )

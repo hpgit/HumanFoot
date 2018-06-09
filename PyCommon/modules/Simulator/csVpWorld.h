@@ -1,7 +1,9 @@
-#pragma once
+#ifndef _CSVPWORLD_H_
+#define _CSVPWORLD_H_
 
 #include <VP/vphysics.h>
 #include <boost/python/ptr.hpp>
+#include <vector>
 
 class VpWorld
 {
@@ -11,17 +13,22 @@ public:
 	vpBody _ground;
 	double _planeHeight;
 	double _lockingVel;
+	std::vector<scalar> sphere_bump_radius;
+	std::vector<Vec3> sphere_bump_pos;
 
 private:
 	bool _calcPenaltyForce(const vpBody* pBody, const Vec3& position, const Vec3& velocity, Vec3& force, scalar Ks, scalar Ds, scalar mu);
+	Vec3 _calcPenaltyForceSphere(const Vec3& velocity, const Vec3& normal, scalar penetration, scalar Ks, scalar Ds, scalar mu);
 
 public:	// expose to python
 	VpWorld(const object& config);
 	void step();
 	void initialize();
 	void setOpenMP();
-	boost::python::tuple getContactPoints(const bp::list& bodyIDsToCheck);
-	boost::python::tuple calcPenaltyForce(const bp::list& bodyIDsToCheck, const bp::list& mus, scalar Ks, scalar Ds);
+	void add_sphere_bump(const scalar radius, const object& pos);
+	bp::list get_sphere_bump_list();
+	bp::tuple getContactPoints(const bp::list& bodyIDsToCheck);
+	bp::tuple calcPenaltyForce(const bp::list& bodyIDsToCheck, const bp::list& mus, scalar Ks, scalar Ds);
 	void applyPenaltyForce(const bp::list& bodyIDs, const bp::list& positions, const bp::list& forces);
 	int getBodyNum() { return _world.GetNumBody(); }
 	VpWorld& self(){return *this;}
@@ -157,3 +164,6 @@ public:	// expose to python
 	void								 ReportStatistics(void);
 	void								 ResetStatistics(void);
 };
+
+
+#endif  // _CSVPWORLD_H_

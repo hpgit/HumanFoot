@@ -159,7 +159,7 @@ bool ColDetSphereBox(const scalar &r0, const SE3 &T0, const Vec3 &size, const SE
 		int i, idx = 0;
 		for ( i = 1; i < 3; i++ ) 
 		{
-			tmin = abs(p[i] - size[1]);
+			tmin = abs(p[i] - size[i]);
 			if ( tmin < min ) 
 			{
 				min = tmin;

@@ -62,6 +62,7 @@ LEFT_FOOT_ONLY = False
 RIGHT_FOOT_ONLY = False
 
 CAPSULE_SLICE_SIZE = 16
+SPHERE_SLICE_SIZE = 16
 
 
 class Renderer:
@@ -271,6 +272,34 @@ class VpPyModelRenderer(Renderer):
                     state.append((geomType, geomT, data, color))
         return state
 '''
+
+
+class VpWorldRenderer(Renderer):
+    def __init__(self, target, color, polygonStyle=POLYGON_FILL, lineWidth=1.):
+        Renderer.__init__(self, target, color)
+        self._world = target
+        self._color = color
+        self._polygonStyle = polygonStyle
+        self._lineWidth = lineWidth
+        self.rc.setPolygonStyle(polygonStyle)
+        self.savable = True
+
+    def render(self, renderType=RENDER_OBJECT):
+        if self._polygonStyle == POLYGON_FILL:
+            glPolygonMode(GL_FRONT, GL_FILL)
+        else:
+            glPolygonMode(GL_FRONT, GL_LINE)
+        glLineWidth(self._lineWidth)
+
+        # sphere_bump_list = self._world.get_sphere_bump_list()
+
+        for sphere_bump in self._world.get_sphere_bump_list():
+            if renderType == RENDER_OBJECT:
+                glColor3ubv(self._color)
+                glPushMatrix()
+                glTranslatef(sphere_bump[1][0], sphere_bump[1][1], sphere_bump[1][2])
+                self.rc.drawSphere(sphere_bump[0])
+                glPopMatrix()
 
 
 class VpModelRenderer(Renderer):
@@ -1697,7 +1726,7 @@ class RenderContext:
         glPopMatrix()
 
     def drawSphere(self, radius):
-        _SLICE_SIZE = 8
+        _SLICE_SIZE = SPHERE_SLICE_SIZE
         gluSphere(self.quad2, radius, _SLICE_SIZE, _SLICE_SIZE)
         # SLICE = 20; STACK = 20
         # if self.polygonStyle == POLYGON_LINE:
