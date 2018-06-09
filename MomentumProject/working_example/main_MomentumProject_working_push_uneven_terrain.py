@@ -48,8 +48,10 @@ def main():
 
     vpWorld = cvw.VpWorld(wcfg)
     sphere_radius = 0.5
-    vpWorld.add_sphere_bump(sphere_radius, (1.6361, -sphere_radius + 0.08, -0.3209))
-    vpWorld.add_sphere_bump(sphere_radius, (1.4543, -sphere_radius + 0.08, -0.3301))
+    # vpWorld.add_sphere_bump(sphere_radius, (1.6361, -sphere_radius + 0.08, -0.3209))
+    # vpWorld.add_sphere_bump(sphere_radius, (1.4543, -sphere_radius + 0.08, -0.3301))
+    vpWorld.add_sphere_bump(sphere_radius, (1.6361, -sphere_radius + 0.08, -0.2909))
+    vpWorld.add_sphere_bump(sphere_radius, (1.4543, -sphere_radius + 0.08, -0.2901))
     motionModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)
     controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
     vpWorld.initialize()
@@ -120,8 +122,8 @@ def main():
 
     # penalty method
     bodyIDsToCheck = list(range(vpWorld.getBodyNum()))
-    mus = [1.]*len(bodyIDsToCheck)
-    # mus = [.5]*len(bodyIDsToCheck)
+    # mus = [1.]*len(bodyIDsToCheck)
+    mus = [.5]*len(bodyIDsToCheck)
 
     # flat data structure
     ddth_des_flat = ype.makeFlatList(totalDOF)

@@ -49,7 +49,7 @@ maxContactChangeCount = 30
 preFootCenter = [None]
 
 DART_CONTACT_ON = False
-SKELETON_ON = True
+SKELETON_ON = False
 
 
 def main():
@@ -65,8 +65,10 @@ def main():
 
     vpWorld = cvw.VpWorld(wcfg)
     sphere_radius = 0.5
-    vpWorld.add_sphere_bump(sphere_radius, (1.6361, -sphere_radius + 0.08, -0.3209))
-    vpWorld.add_sphere_bump(sphere_radius, (1.4543, -sphere_radius + 0.08, -0.3301))
+    # vpWorld.add_sphere_bump(sphere_radius, (1.6361, -sphere_radius + 0.08, -0.3209))
+    # vpWorld.add_sphere_bump(sphere_radius, (1.4543, -sphere_radius + 0.08, -0.3301))
+    vpWorld.add_sphere_bump(sphere_radius, (1.6361, -sphere_radius + 0.08, -0.2909))
+    vpWorld.add_sphere_bump(sphere_radius, (1.4543, -sphere_radius + 0.08, -0.2901))
     vpWorld.SetGlobalDamping(0.999)
     motionModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)
     controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
@@ -154,7 +156,7 @@ def main():
     # penalty method
     bodyIDsToCheck = list(range(vpWorld.getBodyNum()))
     # mus = [1.]*len(bodyIDsToCheck)
-    mus = [2.]*len(bodyIDsToCheck)
+    mus = [.5]*len(bodyIDsToCheck)
 
     # flat data structure
     ddth_des_flat = ype.makeFlatList(totalDOF)
@@ -254,22 +256,22 @@ def main():
         skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), color=(230, 230, 230), offset_draw=(0., -0.0, 0.))
         viewer.doc.addRenderer('skeleton', skeleton_renderer)
     viewer.doc.addRenderer('rd_footCenter', yr.PointsRenderer(rd_footCenter))
-    # viewer.doc.setRendererVisible('rd_footCenter', False)
+    viewer.doc.setRendererVisible('rd_footCenter', False)
     viewer.doc.addRenderer('rd_footCenter_ref', yr.PointsRenderer(rd_footCenter_ref))
-    # viewer.doc.setRendererVisible('rd_footCenter_ref', False)
+    viewer.doc.setRendererVisible('rd_footCenter_ref', False)
     viewer.doc.addRenderer('rd_CM_plane', yr.PointsRenderer(rd_CM_plane, (255,255,0)))
-    # viewer.doc.setRendererVisible('rd_CM_plane', False)
+    viewer.doc.setRendererVisible('rd_CM_plane', False)
     viewer.doc.addRenderer('rd_CP', yr.PointsRenderer(rd_CP, (0,255,0)))
-    # viewer.doc.setRendererVisible('rd_CP', False)
+    viewer.doc.setRendererVisible('rd_CP', False)
     viewer.doc.addRenderer('rd_CP_des', yr.PointsRenderer(rd_CP_des, (255,0,255)))
-    # viewer.doc.setRendererVisible('rd_CP_des', False)
+    viewer.doc.setRendererVisible('rd_CP_des', False)
     viewer.doc.addRenderer('rd_dL_des_plane', yr.VectorsRenderer(rd_dL_des_plane, rd_CM, (255,255,0)))
-    # viewer.doc.setRendererVisible('rd_dL_des_plane', False)
+    viewer.doc.setRendererVisible('rd_dL_des_plane', False)
     viewer.doc.addRenderer('rd_dH_des', yr.VectorsRenderer(rd_dH_des, rd_CM, (0,255,0)))
-    # viewer.doc.setRendererVisible('rd_dH_des', False)
+    viewer.doc.setRendererVisible('rd_dH_des', False)
     # viewer.doc.addRenderer('rd_grf_des', yr.ForcesRenderer(rd_grf_des, rd_CP_des, (0,255,0), .001))
     viewer.doc.addRenderer('rd_CF', yr.VectorsRenderer(rd_CF, rd_CF_pos, (255,255,0)))
-    # viewer.doc.setRendererVisible('rd_CF', False)
+    viewer.doc.setRendererVisible('rd_CF', False)
     viewer.doc.addRenderer('rd_foot_ori', yr.OrientationsRenderer(rd_foot_ori, rd_foot_pos, (255,255,0)))
     viewer.doc.setRendererVisible('rd_foot_ori', False)
 
@@ -426,6 +428,8 @@ def main():
         # print(frame)
         # print(motion[frame].getJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0']))
         # hfi.footAdjust(motion[frame], idDic, SEGMENT_FOOT_MAG=.03, SEGMENT_FOOT_RAD=.015, baseHeight=0.02)
+        if frame == 0:
+            setParamVal('com Y offset', 0.02)
 
         if abs(getParamVal('tiptoe angle')) > 0.001:
             tiptoe_angle = getParamVal('tiptoe angle')
@@ -665,15 +669,41 @@ def main():
         #     hull = Delaunay(contact_pos_2d)
         #     print(hull.find_simplex(p) >= 0)
 
+
         # set up equality constraint
+
+        # 1. calculate desired up vector of each contacting body.
+        # 1.1 find closest sphere
+        bump_sphere_list = vpWorld.get_sphere_bump_list()
+
+        def find_closest_bump_sphere(pos):
+            closest_idx = -1
+            dist = pos[1]
+            for i in range(len(bump_sphere_list)):
+                bump_sphere = bump_sphere_list[i]
+                temp_dist = np.linalg.norm(pos-bump_sphere[1]) - bump_sphere[0]
+                if temp_dist < dist:
+                    dist = temp_dist
+                    closest_idx = i
+
+            return closest_idx
+
+        closest_bump_sphere = list(map(find_closest_bump_sphere, contact_body_pos))
+        # 1.2. set des_up_vec to normal direction
+        des_up_vec = [mm.normalize(contact_body_pos[i] - bump_sphere_list[closest_bump_sphere[i]][1]) if closest_bump_sphere[i] != -1 else mm.unitY() for i in range(len(contact_ids))]
+        des_pos = [bump_sphere_list[closest_bump_sphere[i]][1] + np.asarray(des_up_vec[i])*bump_sphere_list[closest_bump_sphere[i]][0] if closest_bump_sphere[i] != -1 else 0. for i in range(len(contact_ids))]
+
         # TODO:
         # logSO3 is just q'', not acceleration.
         # To make a_oris acceleration, q'' -> a will be needed
         # body_ddqs = list(map(mm.logSO3, [mm.getSO3FromVectors(np.dot(body_ori, mm.unitY()), mm.unitY()) for body_ori in contact_body_ori]))
         # body_ddqs = list(map(mm.logSO3, [np.dot(contact_body_ori[i].T, np.dot(ref_body_ori[i], mm.getSO3FromVectors(np.dot(ref_body_ori[i], mm.unitY()), mm.unitY()))) for i in range(len(contact_body_ori))]))
         # body_ddqs = list(map(mm.logSO3, [np.dot(contact_body_ori[i].T, np.dot(ref_body_ori[i], mm.getSO3FromVectors(np.dot(ref_body_ori[i], up_vec_in_each_link[contact_ids[i]]), mm.unitY()))) for i in range(len(contact_body_ori))]))
-        a_oris = list(map(mm.logSO3, [np.dot(contact_body_ori[i].T, np.dot(ref_body_ori[i], mm.getSO3FromVectors(np.dot(ref_body_ori[i], up_vec_in_each_link[contact_ids[i]]), mm.unitY()))) for i in range(len(contact_body_ori))]))
-        a_oris = list(map(mm.logSO3, [np.dot(np.dot(ref_body_ori[i], mm.getSO3FromVectors(np.dot(ref_body_ori[i], up_vec_in_each_link[contact_ids[i]]), mm.unitY())), contact_body_ori[i].T) for i in range(len(contact_body_ori))]))
+
+        # a_oris = list(map(mm.logSO3, [np.dot(contact_body_ori[i].T, np.dot(ref_body_ori[i], mm.getSO3FromVectors(np.dot(ref_body_ori[i], up_vec_in_each_link[contact_ids[i]]), mm.unitY()))) for i in range(len(contact_body_ori))]))
+        # a_oris = list(map(mm.logSO3, [np.dot(np.dot(ref_body_ori[i], mm.getSO3FromVectors(np.dot(ref_body_ori[i], up_vec_in_each_link[contact_ids[i]]), mm.unitY())), contact_body_ori[i].T) for i in range(len(contact_body_ori))]))
+
+        a_oris = list(map(mm.logSO3, [np.dot(np.dot(ref_body_ori[i], mm.getSO3FromVectors(np.dot(ref_body_ori[i], up_vec_in_each_link[contact_ids[i]]), np.asarray(des_up_vec[i]))), contact_body_ori[i].T) for i in range(len(contact_body_ori))]))
         body_qs = list(map(mm.logSO3, contact_body_ori))
         body_angs = [np.dot(contact_body_ori[i], contact_body_angvel[i]) for i in range(len(contact_body_ori))]
         body_dqs = [mm.vel2qd(body_angs[i], body_qs[i]) for i in range(len(body_angs))]
@@ -687,8 +717,8 @@ def main():
         # body_dq = mm.vel2qd(body_ang, body_q)
         # a_ori = np.dot(body_ori, mm.qdd2accel(body_ddq, body_dq, body_q))
 
-        KT_SUP = np.diag([kt_sup/10., kt_sup, kt_sup/10.])
-        # KT_SUP = np.diag([kt_sup, kt_sup, kt_sup])
+        # KT_SUP = np.diag([kt_sup/10., kt_sup, kt_sup/10.])
+        KT_SUP = np.diag([kt_sup/5., kt_sup, kt_sup/5.])
 
         # a_oris = list(map(mm.logSO3, [mm.getSO3FromVectors(np.dot(body_ori, mm.unitY()), mm.unitY()) for body_ori in contact_body_ori]))
         # a_oris = list(map(mm.logSO3, [mm.getSO3FromVectors(np.dot(contact_body_ori[i], up_vec_in_each_link[contact_ids[i]]), mm.unitY()) for i in range(len(contact_body_ori))]))
@@ -698,8 +728,10 @@ def main():
         #                     kt_sup*a_oris[i] - dt_sup * contact_body_angvel[i]) for i in range(len(a_oris))]
         a_sups = [np.append(np.dot(KT_SUP, (ref_body_pos[i] - contact_body_pos[i] + contMotionOffset)) - dt_sup * contact_body_vel[i],
                             kt_sup*a_oris[i] - dt_sup * contact_body_angvel[i]) for i in range(len(a_oris))]
+        a_sups = [np.append(np.dot(KT_SUP, (des_pos[i]-contact_body_pos[i])) - dt_sup * contact_body_vel[i],
+                            10.*kt_sup*a_oris[i] - dt_sup * contact_body_angvel[i]) for i in range(len(a_oris))]
         # for i in range(len(a_sups)):
-        #     a_sups[i][1] = -kt_sup * contact_body_pos[i][1] - dt_sup * contact_body_vel[i][1]
+        #     a_sups[i][1] = -kt_sup * des_pos[i][1] - dt_sup * contact_body_vel[i][1]
 
         # momentum matrix
         RS = np.dot(P, Jsys)
