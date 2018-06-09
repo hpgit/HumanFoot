@@ -464,7 +464,7 @@ class GlWindow(Fl_Gl_Window):
 
         # glClearColor(.8, .8, .8, .8)
         glClearColor(.1, .1, .1, .8)
-        glClearColor(.3, .3, .3, .5)
+        # glClearColor(.3, .3, .3, .5)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         if self.projectionChanged:
