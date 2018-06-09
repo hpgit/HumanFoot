@@ -231,7 +231,7 @@ def main():
 
     # viewer = ysv.SimpleViewer()
     # viewer = hsv.hpSimpleViewer(rect=[0, 0, 1024, 768], viewForceWnd=False)
-    viewer = hsv.hpSimpleViewer(rect=[0, 0, 1920+300, 1+1080+55], viewForceWnd=False)
+    viewer = hsv.hpSimpleViewer(rect=[0, 0, 960+300, 1+1080+55], viewForceWnd=False)
     # viewer.record(False)
     # viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,255,255), yr.LINK_BONE))
     viewer.doc.addObject('motion', motion)
@@ -312,7 +312,7 @@ def main():
     viewer.objectInfoWnd.add1DSlider("SupKt", 0., 300., 0.1, initSupKt)
     viewer.objectInfoWnd.add1DSlider("Fm", 0., 1000., 10., initFm)
     viewer.objectInfoWnd.add1DSlider("com X offset", -1., 1., 0.01, initComX)
-    viewer.objectInfoWnd.add1DSlider("com Y offset", -1., 1., 0.01, initComY)
+    viewer.objectInfoWnd.add1DSlider("com Y offset", -1., 1., 0.001, initComY)
     viewer.objectInfoWnd.add1DSlider("com Z offset", -1., 1., 0.01, initComZ)
     viewer.objectInfoWnd.add1DSlider("tiptoe angle", -0.5, .5, 0.001, 0.)
     viewer.objectInfoWnd.add1DSlider("left tilt angle", -0.5, .5, 0.001, 0.)
@@ -415,10 +415,13 @@ def main():
         up_vec_in_each_link[foot_id] = controlModel_ik.getBodyOrientationGlobal(foot_id)[1, :]
     controlModel_ik.set_q(controlModel.get_q())
 
+    motion_Y = motion[0].getJointPositionGlobal(0)[1]
+
     ###################################
     # simulate
     ###################################
     def preFrameCallback_Always(frame):
+        motion[frame].translateByTarget((0., motion_Y+getParamVal('com Y offset'), 0.))
         touch_body_idx = []
         if foot_viewer.check_om_l.value():
             touch_body_idx.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_0'))
@@ -443,38 +446,22 @@ def main():
             touch_body_idx.append(motion[0].skeleton.getJointIndex('RightFoot_foot_1_0'))
 
         hfi.footAdjust(motion[frame], touch_body_idx, 0.01, 0.008, 0.)
-        if frame < 120+start_frame:
-            viewer.motionViewWnd.glWindow.camera.rotateX = math.pi /180. * -25.
-            if frame > start_frame:
-                viewer.motionViewWnd.glWindow.camera.rotateY = mm.deg2Rad((frame-start_frame)*3+45.)
-            viewer.motionViewWnd.glWindow.camera.distance = .4
-            viewer.motionViewWnd.glWindow.camera.center = \
-                .5*(motionModel.getBodyPositionGlobal(idDic['RightFoot']) + motionModel.getBodyPositionGlobal(idDic['LeftFoot'])) + np.array([0., -0.05, 0.])
+        print(motion[frame].getJointPositionGlobal(idDic['LeftFoot_foot_0_0_0']))
+
+        # if frame < 120+start_frame:
+        #     viewer.motionViewWnd.glWindow.camera.rotateX = math.pi /180. * -25.
+        #     if frame > start_frame:
+        #         viewer.motionViewWnd.glWindow.camera.rotateY = mm.deg2Rad((frame-start_frame)*3+45.)
+        #     viewer.motionViewWnd.glWindow.camera.distance = .4
+        #     viewer.motionViewWnd.glWindow.camera.center = \
+        #         .5*(motionModel.getBodyPositionGlobal(idDic['RightFoot']) + motionModel.getBodyPositionGlobal(idDic['LeftFoot'])) + np.array([0., -0.05, 0.])
+
+
 
     def simulateCallback(frame):
 
         # print(frame)
         # print(motion[frame].getJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0']))
-        if False:
-            if frame == 200:
-                if motionFile == 'wd2_tiptoe.bvh':
-                    setParamVal('tiptoe angle', 0.3)
-                if motionFile == 'wd2_tiptoe_zygote.bvh':
-                    setParamVal('tiptoe angle', 0.3)
-            # elif 210 < frame < 240:
-                # if motionFile == 'wd2_tiptoe_zygote.bvh':
-                #     setParamVal('com Y offset', 0.01/30. * (frame-110))
-            elif frame == 400:
-                setParamVal('com Y offset', 0.)
-                setParamVal('tiptoe angle', 0.)
-            elif frame == 430:
-                foot_viewer.check_all_seg()
-                # setParamVal('SupKt', 30.)
-            # elif frame == 400:
-            #     setParamVal('SupKt', 17.)
-
-
-        # hfi.footAdjust(motion[frame], idDic, SEGMENT_FOOT_MAG=.03, SEGMENT_FOOT_RAD=.015, baseHeight=0.02)
 
         if abs(getParamVal('tiptoe angle')) > 0.001:
             tiptoe_angle = getParamVal('tiptoe angle')
@@ -525,7 +512,6 @@ def main():
             motion[frame].mulJointOrientationLocal(idDic['RightFoot'], mm.exp(mm.unitZ(), -math.pi * right_tilt_angle))
 
         motionModel.update(motion[frame])
-        motionModel.translateByOffset(np.array([getParamVal('com X offset'), getParamVal('com Y offset'), getParamVal('com Z offset')]))
         controlModel_ik.set_q(controlModel.get_q())
 
         global g_initFlag
@@ -703,7 +689,7 @@ def main():
 
     viewer.setSimulateCallback(simulateCallback)
     viewer.setPreFrameCallback_Always(preFrameCallback_Always)
-    viewer.startTimer(1/30.)
+    viewer.startTimer(1./4.)
     # viewer.play()
     viewer.show()
 

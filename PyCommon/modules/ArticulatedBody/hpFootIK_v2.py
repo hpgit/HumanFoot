@@ -40,7 +40,34 @@ def footAdjust(posture_ori, touch_body_indices, SEGMENT_FOOT_MAG, SEGMENT_FOOT_R
     if len(side_touch_body_indices) == 0:
         pass
     elif len(side_touch_body_indices) == 1:
-        pass
+        seg_idx = side_touch_body_indices[0]
+
+        # seg joint y pos to 0
+        ankle_to_joint_vec = seg_joint_pos[0] - foot_joint_pos
+        joint_vec_rot_axis, temp_angle = mm.getRotAxisAngleFromVectors(ankle_to_joint_vec, -mm.unitY())
+        joint_y_to_zero_angle = temp_angle - math.acos((foot_joint_pos[1] - SEGMENT_FOOT_RAD - baseHeight)/np.linalg.norm(ankle_to_joint_vec))
+        posture_ori.mulJointOrientationGlobal(idDic[foot_name], mm.exp(joint_vec_rot_axis, joint_y_to_zero_angle))
+
+        ###############################################################
+        #TODO:
+        ###############################################################
+        # rotate seg to parallel ground
+        seg_ori = posture_ori.getJointOrientationGlobal(seg_idx)
+        posture_ori.mulJointOrientationGlobal(seg_idx, seg_ori.T)
+
+    elif len(side_touch_body_indices) == 2:
+        seg_idx = [side_touch_body_indices[0], side_touch_body_indices[1]]
+
+        ankle_to_joint_vecs = [seg_joint_pos[i] - foot_joint_pos for i in range(len(seg_idx))]
+        ankle_to_joint_vec = .5*(ankle_to_joint_vecs[0] + ankle_to_joint_vecs[1])
+        joint_vec_rot_axis, temp_angle = mm.getRotAxisAngleFromVectors(ankle_to_joint_vec, -mm.unitY())
+        joint_y_to_zero_angle = temp_angle - math.acos((foot_joint_pos[1] - SEGMENT_FOOT_RAD - baseHeight)/np.linalg.norm(ankle_to_joint_vec))
+        posture_ori.mulJointOrientationGlobal(idDic[foot_name], mm.exp(joint_vec_rot_axis, joint_y_to_zero_angle))
+
+
+
+
+
 
     seg_contact_pos = []
     for touch_body_idx in side_touch_body_indices:

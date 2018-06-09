@@ -355,6 +355,18 @@ def getSO3FromVectors(vec1, vec2):
                        [(1.0-c)*z*x - s*y,    (1.0-c)*z*y + s*x,    c + (1.0-c)*z*z]])    
     return SO3
 
+
+def getRotAxisAngleFromVectors(vec1, vec2):
+    vec1 = normalize(vec1)
+    vec2 = normalize(vec2)
+
+    rot_axis = normalize(np.cross(vec1, vec2))
+    inner = np.inner(vec1, vec2)
+    theta = math.acos(inner if -1.0 < inner < 1.0 else math.copysign(1.0, inner))
+
+    return rot_axis, theta
+
+
 def getSE3FromSO3andVec3(SO3, transV):
     SE3 = np.eye(4)
     SE3[:3, :3] = SO3
