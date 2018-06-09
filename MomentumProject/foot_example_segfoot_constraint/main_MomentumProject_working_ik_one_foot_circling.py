@@ -246,15 +246,15 @@ def main():
         skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), color=(230, 230, 230), offset_draw=(0., -0.0, 0.))
         viewer.doc.addRenderer('skeleton', skeleton_renderer)
     viewer.doc.addRenderer('rd_footCenter', yr.PointsRenderer(rd_footCenter))
-    # viewer.doc.setRendererVisible('rd_footCenter', False)
+    viewer.doc.setRendererVisible('rd_footCenter', False)
     viewer.doc.addRenderer('rd_footCenter_ref', yr.PointsRenderer(rd_footCenter_ref))
-    # viewer.doc.setRendererVisible('rd_footCenter_ref', False)
+    viewer.doc.setRendererVisible('rd_footCenter_ref', False)
     viewer.doc.addRenderer('rd_CM_plane', yr.PointsRenderer(rd_CM_plane, (255,255,0)))
-    # viewer.doc.setRendererVisible('rd_CM_plane', False)
+    viewer.doc.setRendererVisible('rd_CM_plane', False)
     viewer.doc.addRenderer('rd_CP', yr.PointsRenderer(rd_CP, (0,255,0)))
-    # viewer.doc.setRendererVisible('rd_CP', False)
+    viewer.doc.setRendererVisible('rd_CP', False)
     viewer.doc.addRenderer('rd_CP_des', yr.PointsRenderer(rd_CP_des, (255,0,255)))
-    # viewer.doc.setRendererVisible('rd_CP_des', False)
+    viewer.doc.setRendererVisible('rd_CP_des', False)
     viewer.doc.addRenderer('rd_dL_des_plane', yr.VectorsRenderer(rd_dL_des_plane, rd_CM, (255,255,0)))
     viewer.doc.setRendererVisible('rd_dL_des_plane', False)
     viewer.doc.addRenderer('rd_dH_des', yr.VectorsRenderer(rd_dH_des, rd_CM, (0,255,0)))
@@ -428,6 +428,10 @@ def main():
             #     setParamVal('com X offset', -0.04)
             elif frame < 100+start_frame:
                 pass
+            elif frame -100-start_frame >= frame_offset*3+20:
+                foot_viewer.check_op_l.value(True)
+                setParamVal('left tilt angle', 0.)
+                setParamVal('tiptoe angle', 0.1)
             elif (frame - 100 - start_frame) % frame_offset == 0:
                 foot_viewer.check_op_l.value(False)
                 setParamVal('left tilt angle', 0.1)

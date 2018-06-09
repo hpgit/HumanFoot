@@ -31,7 +31,7 @@ VIEW_TOP = 2
 VIEW_PERSPECTIVE = 3
 
 # Define
-FLAG_SHADOW = 0
+FLAG_SHADOW = 1
 
 #class StateObject:
 #    def getState(self):
@@ -358,8 +358,8 @@ class GlWindow(Fl_Gl_Window):
                     glColor4f(0.3, 0.3, 0.3, 0.5)
                 else:
                     # glColor4f(0.9, 0.9, 0.9, 0.5)
-                    # glColor4f(0.5, 0.5, 0.5, 0.5)
-                    glColor4f(0.3, 0.3, 0.3, 0.5)
+                    glColor4f(0.5, 0.5, 0.5, 0.5)
+                    # glColor4f(0.3, 0.3, 0.3, 0.5)
                 glVertex3d(xp,      self.planeHeight-h, yp)
                 glVertex3d(xp,      self.planeHeight-h, yp + yd)
                 glVertex3d(xp + xd, self.planeHeight-h, yp + yd)
@@ -464,8 +464,7 @@ class GlWindow(Fl_Gl_Window):
 
         # glClearColor(.8, .8, .8, .8)
         glClearColor(.1, .1, .1, .8)
-        # glClearColor(.3, .3, .3, .5)
-        glClearColor(1., 1., 1., .8)
+        glClearColor(.3, .3, .3, .5)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         if self.projectionChanged:
@@ -493,7 +492,7 @@ class GlWindow(Fl_Gl_Window):
         # self.drawGround()
         # self.drawAxis()
         # self.drawCoordinate((0, 0, 0))
-        # self.drawGround_color()
+        self.drawGround_color()
         # self.drawGround()
 
         # self.drawGroundFilled()
