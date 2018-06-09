@@ -49,7 +49,7 @@ maxContactChangeCount = 30
 preFootCenter = [None]
 
 DART_CONTACT_ON = False
-SKELETON_ON = False
+SKELETON_ON = True
 
 
 def main():
@@ -426,9 +426,15 @@ def main():
             viewer.motionViewWnd.glWindow.camera.rotateX = math.pi /180. * -25.
             if frame > start_frame:
                 viewer.motionViewWnd.glWindow.camera.rotateY = mm.deg2Rad((frame-start_frame)*3+45.)
+            else:
+                viewer.motionViewWnd.glWindow.camera.rotateY = mm.deg2Rad(45.)
+
             viewer.motionViewWnd.glWindow.camera.distance = .4
             viewer.motionViewWnd.glWindow.camera.center = \
                 .5*(controlModel.getBodyPositionGlobal(idDic['RightFoot']) + controlModel.getBodyPositionGlobal(idDic['LeftFoot'])) + np.array([0., -0.05, 0.])
+        elif frame > 340:
+            viewer.doc.setRendererVisible('controlModel', False)
+            viewer.doc.setRendererVisible('skeleton', True)
         else:
             if 0 <= frame % 50 < 22:
                 viewer.doc.setRendererVisible('controlModel', True)

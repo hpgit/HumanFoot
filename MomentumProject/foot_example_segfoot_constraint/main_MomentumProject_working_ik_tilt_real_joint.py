@@ -400,7 +400,7 @@ def main():
 
         return fixed_nested_dof_values
 
-    start_frame = 100
+    start_frame = 150
 
     up_vec_in_each_link = dict()
     for foot_id in footIdlist:
@@ -422,8 +422,8 @@ def main():
             elif frame == start_frame:
                 foot_viewer.check_tilt_left_all()
             # elif frame == start_frame+10:
-                setParamVal('left tilt angle', -0.15)
-                setParamVal('right tilt angle', 0.15)
+                setParamVal('left tilt angle', -0.1)
+                setParamVal('right tilt angle', 0.1)
             elif frame == start_frame + 90:
                 setParamVal('left tilt angle', 0.)
                 setParamVal('right tilt angle', 0.)
@@ -446,6 +446,7 @@ def main():
                 motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1'], mm.exp(mm.unitZ(), -math.pi * left_tilt_angle))
             else:
                 motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1_0'], mm.exp(mm.unitZ(), -math.pi * left_tilt_angle))
+            motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_1_0'], mm.exp(mm.unitZ(), -math.pi * left_tilt_angle))
             motion[frame].mulJointOrientationLocal(idDic['LeftFoot'], mm.exp(mm.unitZ(), math.pi * left_tilt_angle))
 
         elif getParamVal('left tilt angle') < -0.001:
@@ -455,6 +456,7 @@ def main():
                 motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1'], mm.exp(mm.unitZ(), math.pi * left_tilt_angle))
             else:
                 motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1_0'], mm.exp(mm.unitZ(), math.pi * left_tilt_angle))
+            motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_1_0'], mm.exp(mm.unitZ(), -math.pi * left_tilt_angle))
             motion[frame].mulJointOrientationLocal(idDic['LeftFoot'], mm.exp(mm.unitZ(), math.pi * left_tilt_angle))
 
         if getParamVal('right tilt angle') > 0.001:
@@ -463,6 +465,7 @@ def main():
                 motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1'], mm.exp(mm.unitZ(), math.pi * right_tilt_angle))
             else:
                 motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1_0'], mm.exp(mm.unitZ(), math.pi * right_tilt_angle))
+            motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_1_0'], mm.exp(mm.unitZ(), math.pi * right_tilt_angle))
             motion[frame].mulJointOrientationLocal(idDic['RightFoot'], mm.exp(mm.unitZ(), -math.pi * right_tilt_angle))
         elif getParamVal('right tilt angle') < -0.001:
             right_tilt_angle = getParamVal('right tilt angle')
@@ -471,6 +474,7 @@ def main():
                 motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1'], mm.exp(mm.unitZ(), -math.pi * right_tilt_angle))
             # else:
             #     motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1_0'], mm.exp(mm.unitZ(), -math.pi * right_tilt_angle))
+            motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_1_0'], mm.exp(mm.unitZ(), math.pi * right_tilt_angle))
             motion[frame].mulJointOrientationLocal(idDic['RightFoot'], mm.exp(mm.unitZ(), -math.pi * right_tilt_angle))
 
         motionModel.update(motion[frame])

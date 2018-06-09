@@ -57,11 +57,11 @@ RENDER_REFLECTION = 2
 
 shadow_color = (50, 50, 50)
 
-FOOT_RENDER_ONLY = False
-LEFT_FOOT_ONLY = False
+FOOT_RENDER_ONLY = True
+LEFT_FOOT_ONLY = True
 RIGHT_FOOT_ONLY = False
 
-CAPSULE_SLICE_SIZE = 4
+CAPSULE_SLICE_SIZE = 8
 
 
 class Renderer:
@@ -362,6 +362,10 @@ class VpModelRenderer(Renderer):
         return state
 
     def renderState(self, state, renderType=RENDER_OBJECT):
+        if self._polygonStyle == POLYGON_FILL:
+            glPolygonMode(GL_FRONT, GL_FILL)
+        else:
+            glPolygonMode(GL_FRONT, GL_LINE)
         for elem in state:
             body_idx, geom_type, _T, geom_size, color = elem
 
@@ -1272,6 +1276,63 @@ class WideArrowRenderer(Renderer):
                         self.rc.drawArrow(points[i], None, mm.v3_scale(forces[i], self.ratio), self.lineWidth)
                     glPopMatrix()
 
+class JointArrowRenderer(Renderer):
+    def __init__(self, forces, points, color=(255,0,0), ratio=1., lineWidth=.02, heightRatio=.2, fromPoint=True, polygonStyle=POLYGON_FILL):
+        Renderer.__init__(self, None, color)
+        self.forces = forces
+        self.points = points
+        self.ratio = ratio
+        self.lineWidth = lineWidth
+        self.fromPoint = fromPoint
+        self.heightRatio = heightRatio
+        self.rc.setPolygonStyle(polygonStyle)
+        self.rc.setNormalStyle(NORMAL_SMOOTH)
+        self.state_init = [[None], [None]]
+
+    def render(self, renderType=RENDER_OBJECT):
+        if renderType == RENDER_OBJECT:
+            self.rc.beginDraw()
+            glColor3ubv(self.totalColor)
+            for i in range(len(self.forces)):
+                if self.forces[i] is not None and self.points[i] is not None:
+                    glPushMatrix()
+                    # glScalef(1, self.heightRatio, 1)
+                    if self.fromPoint==False:
+                        self.rc.drawArrow(None, self.points[i], mm.v3_scale(self.forces[i], self.ratio), self.lineWidth)
+                    else:
+                        self.rc.drawArrow(self.points[i], None, mm.v3_scale(self.forces[i], self.ratio), self.lineWidth)
+                    glPopMatrix()
+
+    def getState(self):
+        return [copy.deepcopy(self.forces), copy.deepcopy(self.points)]
+
+    def renderFrame(self, frame, renderType=RENDER_OBJECT):
+        if frame == -1:
+            self.renderState(self.state_init, renderType)
+        elif frame == self.get_max_saved_frame() + 1:
+            self.saveState()
+            self.renderState(self.savedState[frame], renderType)
+        elif frame <= self.get_max_saved_frame():
+            self.renderState(self.savedState[frame], renderType)
+        else:
+            self.renderState(self.savedState[-1], renderType)
+
+    def renderState(self, state, renderType=RENDER_OBJECT):
+        forces, points = state[0], state[1]
+        if renderType == RENDER_OBJECT:
+            self.rc.beginDraw()
+            glColor3ubv(self.totalColor)
+            for i in range(len(forces)):
+                if forces[i] is not None and points[i] is not None:
+                    glPushMatrix()
+                    # glScalef(1, self.heightRatio, 1)
+                    if not self.fromPoint:
+                        self.rc.drawJointArrow(None, points[i], mm.v3_scale(forces[i], self.ratio), self.lineWidth)
+                    else:
+                        self.rc.drawJointArrow(points[i], None, mm.v3_scale(forces[i], self.ratio), self.lineWidth)
+                    glPopMatrix()
+
+
 class TorquesRenderer(Renderer):
     def __init__(self, torques, points, color=(255,0,0), ratio=1., lineWidth=.02, radius=.1, fromPoint=True):
         Renderer.__init__(self, None, color)
@@ -1770,7 +1831,33 @@ class RenderContext:
                    (lineWidth/2., lineWidth/2., lineWidth/2., triWidth/2., 0, 0))
         
         glPopMatrix()
-    
+
+    def drawJointArrow(self, startPos, endPos, vector=None, lineWidth=.02):
+        if vector is None:
+            vector = [endPos[i]-startPos[i] for i in range(3)]
+        elif startPos is None:
+            startPos = [endPos[i]-vector[i] for i in range(3)]
+
+        length = mm.length(vector)
+        if length==0.: return
+
+        glPushMatrix()
+
+        arrowT = mm.Rp2T(mm.getSO3FromVectors((length,0,0), vector), startPos)
+        glMultMatrixf(arrowT.transpose())
+
+        # triWidth = lineWidth * 3
+        # triLength = triWidth * 1.2
+        triWidth = lineWidth * 1.5
+        # triLength = triWidth * 1.2
+        triLength = length
+
+        # line + cone all parts
+        glePolyCone(((0,0,0), (0,0,0), (length-triLength,0,0), (length-triLength,0,0), (length,0,0), (length,0,0)), None,
+                    (lineWidth/2., lineWidth/2., lineWidth/2., triWidth/2., 0, 0))
+
+        glPopMatrix()
+
     def drawCircularArrow(self, startPos, endPos, rotVec=None, lineWidth=.02, radius=.1):
         if rotVec is None:
             rotVec = [endPos[i]-startPos[i] for i in range(3)]

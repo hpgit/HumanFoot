@@ -309,17 +309,21 @@ def create_biped(motionName='wd2_n_kick.bvh', SEGMENT_FOOT=True, SEGMENT_FOOT_MA
             capsulize('RightFoot_foot_1_0')
             node = mcfg.getNode('RightFoot_foot_1_0')
             node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([-.9, 0., 0.]), mm.exp([0.]*3)],
-                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*3.6+2.*SEGMENT_FOOT_RAD))
+                         # ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*3.6+2.*SEGMENT_FOOT_RAD))
+                        ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([+.9, 0., 0.]), mm.exp([0.]*3)],
-                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*3.6+2.*SEGMENT_FOOT_RAD))
+                         # ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*3.6+2.*SEGMENT_FOOT_RAD))
+                        ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             node.jointType = footJointType
 
             capsulize('LeftFoot_foot_1_0')
             node = mcfg.getNode('LeftFoot_foot_1_0')
             node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([-.9, 0., .0]), mm.exp([0.]*3)],
-                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*3.6+2.*SEGMENT_FOOT_RAD))
+                         # ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*3.6+2.*SEGMENT_FOOT_RAD))
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([+.9, 0., .0]), mm.exp([0.]*3)],
-                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*3.6+2.*SEGMENT_FOOT_RAD))
+                         # ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG*3.6+2.*SEGMENT_FOOT_RAD))
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             node.jointType = footJointType
 
         elif SEGMENT_FOOT_OUTSIDE_JOINT_FIRST and not SEGMENT_FOOT_ARC:
