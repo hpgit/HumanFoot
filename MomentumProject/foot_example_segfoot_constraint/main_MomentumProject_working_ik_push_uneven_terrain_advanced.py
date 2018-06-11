@@ -271,7 +271,7 @@ def main():
     viewer.doc.setRendererVisible('rd_dH_des', False)
     # viewer.doc.addRenderer('rd_grf_des', yr.ForcesRenderer(rd_grf_des, rd_CP_des, (0,255,0), .001))
     viewer.doc.addRenderer('rd_CF', yr.VectorsRenderer(rd_CF, rd_CF_pos, (255,255,0)))
-    viewer.doc.setRendererVisible('rd_CF', False)
+    # viewer.doc.setRendererVisible('rd_CF', False)
     viewer.doc.addRenderer('rd_foot_ori', yr.OrientationsRenderer(rd_foot_ori, rd_foot_pos, (255,255,0)))
     viewer.doc.setRendererVisible('rd_foot_ori', False)
 
@@ -816,10 +816,6 @@ def main():
 
         controlModel_ik.set_q(controlModel.get_q())
 
-        if foot_viewer is not None:
-            foot_viewer.foot_pressure_gl_window.refresh_foot_contact_info(frame, vpWorld, bodyIDsToCheck, mus, Ks, Ds)
-            foot_viewer.foot_pressure_gl_window.goToFrame(frame)
-
         # rendering
         for foot_seg_id in footIdlist:
             control_model_renderer.body_colors[foot_seg_id] = (255, 240, 255)
@@ -910,7 +906,13 @@ def main():
 
             skeleton_renderer.appendFrameState(Ts)
 
+    def postFrameCallback(frame):
+        if foot_viewer is not None:
+            foot_viewer.foot_pressure_gl_window.refresh_foot_contact_info(frame, vpWorld, bodyIDsToCheck, mus, Ks, Ds)
+            foot_viewer.foot_pressure_gl_window.goToFrame(frame)
+
     viewer.setSimulateCallback(simulateCallback)
+    viewer.setPostFrameCallback_Always(postFrameCallback)
     viewer.startTimer(1/30.)
     # viewer.play()
     viewer.show()

@@ -28,6 +28,7 @@ public:	// expose to python
 	void add_sphere_bump(const scalar radius, const object& pos);
 	bp::list get_sphere_bump_list();
 	bp::tuple getContactPoints(const bp::list& bodyIDsToCheck);
+	bp::tuple getContactInfoForcePlate(const bp::list& bodyIDsToCheck);
 	bp::tuple calcPenaltyForce(const bp::list& bodyIDsToCheck, const bp::list& mus, scalar Ks, scalar Ds);
 	void applyPenaltyForce(const bp::list& bodyIDs, const bp::list& positions, const bp::list& forces);
 	int getBodyNum() { return _world.GetNumBody(); }

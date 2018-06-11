@@ -1741,11 +1741,32 @@ class RenderContext:
             glVertex2f(radius * math.cos(2.*math.pi*float(i)/_SLICE_SIZE), radius * math.sin(2.*math.pi*float(i)/_SLICE_SIZE))
         glEnd()
 
-    def drawCapsule2D(self, radius, height):
-        _SLICE_SIZE = 16
-        # glBegin(GL_LINE_LOOP)
+    def drawCircleFilled(self, radius):
+        _SLICE_SIZE = 32
         glBegin(GL_TRIANGLE_FAN)
         glVertex2f(0., 0.)
+        for i in range(_SLICE_SIZE+1):
+            glVertex2f(radius * math.cos(2.*math.pi*float(i)/_SLICE_SIZE), radius * math.sin(2.*math.pi*float(i)/_SLICE_SIZE))
+        glEnd()
+
+    def drawCapsule2DFilled(self, radius, height):
+        _SLICE_SIZE = 16
+        glBegin(GL_TRIANGLE_FAN)
+        glVertex2f(0., 0.)
+        r, h = radius, height
+
+        for i in range(_SLICE_SIZE):
+            glVertex2f(r*math.cos(math.pi*float(i)/_SLICE_SIZE), h/2. + r*math.sin(math.pi*float(i)/_SLICE_SIZE))
+        for i in range(_SLICE_SIZE):
+            glVertex2f(-r*math.cos(math.pi*float(i)/_SLICE_SIZE), -h/2. - r*math.sin(math.pi*float(i)/_SLICE_SIZE))
+
+        glVertex2f(r, h/2.)
+        glEnd()
+
+    def drawCapsule2D(self, radius, height):
+        _SLICE_SIZE = 16
+        # glLineWidth(1.)
+        glBegin(GL_LINE_LOOP)
         r, h = radius, height
 
         for i in range(_SLICE_SIZE):

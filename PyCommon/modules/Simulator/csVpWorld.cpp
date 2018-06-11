@@ -29,6 +29,7 @@ BOOST_PYTHON_MODULE(csVpWorld)
 		.def("applyPenaltyForce", &VpWorld::applyPenaltyForce)
 		.def("getBodyNum", &VpWorld::getBodyNum)
 		.def("getContactPoints", &VpWorld::getContactPoints)
+		.def("getContactInfoForcePlate", &VpWorld::getContactInfoForcePlate)
 		//.def("getTimeStep", &VpWorld::getTimeStep)
 		//.def(" //void								 AddBody(vpBody *);
 		//.def(" //void								 AddWorld(vpWorld *);
@@ -212,7 +213,7 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
                     if (penentrated)
                     {
                         normal = -normal;
-                        positionLocal = geomFrame % position;
+                        positionLocal = bodyInvFrame * position;
                         velocity = pBody->GetLinVelocity(positionLocal);
                         force = _calcPenaltyForceSphere(velocity, normal, penetration, Ks, Ds, XD(mus[i]));
 
@@ -282,7 +283,7 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 
                     if (penentrated)
                     {
-                        positionLocal = geomFrame % position;
+                        positionLocal = bodyInvFrame * position;
                         velocity = pBody->GetLinVelocity(positionLocal);
                         force = _calcPenaltyForceSphere(velocity, normal, penetration, Ks, Ds, XD(mus[i]));
 
@@ -667,6 +668,189 @@ boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
 
 
 	return make_tuple(bodyIDs, positions, positionLocals, velocities);
+}
+
+
+// @return ( bodyIDs, geomIDs, postionLocalsForGeom)
+boost::python::tuple VpWorld::getContactInfoForcePlate( const bp::list& bodyIDsToCheck)
+{
+	bp::list bodyIDs, geomIDs, positionLocals;
+	int bodyID;
+	ndarray O_Vec3 = np::array(make_tuple(0., 0., 0.));
+	const vpBody* pBody;
+	vpGeom* pGeom;
+	char type;
+	scalar data[3];
+	Vec3 position, velocity, force, positionLocal, positionLocalForGeom;
+	SE3 bodyInvFrame;
+
+	scalar sphere_radius;
+	Vec3 sphere_pos;
+	SE3 sphere_T;
+
+	Vec3 normal;
+	scalar penetration;
+
+    //bool ColDetSphereBox(const scalar &r0, const SE3 &T0, const Vec3 &size, const SE3 &T1, Vec3 &normal, Vec3 &point, scalar &penetration)
+    // sphere to body check
+    for(std::vector<scalar>::size_type s=0; s < this->sphere_bump_radius.size(); s++)
+    {
+        sphere_radius = this->sphere_bump_radius[s];
+        sphere_pos = this->sphere_bump_pos[s];
+        sphere_T = SE3(sphere_pos);
+        for (int i=0; i<len(bodyIDsToCheck); i++)
+        {
+            bodyID = XI(bodyIDsToCheck[i]);
+            pBody = _world.GetBody(bodyID);
+            bodyInvFrame = Inv(pBody->GetFrame());
+
+            for (int j = 0; j<pBody->GetNumGeometry(); ++j)
+            {
+                pGeom = pBody->GetGeometry(j);
+
+                pGeom->GetShape(&type, data);
+                const SE3& geomFrame = pGeom->GetGlobalFrame();
+                if (type == 'B' || type == 'M' || type == 'N')
+                {
+                    // sphere view
+                    bool penentrated = ColDetSphereBox(sphere_radius, sphere_T, ((vpBox*)pGeom)->GetHalfSize(), geomFrame);
+
+                    if (penentrated)
+                    {
+                        positionLocalForGeom = geomFrame % position;
+
+                        bodyIDs.append(bodyID);
+
+                        geomIDs.append(j);
+
+                        object pyPositionLocal = O_Vec3.copy();
+                        Vec3_2_pyVec3(positionLocalForGeom, pyPositionLocal);
+                        positionLocals.append(pyPositionLocal);
+                    }
+
+                    // box view
+                    for (int p = 0; p<8; ++p)
+                    {
+                        positionLocal[0] = (p & MAX_X) ? data[0] / 2. : -data[0] / 2.;
+                        positionLocal[1] = (p & MAX_Y) ? data[1] / 2. : -data[1] / 2.;
+                        positionLocal[2] = (p & MAX_Z) ? data[2] / 2. : -data[2] / 2.;
+                        position = geomFrame * positionLocal;
+
+                        normal = position - sphere_pos;
+                        penetration = sphere_radius - normal.Normalize();
+                        bool penentrated = penetration > 0.;
+                        if (penentrated)
+                        {
+                            bodyIDs.append(bodyID);
+
+                            geomIDs.append(j);
+
+                            object pyPositionLocal = O_Vec3.copy();
+                            Vec3_2_pyVec3(positionLocal, pyPositionLocal);
+                            positionLocals.append(pyPositionLocal);
+                        }
+                    }
+                }
+                else if (type == 'C' || type == 'D' || type == 'E')
+                {
+                    scalar capsule_radius = ((vpCapsule*)pGeom)->GetRadius();
+                    scalar capsule_half_height = ((vpCapsule*)pGeom)->GetHeight()/2. - capsule_radius;
+
+                    bool penentrated =
+                        type == 'C'? ColDetCapsuleSphere(capsule_radius, capsule_half_height, geomFrame, sphere_radius, sphere_T) :
+                        type == 'D'? ColDetCapsuleSphereOneSideOnly(capsule_radius, capsule_half_height, geomFrame, sphere_radius, sphere_T, normal, position, penetration) :
+                        false;
+
+                    if (penentrated)
+                    {
+                        positionLocalForGeom = geomFrame % position;
+
+                        bodyIDs.append(bodyID);
+
+                        geomIDs.append(j);
+
+                        object pyPositionLocal = O_Vec3.copy();
+                        Vec3_2_pyVec3(positionLocalForGeom, pyPositionLocal);
+                        positionLocals.append(pyPositionLocal);
+                    }
+                }
+            }
+        }
+    }
+
+
+
+    // body to plane check
+	for (int i = 0; i<len(bodyIDsToCheck); ++i)
+	{
+		bodyID = XI(bodyIDsToCheck[i]);
+		pBody = _world.GetBody(bodyID);
+		bodyInvFrame = Inv(pBody->GetFrame());
+
+		for (int j = 0; j<pBody->GetNumGeometry(); ++j)
+		{
+			pGeom = pBody->GetGeometry(j);
+
+			pGeom->GetShape(&type, data);
+            const SE3& geomFrame = pGeom->GetGlobalFrame();
+			if (type == 'B' || type == 'M' || type == 'N')
+			{
+				for (int p = 0; p<8; ++p)
+				{
+					positionLocal[0] = (p & MAX_X) ? data[0] / 2. : -data[0] / 2.;
+					positionLocal[1] = (p & MAX_Y) ? data[1] / 2. : -data[1] / 2.;
+					positionLocal[2] = (p & MAX_Z) ? data[2] / 2. : -data[2] / 2.;
+					position = geomFrame * positionLocal;
+
+					velocity = pBody->GetLinVelocity(positionLocal);
+
+					bool penentrated = position[1] < 0.;
+					if (penentrated)
+					{
+						bodyIDs.append(bodyID);
+
+                        geomIDs.append(j);
+
+						object pyPositionLocal = O_Vec3.copy();
+						Vec3_2_pyVec3(positionLocal, pyPositionLocal);
+						positionLocals.append(pyPositionLocal);
+					}
+				}
+			}
+			else if (type == 'C' || type == 'D' || type == 'E')
+			{
+				const vector<Vec3>& verticesLocal = type == 'C'? ((MyFoot3*)pGeom)->getVerticesLocal() :
+													type == 'D'? ((MyFoot4*)pGeom)->getVerticesLocal() :
+													             ((MyFoot5*)pGeom)->getVerticesLocal();
+				const vector<Vec3>& verticesGlobal = type == 'C'? ((MyFoot3*)pGeom)->getVerticesGlobal() :
+													type == 'D'? ((MyFoot4*)pGeom)->getVerticesGlobal() :
+													             ((MyFoot5*)pGeom)->getVerticesGlobal();
+				for (std::vector<int>::size_type k = 0; k < verticesLocal.size(); ++k)
+				{
+
+					// positionLocal = verticesLocal[k];
+                    positionLocal = bodyInvFrame * verticesGlobal[k];
+					position = verticesGlobal[k];
+					velocity = pBody->GetLinVelocity(positionLocal);
+					positionLocalForGeom = geomFrame % verticesGlobal[k];
+
+					bool penentrated = position[1] < 0.;
+					if (penentrated)
+					{
+						bodyIDs.append(bodyID);
+
+						geomIDs.append(j);
+
+						object pyPositionLocal = O_Vec3.copy();
+						Vec3_2_pyVec3(positionLocalForGeom, pyPositionLocal);
+						positionLocals.append(pyPositionLocal);
+					}
+				}
+			}
+		}
+	}
+
+	return make_tuple(bodyIDs, geomIDs, positionLocals);
 }
 
 /*********************

@@ -8,10 +8,11 @@ from PyCommon.modules.Math import mmMath as mm
 
 class PressureFrameInfo:
     def __init__(self):
+        self.contact_body_idx = []
         self.contact_seg_idx = []
         self.contact_seg_position_local = []
+        self.contact_seg_position_geom_local = []
         self.contact_seg_forces = []
-
 
 
 class FootPressureGlWindow(Fl_Gl_Window):
@@ -184,6 +185,220 @@ class FootPressureGlWindow(Fl_Gl_Window):
         glLoadIdentity()
 
 
+class FootContactGlWindow(Fl_Gl_Window):
+    def __init__(self, x, y, w, h, model):
+        Fl_Gl_Window.__init__(self, x, y, w, h)
+
+        self.initGL()
+        self.rc = yr.RenderContext()
+        self.model = model
+        self.idDic = dict()
+        for i in range(self.model.getJointNum()):
+            self.idDic[i] = self.model.index2name(i)
+
+        self.foot_index = []
+        self.left_foot_index = []
+        self.right_foot_index = []
+        self.foot_seg_index = []
+        self.left_seg_index = []
+        self.right_seg_index = []
+
+        self.geom_ids = []
+        self.geom_names = []
+        self.geom_types = []
+        self.geom_trans = []
+        self.geom_sizes = []
+        self.body_trans = []
+
+        self.pressure_info = {}  # type: dict[int, PressureFrameInfo]
+
+        self.frame = -1
+
+    def refresh_foot_contact_info(self, frame, world, bodyIDsToCheck, mus, Ks, Ds):
+        if frame not in self.pressure_info.keys():
+            self.pressure_info[frame] = PressureFrameInfo()
+            bodyIDs, geomIDs, contactPositionGeomLocals = world.getContactInfoForcePlate(bodyIDsToCheck)
+            self.pressure_info[frame].contact_body_idx.extend(bodyIDs)
+            self.pressure_info[frame].contact_seg_idx.extend(geomIDs)
+            self.pressure_info[frame].contact_seg_position_geom_local.extend(contactPositionGeomLocals)
+        self.redraw()
+
+    def draw_foot(self, side):
+        sign = 1
+        if side == 'Right':
+            sign = -1
+
+        # inside phalanges
+        glPushMatrix()
+        glTranslatef(sign*-0.1823, 1.0397, 0.)
+        # glTranslatef(0., 0.18, 0.)
+        glTranslatef(0., 0.1*6.63*0.5, 0.)
+        self.rc.drawCapsule2D(0.08, 0.1*6.63)
+        glTranslatef(sign*0.18, 0., 0.)
+        self.rc.drawCapsule2D(0.08, 0.1*6.63)
+        glTranslatef(sign*0.18, 0., 0.)
+        self.rc.drawCapsule2D(0.08, 0.1*6.63)
+        glPopMatrix()
+
+        # outside metatarsal
+        glPushMatrix()
+        glTranslatef(sign*(-0.2784-0.0773), 0.452, 0.)
+        glTranslatef(0., 0.1*5.877*0.5, 0.)
+        self.rc.drawCapsule2D(0.08, 0.1*5.877)
+        glTranslatef(sign*-0.18, 0., 0.)
+        self.rc.drawCapsule2D(0.08, 0.1*5.877)
+        glPopMatrix()
+
+        # outside phalanges
+        glPushMatrix()
+        glTranslatef(sign*-0.2784, 0.452, 0.)
+        glTranslatef(sign*-0.0773, 0.5877, 0.)
+        # glTranslatef(0., 0.18, 0.)
+        glTranslatef(0., 0.1*5.25*0.5, 0.)
+        self.rc.drawCapsule2D(0.08, 0.1 * 5.25)
+        glTranslatef(sign*-0.18, 0., 0.)
+        self.rc.drawCapsule2D(0.08, 0.1 * 5.25)
+        glPopMatrix()
+
+        # heel
+        glPushMatrix()
+        glTranslatef(0., -0.1, 0.)
+        glTranslatef(0., -0.1*3.6*0.5, 0.)
+        glTranslatef(sign*0.09, 0., 0.)
+        self.rc.drawCapsule2D(0.08, 0.1 * 3.6)
+        glTranslatef(sign*-0.18, 0., 0.)
+        self.rc.drawCapsule2D(0.08, 0.1 * 3.6)
+        glPopMatrix()
+
+    def draw_contact(self, side, frame):
+        if frame >= 0:
+            sign = 1
+            if side == 'Right':
+                sign = -1
+            for i in range(len(self.pressure_info[frame].contact_body_idx)):
+                contact_body_idx = self.pressure_info[frame].contact_body_idx[i]
+                if side not in self.idDic[contact_body_idx]:
+                    continue
+                contact_seg_idx = self.pressure_info[frame].contact_seg_idx[i]
+                contact_pos = self.pressure_info[frame].contact_seg_position_geom_local[i][2]
+                if '0_1_0' in self.idDic[contact_body_idx]:
+                    # inside phalanges
+                    glPushMatrix()
+                    glTranslatef(sign*-0.1823, 1.0397, 0.)
+                    if contact_seg_idx == 1:
+                        glTranslatef(sign*0.18, 0., 0.)
+                    if contact_seg_idx == 2:
+                        glTranslatef(sign*0.36, 0., 0.)
+                    glTranslatef(0., 0.1*6.63*0.5, 0.)
+                    if contact_pos/6.63 > 0.005:
+                        contact_pos = 6.63*0.005
+                    elif contact_pos/6.63 < -0.005:
+                        contact_pos = -6.63*0.005
+                    glTranslatef(0., 10.*contact_pos, 0.)
+                    self.rc.drawCircleFilled(0.08)
+                    glPopMatrix()
+
+                elif '0_0_0' in self.idDic[contact_body_idx]:
+                    # outside phalanges
+                    glPushMatrix()
+                    glTranslatef(sign*-0.2784, 0.452, 0.)
+                    glTranslatef(sign*-0.0773, 0.5877, 0.)
+                    glTranslatef(0., 0.1*5.25*0.5, 0.)
+                    if contact_seg_idx == 1:
+                        glTranslatef(sign*-0.18, 0., 0.)
+                    if contact_pos/5.25 > 0.005:
+                        contact_pos = 5.25*0.005
+                    elif contact_pos/5.25 < -0.005:
+                        contact_pos = -5.25*0.005
+                    glTranslatef(0., 10.*contact_pos, 0.)
+                    self.rc.drawCircleFilled(0.08)
+                    glPopMatrix()
+
+                elif '0_0' in self.idDic[contact_body_idx]:
+                    # outside metatarsal
+                    glPushMatrix()
+                    glTranslatef(sign*(-0.2784-0.0773), 0.452, 0.)
+                    glTranslatef(0., 0.1*5.877*0.5, 0.)
+                    if contact_seg_idx == 0:
+                        if contact_pos/6.236 > 0.005:
+                            contact_pos = 6.236*0.005
+                        elif contact_pos/6.236 < -0.005:
+                            contact_pos = -6.236*0.005
+                        glTranslatef(0., 10.*contact_pos/6.236*5.877, 0.)
+                    elif contact_seg_idx == 1:
+                        glTranslatef(sign*-0.18, 0., 0.)
+                        if contact_pos/5.928 > 0.005:
+                            contact_pos = 5.928*0.005
+                        if contact_pos/5.928 < -0.005:
+                            contact_pos = -5.928*0.005
+                        glTranslatef(0., 10.*contact_pos/5.928*5.877, 0.)
+                    self.rc.drawCircleFilled(0.08)
+                    glPopMatrix()
+
+                elif '1_0' in self.idDic[contact_body_idx]:
+                    # heel
+                    glPushMatrix()
+                    glTranslatef(0., -0.1, 0.)
+                    glTranslatef(0., -0.1*3.6*0.5, 0.)
+                    if contact_seg_idx == 0:
+                        glTranslatef(sign*0.09, 0., 0.)
+                    elif contact_seg_idx == 1:
+                        glTranslatef(sign*-0.09, 0., 0.)
+                    if contact_pos/3.6 > 0.005:
+                        contact_pos = 3.6*0.005
+                    elif contact_pos/3.6 < -0.005:
+                        contact_pos = -3.6*0.005
+                    glTranslatef(0., -10.*contact_pos, 0.)
+                    self.rc.drawCircleFilled(0.08)
+                    glPopMatrix()
+
+    def draw(self):
+        frame = self.frame
+        glClearColor(1., 1., 1., 1.)
+        glClear(GL_COLOR_BUFFER_BIT)
+
+        glPushMatrix()
+        glScalef(0.5, 0.5, 0.5)
+
+        glPushMatrix()
+        # glColor3f(200, 200, 200)
+        glColor3ub(50, 50, 50)
+        glTranslatef(-0.7, -0.5, 0.)
+        self.draw_foot('Left')
+        glTranslatef(1.4, 0., 0.)
+        self.draw_foot('Right')
+        glPopMatrix()
+
+        glPushMatrix()
+        glColor3ub(200, 0, 0)
+        glTranslatef(-0.7, -0.5, 0.01)
+        self.draw_contact('Left', frame)
+        glTranslatef(1.4, 0., 0.)
+        self.draw_contact('Right', frame)
+        glPopMatrix()
+
+        glPopMatrix()
+
+    def goToFrame(self, frame):
+        self.frame = frame
+        self.redraw()
+
+    def initGL(self):
+        # glClearColor(0., 0., 0., 1.)
+        glClearColor(1., 1., 1., 1.)
+        self.projectOrtho(3)
+
+    def projectOrtho(self, distance):
+        glViewport(0, 0, self.w(), self.h())
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        x = float(self.w())/float(self.h()) * distance
+        y = 1. * distance
+        glOrtho(-.5*x, .5*x, -.5*y, .5*y, -1000., 1000.)
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+
+
 class FootWindow(Fl_Window):
     def __init__(self, x, y, w, h, title, model):
         Fl_Window.__init__(self, x, y, w, h, title)
@@ -211,7 +426,9 @@ class FootWindow(Fl_Window):
             self.check_im_r = Fl_Check_Button(110, 50, 30, 30, 'IM')
         self.check_h_r = Fl_Check_Button(130, 90, 30, 30, 'H')
 
-        self.foot_pressure_gl_window = FootPressureGlWindow(50, 150, 200, 200, model)
+        # self.foot_pressure_gl_window = FootPressureGlWindow(50, 150, 200, 200, model)
+        # self.foot_pressure_gl_window = FootContactGlWindow(50, 150, 200, 200, model)
+        self.foot_pressure_gl_window = FootContactGlWindow(50, 150, self.h()-300, self.h()-300, model)
 
         # self.check_op_l.value(True)
         # self.check_om_l.value(True)
