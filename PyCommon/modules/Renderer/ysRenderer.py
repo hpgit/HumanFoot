@@ -414,7 +414,7 @@ class VpModelRenderer(Renderer):
                 glTranslated(-.5*data[0], -.5*data[1], -.5*data[2])
                 if not FOOT_RENDER_ONLY:
                     self.rc.drawBox(data[0], data[1], data[2])
-            elif geom_type in ('C', 'D', 'E'):
+            elif geom_type in ('C', 'D', 'E', 'F'):
                 # capsule case
                 data = geom_size.copy()
                 # data.append(pGeom.GetRadius())

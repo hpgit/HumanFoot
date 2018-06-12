@@ -250,6 +250,44 @@ void MyFoot4::getContactVerticesGlobal(vector<Vec3>& verticesGlobal)
 	}
 }
 
+void MyFoot6::getContactVertices(vector<Vec3>& verticesLocal, vector<Vec3>& verticesGlobal)
+{
+	getContactVerticesGlobal(verticesGlobal);
+	verticesLocal.clear();
+	SE3 globalFrame = this->GetGlobalFrame();
+	for(std::vector<int>::size_type i=0; i<verticesGlobal.size(); i++)
+        verticesLocal.push_back(Inv(globalFrame)*verticesGlobal[i]);
+}
+void MyFoot6::getContactVerticesGlobal(vector<Vec3>& verticesGlobal)
+{
+    int contact_segment = 0;
+	scalar l = _h / 2. - _r; scalar r = -_h / 2. + _r;
+	Vec3 center[2];
+	//scalar depth[2];
+	center[0] = this->GetGlobalFrame()* Vec3(0, 0, r);
+	verticesGlobal.clear();
+	verticesGlobal.push_back(center[0] + Vec3(0, -_r, 0));
+
+	double r_contact = 0.0;
+	Vec3 contactPoint(0., 0., 0.);
+	if(contact_segment != 0)
+	{
+        for(int j=0; j<1; j++)
+        {
+            if(center[j][1] -_r < 0.0)
+            {
+                r_contact = sqrt( _r * _r - center[j][1]*center[j][1]);
+                for (int i=0; i<contact_segment; i++)
+                {
+                    contactPoint[0] = center[j][0] + r_contact * cos(double(i)/contact_segment * 2 * M_PI);
+                    contactPoint[2] = center[j][2] + r_contact * sin(double(i)/contact_segment * 2 * M_PI);
+                    verticesGlobal.push_back(contactPoint);
+                }
+            }
+        }
+	}
+}
+
 void MyFoot5::getContactVertices(vector<Vec3>& verticesLocal, vector<Vec3>& verticesGlobal)
 {
 	verticesLocal.clear();

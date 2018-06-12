@@ -259,9 +259,9 @@ def create_biped(motionName='wd2_n_kick.bvh', SEGMENT_FOOT=True, SEGMENT_FOOT_MA
             node = mcfg.getNode('RightFoot_foot_0_0')
             body_vector = np.array([-0.773, -1.936, 5.877])
             body_ori = mm.getSO3FromVectors(mm.unitZ(), body_vector)
-            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([0., 0., 0.]), mm.exp([0., 0., 0.])], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
+            node.addGeom('MyFoot6', [SEGMENT_FOOT_MAG*np.array([0., 0., 0.]), mm.exp([0., 0., 0.])], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             fifth_metatarsal_vector = np.array([-0.773, 0., 5.877])
-            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, -1.8*mm.unitX() + body_vector/2. - fifth_metatarsal_vector/2.),
+            node.addGeom('MyFoot6', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, -1.8*mm.unitX() + body_vector/2. - fifth_metatarsal_vector/2.),
                                      np.dot(body_ori.T, np.dot(mm.getSO3FromVectors(body_vector, fifth_metatarsal_vector), body_ori))],
                          ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(fifth_metatarsal_vector) + 2*SEGMENT_FOOT_RAD))
             node.jointType = footJointType
@@ -270,9 +270,9 @@ def create_biped(motionName='wd2_n_kick.bvh', SEGMENT_FOOT=True, SEGMENT_FOOT_MA
             node = mcfg.getNode('LeftFoot_foot_0_0')
             body_vector = np.array([0.773, -1.936, 5.877])
             body_ori = mm.getSO3FromVectors(mm.unitZ(), body_vector)
-            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([0., 0., 0.]), mm.exp([0., 0., 0.])], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
+            node.addGeom('MyFoot6', [SEGMENT_FOOT_MAG*np.array([0., 0., 0.]), mm.exp([0., 0., 0.])], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             fifth_metatarsal_vector = np.array([0.773, 0., 5.877])
-            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, 1.8*mm.unitX() + body_vector/2. - fifth_metatarsal_vector/2.),
+            node.addGeom('MyFoot6', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, 1.8*mm.unitX() + body_vector/2. - fifth_metatarsal_vector/2.),
                                      np.dot(body_ori.T, np.dot(mm.getSO3FromVectors(body_vector, fifth_metatarsal_vector), body_ori))],
                          ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(fifth_metatarsal_vector) + 2*SEGMENT_FOOT_RAD))
             node.jointType = footJointType
@@ -280,14 +280,14 @@ def create_biped(motionName='wd2_n_kick.bvh', SEGMENT_FOOT=True, SEGMENT_FOOT_MA
             # RightFoot_foot_0_0_0 : outside phalanges
             capsulize('RightFoot_foot_0_0_0')
             node = mcfg.getNode('RightFoot_foot_0_0_0')
-            node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
-            node.addGeom('MyFoot4', [SEGMENT_FOOT_MAG*np.array([-1.8, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
+            node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
+            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([-1.8, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             node.jointType = footJointType
 
             capsulize('LeftFoot_foot_0_0_0')
             node = mcfg.getNode('LeftFoot_foot_0_0_0')
-            node.addGeom('MyFoot4', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
-            node.addGeom('MyFoot4', [SEGMENT_FOOT_MAG*np.array([+1.8, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
+            node.addGeom('MyFoot3', [np.array([0.]*3), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
+            node.addGeom('MyFoot3', [SEGMENT_FOOT_MAG*np.array([+1.8, 0., 0.]), mm.exp([0.]*3)], ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, -1))
             node.jointType = footJointType
 
             # RightFoot_foot_0_1_0 : inside phalanges

@@ -789,9 +789,6 @@ def main():
 
         controlModel_ik.set_q(controlModel.get_q())
 
-        if foot_viewer is not None:
-            foot_viewer.foot_pressure_gl_window.refresh_foot_contact_info(frame, vpWorld, bodyIDsToCheck, mus, Ks, Ds)
-            foot_viewer.foot_pressure_gl_window.goToFrame(frame)
 
         # rendering
         bodyIDs, geomIDs, positionLocalsForGeom = vpWorld.getContactInfoForcePlate(bodyIDsToCheck)
@@ -889,6 +886,12 @@ def main():
 
             skeleton_renderer.appendFrameState(Ts)
 
+    def postFrameCallback_Always(frame):
+        if foot_viewer is not None:
+            foot_viewer.foot_pressure_gl_window.refresh_foot_contact_info(frame, vpWorld, bodyIDsToCheck, mus, Ks, Ds)
+            foot_viewer.foot_pressure_gl_window.goToFrame(frame)
+
+    viewer.setPostFrameCallback_Always(postFrameCallback_Always)
     viewer.setSimulateCallback(simulateCallback)
     viewer.startTimer(1/30.)
     # viewer.play()

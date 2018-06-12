@@ -103,6 +103,29 @@ public:
 	virtual void GetShape(char *type, scalar *data) const { vpCapsule::GetShape(type, data); type[0] = 'D'; }
 };
 
+class MyFoot6 : public MyFoot3
+{
+private:
+	vector<Vec3> _verticesLocal;
+public:
+	MyFoot6(scalar radius, scalar height):MyFoot3(radius, height){}
+	virtual const vector<Vec3>& getVerticesLocal()
+	{
+		vector<Vec3> verticesGlobal;
+		getContactVertices(_verticesLocal, verticesGlobal);
+		return _verticesLocal;
+	}
+	virtual const vector<Vec3>& getVerticesGlobal()
+	{
+		vector<Vec3> verticesGlobal;
+		getContactVertices(_verticesLocal, verticesGlobal);
+		return _getVerticesGlobal(this, _verticesLocal);
+	}
+	void getContactVertices(vector<Vec3>& verticesLocal, vector<Vec3>& verticesGlobal);
+	void getContactVerticesGlobal(vector<Vec3>& verticesGlobal);
+	virtual void GetShape(char *type, scalar *data) const { vpCapsule::GetShape(type, data); type[0] = 'F'; }
+};
+
 class MyFoot5 : public MyFoot3
 {
 private:

@@ -147,7 +147,7 @@ bp::list VpWorld::get_sphere_bump_list()
     return ls;
 }
 
-static bool ColDetCapsuleSphereOneSideOnly(const scalar &r0, const scalar &h, const SE3 &T0, const scalar &r1, const SE3 &T1, Vec3 &normal, Vec3 &point, scalar &penetration)
+static bool ColDetCapsuleSphereFrontSideOnly(const scalar &r0, const scalar &h, const SE3 &T0, const scalar &r1, const SE3 &T1, Vec3 &normal, Vec3 &point, scalar &penetration)
 {
 	Vec3 dir(&T0[6]);
 	Vec3 c1(&T1[9]);
@@ -157,6 +157,23 @@ static bool ColDetCapsuleSphereOneSideOnly(const scalar &r0, const scalar &h, co
 
 	if ( t > h ) t = h;
 	if ( t < -h+r0 ) t= -h+r0;
+
+	dir *= t;
+	c0 += dir;
+
+	return ColDetSphereSphere(r0, c0, r1, c1, normal, point, penetration);
+}
+
+static bool ColDetCapsuleSphereBackSideOnly(const scalar &r0, const scalar &h, const SE3 &T0, const scalar &r1, const SE3 &T1, Vec3 &normal, Vec3 &point, scalar &penetration)
+{
+	Vec3 dir(&T0[6]);
+	Vec3 c1(&T1[9]);
+	Vec3 c0(&T0[9]);
+
+	scalar t = Inner(dir, c1 - c0);
+
+	if ( t > h-r0 ) t = h;
+	if ( t < -h ) t= -h+r0;
 
 	dir *= t;
 	c0 += dir;
@@ -271,14 +288,15 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
                         }
                     }
                 }
-                else if (type == 'C' || type == 'D' || type == 'E')
+                else if (type == 'C' || type == 'D' || type == 'E' || type == 'F')
                 {
                     scalar capsule_radius = ((vpCapsule*)pGeom)->GetRadius();
                     scalar capsule_half_height = ((vpCapsule*)pGeom)->GetHeight()/2. - capsule_radius;
 
                     bool penentrated =
                         type == 'C'? ColDetCapsuleSphere(capsule_radius, capsule_half_height, geomFrame, sphere_radius, sphere_T, normal, position, penetration) :
-                        type == 'D'? ColDetCapsuleSphereOneSideOnly(capsule_radius, capsule_half_height, geomFrame, sphere_radius, sphere_T, normal, position, penetration) :
+                        type == 'D'? ColDetCapsuleSphereFrontSideOnly(capsule_radius, capsule_half_height, geomFrame, sphere_radius, sphere_T, normal, position, penetration) :
+                        type == 'F'? ColDetCapsuleSphereBackSideOnly(capsule_radius, capsule_half_height, geomFrame, sphere_radius, sphere_T, normal, position, penetration) :
                         false;
 
                     if (penentrated)
@@ -360,13 +378,15 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 					}
 				}
 			}
-			else if (type == 'C' || type == 'D' || type == 'E')
+			else if (type == 'C' || type == 'D' || type == 'E' || type == 'F')
 			{
 				const vector<Vec3>& verticesLocal = type == 'C'? ((MyFoot3*)pGeom)->getVerticesLocal() :
 													type == 'D'? ((MyFoot4*)pGeom)->getVerticesLocal() :
+													type == 'F'? ((MyFoot6*)pGeom)->getVerticesLocal() :
 													             ((MyFoot5*)pGeom)->getVerticesLocal();
 				const vector<Vec3>& verticesGlobal = type == 'C'? ((MyFoot3*)pGeom)->getVerticesGlobal() :
 													type == 'D'? ((MyFoot4*)pGeom)->getVerticesGlobal() :
+													type == 'F'? ((MyFoot6*)pGeom)->getVerticesGlobal() :
 													             ((MyFoot5*)pGeom)->getVerticesGlobal();
 				for (std::vector<int>::size_type k = 0; k < verticesLocal.size(); ++k)
 				{
@@ -588,13 +608,15 @@ boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
 		{
 			pGeom = pBody->GetGeometry(j);
 			pGeom->GetShape(&type, data);
-			if (type == 'C')
+			if (type == 'C' || type == 'D' || type == 'E' || type == 'F')
 			{
 			    const vector<Vec3>& verticesLocal = type == 'C'? ((MyFoot3*)pGeom)->getVerticesLocal() :
 													type == 'D'? ((MyFoot4*)pGeom)->getVerticesLocal() :
+													type == 'F'? ((MyFoot6*)pGeom)->getVerticesLocal() :
 																 ((MyFoot5*)pGeom)->getVerticesLocal();
 				const vector<Vec3>& verticesGlobal = type == 'C'? ((MyFoot3*)pGeom)->getVerticesGlobal() :
 													 type == 'D'? ((MyFoot4*)pGeom)->getVerticesGlobal() :
+													 type == 'F'? ((MyFoot6*)pGeom)->getVerticesGlobal() :
 																  ((MyFoot5*)pGeom)->getVerticesGlobal();
 				for (std::vector<int>::size_type k = 0; k < verticesLocal.size(); ++k)
 				{
@@ -751,14 +773,15 @@ boost::python::tuple VpWorld::getContactInfoForcePlate( const bp::list& bodyIDsT
                         }
                     }
                 }
-                else if (type == 'C' || type == 'D' || type == 'E')
+                else if (type == 'C' || type == 'D' || type == 'E' || type == 'F')
                 {
                     scalar capsule_radius = ((vpCapsule*)pGeom)->GetRadius();
                     scalar capsule_half_height = ((vpCapsule*)pGeom)->GetHeight()/2. - capsule_radius;
 
                     bool penentrated =
                         type == 'C'? ColDetCapsuleSphere(capsule_radius, capsule_half_height, geomFrame, sphere_radius, sphere_T) :
-                        type == 'D'? ColDetCapsuleSphereOneSideOnly(capsule_radius, capsule_half_height, geomFrame, sphere_radius, sphere_T, normal, position, penetration) :
+                        type == 'D'? ColDetCapsuleSphereFrontSideOnly(capsule_radius, capsule_half_height, geomFrame, sphere_radius, sphere_T, normal, position, penetration) :
+                        type == 'F'? ColDetCapsuleSphereBackSideOnly(capsule_radius, capsule_half_height, geomFrame, sphere_radius, sphere_T, normal, position, penetration) :
                         false;
 
                     if (penentrated)
@@ -817,13 +840,15 @@ boost::python::tuple VpWorld::getContactInfoForcePlate( const bp::list& bodyIDsT
 					}
 				}
 			}
-			else if (type == 'C' || type == 'D' || type == 'E')
+			else if (type == 'C' || type == 'D' || type == 'E' || type == 'F')
 			{
 				const vector<Vec3>& verticesLocal = type == 'C'? ((MyFoot3*)pGeom)->getVerticesLocal() :
 													type == 'D'? ((MyFoot4*)pGeom)->getVerticesLocal() :
+													type == 'F'? ((MyFoot6*)pGeom)->getVerticesLocal() :
 													             ((MyFoot5*)pGeom)->getVerticesLocal();
 				const vector<Vec3>& verticesGlobal = type == 'C'? ((MyFoot3*)pGeom)->getVerticesGlobal() :
 													type == 'D'? ((MyFoot4*)pGeom)->getVerticesGlobal() :
+													type == 'F'? ((MyFoot6*)pGeom)->getVerticesGlobal() :
 													             ((MyFoot5*)pGeom)->getVerticesGlobal();
 				for (std::vector<int>::size_type k = 0; k < verticesLocal.size(); ++k)
 				{

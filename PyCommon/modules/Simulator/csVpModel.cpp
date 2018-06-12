@@ -348,7 +348,8 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 			for (int i=0; i<numGeom; i++)
 			{
 				string geomType = XS(cfgNode.attr("geoms")[i]);
-				if (0 == geomType.compare("MyFoot3") || 0 == geomType.compare("MyFoot4") || 0 == geomType.compare("MyFoot5"))
+				if (0 == geomType.compare("MyFoot3") || 0 == geomType.compare("MyFoot4")
+				    || 0 == geomType.compare("MyFoot5") || 0 == geomType.compare("MyFoot6"))
 				{
 					scalar density = XD(cfgNode.attr("geomMaterial")[i].attr("density"));
 					scalar radius = XD(cfgNode.attr("geomMaterial")[i].attr("radius"));
@@ -378,6 +379,8 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 						pNode->body.AddGeometry(new MyFoot3(radius, height), geomT);
 					else if(0 == geomType.compare("MyFoot4"))
 						pNode->body.AddGeometry(new MyFoot4(radius, height), geomT);
+					else if(0 == geomType.compare("MyFoot6"))
+						pNode->body.AddGeometry(new MyFoot6(radius, height), geomT);
 					else
 						pNode->body.AddGeometry(new MyFoot5(radius, height), geomT);
 				}
@@ -411,7 +414,8 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 		//*/	
 		///*
 			string geomType = XS(cfgNode.attr("geom"));
-			if (0 == geomType.compare("MyFoot3") || 0 == geomType.compare("MyFoot4") || 0 == geomType.compare("MyFoot5"))
+			if (0 == geomType.compare("MyFoot3") || 0 == geomType.compare("MyFoot4")
+			    || 0 == geomType.compare("MyFoot5")|| 0 == geomType.compare("MyFoot6"))
 			{
 				scalar radius = .05;
 				if( cfgNode.attr("width") != object() )
@@ -433,6 +437,8 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 					pNode->body.AddGeometry(new MyFoot3(radius, length));
 				else if(0 == geomType.compare("MyFoot4"))
 					pNode->body.AddGeometry(new MyFoot4(radius, length));
+				else if(0 == geomType.compare("MyFoot6"))
+					pNode->body.AddGeometry(new MyFoot6(radius, length));
 				else
 					pNode->body.AddGeometry(new MyFoot5(radius, length));
 				pNode->body.SetInertia(CylinderInertia(density, radius, length));
