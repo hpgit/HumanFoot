@@ -117,8 +117,8 @@ def main():
 
     # penalty method
     bodyIDsToCheck = list(range(vpWorld.getBodyNum()))
-    # mus = [1.]*len(bodyIDsToCheck)
-    mus = [.5]*len(bodyIDsToCheck)
+    mus = [1.]*len(bodyIDsToCheck)
+    # mus = [.5]*len(bodyIDsToCheck)
 
     # flat data structure
     ddth_des_flat = ype.makeFlatList(totalDOF)
@@ -521,7 +521,9 @@ def main():
         # todo that, set joint velocities to vpModel
         CM_ref_plane = footCenter
         # CM_ref_plane[1] += motionModel.getCOM()[1]
-        dL_des_plane = Kl*totalMass*(CM_ref_plane - CM_plane) - Dl*totalMass*dCM_plane
+        CM_ref = footCenter + np.array([getParamVal('com X offset'), motionModel.getCOM()[1] + getParamVal('com Y offset'), getParamVal('com Z offset')])
+        # dL_des_plane = Kl*totalMass*(CM_ref_plane - CM_plane) - Dl*totalMass*dCM_plane
+        dL_des_plane = Kl * totalMass * (CM_ref - CM) - Dl * totalMass * dCM
         # dL_des_plane[1] = 0.
 
         # angular momentum
@@ -536,7 +538,7 @@ def main():
         CP_old[0] = CP
 
         if CP is not None and dCP is not None:
-            ddCP_des = Kh*(CP_ref - CP) - Dh*(dCP)
+            ddCP_des = Kh*(CP_ref - CP) - Dh*dCP
             CP_des = CP + dCP*(1/30.) + .5*ddCP_des*((1/30.)**2)
             dH_des = np.cross((CP_des - CM), (dL_des_plane + totalMass*mm.s2v(wcfg.gravity)))
             if contactChangeCount >0:# and contactChangeType == 'DtoS':
@@ -598,8 +600,10 @@ def main():
         # body_dqs = [mm.vel2qd(body_angs[i], body_qs[i]) for i in range(len(body_angs))]
         # a_oris = [np.dot(contact_body_ori[i], mm.qdd2accel(body_ddqs[i], body_dqs[i], body_qs[i])) for i in range(len(contact_body_ori))]
         #
-        a_oriL = mm.logSO3(mm.getSO3FromVectors(np.dot(footBodyOriL, np.array([0,1,0])), np.array([0,1,0])))
-        a_oriR = mm.logSO3(mm.getSO3FromVectors(np.dot(footBodyOriR, np.array([0,1,0])), np.array([0,1,0])))
+        a_oriL = mm.logSO3(mm.getSO3FromVectors(np.dot(footBodyOriL, mm.unitY()), mm.unitY()))
+        a_oriR = mm.logSO3(mm.getSO3FromVectors(np.dot(footBodyOriR, mm.unitY()), mm.unitY()))
+
+        print(np.dot(footBodyOriL, mm.unitY()))
 
         #if contact == 3 and contactChangeCount < maxContactChangeCount/4 and contactChangeCount >=1:
             #kt_sup = 30
@@ -608,10 +612,12 @@ def main():
 
         # a_supL = np.append(kt_sup*(refFootL - footCenterL + contMotionOffset) + dt_sup*(refFootVelL - footBodyVelL), kt_sup*a_oriL+dt_sup*(refFootAngVelL-footBodyAngVelL))
         # a_supR = np.append(kt_sup*(refFootR - footCenterR + contMotionOffset) + dt_sup*(refFootVelR - footBodyVelR), kt_sup*a_oriR+dt_sup*(refFootAngVelR-footBodyAngVelR))
-        a_supL = np.append(kt_sup*(refFootL - footCenterL + contMotionOffset) - dt_sup*footBodyVelL, kt_sup*a_oriL-dt_sup*footBodyAngVelL)
-        a_supL[1] = -kt_sup*footCenterL[1] -dt_sup*footBodyVelL[1]
-        a_supR = np.append(kt_sup*(refFootR - footCenterR + contMotionOffset) - dt_sup*footBodyVelR, kt_sup*a_oriR-dt_sup*footBodyAngVelR)
-        a_supR[1] = -kt_sup*footCenterR[1] -dt_sup*footBodyVelR[1]
+        a_supL = np.append(kt_sup*(refFootL - footCenterL + contMotionOffset) - dt_sup*footBodyVelL, kt_sup*a_oriL - dt_sup*footBodyAngVelL)
+        # a_supL[1] = kt_sup*(0.028-footCenterL[1]) -dt_sup*footBodyVelL[1]
+        a_supL[1] = kt_sup*(0.0-footCenterL[1]) - dt_sup*footBodyVelL[1]
+        a_supR = np.append(kt_sup*(refFootR - footCenterR + contMotionOffset) - dt_sup*footBodyVelR, kt_sup*a_oriR - dt_sup*footBodyAngVelR)
+        # a_supR[1] = kt_sup*(0.028-footCenterR[1]) -dt_sup*footBodyVelR[1]
+        a_supR[1] = kt_sup*(0.0-footCenterR[1]) - dt_sup*footBodyVelR[1]
 
         ##if contact == 2:
         #if refFootR[1] <doubleTosingleOffset :
@@ -654,7 +660,6 @@ def main():
             config['weightMap']['LeftLeg'] = .25
             config['weightMap']['LeftFoot'] = .2
 
-
         w = mot.getTrackingWeight(DOFs, motion[0].skeleton, config['weightMap'])
 
         #if contact == 2:
@@ -672,7 +677,7 @@ def main():
             #if refFootL[1] < doubleTosingleOffset:
                 mot.addConstraint2(problem, totalDOF, JsupL, dJsupL, dth_flat, a_supL)
 
-        if contactChangeCount >0:
+        if contactChangeCount > 0:
             contactChangeCount -= 1
             if contactChangeCount == 0:
                 maxContactChangeCount = 30
