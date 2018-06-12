@@ -49,7 +49,7 @@ maxContactChangeCount = 30
 preFootCenter = [None]
 
 DART_CONTACT_ON = False
-SKELETON_ON = True
+SKELETON_ON = False
 
 
 def main():
@@ -422,8 +422,8 @@ def main():
             elif frame == start_frame:
                 foot_viewer.check_tilt_left_all()
             # elif frame == start_frame+10:
-                setParamVal('left tilt angle', -0.1)
-                setParamVal('right tilt angle', 0.1)
+                setParamVal('left tilt angle', -0.2)
+                setParamVal('right tilt angle', 0.2)
             elif frame == start_frame + 90:
                 setParamVal('left tilt angle', 0.)
                 setParamVal('right tilt angle', 0.)
@@ -454,8 +454,8 @@ def main():
             motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_0'], mm.exp(mm.unitZ(), -math.pi * left_tilt_angle))
             if motion[0].skeleton.getJointIndex('LeftFoot_foot_0_1') is not None:
                 motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1'], mm.exp(mm.unitZ(), math.pi * left_tilt_angle))
-            else:
-                motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1_0'], mm.exp(mm.unitZ(), math.pi * left_tilt_angle))
+            # else:
+            #     motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1_0'], mm.exp(mm.unitZ(), math.pi * left_tilt_angle))
             motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_1_0'], mm.exp(mm.unitZ(), -math.pi * left_tilt_angle))
             motion[frame].mulJointOrientationLocal(idDic['LeftFoot'], mm.exp(mm.unitZ(), math.pi * left_tilt_angle))
 
@@ -698,6 +698,15 @@ def main():
         a_sups = [np.append(np.dot(KT_SUP, (ref_body_pos[i] - contact_body_pos[i] + contMotionOffset)) - dt_sup * contact_body_vel[i],
                             kt_sup*a_oris[i] - dt_sup * contact_body_angvel[i]) for i in range(len(a_oris))]
 
+
+        # set up soft constraint
+        ee_idx = motion[frame].skeleton.getJointIndex('Spine')
+        ee_ori = controlModel.getBodyOrientationGlobal(ee_idx)
+        ee_ang = controlModel.getBodyAngVelocityGlobal(ee_idx)
+        J_ee = Jsys[6*ee_idx+3:6*ee_idx+6, :]
+        dJ_ee = dJsys[6*ee_idx+3:6*ee_idx+6]
+        a_ee = 20. * mm.logSO3(mm.getSO3FromVectors(np.dot(ee_ori, mm.unitZ()), mm.unitY())) - 1. * ee_ang
+
         # momentum matrix
         RS = np.dot(P, Jsys)
         R, S = np.vsplit(RS, 2)
@@ -735,6 +744,7 @@ def main():
         if dH_des is not None:
             mot.addLinearTerms(problem, totalDOF, Bl, dL_des_plane, R, r_bias)
             mot.addAngularTerms(problem, totalDOF, Bh, dH_des, S, s_bias)
+            # mot.addEndEffectorTerms(problem, totalDOF, 1., J_ee, dJ_ee, dth, a_ee)
 
             if True:
                 for c_idx in range(len(contact_ids)):
@@ -781,16 +791,19 @@ def main():
 
         controlModel_ik.set_q(controlModel.get_q())
 
-        if foot_viewer is not None:
-            foot_viewer.foot_pressure_gl_window.refresh_foot_contact_info(frame, vpWorld, bodyIDsToCheck, mus, Ks, Ds)
-            foot_viewer.foot_pressure_gl_window.goToFrame(frame)
-
         # rendering
+        bodyIDs, geomIDs, positionLocalsForGeom = vpWorld.getContactInfoForcePlate(bodyIDsToCheck)
         for foot_seg_id in footIdlist:
             control_model_renderer.body_colors[foot_seg_id] = (255, 240, 255)
+            control_model_renderer.geom_colors[foot_seg_id] = [(255, 240, 255)] * controlModel.getBodyGeomNum(foot_seg_id)
 
-        for contact_id in contact_ids:
-            control_model_renderer.body_colors[contact_id] = (255, 0, 0)
+        for i in range(len(geomIDs)):
+            control_model_renderer.geom_colors[bodyIDs[i]][geomIDs[i]] = (255, 0, 0)
+        # for foot_seg_id in footIdlist:
+        #     control_model_renderer.body_colors[foot_seg_id] = (255, 240, 255)
+        #
+        # for contact_id in contact_ids:
+        #     control_model_renderer.body_colors[contact_id] = (255, 0, 0)
 
 
         rd_footCenter[0] = footCenter
@@ -874,6 +887,12 @@ def main():
 
             skeleton_renderer.appendFrameState(Ts)
 
+    def postFrameCallback_Always(frame):
+        if foot_viewer is not None:
+            foot_viewer.foot_pressure_gl_window.refresh_foot_contact_info(frame, vpWorld, bodyIDsToCheck, mus, Ks, Ds)
+            foot_viewer.foot_pressure_gl_window.goToFrame(frame)
+
+    viewer.setPostFrameCallback_Always(postFrameCallback_Always)
     viewer.setSimulateCallback(simulateCallback)
     viewer.startTimer(1/30.)
     # viewer.play()

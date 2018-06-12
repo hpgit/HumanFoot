@@ -794,11 +794,18 @@ def main():
             foot_viewer.foot_pressure_gl_window.goToFrame(frame)
 
         # rendering
+        bodyIDs, geomIDs, positionLocalsForGeom = vpWorld.getContactInfoForcePlate(bodyIDsToCheck)
         for foot_seg_id in footIdlist:
             control_model_renderer.body_colors[foot_seg_id] = (255, 240, 255)
+            control_model_renderer.geom_colors[foot_seg_id] = [(255, 240, 255)] * controlModel.getBodyGeomNum(foot_seg_id)
 
-        for contact_id in contact_ids:
-            control_model_renderer.body_colors[contact_id] = (255, 0, 0)
+        for i in range(len(geomIDs)):
+            control_model_renderer.geom_colors[bodyIDs[i]][geomIDs[i]] = (255, 0, 0)
+        # for foot_seg_id in footIdlist:
+        #     control_model_renderer.body_colors[foot_seg_id] = (255, 240, 255)
+        #
+        # for contact_id in contact_ids:
+        #     control_model_renderer.body_colors[contact_id] = (255, 0, 0)
 
 
         rd_footCenter[0] = footCenter

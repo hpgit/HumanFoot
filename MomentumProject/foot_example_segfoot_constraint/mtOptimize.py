@@ -41,8 +41,8 @@ def addAngularTerms(problem, totalDOF, weight, dH_des, S, s_bias):
 
 
 def addEndEffectorTerms(problem, totalDOF, weight, J, dJ, dth, ddP_des):
-    # minimize | ddP_des - (J*ddth + dJ*dth)|^2
-    problem.addObjective_matrix(J, ddP_des - np.dot(dJ, dth), weight)
+    # minimize | ddP_des - (J*ddth + dJ)|^2
+    problem.addObjective_matrix(J, ddP_des - dJ, weight)
 
 
 def addSoftPointConstraintTerms(problem, totalDOF, weight, ddP_des, Q, q_bias):

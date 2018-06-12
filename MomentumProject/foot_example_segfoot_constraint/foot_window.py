@@ -1,3 +1,6 @@
+import os
+from time import gmtime, strftime
+from PyCommon.modules.GUI.csDump import dump_png
 import numpy as np
 
 from fltk import *
@@ -398,6 +401,54 @@ class FootContactGlWindow(Fl_Gl_Window):
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
 
+    def test(self):
+        FramebufferName = 0
+        glGenFramebuffers(1, FramebufferName)
+        glBindFramebuffer(GL_FRAMEBUFFER, FramebufferName)
+        glGenTextures(1, renderedTexture)
+
+        glBindTexture(GL_TEXTURE_2D, renderedTexture)
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 768, 0, GL_RGB, GL_UNSIGNED_BYTE, 0)
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+
+        glGenRenderbuffers(1, depthrenderbuffer)
+        glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer)
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1024, 768)
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer)
+
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderedTexture, 0);
+
+        DrawBuffers[1] = {GL_COLOR_ATTACHMENT0}
+        glDrawBuffers(1, DrawBuffers)
+
+        glBindFramebuffer(GL_FRAMEBUFFER, FramebufferName);
+        glViewport(0, 0, 1024, 768);
+
+    def dump(self, ptr, parent):
+        session_name = parent.dump_name.value()
+        if len(session_name) == 0:
+            session_name = '_movtmp'
+        dumping_session = session_name + strftime("%Y%m%d%H%M")
+        dumping_start_frame = int(parent.dump_start_frame.value())
+        dumping_end_frame = int(parent.dump_end_frame.value())
+
+        if not os.path.exists('dump/'+dumping_session):
+            os.makedirs('dump/'+dumping_session)
+
+        for frame in range(dumping_start_frame, dumping_end_frame):
+            self.goToFrame(frame)
+            dump_png('dump/' + dumping_session + '/' + '{:04d}'.format(frame-dumping_start_frame) + ".png", self.w(), self.h())
+
+        os.system('ffmpeg -loglevel 0 -framerate 30 -i dump/'+dumping_session+'/%04d.png -vcodec libx264 -crf 20 -pix_fmt yuv420p dump/' + dumping_session+'.mp4')
+        os.system('ffplay -loglevel 0 dump/'+dumping_session+'.mp4 &')
+
+    def dump_single(self):
+        dump_png('dump_force_plate/'+'{:04d}'.format(self.frame) + ".png", self.w(), self.h())
+
+
 
 class FootWindow(Fl_Window):
     def __init__(self, x, y, w, h, title, model):
@@ -430,12 +481,14 @@ class FootWindow(Fl_Window):
         # self.foot_pressure_gl_window = FootContactGlWindow(50, 150, 200, 200, model)
         self.foot_pressure_gl_window = FootContactGlWindow(50, 150, self.h()-300, self.h()-300, model)
 
-        # self.check_op_l.value(True)
-        # self.check_om_l.value(True)
-        # self.check_h_l.value(True)
-        # self.check_op_r.value(True)
-        # self.check_om_r.value(True)
-        # self.check_h_r.value(True)
+        self.dump_btn = Fl_Button(250, 10, 30, 20, 'dump')
+        self.dump_btn.callback(self.foot_pressure_gl_window.dump, self)
+        self.dump_start_frame = Fl_Value_Input(250, 40, 40, 20, 's')
+        self.dump_start_frame.value(1)
+        self.dump_end_frame = Fl_Value_Input(250, 70, 40, 20, 'e')
+        self.dump_end_frame.value(300)
+        self.dump_name = Fl_Input(250, 100, 100, 20, 'name')
+        self.dump_name.value('_movtmp')
 
         self.end()
 

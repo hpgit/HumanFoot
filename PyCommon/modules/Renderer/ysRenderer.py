@@ -311,6 +311,7 @@ class VpModelRenderer(Renderer):
         self._lineWidth = lineWidth
         self.rc.setPolygonStyle(polygonStyle)
         self.body_colors = [color] * self._model.getBodyNum()
+        self.geom_colors = [None] * self._model.getBodyNum()
         self.savable = True
 
     def render(self, renderType=RENDER_OBJECT):
@@ -384,10 +385,10 @@ class VpModelRenderer(Renderer):
             geom_sizes = self._model.getBodyGeomsSize(body_idx)
             geom_frames = self._model.getBodyGeomsGlobalFrame(body_idx)
             # geom_colors = self._color
-            geom_colors = self.body_colors[body_idx]
+            geom_colors = [self.body_colors[body_idx]]*self._model.getBodyGeomNum(body_idx) if self.geom_colors[body_idx] is None else self.geom_colors[body_idx]
 
             for i in range(self._model.getBodyGeomNum(body_idx)):
-                state.append((body_idx, geom_types[i], geom_frames[i], geom_sizes[i], geom_colors))
+                state.append((body_idx, geom_types[i], geom_frames[i], geom_sizes[i], geom_colors[i]))
         return state
 
     def renderState(self, state, renderType=RENDER_OBJECT):

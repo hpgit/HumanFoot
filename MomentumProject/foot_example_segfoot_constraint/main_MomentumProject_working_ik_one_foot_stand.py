@@ -49,7 +49,7 @@ maxContactChangeCount = 30
 preFootCenter = [None]
 
 DART_CONTACT_ON = False
-SKELETON_ON = True
+SKELETON_ON = False
 
 
 def main():
@@ -246,11 +246,11 @@ def main():
         skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), color=(230, 230, 230), offset_draw=(0., -0.0, 0.))
         viewer.doc.addRenderer('skeleton', skeleton_renderer)
     viewer.doc.addRenderer('rd_footCenter', yr.PointsRenderer(rd_footCenter))
-    viewer.doc.setRendererVisible('rd_footCenter', False)
+    # viewer.doc.setRendererVisible('rd_footCenter', False)
     viewer.doc.addRenderer('rd_footCenter_ref', yr.PointsRenderer(rd_footCenter_ref))
     viewer.doc.setRendererVisible('rd_footCenter_ref', False)
     viewer.doc.addRenderer('rd_CM_plane', yr.PointsRenderer(rd_CM_plane, (255,255,0)))
-    viewer.doc.setRendererVisible('rd_CM_plane', False)
+    # viewer.doc.setRendererVisible('rd_CM_plane', False)
     viewer.doc.addRenderer('rd_CP', yr.PointsRenderer(rd_CP, (0,255,0)))
     viewer.doc.setRendererVisible('rd_CP', False)
     viewer.doc.addRenderer('rd_CP_des', yr.PointsRenderer(rd_CP_des, (255,0,255)))
@@ -416,16 +416,36 @@ def main():
     def simulateCallback(frame):
         # print(frame)
         # print(motion[frame].getJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0']))
-        if True:
+        if False:
             if frame == start_frame:
                 foot_viewer.check_om_r.value(False)
+                foot_viewer.check_h_r.value(False)
             elif frame == start_frame + 20:
                 foot_viewer.check_op_r.value(False)
+            elif frame == start_frame + 40:
+                setParamVal('com X offset', 0.04)
             elif frame == start_frame + 70:
+                setParamVal('com X offset', 0.00)
                 foot_viewer.check_ip_r.value(False)
             elif frame == start_frame + 455:
                 foot_viewer.check_ip_r.value(True)
             elif frame == start_frame + 515:
+                foot_viewer.check_op_r.value(True)
+                foot_viewer.check_om_r.value(True)
+        if True:
+            if frame == start_frame:
+                foot_viewer.check_om_r.value(False)
+                foot_viewer.check_h_r.value(False)
+            elif frame == start_frame + 15:
+                foot_viewer.check_op_r.value(False)
+            elif frame == start_frame + 30:
+                setParamVal('com X offset', 0.04)
+            elif frame == start_frame + 45:
+                setParamVal('com X offset', 0.00)
+                foot_viewer.check_ip_r.value(False)
+            elif frame == start_frame + 200:
+                foot_viewer.check_ip_r.value(True)
+            elif frame == start_frame + 230:
                 foot_viewer.check_op_r.value(True)
                 foot_viewer.check_om_r.value(True)
 
@@ -674,6 +694,7 @@ def main():
         body_angs = [np.dot(contact_body_ori[i], contact_body_angvel[i]) for i in range(len(contact_body_ori))]
         body_dqs = [mm.vel2qd(body_angs[i], body_qs[i]) for i in range(len(body_angs))]
         a_oris = [np.dot(contact_body_ori[i], mm.qdd2accel(body_ddqs[i], body_dqs[i], body_qs[i])) for i in range(len(contact_body_ori))]
+        a_oris = list(map(mm.logSO3, [np.dot(np.dot(ref_body_ori[i], mm.getSO3FromVectors(np.dot(ref_body_ori[i], up_vec_in_each_link[contact_ids[i]]), mm.unitY())), contact_body_ori[i].T) for i in range(len(contact_body_ori))]))
 
         # body_ddq = body_ddqs[0]
         # body_ori = contact_body_ori[0]
@@ -683,15 +704,28 @@ def main():
         # body_dq = mm.vel2qd(body_ang, body_q)
         # a_ori = np.dot(body_ori, mm.qdd2accel(body_ddq, body_dq, body_q))
 
-        # KT_SUP = np.diag([kt_sup/10., kt_sup, kt_sup/10.])
+        KT_SUP = np.diag([kt_sup/10., kt_sup, kt_sup/10.])
 
         # a_oris = list(map(mm.logSO3, [mm.getSO3FromVectors(np.dot(body_ori, mm.unitY()), mm.unitY()) for body_ori in contact_body_ori]))
         # a_sups = [np.append(kt_sup*(ref_body_pos[i] - contact_body_pos[i] + contMotionOffset) + dt_sup*(ref_body_vel[i] - contact_body_vel[i]),
         #                     kt_sup*a_oris[i]+dt_sup*(ref_body_angvel[i]-contact_body_angvel[i])) for i in range(len(a_oris))]
-        a_sups = [np.append(kt_sup*(ref_body_pos[i] - contact_body_pos[i] + contMotionOffset) - dt_sup * contact_body_vel[i],
-                            kt_sup*a_oris[i] - dt_sup * contact_body_angvel[i]) for i in range(len(a_oris))]
-        # a_sups = [np.append(np.dot(KT_SUP, (ref_body_pos[i] - contact_body_pos[i] + contMotionOffset)) - dt_sup * contact_body_vel[i],
+        # a_sups = [np.append(kt_sup*(ref_body_pos[i] - contact_body_pos[i] + contMotionOffset) - dt_sup * contact_body_vel[i],
         #                     kt_sup*a_oris[i] - dt_sup * contact_body_angvel[i]) for i in range(len(a_oris))]
+        a_sups = [np.append(np.dot(KT_SUP, (ref_body_pos[i] - contact_body_pos[i] + contMotionOffset)) - dt_sup * contact_body_vel[i],
+                            kt_sup*a_oris[i] - dt_sup * contact_body_angvel[i]) for i in range(len(a_oris))]
+
+        # set up soft constraint
+        ee_idx = idDic['RightFoot']
+        ee_ori = controlModel.getBodyOrientationGlobal(ee_idx)
+        ee_pos = controlModel.getBodyPositionGlobal(ee_idx)
+        ee_ang = controlModel.getBodyAngVelocityGlobal(ee_idx)
+        # J_ee = np.vstack((Jsys[6*ee_idx:6*ee_idx+1, :], Jsys[6*ee_idx+2:6*ee_idx+3, :]))
+        # dJ_ee = np.hstack((dJsys[6*ee_idx:6*ee_idx+1], dJsys[6*ee_idx+2:6*ee_idx+3]))
+        J_ee = Jsys[6*ee_idx:6*ee_idx+1, :]
+        dJ_ee = dJsys[6*ee_idx:6*ee_idx+1]
+        # a_ee = 20. * mm.logSO3(mm.getSO3FromVectors(np.dot(ee_ori, mm.unitZ()), mm.unitY())) - 1. * ee_ang
+        a_ee = -10.*(controlModel.getBodyPositionGlobal(idDic['LeftFoot'])[0] - ee_pos[0])
+        # print(controlModel.getBodyPositionGlobal(idDic['LeftFoot']))
 
         # momentum matrix
         RS = np.dot(P, Jsys)
@@ -730,6 +764,8 @@ def main():
         if dH_des is not None:
             mot.addLinearTerms(problem, totalDOF, Bl, dL_des_plane, R, r_bias)
             mot.addAngularTerms(problem, totalDOF, Bh, dH_des, S, s_bias)
+            if True and frame > start_frame + 60:
+                mot.addEndEffectorTerms(problem, totalDOF, 1., J_ee, dJ_ee, dth, a_ee)
 
             if True:
                 for c_idx in range(len(contact_ids)):
@@ -776,16 +812,20 @@ def main():
 
         controlModel_ik.set_q(controlModel.get_q())
 
-        if foot_viewer is not None:
-            foot_viewer.foot_pressure_gl_window.refresh_foot_contact_info(frame, vpWorld, bodyIDsToCheck, mus, Ks, Ds)
-            foot_viewer.foot_pressure_gl_window.goToFrame(frame)
-
         # rendering
+        bodyIDs, geomIDs, positionLocalsForGeom = vpWorld.getContactInfoForcePlate(bodyIDsToCheck)
         for foot_seg_id in footIdlist:
             control_model_renderer.body_colors[foot_seg_id] = (255, 240, 255)
+            control_model_renderer.geom_colors[foot_seg_id] = [(255, 240, 255)] * controlModel.getBodyGeomNum(foot_seg_id)
 
-        for contact_id in contact_ids:
-            control_model_renderer.body_colors[contact_id] = (255, 0, 0)
+        for i in range(len(geomIDs)):
+            control_model_renderer.geom_colors[bodyIDs[i]][geomIDs[i]] = (255, 0, 0)
+
+        # for foot_seg_id in footIdlist:
+        #     control_model_renderer.body_colors[foot_seg_id] = (255, 240, 255)
+
+        # for contact_id in contact_ids:
+        #     control_model_renderer.body_colors[contact_id] = (255, 0, 0)
 
 
         rd_footCenter[0] = footCenter
@@ -869,6 +909,12 @@ def main():
 
             skeleton_renderer.appendFrameState(Ts)
 
+    def postFrameCallback_Always(frame):
+        if foot_viewer is not None:
+            foot_viewer.foot_pressure_gl_window.refresh_foot_contact_info(frame, vpWorld, bodyIDsToCheck, mus, Ks, Ds)
+            foot_viewer.foot_pressure_gl_window.goToFrame(frame)
+
+    viewer.setPostFrameCallback_Always(postFrameCallback_Always)
     viewer.setSimulateCallback(simulateCallback)
     viewer.startTimer(1/30.)
     # viewer.play()
@@ -878,7 +924,7 @@ def main():
     foot_viewer.show()
     foot_viewer.check_left_seg()
     foot_viewer.check_right_seg()
-    foot_viewer.check_heel_off()
+    # foot_viewer.check_heel_off()
     viewer.motionViewWnd.goToFrame(0)
 
     Fl.run()

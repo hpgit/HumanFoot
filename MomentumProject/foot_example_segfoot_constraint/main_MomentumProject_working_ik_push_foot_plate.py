@@ -903,7 +903,7 @@ def main():
     # viewer.play()
     viewer.show()
 
-    foot_viewer = FootWindow(viewer.x() + viewer.w() + 20, viewer.y(), 300, 500, 'foot contact modifier', controlModel)
+    foot_viewer = FootWindow(viewer.x() + viewer.w() + 20, viewer.y(), 800, 800, 'foot contact modifier', controlModel)
     foot_viewer.show()
     foot_viewer.check_all_seg()
     viewer.motionViewWnd.goToFrame(0)

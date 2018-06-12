@@ -801,16 +801,19 @@ def main():
 
         controlModel_ik.set_q(controlModel.get_q())
 
-        if foot_viewer is not None:
-            foot_viewer.foot_pressure_gl_window.refresh_foot_contact_info(frame, vpWorld, bodyIDsToCheck, mus, Ks, Ds)
-            foot_viewer.foot_pressure_gl_window.goToFrame(frame)
-
         # rendering
+        bodyIDs, geomIDs, positionLocalsForGeom = vpWorld.getContactInfoForcePlate(bodyIDsToCheck)
         for foot_seg_id in footIdlist:
             control_model_renderer.body_colors[foot_seg_id] = (255, 240, 255)
+            control_model_renderer.geom_colors[foot_seg_id] = [(255, 240, 255)] * controlModel.getBodyGeomNum(foot_seg_id)
 
-        for contact_id in contact_ids:
-            control_model_renderer.body_colors[contact_id] = (255, 0, 0)
+        for i in range(len(geomIDs)):
+            control_model_renderer.geom_colors[bodyIDs[i]][geomIDs[i]] = (255, 0, 0)
+        # for foot_seg_id in footIdlist:
+        #     control_model_renderer.body_colors[foot_seg_id] = (255, 240, 255)
+        #
+        # for contact_id in contact_ids:
+        #     control_model_renderer.body_colors[contact_id] = (255, 0, 0)
 
 
         rd_footCenter[0] = footCenter
@@ -894,12 +897,20 @@ def main():
 
             skeleton_renderer.appendFrameState(Ts)
 
+    def postFrameCallback_Always(frame):
+        if foot_viewer is not None:
+            foot_viewer.foot_pressure_gl_window.refresh_foot_contact_info(frame, vpWorld, bodyIDsToCheck, mus, Ks, Ds)
+            foot_viewer.foot_pressure_gl_window.goToFrame(frame)
+
     viewer.setSimulateCallback(simulateCallback)
+    viewer.setPostFrameCallback_Always(postFrameCallback_Always)
     viewer.startTimer(1/30.)
     # viewer.play()
     viewer.show()
 
-    foot_viewer = FootWindow(viewer.x() + viewer.w() + 20, viewer.y(), 300, 500, 'foot contact modifier', controlModel)
+    # foot_viewer = FootWindow(viewer.x() + viewer.w() + 20, viewer.y(), 800, 800, 'foot contact modifier', controlModel)
+    # foot_viewer = FootWindow(viewer.x() + viewer.w() + 20, viewer.y(), 300, 500, 'foot contact modifier', controlModel)
+    foot_viewer = FootWindow(viewer.x() + viewer.w() + 20, viewer.y(), 1380, 1380, 'foot contact modifier', controlModel)
     foot_viewer.show()
     # foot_viewer.check_left_seg()
     # foot_viewer.check_tiptoe_right()
