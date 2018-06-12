@@ -358,8 +358,8 @@ class GlWindow(Fl_Gl_Window):
                     glColor4f(0.3, 0.3, 0.3, 0.5)
                 else:
                     # glColor4f(0.9, 0.9, 0.9, 0.5)
-                    glColor4f(0.5, 0.5, 0.5, 0.5)
-                    # glColor4f(0.3, 0.3, 0.3, 0.5)
+                    # glColor4f(0.5, 0.5, 0.5, 0.5)
+                    glColor4f(0.3, 0.3, 0.3, 0.5)
                 glVertex3d(xp,      self.planeHeight-h, yp)
                 glVertex3d(xp,      self.planeHeight-h, yp + yd)
                 glVertex3d(xp + xd, self.planeHeight-h, yp + yd)
