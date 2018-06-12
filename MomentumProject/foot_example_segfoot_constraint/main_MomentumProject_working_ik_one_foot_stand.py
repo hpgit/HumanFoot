@@ -49,7 +49,7 @@ maxContactChangeCount = 30
 preFootCenter = [None]
 
 DART_CONTACT_ON = False
-SKELETON_ON = False
+SKELETON_ON = True
 
 
 def main():
@@ -228,7 +228,7 @@ def main():
 
     # viewer = ysv.SimpleViewer()
     # viewer = hsv.hpSimpleViewer(rect=[0, 0, 1024, 768], viewForceWnd=False)
-    viewer = hsv.hpSimpleViewer(rect=[0, 0, 1920+300, 1+1080+55], viewForceWnd=False)
+    viewer = hsv.hpSimpleViewer(rect=[0, 0, 960+300, 1+1080+55], viewForceWnd=False)
     # viewer.record(False)
     # viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,255,255), yr.LINK_BONE))
     viewer.doc.addObject('motion', motion)
@@ -246,11 +246,11 @@ def main():
         skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), color=(230, 230, 230), offset_draw=(0., -0.0, 0.))
         viewer.doc.addRenderer('skeleton', skeleton_renderer)
     viewer.doc.addRenderer('rd_footCenter', yr.PointsRenderer(rd_footCenter))
-    # viewer.doc.setRendererVisible('rd_footCenter', False)
+    viewer.doc.setRendererVisible('rd_footCenter', False)
     viewer.doc.addRenderer('rd_footCenter_ref', yr.PointsRenderer(rd_footCenter_ref))
     viewer.doc.setRendererVisible('rd_footCenter_ref', False)
     viewer.doc.addRenderer('rd_CM_plane', yr.PointsRenderer(rd_CM_plane, (255,255,0)))
-    # viewer.doc.setRendererVisible('rd_CM_plane', False)
+    viewer.doc.setRendererVisible('rd_CM_plane', False)
     viewer.doc.addRenderer('rd_CP', yr.PointsRenderer(rd_CP, (0,255,0)))
     viewer.doc.setRendererVisible('rd_CP', False)
     viewer.doc.addRenderer('rd_CP_des', yr.PointsRenderer(rd_CP_des, (255,0,255)))
@@ -306,9 +306,9 @@ def main():
     viewer.objectInfoWnd.add1DSlider("Bh", 0., 1., .001, initBh)
     viewer.objectInfoWnd.add1DSlider("SupKt", 0., 300., 0.1, initSupKt)
     viewer.objectInfoWnd.add1DSlider("Fm", 0., 1000., 10., initFm)
-    viewer.objectInfoWnd.add1DSlider("com X offset", -1., 1., 0.01, initComX)
-    viewer.objectInfoWnd.add1DSlider("com Y offset", -1., 1., 0.01, initComY)
-    viewer.objectInfoWnd.add1DSlider("com Z offset", -1., 1., 0.01, initComZ)
+    viewer.objectInfoWnd.add1DSlider("com X offset", -1., 1., 0.001, initComX)
+    viewer.objectInfoWnd.add1DSlider("com Y offset", -1., 1., 0.001, initComY)
+    viewer.objectInfoWnd.add1DSlider("com Z offset", -1., 1., 0.001, initComZ)
     viewer.objectInfoWnd.add1DSlider("tiptoe angle", -0.5, .5, 0.001, 0.)
     viewer.objectInfoWnd.add1DSlider("left tilt angle", -0.5, .5, 0.001, 0.)
     viewer.objectInfoWnd.add1DSlider("right tilt angle", -0.5, .5, 0.001, 0.)
@@ -444,10 +444,15 @@ def main():
                 setParamVal('com X offset', 0.00)
                 foot_viewer.check_ip_r.value(False)
             elif frame == start_frame + 200:
+                setParamVal('com X offset', 0.04)
                 foot_viewer.check_ip_r.value(True)
             elif frame == start_frame + 230:
+                setParamVal('com X offset', 0.08)
                 foot_viewer.check_op_r.value(True)
                 foot_viewer.check_om_r.value(True)
+                foot_viewer.check_h_r.value(True)
+            elif start_frame + 240 <= frame <= start_frame + 320:
+                setParamVal('com X offset', -(frame-start_frame-320)*0.001)
 
         # hfi.footAdjust(motion[frame], idDic, SEGMENT_FOOT_MAG=.03, SEGMENT_FOOT_RAD=.015, baseHeight=0.02)
 
@@ -721,10 +726,10 @@ def main():
         ee_ang = controlModel.getBodyAngVelocityGlobal(ee_idx)
         # J_ee = np.vstack((Jsys[6*ee_idx:6*ee_idx+1, :], Jsys[6*ee_idx+2:6*ee_idx+3, :]))
         # dJ_ee = np.hstack((dJsys[6*ee_idx:6*ee_idx+1], dJsys[6*ee_idx+2:6*ee_idx+3]))
-        J_ee = Jsys[6*ee_idx:6*ee_idx+1, :]
-        dJ_ee = dJsys[6*ee_idx:6*ee_idx+1]
+        J_ee = Jsys[6*ee_idx+2:6*ee_idx+3, :]
+        dJ_ee = dJsys[6*ee_idx+2:6*ee_idx+3]
         # a_ee = 20. * mm.logSO3(mm.getSO3FromVectors(np.dot(ee_ori, mm.unitZ()), mm.unitY())) - 1. * ee_ang
-        a_ee = -10.*(controlModel.getBodyPositionGlobal(idDic['LeftFoot'])[0] - ee_pos[0])
+        a_ee = 100.*(controlModel.getBodyPositionGlobal(idDic['LeftFoot'])[2] - ee_pos[2])
         # print(controlModel.getBodyPositionGlobal(idDic['LeftFoot']))
 
         # momentum matrix
@@ -764,7 +769,7 @@ def main():
         if dH_des is not None:
             mot.addLinearTerms(problem, totalDOF, Bl, dL_des_plane, R, r_bias)
             mot.addAngularTerms(problem, totalDOF, Bh, dH_des, S, s_bias)
-            if True and frame > start_frame + 60:
+            if start_frame + 60 < frame < start_frame + 200:
                 mot.addEndEffectorTerms(problem, totalDOF, 1., J_ee, dJ_ee, dth, a_ee)
 
             if True:

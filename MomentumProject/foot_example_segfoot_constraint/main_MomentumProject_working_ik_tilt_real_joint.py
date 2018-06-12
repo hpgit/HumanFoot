@@ -49,7 +49,7 @@ maxContactChangeCount = 30
 preFootCenter = [None]
 
 DART_CONTACT_ON = False
-SKELETON_ON = False
+SKELETON_ON = True
 
 
 def main():
@@ -622,6 +622,8 @@ def main():
             footCenter = preFootCenter[0] + (maxContactChangeCount - contactChangeCount)*(footCenter-preFootCenter[0])/maxContactChangeCount
         else:
             preFootCenter[0] = footCenter.copy()
+
+        # footCenter = np.array([1.54049, 0., -0.29345])
 
         # linear momentum
         # TODO:
