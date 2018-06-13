@@ -15,6 +15,8 @@ public:
 	double _lockingVel;
 	std::vector<scalar> sphere_bump_radius;
 	std::vector<Vec3> sphere_bump_pos;
+	std::vector<Vec3> plane_normal;
+	std::vector<Vec3> plane_origin;
 
 private:
 	bool _calcPenaltyForce(const vpBody* pBody, const Vec3& position, const Vec3& velocity, Vec3& force, scalar Ks, scalar Ds, scalar mu);
@@ -26,7 +28,12 @@ public:	// expose to python
 	void initialize();
 	void setOpenMP();
 	void add_sphere_bump(const scalar radius, const object& pos);
+	void set_sphere_bump(int index, const scalar radius, const object& pos);
 	bp::list get_sphere_bump_list();
+
+	void add_plane(const object& normal, const object& pos);
+	void set_plane(int index, const object& normal, const object& pos);
+
 	bp::tuple getContactPoints(const bp::list& bodyIDsToCheck);
 	bp::tuple getContactInfoForcePlate(const bp::list& bodyIDsToCheck);
 	bp::tuple calcPenaltyForce(const bp::list& bodyIDsToCheck, const bp::list& mus, scalar Ks, scalar Ds);

@@ -31,7 +31,7 @@ def create_vchain_5():
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
-    stepsPerFrame = 60
+    stepsPerFrame = 120
     wcfg.timeStep = (1/30.)/stepsPerFrame
 
     # parameter
@@ -74,8 +74,9 @@ def create_biped_zygote():
     yme.rotateJointLocal(motion, 'RightFoot', mm.exp(mm.v3(1,0.5,0), -.6), False)
 
     yme.updateGlobalT(motion)
-    #motion.translateByOffset((0, -0.07, 0))
+    # motion.translateByOffset((0, -0.07, 0))
 
+    # motion.translateByOffset((0, -0.06, 0))
     motion.extend([motion[-1]]*300)
     del motion[:270]
     for i in range(2000):

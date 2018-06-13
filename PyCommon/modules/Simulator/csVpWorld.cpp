@@ -24,6 +24,7 @@ BOOST_PYTHON_MODULE(csVpWorld)
 		.def("step", &VpWorld::step)
 		.def("initialize", &VpWorld::initialize)
 		.def("add_sphere_bump", &VpWorld::add_sphere_bump)
+		.def("set_sphere_bump", &VpWorld::set_sphere_bump)
 		.def("get_sphere_bump_list", &VpWorld::get_sphere_bump_list)
 		.def("calcPenaltyForce", &VpWorld::calcPenaltyForce)
 		.def("applyPenaltyForce", &VpWorld::applyPenaltyForce)
@@ -138,6 +139,11 @@ void VpWorld::add_sphere_bump(const scalar radius, const object& pos)
     this->sphere_bump_pos.push_back(pyVec3_2_Vec3(pos));
 }
 
+void VpWorld::set_sphere_bump(int index, const scalar radius, const object& pos)
+{
+    this->sphere_bump_radius[index] = radius;
+    this->sphere_bump_pos[index] = pyVec3_2_Vec3(pos);
+}
 
 bp::list VpWorld::get_sphere_bump_list()
 {
@@ -145,6 +151,18 @@ bp::list VpWorld::get_sphere_bump_list()
     for(std::vector<scalar>::size_type i=0; i < this->sphere_bump_radius.size(); i++)
         ls.append(bp::make_tuple(this->sphere_bump_radius[i], Vec3_2_pyVec3(this->sphere_bump_pos[i])));
     return ls;
+}
+
+void VpWorld::add_plane(const object& normal, const object& pos)
+{
+    this->plane_normal.push_back(pyVec3_2_Vec3(normal));
+    this->plane_origin.push_back(pyVec3_2_Vec3(pos));
+}
+
+void VpWorld::set_plane(int index, const object& normal, const object& pos)
+{
+    this->plane_normal[index] = pyVec3_2_Vec3(normal);
+    this->plane_origin[index] = pyVec3_2_Vec3(pos);
 }
 
 static bool ColDetCapsuleSphereFrontSideOnly(const scalar &r0, const scalar &h, const SE3 &T0, const scalar &r1, const SE3 &T1, Vec3 &normal, Vec3 &point, scalar &penetration)
@@ -779,7 +797,7 @@ boost::python::tuple VpWorld::getContactInfoForcePlate( const bp::list& bodyIDsT
                     scalar capsule_half_height = ((vpCapsule*)pGeom)->GetHeight()/2. - capsule_radius;
 
                     bool penentrated =
-                        type == 'C'? ColDetCapsuleSphere(capsule_radius, capsule_half_height, geomFrame, sphere_radius, sphere_T) :
+                        type == 'C'? ColDetCapsuleSphere(capsule_radius, capsule_half_height, geomFrame, sphere_radius, sphere_T, normal, position, penetration) :
                         type == 'D'? ColDetCapsuleSphereFrontSideOnly(capsule_radius, capsule_half_height, geomFrame, sphere_radius, sphere_T, normal, position, penetration) :
                         type == 'F'? ColDetCapsuleSphereBackSideOnly(capsule_radius, capsule_half_height, geomFrame, sphere_radius, sphere_T, normal, position, penetration) :
                         false;

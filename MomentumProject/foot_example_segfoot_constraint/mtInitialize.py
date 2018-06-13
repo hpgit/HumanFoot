@@ -241,19 +241,19 @@ def create_biped(motionName='wd2_n_kick.bvh', SEGMENT_FOOT=True, SEGMENT_FOOT_MA
             calcaneus_vector = np.array([-2.784, -3.463, 4.52]) - calcaneus_origin
             node.addGeom('MyFoot5', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, calcaneus_origin - body_vector/2. + calcaneus_vector/2.),
                                      np.dot(body_ori.T, np.dot(mm.getSO3FromVectors(body_vector, calcaneus_vector), body_ori))],
-                         ypc.CapsuleMaterial(0.00001, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(calcaneus_vector) + 2*SEGMENT_FOOT_RAD))
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(calcaneus_vector) + 2*SEGMENT_FOOT_RAD))
             calcaneus_vector = body_vector - third_metatarsal_vector - calcaneus_origin
             node.addGeom('MyFoot5', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, calcaneus_origin - body_vector/2. + calcaneus_vector/2.),
                                      np.dot(body_ori.T, np.dot(mm.getSO3FromVectors(body_vector, calcaneus_vector), body_ori))],
-                         ypc.CapsuleMaterial(0.00001, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(calcaneus_vector) + 2*SEGMENT_FOOT_RAD))
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(calcaneus_vector) + 2*SEGMENT_FOOT_RAD))
             calcaneus_vector = 1.8*mm.unitX() + body_vector - second_metatarsal_vector - calcaneus_origin
             node.addGeom('MyFoot5', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, calcaneus_origin - body_vector/2. + calcaneus_vector/2.),
                                      np.dot(body_ori.T, np.dot(mm.getSO3FromVectors(body_vector, calcaneus_vector), body_ori))],
-                         ypc.CapsuleMaterial(0.00001, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(calcaneus_vector) + 2*SEGMENT_FOOT_RAD))
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(calcaneus_vector) + 2*SEGMENT_FOOT_RAD))
             calcaneus_vector = 3.6*mm.unitX() + body_vector - first_metatarsal_vector - calcaneus_origin
             node.addGeom('MyFoot5', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, calcaneus_origin - body_vector/2. + calcaneus_vector/2.),
                                      np.dot(body_ori.T, np.dot(mm.getSO3FromVectors(body_vector, calcaneus_vector), body_ori))],
-                         ypc.CapsuleMaterial(0.00001, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(calcaneus_vector) + 2*SEGMENT_FOOT_RAD))
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(calcaneus_vector) + 2*SEGMENT_FOOT_RAD))
 
             node = mcfg.getNode('LeftFoot')
             node.bone_dir_child = 'LeftFoot_foot_0_1_0'
@@ -276,19 +276,19 @@ def create_biped(motionName='wd2_n_kick.bvh', SEGMENT_FOOT=True, SEGMENT_FOOT_MA
             calcaneus_vector = np.array([2.784, -3.463, 4.52]) - calcaneus_origin
             node.addGeom('MyFoot5', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, calcaneus_origin - body_vector/2. + calcaneus_vector/2.),
                                      np.dot(body_ori.T, np.dot(mm.getSO3FromVectors(body_vector, calcaneus_vector), body_ori))],
-                         ypc.CapsuleMaterial(0.00001, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(calcaneus_vector) + 2*SEGMENT_FOOT_RAD))
+                         ypc.CapsuleMaterial(0.0, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(calcaneus_vector) + 2*SEGMENT_FOOT_RAD))
             calcaneus_vector = body_vector - third_metatarsal_vector - calcaneus_origin
             node.addGeom('MyFoot5', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, calcaneus_origin - body_vector/2. + calcaneus_vector/2.),
                                      np.dot(body_ori.T, np.dot(mm.getSO3FromVectors(body_vector, calcaneus_vector), body_ori))],
-                         ypc.CapsuleMaterial(0.00001, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(calcaneus_vector) + 2*SEGMENT_FOOT_RAD))
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(calcaneus_vector) + 2*SEGMENT_FOOT_RAD))
             calcaneus_vector = -1.8*mm.unitX() + body_vector - second_metatarsal_vector - calcaneus_origin
             node.addGeom('MyFoot5', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, calcaneus_origin - body_vector/2. + calcaneus_vector/2.),
                                      np.dot(body_ori.T, np.dot(mm.getSO3FromVectors(body_vector, calcaneus_vector), body_ori))],
-                         ypc.CapsuleMaterial(0.00001, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(calcaneus_vector) + 2*SEGMENT_FOOT_RAD))
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(calcaneus_vector) + 2*SEGMENT_FOOT_RAD))
             calcaneus_vector = -3.6*mm.unitX() + body_vector - first_metatarsal_vector - calcaneus_origin
             node.addGeom('MyFoot5', [SEGMENT_FOOT_MAG*np.dot(body_ori.T, calcaneus_origin - body_vector/2. + calcaneus_vector/2.),
                                      np.dot(body_ori.T, np.dot(mm.getSO3FromVectors(body_vector, calcaneus_vector), body_ori))],
-                         ypc.CapsuleMaterial(0.00001, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(calcaneus_vector) + 2*SEGMENT_FOOT_RAD))
+                         ypc.CapsuleMaterial(capsulDensity, SEGMENT_FOOT_RAD, SEGMENT_FOOT_MAG * np.linalg.norm(calcaneus_vector) + 2*SEGMENT_FOOT_RAD))
 
             # RightFoot_foot_0_0 : outside metatarsals
             capsulize('RightFoot_foot_0_0')

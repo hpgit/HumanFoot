@@ -44,6 +44,7 @@ def main():
 
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_5()
     motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped_zygote()
+    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
     # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_jump_biped()
 
     vpWorld = cvw.VpWorld(wcfg)
@@ -117,8 +118,8 @@ def main():
 
     # penalty method
     bodyIDsToCheck = list(range(vpWorld.getBodyNum()))
-    mus = [1.]*len(bodyIDsToCheck)
-    # mus = [.5]*len(bodyIDsToCheck)
+    # mus = [1.]*len(bodyIDsToCheck)
+    mus = [.5]*len(bodyIDsToCheck)
 
     # flat data structure
     ddth_des_flat = ype.makeFlatList(totalDOF)
@@ -140,6 +141,9 @@ def main():
     rd_exf_des = [None]
     rd_exfen_des = [None]
     rd_root_des = [None]
+
+    rd_foot_ori = [None]
+    rd_foot_pos = [None]
 
     rd_CF = [None]
     rd_CF_pos = [None]
@@ -169,20 +173,22 @@ def main():
     # viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_LINE))
     viewer.doc.addRenderer('controlModel', yr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_FILL))
     viewer.doc.addRenderer('rd_footCenter', yr.PointsRenderer(rd_footCenter))
-    viewer.doc.setRendererVisible('rd_footCenter', False)
+    # viewer.doc.setRendererVisible('rd_footCenter', False)
     viewer.doc.addRenderer('rd_CM_plane', yr.PointsRenderer(rd_CM_plane, (255,255,0)))
-    viewer.doc.setRendererVisible('rd_CM_plane', False)
+    # viewer.doc.setRendererVisible('rd_CM_plane', False)
     viewer.doc.addRenderer('rd_CP', yr.PointsRenderer(rd_CP, (0,255,0)))
-    viewer.doc.setRendererVisible('rd_CP', False)
+    # viewer.doc.setRendererVisible('rd_CP', False)
     viewer.doc.addRenderer('rd_CP_des', yr.PointsRenderer(rd_CP_des, (255,0,255)))
-    viewer.doc.setRendererVisible('rd_CP_des', False)
+    # viewer.doc.setRendererVisible('rd_CP_des', False)
     viewer.doc.addRenderer('rd_dL_des_plane', yr.VectorsRenderer(rd_dL_des_plane, rd_CM, (255,255,0)))
-    viewer.doc.setRendererVisible('rd_dL_des_plane', False)
+    # viewer.doc.setRendererVisible('rd_dL_des_plane', False)
     viewer.doc.addRenderer('rd_dH_des', yr.VectorsRenderer(rd_dH_des, rd_CM, (0,255,0)))
-    viewer.doc.setRendererVisible('rd_dH_des', False)
+    # viewer.doc.setRendererVisible('rd_dH_des', False)
     # viewer.doc.addRenderer('rd_grf_des', yr.ForcesRenderer(rd_grf_des, rd_CP_des, (0,255,0), .001))
     viewer.doc.addRenderer('rd_CF', yr.VectorsRenderer(rd_CF, rd_CF_pos, (255,255,0)))
-    viewer.doc.setRendererVisible('rd_CF', False)
+    # viewer.doc.setRendererVisible('rd_CF', False)
+    viewer.doc.addRenderer('rd_foot_ori', yr.OrientationsRenderer(rd_foot_ori, rd_foot_pos, (255,255,0)))
+    # viewer.doc.setRendererVisible('rd_foot_ori', False)
 
     viewer.doc.addRenderer('extraForce', yr.VectorsRenderer(rd_exf_des, extraForcePos, (0,255,0)))
     viewer.doc.setRendererVisible('extraForce', False)
@@ -248,6 +254,14 @@ def main():
     initBl = .1
     initBh = .13
     initSupKt = 17
+
+    # initKt = 25
+    # initKl = 60.
+    # initKh = 20.
+    #
+    # initBl = .1
+    # initBh = .13
+    initSupKt = 21.6
 
     initFm = 50.0
 
@@ -356,10 +370,6 @@ def main():
         #################################################
         # jacobian
         #################################################
-
-        # caution!! body orientation and joint orientation of foot are totally different!!
-        footOriL = controlModel.getJointOrientationGlobal(supL)
-        footOriR = controlModel.getJointOrientationGlobal(supR)
 
         # desire footCenter[1] = 0.041135
         # desire footCenter[1] = 0.0197
@@ -582,7 +592,6 @@ def main():
 
 
         #set up equality constraint
-        footBodyOriL
         L_ddq = mm.logSO3(np.dot(footBodyOriL.T, np.dot(refFootOriL, mm.getSO3FromVectors(np.dot(refFootOriL, mm.unitY()), mm.unitY()))))
         R_ddq = mm.logSO3(np.dot(footBodyOriR.T, np.dot(refFootOriR, mm.getSO3FromVectors(np.dot(refFootOriR, mm.unitY()), mm.unitY()))))
         L_q = mm.logSO3(footBodyOriL)
@@ -602,8 +611,6 @@ def main():
         #
         a_oriL = mm.logSO3(mm.getSO3FromVectors(np.dot(footBodyOriL, mm.unitY()), mm.unitY()))
         a_oriR = mm.logSO3(mm.getSO3FromVectors(np.dot(footBodyOriR, mm.unitY()), mm.unitY()))
-
-        print(np.dot(footBodyOriL, mm.unitY()))
 
         #if contact == 3 and contactChangeCount < maxContactChangeCount/4 and contactChangeCount >=1:
             #kt_sup = 30
@@ -714,11 +721,6 @@ def main():
             vpWorld.step()
 
         # rendering
-        rightFootVectorX[0] = np.dot(footOriL, np.array([.1,0,0]))
-        rightFootVectorY[0] = np.dot(footOriL, np.array([0,.1,0]))
-        rightFootVectorZ[0] = np.dot(footOriL, np.array([0,0,.1]))
-        rightFootPos[0] = footCenterL
-
         rightVectorX[0] = np.dot(footBodyOriL, np.array([.1,0,0]))
         rightVectorY[0] = np.dot(footBodyOriL, np.array([0,.1,0]))
         rightVectorZ[0] = np.dot(footBodyOriL, np.array([0,0,.1]))
@@ -743,6 +745,13 @@ def main():
             rd_grf_des[0] = dL_des_plane - totalMass*mm.s2v(wcfg.gravity)
 
         rd_root_des[0] = rootPos[0]
+
+        del rd_foot_ori[:]
+        del rd_foot_pos[:]
+        rd_foot_ori.append(controlModel.getBodyOrientationGlobal(supL))
+        rd_foot_ori.append(controlModel.getBodyOrientationGlobal(supR))
+        rd_foot_pos.append(controlModel.getBodyPositionGlobal(supL))
+        rd_foot_pos.append(controlModel.getBodyPositionGlobal(supR))
 
         del rd_CF[:]
         del rd_CF_pos[:]
