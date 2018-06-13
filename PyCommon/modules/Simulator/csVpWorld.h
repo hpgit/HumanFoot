@@ -20,6 +20,7 @@ public:
 
 private:
 	bool _calcPenaltyForce(const vpBody* pBody, const Vec3& position, const Vec3& velocity, Vec3& force, scalar Ks, scalar Ds, scalar mu);
+	bool _calcPenaltyForcePlane(int index, const vpBody* pBody, const Vec3& position, const Vec3& velocity, Vec3& force, scalar Ks, scalar Ds, scalar mu);
 	Vec3 _calcPenaltyForceSphere(const Vec3& velocity, const Vec3& normal, scalar penetration, scalar Ks, scalar Ds, scalar mu);
 
 public:	// expose to python
@@ -33,6 +34,7 @@ public:	// expose to python
 
 	void add_plane(const object& normal, const object& pos);
 	void set_plane(int index, const object& normal, const object& pos);
+	bp::list get_plane_list();
 
 	bp::tuple getContactPoints(const bp::list& bodyIDsToCheck);
 	bp::tuple getContactInfoForcePlate(const bp::list& bodyIDsToCheck);

@@ -31,7 +31,7 @@ VIEW_TOP = 2
 VIEW_PERSPECTIVE = 3
 
 # Define
-FLAG_SHADOW = 0
+FLAG_SHADOW = 1
 
 #class StateObject:
 #    def getState(self):
@@ -136,6 +136,9 @@ class GlWindow(Fl_Gl_Window):
 
         self.renderers = []
         self.invisibleRenderers = []
+
+        self.pOnPlaneshadow = [0,0.001,0]
+        self.normalshadow = [0,1,0]
 
     def setupLights(self):
         if self.drawStyle == POLYGON_LINE:
@@ -360,10 +363,11 @@ class GlWindow(Fl_Gl_Window):
                     # glColor4f(0.9, 0.9, 0.9, 0.5)
                     glColor4f(0.5, 0.5, 0.5, 0.5)
                     # glColor4f(0.3, 0.3, 0.3, 0.5)
-                glVertex3d(xp,      self.planeHeight-h, yp)
-                glVertex3d(xp,      self.planeHeight-h, yp + yd)
-                glVertex3d(xp + xd, self.planeHeight-h, yp + yd)
-                glVertex3d(xp + xd, self.planeHeight-h, yp)
+                if not (nSquares//2-2 <= x <=nSquares/2+1 and nSquares//2-2 <= y <= nSquares//2+1):
+                    glVertex3d(xp,      self.planeHeight-h, yp)
+                    glVertex3d(xp,      self.planeHeight-h, yp + yd)
+                    glVertex3d(xp + xd, self.planeHeight-h, yp + yd)
+                    glVertex3d(xp + xd, self.planeHeight-h, yp)
                 i +=1
                 yp += yd
             i = x
@@ -523,12 +527,12 @@ class GlWindow(Fl_Gl_Window):
             # shadow 
             lightshadow = lightPos
             #pOnPlaneshadow = [0,0.001,0]
-            pOnPlaneshadow = [0,0.001,0]
-            normalshadow = [0,1,0]
+            # pOnPlaneshadow = [0,0.001,0]
+            # normalshadow = [0,1,0]
        
         
     #        self.glShadowProjectionPOINT(1,2,3)
-            self.glShadowProjectionPOINT(lightshadow, pOnPlaneshadow, normalshadow)
+            self.glShadowProjectionPOINT(lightshadow, self.pOnPlaneshadow, self.normalshadow)
               #human
 
             '''
