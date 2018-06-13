@@ -67,7 +67,8 @@ def main():
     sphere_radius = 0.5
     # vpWorld.add_sphere_bump(sphere_radius, (1.6361, -sphere_radius + 0.08, -0.3209))
     # vpWorld.add_sphere_bump(sphere_radius, (1.4543, -sphere_radius + 0.08, -0.3301))
-    vpWorld.add_sphere_bump(sphere_radius, (1.6361, -sphere_radius + 0.08, -0.2909))
+    vpWorld.add_sphere_bump(sphere_radius, (1.5961, -sphere_radius + 0.08, -0.2909))
+    # vpWorld.add_sphere_bump(sphere_radius, (1.6161, -sphere_radius + 0.08, -0.2909))
     vpWorld.add_sphere_bump(sphere_radius, (1.4543, -sphere_radius + 0.08, -0.2901))
     vpWorld.SetGlobalDamping(0.999)
     motionModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)
@@ -323,6 +324,8 @@ def main():
     viewer.objectInfoWnd.add1DSlider("tiptoe angle", -0.5, .5, 0.001, 0.)
     viewer.objectInfoWnd.add1DSlider("left tilt angle", -0.5, .5, 0.001, 0.)
     viewer.objectInfoWnd.add1DSlider("right tilt angle", -0.5, .5, 0.001, 0.)
+    viewer.objectInfoWnd.add1DSlider("heel angle", -0.5, .5, 0.001, 0.)
+    viewer.objectInfoWnd.add1DSlider("pha angle", -0.5, .5, 0.001, 0.)
 
     viewer.force_on = False
 
@@ -430,6 +433,8 @@ def main():
         # hfi.footAdjust(motion[frame], idDic, SEGMENT_FOOT_MAG=.03, SEGMENT_FOOT_RAD=.015, baseHeight=0.02)
         if frame == 0:
             setParamVal('com Y offset', 0.02)
+        if frame == 60:
+            setParamVal('pha angle', 0.2)
 
         if abs(getParamVal('tiptoe angle')) > 0.001:
             tiptoe_angle = getParamVal('tiptoe angle')
@@ -478,6 +483,19 @@ def main():
             # else:
             #     motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1_0'], mm.exp(mm.unitZ(), -math.pi * right_tilt_angle))
             motion[frame].mulJointOrientationLocal(idDic['RightFoot'], mm.exp(mm.unitZ(), -math.pi * right_tilt_angle))
+
+        if abs(getParamVal('heel angle')) > 0.001:
+            heel_angle = getParamVal('heel angle')
+            motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_1_0'], mm.exp(mm.unitX(), math.pi * heel_angle))
+            motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_1_0'], mm.exp(mm.unitX(), math.pi * heel_angle))
+
+        if abs(getParamVal('pha angle')) > 0.001:
+            pha_angle = getParamVal('pha angle')
+            motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1_0'], mm.exp(mm.unitX(), math.pi * pha_angle))
+            motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1_0'], mm.exp(mm.unitX(), math.pi * pha_angle))
+            # motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1_0'], mm.exp(mm.unitZ(), -math.pi * pha_angle))
+            # motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1_0'], mm.exp(mm.unitZ(), math.pi * pha_angle))
+
 
         motionModel.update(motion[frame])
         motionModel.translateByOffset(np.array([getParamVal('com X offset'), getParamVal('com Y offset'), getParamVal('com Z offset')]))

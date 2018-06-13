@@ -230,13 +230,13 @@ def main():
 
     # viewer = ysv.SimpleViewer()
     # viewer = hsv.hpSimpleViewer(rect=[0, 0, 1024, 768], viewForceWnd=False)
-    viewer = hsv.hpSimpleViewer(rect=[0, 0, 1280+300, 1+720+55], viewForceWnd=False)
+    viewer = hsv.hpSimpleViewer(rect=[0, 0, 1920+300, 1+1080+55], viewForceWnd=False)
     # viewer.record(False)
     # viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,255,255), yr.LINK_BONE))
     viewer.doc.addObject('motion', motion)
     viewer.doc.addRenderer('motionModel', yr.VpModelRenderer(motionModel, (150,150,255), yr.POLYGON_FILL))
     viewer.doc.setRendererVisible('motionModel', False)
-    viewer.doc.addRenderer('ikModel', yr.VpModelRenderer(controlModel_ik, (150,150,150), yr.POLYGON_LINE))
+    viewer.doc.addRenderer('ikModel', yr.VpModelRenderer(controlModel_ik, (50,50,50), yr.POLYGON_LINE))
     # viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_LINE))
     control_model_renderer = yr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_FILL)
     viewer.doc.addRenderer('controlModel', control_model_renderer)
@@ -426,6 +426,9 @@ def main():
             viewer.motionViewWnd.glWindow.camera.distance = .4
             viewer.motionViewWnd.glWindow.camera.center = \
                 .5*(controlModel.getBodyPositionGlobal(idDic['RightFoot']) + controlModel.getBodyPositionGlobal(idDic['LeftFoot'])) + np.array([0., -0.05, 0.])
+        # viewer.motionViewWnd.glWindow.projectionOrtho = True
+        # viewer.motionViewWnd.glWindow.projectionChanged = True
+        # viewer.motionViewWnd.glWindow.camera.rotateY = mm.deg2Rad(182.)
 
     def simulateCallback(frame):
         # print(frame)
@@ -629,17 +632,17 @@ def main():
         del rd_exf_des[:]
         del extraForcePos[:]
 
-        extraForcePos.append(controlModel.getJointPositionGlobal(idDic['LeftFoot']))
-        rd_exf_des.append(controlModel.getJointPositionGlobal(idDic['LeftFoot_foot_0_0']) - controlModel.getJointPositionGlobal(idDic['LeftFoot']))
+        extraForcePos.append(controlModel_ik.getJointPositionGlobal(idDic['LeftFoot']))
+        rd_exf_des.append(controlModel_ik.getJointPositionGlobal(idDic['LeftFoot_foot_0_0']) - controlModel_ik.getJointPositionGlobal(idDic['LeftFoot']))
 
-        extraForcePos.append(controlModel.getJointPositionGlobal(idDic['LeftFoot']))
-        rd_exf_des.append(controlModel.getJointPositionGlobal(idDic['LeftFoot_foot_0_1_0']) - controlModel.getJointPositionGlobal(idDic['LeftFoot']))
+        extraForcePos.append(controlModel_ik.getJointPositionGlobal(idDic['LeftFoot']))
+        rd_exf_des.append(controlModel_ik.getJointPositionGlobal(idDic['LeftFoot_foot_0_1_0']) - controlModel_ik.getJointPositionGlobal(idDic['LeftFoot']))
 
-        extraForcePos.append(controlModel.getJointPositionGlobal(idDic['LeftFoot']))
-        rd_exf_des.append(controlModel.getJointPositionGlobal(idDic['LeftFoot_foot_1_0']) - controlModel.getJointPositionGlobal(idDic['LeftFoot']))
+        extraForcePos.append(controlModel_ik.getJointPositionGlobal(idDic['LeftFoot']))
+        rd_exf_des.append(controlModel_ik.getJointPositionGlobal(idDic['LeftFoot_foot_1_0']) - controlModel_ik.getJointPositionGlobal(idDic['LeftFoot']))
 
-        extraForcePos.append(controlModel.getJointPositionGlobal(idDic['LeftFoot_foot_0_0']))
-        rd_exf_des.append(controlModel.getJointPositionGlobal(idDic['LeftFoot_foot_0_0_0']) - controlModel.getJointPositionGlobal(idDic['LeftFoot_foot_0_0']))
+        extraForcePos.append(controlModel_ik.getJointPositionGlobal(idDic['LeftFoot_foot_0_0']))
+        rd_exf_des.append(controlModel_ik.getJointPositionGlobal(idDic['LeftFoot_foot_0_0_0']) - controlModel_ik.getJointPositionGlobal(idDic['LeftFoot_foot_0_0']))
 
 
         # render contact_ids

@@ -426,7 +426,7 @@ def main():
         global COLOR_ON
         viewer.motionViewWnd.glWindow.camera.rotateX = math.pi /180. * -25.
         viewer.motionViewWnd.glWindow.camera.rotateY = mm.deg2Rad(45.)
-        viewer.motionViewWnd.glWindow.camera.distance = .6
+        viewer.motionViewWnd.glWindow.camera.distance = .5
         viewer.motionViewWnd.glWindow.camera.center = np.array([0.04347, -0.01005, -0.31936])
         if frame < start_frame:
             setParamVal('com Y offset', -0.11)
@@ -451,12 +451,13 @@ def main():
         elif frame < start_frame + 150:
             pass
         elif frame < start_frame + 165:
-            # setParamVal('com Y offset', -0.11 + (frame - start_frame - 90)*0.0032)
+            setParamVal('com Y offset', -0.11 + (frame - start_frame - 150)*0.0004)
             setParamVal('left tilt angle', -(frame-start_frame-150)*0.012)
         elif frame < start_frame + 180:
             pass
-        # elif frame < start_frame + 120:
-        #     setParamVal('left tilt angle', 0.168-(frame-start_frame-105)*0.012)
+        elif frame < start_frame + 195:
+            setParamVal('com Y offset', -0.104 - (frame - start_frame - 180)*0.0004)
+            setParamVal('left tilt angle', -0.168 + (frame-start_frame - 180)*0.012)
 
 
         # print(viewer.motionViewWnd.glWindow.camera.rotateX/math.pi * 180.)

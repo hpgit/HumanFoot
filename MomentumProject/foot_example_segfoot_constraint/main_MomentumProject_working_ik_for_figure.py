@@ -640,6 +640,29 @@ def main():
             control_model_renderer.body_colors[contact_id] = (255, 0, 0)
 
 
+        pallete2 = list()
+        pallete2.append((244, 198, 61))
+        pallete2.append((4, 105, 113))
+        pallete2.append((234, 219, 196))
+        pallete2.append((216, 1, 6))
+        pallete2.append((230, 230, 230))
+
+        pallete = pallete2
+
+        color = dict()
+        color['RightFoot'] = pallete[0]
+        color['RightFoot_foot_1_0'] = pallete[4]
+        color['RightFoot_foot_0_0'] = pallete[1]
+        color['RightFoot_foot_0_0_0'] = pallete[2]
+        color['RightFoot_foot_0_1_0'] = pallete[3]
+        color['LeftFoot'] = pallete[0]
+        color['LeftFoot_foot_1_0'] = pallete[4]
+        color['LeftFoot_foot_0_0'] = pallete[1]
+        color['LeftFoot_foot_0_0_0'] = pallete[2]
+        color['LeftFoot_foot_0_1_0'] = pallete[3]
+
+        for color_key in color.keys():
+            control_model_renderer.body_colors[idDic[color_key]] = color[color_key]
 
         rd_CM[0] = CM
 
@@ -696,7 +719,19 @@ def main():
             Ts['upper_limb_L'] = controlModel.getJointTransform(idDic['LeftArm'])
             Ts['lower_limb_L'] = controlModel.getJointTransform(idDic['LeftForeArm'])
 
-            skeleton_renderer.appendFrameState(Ts)
+            color = dict()
+            color['foot_R'] = pallete[0]
+            color['heel_R'] = pallete[4]
+            color['outside_metatarsal_R'] = pallete[1]
+            color['outside_phalanges_R'] = pallete[2]
+            color['inside_phalanges_R'] = pallete[3]
+            color['foot_L'] = pallete[0]
+            color['heel_L'] = pallete[4]
+            color['outside_metatarsal_L'] = pallete[1]
+            color['outside_phalanges_L'] = pallete[2]
+            color['inside_phalanges_L'] = pallete[3]
+
+            skeleton_renderer.appendFrameState(Ts, color)
 
     viewer.setSimulateCallback(simulateCallback)
     viewer.setPreFrameCallback_Always(preFrameCallback_Always)
