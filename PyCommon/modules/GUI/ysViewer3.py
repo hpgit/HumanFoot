@@ -363,7 +363,7 @@ class GlWindow(Fl_Gl_Window):
                     # glColor4f(0.9, 0.9, 0.9, 0.5)
                     glColor4f(0.5, 0.5, 0.5, 0.5)
                     # glColor4f(0.3, 0.3, 0.3, 0.5)
-                if not (nSquares//2-2 <= x <=nSquares/2+1 and nSquares//2-2 <= y <= nSquares//2+1):
+                if True or not (nSquares//2-2 <= x <=nSquares/2+1 and nSquares//2-2 <= y <= nSquares//2+1):
                     glVertex3d(xp,      self.planeHeight-h, yp)
                     glVertex3d(xp,      self.planeHeight-h, yp + yd)
                     glVertex3d(xp + xd, self.planeHeight-h, yp + yd)
