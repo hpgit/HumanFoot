@@ -38,13 +38,10 @@ from PyCommon.modules.Simulator import ysPhysConfig as ypc
 from PyCommon.modules.GUI import hpSimpleViewer as hsv
 from PyCommon.modules.Util import ysPythonEx as ype
 
-from PyCommon.modules.Simulator import csVpModel_py as pcvm
-from PyCommon.modules.Simulator import csVpWorld_py as pcvw
-
+from PyCommon.modules.Simulator import csVpModel as cvm
+from PyCommon.modules.Simulator import csVpWorld as cvw
 
 import math
-from matplotlib import pyplot as plt
-from matplotlib import collections
 
 current_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -327,9 +324,10 @@ def walkings(params=None, isCma=False):
     Kt = 20.
     Dt = 2.*(Kt**.5)
     # Dt = Kt/900.
-    Ks = 1600.
+    Ks = 16000.
     Ds = 2.*(Ks**.5)
-    mu = 1.
+    # mu = 1.
+    mu = .5
     # Dt = 0.
 
     # constaants
@@ -489,16 +487,14 @@ def walkings(params=None, isCma=False):
     stepsPerFrame = 30
     wcfg.timeStep = (frameTime)/stepsPerFrame
 
-    vpWorld = pcvw.VpWorld(wcfg)
-    motionModel = pcvm.VpMotionModel(vpWorld, motion_ori[0], mcfg)
+    vpWorld = cvw.VpWorld(wcfg)
+    motionModel = cvm.VpMotionModel(vpWorld, motion_ori[0], mcfg)
     # ModelOffset = np.array([0., 0., 0.])
     # motionModel.translateByOffset(ModelOffset)
-    controlModel = pcvm.VpControlModel(vpWorld, motion_ori[0], mcfg)
-    vpWorld.SetIntegrator("IMPLICIT_EULER_FAST")
+    controlModel = cvm.VpControlModel(vpWorld, motion_ori[0], mcfg)
     vpWorld.initialize()
-    print(controlModel)
+    # print(controlModel)
     # controlModel = None
-
 
     #   motionModel.recordVelByFiniteDiff()
     controlModel.initializeHybridDynamics()
@@ -510,7 +506,8 @@ def walkings(params=None, isCma=False):
     skeleton = motion_ori[0].skeleton
 
     segname = os.path.splitext(filename)[0]+'.seg'
-    segfile = open(dir+segname, 'r')
+    print(segname)
+    segfile = open(dir+segname, 'rb')
     seginfo = pickle.load(segfile)
     segfile.close()
 
@@ -573,7 +570,7 @@ def walkings(params=None, isCma=False):
     #===============================================================================
     # information
     #===============================================================================
-    bodyIDsToCheck = range(vpWorld.getBodyNum())
+    bodyIDsToCheck = list(range(vpWorld.getBodyNum()))
     mus = [mu]*len(bodyIDsToCheck)
 
     bodyMasses = controlModel.getBodyMasses()
@@ -611,7 +608,7 @@ def walkings(params=None, isCma=False):
     #     hdAccMask[3+3*i : 6+3*i] = [False]*3
 
 
-    lID = controlModel.name2id('LeftFoot');      rID = controlModel.name2id('RightFoot')
+    lID = controlModel.name2index('LeftFoot');      rID = controlModel.name2index('RightFoot')
     lUpLeg = skeleton.getJointIndex('LeftUpLeg');rUpLeg = skeleton.getJointIndex('RightUpLeg')
     lKnee = skeleton.getJointIndex('LeftLeg');   rKnee = skeleton.getJointIndex('RightLeg')
     lFoot = skeleton.getJointIndex('LeftFoot');  rFoot = skeleton.getJointIndex('RightFoot')
@@ -667,8 +664,8 @@ def walkings(params=None, isCma=False):
         viewer.setRenderers2([yr.VpModelRenderer(controlModel, CHARACTER_COLOR, yr.POLYGON_FILL)])
     else:
         # viewer = ysv.SimpleViewer()
-        viewer = hsv.hpSimpleViewer()
-        #    viewer.record(False)
+        viewer = hsv.hpSimpleViewer(viewForceWnd=False)
+        # viewer.record(False)
 
         viewer.doc.addRenderer('motionModel', yr.VpModelRenderer(motionModel, (0,150,255), yr.POLYGON_LINE))
         viewer.doc.addRenderer('controlModel', yr.VpModelRenderer(controlModel, (50,200,200), yr.POLYGON_FILL))
@@ -711,7 +708,7 @@ def walkings(params=None, isCma=False):
     #    viewer.doc.addRenderer('rd_frame2', yr.FramesRenderer(rd_frame2, (200,200,0)))
     #    viewer.setMaxFrame(len(motion_ori)-1)
 
-    viewer.objectInfoWnd.add1DSlider("penalty_grf_gain",    0., 5000., 10., Ks)
+    viewer.objectInfoWnd.add1DSlider("penalty_grf_gain",    0., 50000., 10., Ks)
     viewer.objectInfoWnd.add1DSlider("c_min_contact_vel",   0., 200., .2, c_min_contact_vel)
     viewer.objectInfoWnd.add1DSlider("c_min_contact_time",  0., 5., .01, c_min_contact_time)
     viewer.objectInfoWnd.add1DSlider("c_landing_duration",  0., 5., .01, c_landing_duration)
@@ -1164,8 +1161,8 @@ def walkings(params=None, isCma=False):
         ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMap)
 
         totalDOF = controlModel.getTotalDOF()
-        # ddth_des_flat = ype.makeFlatList(totalDOF)
-        ddth_des_flat = ype.makeFlatList(controlModel.get3dExtendTotalDOF())
+        ddth_des_flat = ype.makeFlatList(totalDOF)
+        # ddth_des_flat = ype.makeFlatList(controlModel.get3dExtendTotalDOF())
         ype.flatten(ddth_des, ddth_des_flat)
 
         #=======================================================================
@@ -1288,7 +1285,8 @@ def walkings(params=None, isCma=False):
                     if swingID in bodyIDs:
                         minContactVel = 1000.
                         for i in range(len(bodyIDs)):
-                            if bodyIDs[i]==swingID:
+                            if bodyIDs[i] == swingID:
+                                print(swingID, contactPositionLocals[i])
                                 vel = controlModel.getBodyVelocityGlobal(swingID, contactPositionLocals[i])
                                 vel[1] = 0
                                 contactVel = mm.length(vel)
@@ -1298,7 +1296,7 @@ def walkings(params=None, isCma=False):
                 extended[0] = False
 
                 if contact:
-                    #                    print frame, 'foot touch'
+                    # print frame, 'foot touch'
                     lastFrame = True
                     acc_offset[0] += frame - curInterval[1]
 
@@ -1309,7 +1307,7 @@ def walkings(params=None, isCma=False):
                     #                    preserveJoints = [lFoot, rFoot]
                     #                    preserveJoints = [lFoot, rFoot, lKnee, rKnee]
                     #                    preserveJoints = [lFoot, rFoot, lKnee, rKnee, lUpLeg, rUpLeg]
-                    stanceKnees = [rKnee] if curState==yba.GaitState.LSWING else [lKnee]
+                    stanceKnees = [rKnee] if curState == yba.GaitState.LSWING else [lKnee]
                     preserveJoints = [stanceFoots[0], stanceKnees[0], stanceLegs[0]]
 
                     diff = 3

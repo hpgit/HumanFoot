@@ -443,7 +443,6 @@ class DartModelMaker:
         et.SubElement(etPhysics, "gravity").text = "0 -9.81 0"
         et.SubElement(etPhysics, "collision_detector").text = "fcl_mesh"
 
-
         if isContainGround:
             # add ground body and joint
             etGroundSkeleton = et.SubElement(etWorld, "skeleton", {"name": "grount skeleton"})
@@ -451,7 +450,8 @@ class DartModelMaker:
             etGroundBody = et.SubElement(etGroundSkeleton, "body", {"name": "ground"})
             et.SubElement(etGroundBody, "transformation").text = "0 -0.025 0 0 0 0"
             # etGroundBody.append(AddDartShapeNode(SE3(), [5.0, 0.05, 5.0], "box"))
-            etGroundBody.append(self.AddDartShapeNode(SE3(), [10000.0, 0.05, 10000.0], "box", "collision"))
+            etGroundBody.append(self.AddDartShapeNode(SE3(), [10000.0, 0.05, 10000.0], "box"))
+            etGroundBody.append(self.AddDartShapeNode(SE3(), [100.0, 0.05, 100.0], "box", "collision"))
 
             etGroundJoint = et.SubElement(etGroundSkeleton, "joint", {"type": "free", "name": "joint 1"})
             et.SubElement(etGroundJoint, "parent").text = "world"
@@ -519,7 +519,7 @@ class DartModelMaker:
         self.skelname = name
         tree, boneTs = self.posture2dartSkel(posture, config, isContainGround)
         # return prettifyXML(tree.getroot())
-        print(prettifyXML(tree.getroot()))
+        # print(prettifyXML(tree.getroot()))
         return et.tostring(tree.getroot(), 'ascii'), boneTs
 
 if __name__ == '__main__':

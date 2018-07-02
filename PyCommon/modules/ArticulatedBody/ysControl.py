@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..Math import mmMath as mm
+from PyCommon.modules.Math import mmMath as mm
 
 
 # th_r[0], th[0] : (Vec3, SO3), th_r[1:], th[1:] : SO3

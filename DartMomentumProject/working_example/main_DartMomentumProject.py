@@ -43,7 +43,7 @@ maxContactChangeCount = 30
 
 preFootCenter = [None]
 
-DART_CONTACT_ON = False
+DART_CONTACT_ON = True
 
 
 def main():
@@ -162,8 +162,9 @@ def main():
     # viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_LINE))
     #viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_FILL))
 
-    viewer.doc.addRenderer('motionModel', yr.DartModelRenderer(dartMotionModel, (150,150,255), yr.POLYGON_FILL))
-    viewer.doc.addRenderer('controlModel', yr.DartModelRenderer(dartModel, (255,240,255), yr.POLYGON_FILL))
+    # viewer.doc.addRenderer('motionModel', yr.DartModelRenderer(dartMotionModel, (150,150,255), yr.POLYGON_FILL))
+    # viewer.doc.addRenderer('controlModel', yr.DartModelRenderer(dartModel, (255,240,255), yr.POLYGON_FILL))
+    viewer.doc.addRenderer('controlModel', yr.DartRenderer(dartModel.world, (150,150,255), yr.POLYGON_FILL))
     viewer.doc.addRenderer('rd_footCenter', yr.PointsRenderer(rd_footCenter))
     viewer.doc.addRenderer('rd_CM_plane', yr.PointsRenderer(rd_CM_plane, (255,255,0)))
     viewer.doc.addRenderer('rd_CP', yr.PointsRenderer(rd_CP, (0,255,0)))

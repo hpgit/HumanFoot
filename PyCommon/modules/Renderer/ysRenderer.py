@@ -27,7 +27,7 @@ from PyCommon.modules.Renderer.csRenderer import ObjImporter
 # from PyCommon.modules.pyVirtualPhysics import *
 # from PyCommon.modules.Simulator import csVpUtil as cvu
 # from PyCommon.modules.Simulator import csDartModel as cdm
-# import PyCommon.modules.pydart2 as pydart
+import pydart2 as pydart
 
 # RendererContext
 NORMAL_FLAT = 0
@@ -452,6 +452,159 @@ class VpModelRenderer(Renderer):
             glPopMatrix()
 
 
+class DartRenderer(Renderer):
+    """
+    :type world: pydart.World
+    """
+    def __init__(self, target, color=(255, 255, 255), polygonStyle=POLYGON_FILL, lineWidth=1.):
+        Renderer.__init__(self, target, color)
+        self.world = target
+        self.rc.setPolygonStyle(polygonStyle)
+        self._lineWidth = lineWidth
+        self.savable = True
+
+    def render(self, renderType=RENDER_OBJECT):
+        glLineWidth(self._lineWidth)
+
+        if renderType == RENDER_SHADOW:
+            glColor3ub(90, 90, 90)
+        else:
+            glColor3ubv(self.totalColor)
+
+        for skeleton in self.world.skeletons:
+            for body in skeleton.bodynodes:
+                glPushMatrix()
+                glMultMatrixd(body.world_transform().transpose())
+                for shapeNode in body.shapenodes:
+                    if shapeNode.has_visual_aspect():
+                        # print(body.name, shapeNode)
+                        if renderType != RENDER_SHADOW:
+                            color = numpy.array(shapeNode.visual_aspect_rgba())*255
+                            # if color[0] != 0 or color[1] != 0 or color[2] != 0:
+                            if sum(self.totalColor) == 765:
+                                c = [int(color[0]), int(color[1]), int(color[2]), int(color[3])]
+                                glColor4ubv(c)
+                            else:
+                                glColor3ubv(self.totalColor)
+                            if body.name == 'ground':
+                                glColor3ub(128, 128, 128)
+                                glPushMatrix()
+                                gravity = 0.0001*self.world.gravity()
+                                glTranslatef(gravity[0], gravity[1], gravity[2])
+                            self.renderShapeNode(shapeNode)
+                            if body.name == 'ground':
+                                glPopMatrix()
+                        elif body.name != 'ground':
+                            glColor3ub(90, 90, 90)
+                            self.renderShapeNode(shapeNode)
+                glPopMatrix()
+        self.world.render_contacts()
+
+    def renderShapeNode(self, shapeNode):
+        """
+
+        :type shapeNode: pydart.ShapeNode
+        :return:
+        """
+        # names = ["BOX", "ELLIPSOID", "CYLINDER", "PLANE",
+        #          "MESH", "SOFT_MESH", "LINE_SEGMENT"]
+
+        # shapeNode.shape.render()
+        geomType = shapeNode.shape.shape_type_name()
+        glPushMatrix()
+        glMultMatrixd(shapeNode.relative_transform().transpose())
+
+        # print(geomType)
+        if geomType == 'BoxShape':
+            shape = shapeNode.shape # type: pydart.BoxShape
+            data = shape.size()
+            glPushMatrix()
+            glTranslatef(-data[0]/2., -data[1]/2., -data[2]/2.)
+            self.rc.drawBox(data[0], data[1], data[2])
+            glPopMatrix()
+        elif geomType == 'CylinderShape':
+            shape = shapeNode.shape # type: pydart.CylinderShape
+            data = [shape.getRadius(), shape.getHeight()]
+            glTranslatef(0., 0., -data[1]/2.)
+            self.rc.drawCylinder(data[0], data[1])
+            # self.rc.drawCapsule(data[0], data[1])
+        elif geomType == 'EllipsoidShape':
+            shape = shapeNode.shape  # type: pydart.EllipsoidShape
+            data = shape.size()  # type: numpy.ndarray
+            glScalef(data[0]/2., data[1]/2., data[2]/2.)
+            self.rc.drawSphere(1.)
+        glPopMatrix()
+
+    def renderFrame(self, frame, renderType=RENDER_OBJECT):
+        if frame == -1:
+            self.renderState(self.getState(), renderType)
+        elif frame == self.get_max_saved_frame() + 1:
+            self.saveState()
+            self.renderState(self.savedState[frame], renderType)
+        elif frame <= self.get_max_saved_frame():
+            self.renderState(self.savedState[frame], renderType)
+        else:
+            self.renderState(self.savedState[-1], renderType)
+
+    def getState(self):
+        state = []
+        for skeleton in self.world.skeletons:
+            for body in skeleton.bodynodes:
+                bodyFrame = body.world_transform()
+                for shapeNode in body.shapenodes:
+                    if shapeNode.has_visual_aspect():
+                        color = None
+                        if sum(self.totalColor) == 765:
+                            c = numpy.array(shapeNode.visual_aspect_rgba())*255
+                            color = [ int(c[0]), int(c[1]), int(c[2])]
+                        else:
+                            color = self.totalColor
+
+                        geomT = numpy.dot(bodyFrame, shapeNode.relative_transform())
+                        # geomT = bodyFrame
+                        geomType = shapeNode.shape.shape_type_name()
+                        shape = shapeNode.shape
+                        data = None
+                        if geomType[0] == 'B':
+                            data = shape.size()
+                        elif geomType[0] == 'C':
+                            data = [shape.radius(), shape.height()]
+                        elif geomType[0] == 'E':
+                            data = shape.size()
+                        state.append((geomType, geomT, data, color))
+        return state
+
+    def renderState(self, state, renderType=RENDER_OBJECT):
+        """
+
+        :type state: list[tuple[str, numpy.ndarray, numpy.ndarray, tuple]]
+        :return:
+        """
+        glLineWidth(self._lineWidth)
+
+        for elem in state:
+            geomType, geomT, data, color = elem
+            glPushMatrix()
+            glMultMatrixd(geomT.transpose())
+            if renderType != RENDER_SHADOW:
+                glColor3ubv(color)
+            else:
+                glColor3ub(90, 90, 90)
+
+            if geomType[0] == 'B':
+                glTranslatef(-data[0]/2., -data[1]/2., -data[2]/2.)
+                self.rc.drawBox(data[0], data[1], data[2])
+            elif geomType[0] == 'C':
+                glTranslatef(0., 0., -data[1]/2.)
+                self.rc.drawCylinder(data[0], data[1])
+                # self.rc.drawCapsule(data[0], data[1])
+            elif geomType[0] == 'E':
+                glScalef(data[0]/2., data[1]/2., data[2]/2.)
+                self.rc.drawSphere(1.)
+
+            glPopMatrix()
+
+
 class DartModelRenderer(Renderer):
     """
     :type model: cdm.DartModel
@@ -506,20 +659,20 @@ class DartModelRenderer(Renderer):
         geomType = shapeNode.shape.shape_type_name()
         glPushMatrix()
         glMultMatrixd(shapeNode.relative_transform().transpose())
-        if geomType == 'BOX':
+        if geomType == 'BoxShape':
             shape = shapeNode.shape # type: pydart.BoxShape
             data = shape.size()
             glPushMatrix()
             glTranslatef(-data[0]/2., -data[1]/2., -data[2]/2.)
             self.rc.drawBox(data[0], data[1], data[2])
             glPopMatrix()
-        elif geomType == 'CYLINDER':
+        elif geomType == 'CylinderShape':
             shape = shapeNode.shape # type: pydart.CylinderShape
             data = [shape.getRadius(), shape.getHeight()]
             glTranslatef(0., 0., -data[1]/2.)
             self.rc.drawCylinder(data[0], data[1])
             # self.rc.drawCapsule(data[0], data[1])
-        elif geomType == 'ELLIPSOID':
+        elif geomType == 'EllipsoidShape':
             shape = shapeNode.shape  # type: pydart.EllipsoidShape
             data = shape.size()  # type: numpy.ndarray
             glScalef(data[0]/2., data[1]/2., data[2]/2.)

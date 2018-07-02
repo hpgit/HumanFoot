@@ -73,7 +73,7 @@ def extendByIntegration_constant(motion, extendLength, preserveJoints=[], finite
     for i in range(extendLength):
         p += v * t
 #        v += a * t
-        ap = map(lambda R0, dR: np.dot(R0, mm.exp(t*dR)), ap, av)
+        ap = list(map(lambda R0, dR: np.dot(R0, mm.exp(t*dR)), ap, av))
 #        av = map(lambda V0, dV: V0 + t*dV, av, aa)
         extended[i].rootPos = p.copy()
         extended.setJointOrientationsLocal(i, ap)

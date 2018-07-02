@@ -313,8 +313,9 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 		Vec3 offset(0);
 
 		object cfgNode = _config.attr("getNode")(joint_name);
+		object bone_dir_child = cfgNode.attr("bone_dir_child");
 
-		if (object() != cfgNode.attr("bone_dir_child"))
+		if (!bone_dir_child.is_none())
 		{
 		    string bone_dir_child_name = XS(cfgNode.attr("bone_dir_child"));
 		    int child_joint_index = XI(posture.attr("skeleton").attr("getJointIndex")(bone_dir_child_name));
@@ -418,13 +419,15 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 			    || 0 == geomType.compare("MyFoot5")|| 0 == geomType.compare("MyFoot6"))
 			{
 				scalar radius = .05;
-				if( cfgNode.attr("width") != object() )
+				object width_object = cfgNode.attr("width");
+				if( !width_object.is_none() )
 					radius = XD(cfgNode.attr("width"));
 
 				scalar length = Norm(offset) + 2*radius;
 				scalar density = XD(cfgNode.attr("density"));
 				scalar mass = 1.;
-				if( cfgNode.attr("mass") != object() )
+				object mass_object = cfgNode.attr("mass");
+				if( !mass_object.is_none() )
 				{
 					mass = XD(cfgNode.attr("mass"));
 					density = mass/ (radius * radius * M_PI * length);
@@ -445,29 +448,34 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 			}
 			else
 			{
+			    object mass_object = cfgNode.attr("mass");
+				object length_object = cfgNode.attr("length");
+				object width_object = cfgNode.attr("width");
+				object height_object = cfgNode.attr("height");
+
 				scalar length;
-				if( cfgNode.attr("length") != object() )
+				if( !length_object.is_none() )
 					length = XD(cfgNode.attr("length")) * XD(cfgNode.attr("boneRatio"));
 				else
 					length = Norm(offset) * XD(cfgNode.attr("boneRatio"));
 
 				scalar density = XD(cfgNode.attr("density"));
 				scalar width, height;
-				if( cfgNode.attr("width") != object() )
+				if( !width_object.is_none() )
 				{
 					width = XD(cfgNode.attr("width"));
-					if( cfgNode.attr("mass") != object() )
+					if( !mass_object.is_none() )
 						height = (XD(cfgNode.attr("mass")) / (density * length)) / width;
-					else if (cfgNode.attr("height") != object())
+					else if ( !height_object.is_none())
 						height = XD(cfgNode.attr("height"));
 					else
 					    height = .1;
 				}
 				else
 				{
-					if( cfgNode.attr("mass") != object() )
+					if( !mass_object.is_none() )
 					{
-                        if (cfgNode.attr("height") != object())
+                        if ( !height_object.is_none())
                         {
                             height = XD(cfgNode.attr("height"));
                             width = (XD(cfgNode.attr("mass")) / (density * length)) / height;
@@ -480,7 +488,7 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
                     }
 					else
 					{
-                        if (cfgNode.attr("height") != object())
+                        if ( !height_object.is_none())
                         {
                             height = XD(cfgNode.attr("height"));
                             width = height;
@@ -517,7 +525,8 @@ void VpModel::_createBody( const object& joint, const SE3& parentT, const object
 		//pNode->body.SetInertia(BoxInertia(density, Vec3(width/2.,height/2.,length/2.)));
 
 		boneT = boneT * SE3(pyVec3_2_Vec3(cfgNode.attr("offset")));
-        if(joint.attr("parent") == object())
+		object parent_object = joint.attr("parent");
+        if(parent_object.is_none())
             boneT=SE3();
 
         _boneTs[joint_index] = boneT;
@@ -942,7 +951,7 @@ object VpModel::getBodyPositionGlobal_py( int index, const object& positionLocal
 	object pyV = O.copy();
 	Vec3 positionLocal_;
 
-	if(positionLocal==object())
+	if(positionLocal.is_none())
 		Vec3_2_pyVec3(getBodyPositionGlobal(index), pyV);
 	else
 	{
@@ -956,8 +965,8 @@ object VpModel::getBodyVelocityGlobal_py( int index, const object& positionLocal
 	ndarray O = np::array(make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 	Vec3 positionLocal_;
-	
-	if(positionLocal==object())
+
+	if(positionLocal.is_none())
 		Vec3_2_pyVec3(getBodyVelocityGlobal(index), pyV);
 	else
 	{
@@ -1003,7 +1012,7 @@ object VpModel::getBodyAccelerationGlobal_py(int index, const object& positionLo
 	ndarray O = np::array(make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 
-	if(positionLocal==object())
+	if(positionLocal.is_none())
 		Vec3_2_pyVec3(getBodyAccelerationGlobal(index), pyV);
 	else
 	{
@@ -1438,7 +1447,8 @@ void VpControlModel::_createJoint( const object& joint, const object& posture, c
 	int temp_parent_index;
 	while(true)
 	{
-		if(temp_joint.attr("parent") == object())
+	    object temp_parent_object = temp_joint.attr("parent");
+		if(temp_parent_object.is_none())
 		{
 			nodeExistParentJoint = object();
 			break;
@@ -1475,7 +1485,7 @@ void VpControlModel::_createJoint( const object& joint, const object& posture, c
 
 //	if ( nodeExistParentJoint!=object() && len_joint_children > 0  &&
 //		_config.attr("hasNode")(joint_name))
-	if ( nodeExistParentJoint!=object() && _config.attr("hasNode")(joint_name))
+	if ( !nodeExistParentJoint.is_none() && _config.attr("hasNode")(joint_name))
 	{
 		Node* pNode = _nodes[joint_index];
 		object cfgNode = _config.attr("getNode")(joint_name);
@@ -1592,7 +1602,8 @@ void VpControlModel::_updateJoint( const object& joint, const object& posture )
 	int temp_parent_index;
 	while(true)
 	{
-		if(temp_joint.attr("parent") == object())
+	    object temp_parent_object = temp_joint.attr("parent");
+		if(temp_parent_object.is_none())
 		{
 			nodeExistParentJoint = object();
 			break;
@@ -1632,7 +1643,7 @@ void VpControlModel::_updateJoint( const object& joint, const object& posture )
 	{
 		Node* pNode = _nodes[joint_index];
 
-		if(nodeExistParentJoint!=object())
+		if( !nodeExistParentJoint.is_none())
 			pNode->joint.SetOrientation(R);
 		else
 			// root�� ���� body�� ���� SetFrame() ���ش�.
@@ -2692,7 +2703,7 @@ void VpControlModel::setInternalJointTorquesLocal( const bp::list& torques )
 void VpControlModel::applyBodyGenForceGlobal( int index, const object& torque, const object& force, const object& positionLocal/*=object()*/ )
 {
 	Vec3 zero(0,0,0);
-	if(positionLocal==object())
+	if(positionLocal.is_none())
 		_nodes[index]->body.ApplyGlobalForce(dse3(XD(torque[0]), XD(torque[1]), XD(torque[2]), XD(force[0]), XD(force[1]), XD(force[2])), zero);
 	else
 		_nodes[index]->body.ApplyGlobalForce(dse3(XD(torque[0]), XD(torque[1]), XD(torque[2]), XD(force[0]), XD(force[1]), XD(force[2])), pyVec3_2_Vec3(positionLocal));
@@ -2701,7 +2712,7 @@ void VpControlModel::applyBodyGenForceGlobal( int index, const object& torque, c
 void VpControlModel::applyBodyForceGlobal( int index, const object& force, const object& positionLocal/*=object()*/ )
 {
 	Vec3 zero(0,0,0);
-	if(positionLocal==object())
+	if(positionLocal.is_none())
 		_nodes[index]->body.ApplyGlobalForce(dse3(0.,0.,0., XD(force[0]), XD(force[1]), XD(force[2])), zero);
 	else
 		_nodes[index]->body.ApplyGlobalForce(dse3(0.,0.,0., XD(force[0]), XD(force[1]), XD(force[2])), pyVec3_2_Vec3(positionLocal));
