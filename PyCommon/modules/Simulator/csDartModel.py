@@ -3,6 +3,7 @@ import math
 import numpy as np
 import numpy.linalg as npl
 import itertools
+import copy
 
 sys.path.append('../../..')
 
@@ -50,12 +51,17 @@ class DartModel:
             self.skeleton = self.world.skeletons[0]
 
         self.update(posture)
+        self.reset_q = copy.deepcopy(self.get_q())
 
         self.geomPoints = [None]*self.getBodyNum()
         self.initContactPoint()
 
     def step(self):
         self.world.step()
+
+    def reset(self):
+        self.world.reset()
+        self.set_q(self.reset_q)
 
     def getBodyNum(self):
         return self.skeleton.num_bodynodes()
@@ -141,11 +147,11 @@ class DartModel:
 
         return vertices
 
-    def applyPenaltyForce(self, bodyIDs, positionLocals, forces, localForce=True):
+    def applyPenaltyForce(self, bodyIDs, positionLocals, forces, localOffset=True):
         for bodyIdx in range(len(bodyIDs)):
             bodyID = bodyIDs[bodyIdx]
             body = self.getBody(bodyID)
-            body.add_ext_force(forces[bodyIdx], positionLocals[bodyIdx], False, localForce)
+            body.add_ext_force(forces[bodyIdx], positionLocals[bodyIdx], False, localOffset)
 
     def get_dart_contact_info(self):
         bodyIDs = [contact.bodynode2.id if contact.bodynode1.name == 'ground' else contact.bodynode1.id
@@ -929,7 +935,7 @@ class DartModel:
         pyV = np.asarray(self.skeleton.q[3:6])
         pyR = mm.exp(np.asarray(self.skeleton.q[:3]))
         ls.append([pyV, pyR])
-        print(pyV)
+        # print(pyV)
         for i in range(1, len(self.skeleton.joints)):
             joint = self.skeleton.joints[i]
             # ls.append(mm.exp(np.array([dof.position() for dof in joint.dofs])))

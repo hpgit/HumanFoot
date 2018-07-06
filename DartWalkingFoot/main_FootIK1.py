@@ -1,7 +1,8 @@
 from fltk import *
 import copy
 import os.path
-from cPickle import load
+from pickle import load
+# from cPickle import load
 # import time
 import numpy as np
 
@@ -32,7 +33,7 @@ from PyCommon.modules.Simulator import hpDartLCPSimulator as hdls
 from PyCommon.modules.GUI import hpSimpleViewer as hsv
 from PyCommon.modules.Util import ysPythonEx as ype
 
-from PyCommon.modules import pydart2 as pydart
+import pydart2 as pydart
 from PyCommon.modules.Simulator import csDartModel as cpm
 from pdcontroller import PDController
 
@@ -494,7 +495,7 @@ def walkings(params, isCma=True):
         bvh.replaceJointFromBvh('LeftFoot', partBvh, SEGMENT_FOOT_MAG)
 
     motion_ori = bvh.toJointMotion(1., False)
-    print motion_ori[0].skeleton
+    print(motion_ori[0].skeleton)
     LeftAnkleIdx = motion_ori[0].skeleton.getJointIndex('LeftFoot')
     RightAnkleIdx = motion_ori[0].skeleton.getJointIndex('RightFoot')
     oriAnkle = motion_ori[0].getJointOrientationGlobal(LeftAnkleIdx)

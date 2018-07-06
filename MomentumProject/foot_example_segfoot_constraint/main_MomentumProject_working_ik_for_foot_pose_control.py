@@ -125,10 +125,6 @@ def main():
     Kh = config['Kh']; Dh = config['Dh']  # angular balance gain
     Ks = config['Ks']; Ds = config['Ds']  # penalty force spring gain
 
-    Bt = config['Bt']
-    Bl = config['Bl']
-    Bh = config['Bh']
-
     selectedBody = motion[0].skeleton.getJointIndex(config['end'])
     constBody = motion[0].skeleton.getJointIndex('RightFoot')
 
@@ -235,14 +231,15 @@ def main():
     # viewer.record(False)
     # viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,255,255), yr.LINK_BONE))
     viewer.doc.addObject('motion', motion)
-    viewer.doc.addRenderer('motionModel', yr.VpModelRenderer(motionModel, (150,150,255), yr.POLYGON_FILL))
+    motion_model_renderer = yr.VpModelRenderer(motionModel, (150,150,255), yr.POLYGON_FILL)
+    viewer.doc.addRenderer('motionModel', motion_model_renderer)
     viewer.doc.setRendererVisible('motionModel', True)
     viewer.doc.addRenderer('ikModel', yr.VpModelRenderer(controlModel_ik, (150,150,255), yr.POLYGON_LINE))
     viewer.doc.setRendererVisible('ikModel', False)
     # viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_LINE))
     control_model_renderer = yr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_FILL)
-    viewer.doc.addRenderer('controlModel', control_model_renderer)
-    viewer.doc.setRendererVisible('controlModel', False)
+    # viewer.doc.addRenderer('controlModel', control_model_renderer)
+    # viewer.doc.setRendererVisible('controlModel', False)
     skeleton_renderer = None
     if SKELETON_ON:
         # skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), offset_Y=-0.08)
@@ -268,7 +265,7 @@ def main():
     viewer.doc.addRenderer('rd_CF', yr.VectorsRenderer(rd_CF, rd_CF_pos, (255,255,0)))
     viewer.doc.setRendererVisible('rd_CF', False)
     viewer.doc.addRenderer('rd_foot_ori', yr.OrientationsRenderer(rd_foot_ori, rd_foot_pos, (255,255,0)))
-    # viewer.doc.setRendererVisible('rd_foot_ori', False)
+    viewer.doc.setRendererVisible('rd_foot_ori', False)
 
     viewer.doc.addRenderer('rd_root_ori', yr.OrientationsRenderer(rd_root_ori, rd_root_pos, (255,255,0)))
     viewer.doc.setRendererVisible('rd_root_ori', False)
@@ -305,47 +302,96 @@ def main():
     initComZ = 0.
 
     viewer.objectInfoWnd.add1DSlider("Kt", 0., 300., 1., initKt)
-    viewer.objectInfoWnd.add1DSlider("Kl", 0., 300., 1., initKl)
-    viewer.objectInfoWnd.add1DSlider("Kh", 0., 300., 1., initKh)
-    viewer.objectInfoWnd.add1DSlider("Bl", 0., 1., .001, initBl)
-    viewer.objectInfoWnd.add1DSlider("Bh", 0., 1., .001, initBh)
-    viewer.objectInfoWnd.add1DSlider("SupKt", 0., 300., 0.1, initSupKt)
-    viewer.objectInfoWnd.add1DSlider("Fm", 0., 1000., 10., initFm)
     viewer.objectInfoWnd.add1DSlider("com X offset", -1., 1., 0.01, initComX)
     viewer.objectInfoWnd.add1DSlider("com Y offset", -1., 1., 0.001, initComY)
     viewer.objectInfoWnd.add1DSlider("com Z offset", -1., 1., 0.01, initComZ)
     viewer.objectInfoWnd.add1DSlider("tiptoe angle", -0.5, .5, 0.001, 0.)
     viewer.objectInfoWnd.add1DSlider("left tilt angle", -0.5, .5, 0.001, 0.)
     viewer.objectInfoWnd.add1DSlider("right tilt angle", -0.5, .5, 0.001, 0.)
+    viewer.objectInfoWnd.add1DRoller("l_rotate_x")
+    viewer.objectInfoWnd.add1DRoller("l_rotate_y")
+    viewer.objectInfoWnd.add1DRoller("l_rotate_z")
+    viewer.objectInfoWnd.add1DRoller("r_rotate_x")
+    viewer.objectInfoWnd.add1DRoller("r_rotate_y")
+    viewer.objectInfoWnd.add1DRoller("r_rotate_z")
 
-    viewer.force_on = False
+    LeftAnkleIdx = motion[0].skeleton.getJointIndex('LeftFoot')
+    RightAnkleIdx = motion[0].skeleton.getJointIndex('RightFoot')
+    currentFootOri = {'Left': motion[0].getJointOrientationGlobal(LeftAnkleIdx),
+                      'Right': motion[0].getJointOrientationGlobal(RightAnkleIdx)
+                      }
 
-    def viewer_SetForceState(object):
-        viewer.force_on = True
+    def offsetSliderHandler(slider, event):
+        """
+        :type slider: Fl_Hor_Value_Slider | Fl_Roller
+        :return:
+        """
+        if event == FL_RELEASE:
+            if slider.label() == 'l_rotate_x':
+                currentFootOri['Left'] = np.dot(mm.rotX(slider.value() * 4.), currentFootOri['Left'])
+            elif slider.label() == 'l_rotate_y':
+                currentFootOri['Left'] = np.dot(mm.rotY(slider.value() * 4.), currentFootOri['Left'])
+            elif slider.label() == 'l_rotate_z':
+                currentFootOri['Left'] = np.dot(mm.rotZ(slider.value() * 4.), currentFootOri['Left'])
+            elif slider.label() == 'r_rotate_x':
+                currentFootOri['Right'] = np.dot(mm.rotX(slider.value() * 4.), currentFootOri['Right'])
+            elif slider.label() == 'r_rotate_y':
+                currentFootOri['Right'] = np.dot(mm.rotY(slider.value() * 4.), currentFootOri['Right'])
+            elif slider.label() == 'r_rotate_z':
+                currentFootOri['Right'] = np.dot(mm.rotZ(slider.value() * 4.), currentFootOri['Right'])
+            slider.value(0.)
 
-    def viewer_GetForceState():
-        return viewer.force_on
+    viewer.objectInfoWnd.getValobject('l_rotate_x').set_handler(offsetSliderHandler)
+    viewer.objectInfoWnd.getValobject('l_rotate_y').set_handler(offsetSliderHandler)
+    viewer.objectInfoWnd.getValobject('l_rotate_z').set_handler(offsetSliderHandler)
+    viewer.objectInfoWnd.getValobject('r_rotate_x').set_handler(offsetSliderHandler)
+    viewer.objectInfoWnd.getValobject('r_rotate_y').set_handler(offsetSliderHandler)
+    viewer.objectInfoWnd.getValobject('r_rotate_z').set_handler(offsetSliderHandler)
 
-    def viewer_ResetForceState():
-        viewer.force_on = False
+    current_frame = 0
 
-    viewer.objectInfoWnd.addBtn('Force on', viewer_SetForceState)
-    viewer_ResetForceState()
+    def offsetSliderCallback(slider):
+        '''
+        :type slider: Fl_Hor_Value_Slider | Fl_Roller
+        :return:
+        '''
 
-    offset = 60
+        # trigger part
+        # if slider.label() == 'offset_tx':
+        #     _rootpos = dartModel.getBodyPositionGlobal(0)
+        #     dartModel.translateByOffset(np.array((slider.value() - _rootpos[0], 0., 0.)))
+        #     dartMotionModel.translateByOffset(np.array((slider.value() - _rootpos[0], 0., 0.)))
+        #     motion_ori[0].translateByOffset(np.array((slider.value()- _rootpos[0], 0., 0.)))
+        # elif slider.label() == 'offset_ty':
+        #     _rootpos = dartModel.getBodyPositionGlobal(0)
+        #     dartModel.translateByOffset(np.array((0., slider.value() - _rootpos[1], 0.)))
+        #     dartMotionModel.translateByOffset(np.array((0., slider.value() - _rootpos[1], 0.)))
+        #     motion_ori[0].translateByOffset(np.array((0., slider.value()- _rootpos[1], 0.)))
+        # elif slider.label() == 'offset_tz':
+        #     _rootpos = dartModel.getBodyPositionGlobal(0)
+        #     dartModel.translateByOffset(np.array((0., 0., slider.value() - _rootpos[2])))
+        #     dartMotionModel.translateByOffset(np.array((0., 0., slider.value() - _rootpos[2])))
+        #     motion_ori[0].translateByOffset(np.array((0., 0., slider.value()- _rootpos[2])))
 
-    viewer.objectInfoWnd.begin()
-    viewer.objectInfoWnd.labelForceX = Fl_Value_Input(20, 30+offset*9, 40, 20, 'X')
-    viewer.objectInfoWnd.labelForceX.value(0)
+        if slider.label() == 'l_rotate_x':
+            motion[0].setJointOrientationGlobal(LeftAnkleIdx, np.dot(mm.rotX(slider.value() * 4.), currentFootOri['Left']))
+        elif slider.label() == 'l_rotate_y':
+            motion[0].setJointOrientationGlobal(LeftAnkleIdx, np.dot(mm.rotY(slider.value() * 4.), currentFootOri['Left']))
+        elif slider.label() == 'l_rotate_z':
+            motion[0].setJointOrientationGlobal(LeftAnkleIdx, np.dot(mm.rotZ(slider.value() * 4.), currentFootOri['Left']))
+        elif slider.label() == 'r_rotate_x':
+            motion[0].setJointOrientationGlobal(RightAnkleIdx, np.dot(mm.rotX(slider.value() * 4.), currentFootOri['Right']))
+        elif slider.label() == 'r_rotate_y':
+            motion[0].setJointOrientationGlobal(RightAnkleIdx, np.dot(mm.rotY(slider.value() * 4.), currentFootOri['Right']))
+        elif slider.label() == 'r_rotate_z':
+            motion[0].setJointOrientationGlobal(RightAnkleIdx, np.dot(mm.rotZ(slider.value() * 4.), currentFootOri['Right']))
 
-    viewer.objectInfoWnd.labelForceY = Fl_Value_Input(80, 30+offset*9, 40, 20, 'Y')
-    viewer.objectInfoWnd.labelForceY.value(0)
-
-    viewer.objectInfoWnd.labelForceZ = Fl_Value_Input(140, 30+offset*9, 40, 20, 'Z')
-    viewer.objectInfoWnd.labelForceZ.value(1)
-
-    viewer.objectInfoWnd.labelForceDur = Fl_Value_Input(220, 30+offset*9, 40, 20, 'Dur')
-    viewer.objectInfoWnd.labelForceDur.value(0.1)
+    viewer.objectInfoWnd.getValobject("l_rotate_x").callback(offsetSliderCallback)
+    viewer.objectInfoWnd.getValobject("l_rotate_y").callback(offsetSliderCallback)
+    viewer.objectInfoWnd.getValobject("l_rotate_z").callback(offsetSliderCallback)
+    viewer.objectInfoWnd.getValobject("r_rotate_x").callback(offsetSliderCallback)
+    viewer.objectInfoWnd.getValobject("r_rotate_y").callback(offsetSliderCallback)
+    viewer.objectInfoWnd.getValobject("r_rotate_z").callback(offsetSliderCallback)
 
     viewer.objectInfoWnd.end()
 
@@ -421,7 +467,7 @@ def main():
     # simulate
     ###################################
     def preFrameCallback_Always(frame):
-        motion[frame].translateByTarget((0., motion_Y+getParamVal('com Y offset'), 0.))
+        motion[0].translateByTarget((0., motion_Y+getParamVal('com Y offset'), 0.))
         touch_body_idx = []
         if foot_viewer.check_om_l.value():
             touch_body_idx.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_0'))
@@ -445,8 +491,12 @@ def main():
         if foot_viewer.check_h_r.value():
             touch_body_idx.append(motion[0].skeleton.getJointIndex('RightFoot_foot_1_0'))
 
-        hfi.footAdjust(motion[frame], touch_body_idx, 0.01, 0.008, 0.)
-        print(motion[frame].getJointPositionGlobal(idDic['LeftFoot_foot_0_0_0']))
+        for idx in lIDlist:
+            motion[0].setJointOrientationLocal(idx, np.eye(3))
+        for idx in rIDlist:
+            motion[0].setJointOrientationLocal(idx, np.eye(3))
+        hfi.footAdjust(motion[0], touch_body_idx, 0.01, 0.008, 0.)
+        print(motion[0].getJointPositionGlobal(idDic['LeftFoot_foot_0_0_0']))
 
         # if frame < 120+start_frame:
         #     viewer.motionViewWnd.glWindow.camera.rotateX = math.pi /180. * -25.
@@ -455,8 +505,6 @@ def main():
         #     viewer.motionViewWnd.glWindow.camera.distance = .4
         #     viewer.motionViewWnd.glWindow.camera.center = \
         #         .5*(motionModel.getBodyPositionGlobal(idDic['RightFoot']) + motionModel.getBodyPositionGlobal(idDic['LeftFoot'])) + np.array([0., -0.05, 0.])
-
-
 
     def simulateCallback(frame):
 
@@ -511,7 +559,7 @@ def main():
             #     motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1_0'], mm.exp(mm.unitZ(), -math.pi * right_tilt_angle))
             motion[frame].mulJointOrientationLocal(idDic['RightFoot'], mm.exp(mm.unitZ(), -math.pi * right_tilt_angle))
 
-        motionModel.update(motion[frame])
+        motionModel.update(motion[0])
         controlModel_ik.set_q(controlModel.get_q())
 
         global g_initFlag
@@ -623,12 +671,10 @@ def main():
 
         # rendering
         for foot_seg_id in footIdlist:
-            control_model_renderer.body_colors[foot_seg_id] = (255, 240, 255)
+            motion_model_renderer.body_colors[foot_seg_id] = (150, 150, 255)
 
         for contact_id in contact_ids:
-            control_model_renderer.body_colors[contact_id] = (255, 0, 0)
-
-
+            motion_model_renderer.body_colors[contact_id] = (255, 240, 255)
 
         rd_CM[0] = CM
 
@@ -689,7 +735,8 @@ def main():
 
     viewer.setSimulateCallback(simulateCallback)
     viewer.setPreFrameCallback_Always(preFrameCallback_Always)
-    viewer.startTimer(1./4.)
+    viewer.startTimer(1./30.)
+    viewer.setMaxFrame(10000)
     # viewer.play()
     viewer.show()
 

@@ -1,5 +1,6 @@
 import copy
 import numpy as np
+import gym
 
 import sys
 if '../PyCommon/modules' not in sys.path:
@@ -43,7 +44,8 @@ preFootCenter = [None]
 
 DART_CONTACT_ON = True
 
-def main(fm=50., fv=np.array([0., 0., 50.])):
+
+def main(fm=50., fv=np.array([0., 0., 50.]), ts=2., te=2.1):
     np.set_printoptions(precision=4, linewidth=200)
     # np.set_printoptions(precision=4, linewidth=1000, threshold=np.inf)
 
@@ -82,6 +84,7 @@ def main(fm=50., fv=np.array([0., 0., 50.])):
     # momentum matrix
     linkMasses = dartModel.getBodyMasses()
     totalMass = dartModel.getTotalMass()
+    dartModel.world.time()
 
     # penalty method
     # bodyIDsToCheck = range(dartModel.getBodyNum())
@@ -100,36 +103,15 @@ def main(fm=50., fv=np.array([0., 0., 50.])):
     #simulate
     ###################################
     def simulateCallback(frame):
-        # print()
-        # print(dartModel.getJointVelocityGlobal(0))
-        # print(dartModel.getDOFVelocities()[0])
-        # print(dartModel.get_dq()[:6])
         dartMotionModel.update(motion[frame])
-
-        global forceShowTime
-
-        footHeight = dartModel.getBody(supL).shapenodes[0].shape.size()[1]/2.
 
         # tracking
         # th_r = motion.getDOFPositions(frame)
         th_r = dartMotionModel.getDOFPositions()
         th = dartModel.getDOFPositions()
         th_r_flat = dartMotionModel.get_q()
-        # dth_r = motion.getDOFVelocities(frame)
-        # dth = dartModel.getDOFVelocities()
-        # ddth_r = motion.getDOFAccelerations(frame)
-        # ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
         dth_flat = dartModel.get_dq()
-        # dth_flat = np.concatenate(dth)
-        # ddth_des_flat = pdcontroller.compute(dartMotionModel.get_q())
-        # ddth_des_flat = pdcontroller.compute(th_r)
         ddth_des_flat = pdcontroller.compute_flat(th_r_flat)
-
-        bodyIDs, contactPositions, contactPositionLocals, contactForces = [], [], [], []
-        if DART_CONTACT_ON:
-            bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.get_dart_contact_info()
-        else:
-            bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
 
         localPos = [[0, 0, 0]]
         for i in range(stepsPerFrame):
@@ -143,8 +125,7 @@ def main(fm=50., fv=np.array([0., 0., 50.])):
             # dartModel.skeleton.set_forces(np.zeros(totalDOF))
 
             extraForce[0] = fm * fv
-            if viewer_GetForceState():
-                forceShowTime += wcfg.timeStep
+            if ts <= dartModel.world.time() <= te:
                 dartModel.applyPenaltyForce(selectedBodyId, localPos, extraForce)
 
             dartModel.step()
@@ -155,4 +136,8 @@ def main(fm=50., fv=np.array([0., 0., 50.])):
             bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
 
 
-main()
+if __name__ == '__main__':
+    # main()
+    ppo2.Model
+
+

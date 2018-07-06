@@ -66,8 +66,8 @@ def main():
     dartModel.initializeHybridDynamics()
 
     #controlToMotionOffset = (1.5, -0.02, 0)
-    controlToMotionOffset = (1.5, 0, 0)
-    dartModel.translateByOffset(controlToMotionOffset)
+    # controlToMotionOffset = (1.5, 0, 0)
+    # dartModel.translateByOffset(controlToMotionOffset)
 
     totalDOF = dartModel.getTotalDOF()
     DOFs = dartModel.getDOFs()
@@ -266,7 +266,12 @@ def main():
     def viewer_ResetForceState():
         viewer.force_on = False
 
+    viewer.reset = False
+    def viewer_reset(object):
+        viewer.reset = True
+
     viewer.objectInfoWnd.addBtn('Force on', viewer_SetForceState)
+    viewer.objectInfoWnd.addBtn('reset', viewer_reset)
     viewer_ResetForceState()
 
     offset = 60
@@ -752,6 +757,11 @@ def main():
             bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.get_dart_contact_info()
         else:
             bodyIDs, contactPositions, contactPositionLocals, contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+        if viewer.reset:
+            viewer.reset = False
+            dartModel.reset()
+
+        print(dartModel.getCOM())
 
         # rendering
         rightFootVectorX[0] = np.dot(footOriL, np.array([.1, 0, 0]))

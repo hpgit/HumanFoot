@@ -19,6 +19,8 @@ def footAdjust(posture_ori, touch_body_indices, SEGMENT_FOOT_MAG, SEGMENT_FOOT_R
     :type baseHeight: float
     :return:
     """
+    if len(touch_body_indices) == 0:
+        return
     idDic = dict()
     for i in range(posture_ori.skeleton.getJointNum()):
         idDic[posture_ori.skeleton.getJointName(i)] = i
@@ -33,7 +35,7 @@ def footAdjust(posture_ori, touch_body_indices, SEGMENT_FOOT_MAG, SEGMENT_FOOT_R
     seg_joint_pos = []
     for touch_body_idx in side_touch_body_indices:
         if nameDic[touch_body_idx] == foot_name+'_foot_0_0':
-            seg_joint_pos.append(posture_ori.getJointPositionGlobal(touch_body_idx) - SEGMENT_FOOT_MAG*np.dot(seg_joint_ori, -1.936*mm.unitY()))
+            seg_joint_pos.append(posture_ori.getJointPositionGlobal(touch_body_idx) + SEGMENT_FOOT_MAG*np.dot(seg_joint_ori, -1.936*mm.unitY()).flatten())
         else:
             seg_joint_pos.append(posture_ori.getJointPositionGlobal(touch_body_idx))
 

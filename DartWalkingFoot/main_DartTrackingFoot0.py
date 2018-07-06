@@ -35,7 +35,7 @@ from PyCommon.modules.Simulator import hpDartLCPSimulator as hdls
 from PyCommon.modules.GUI import hpSimpleViewer as hsv
 from PyCommon.modules.Util import ysPythonEx as ype
 
-from PyCommon.modules import pydart2 as pydart
+import pydart2 as pydart
 from PyCommon.modules.Simulator import csDartModel as cpm
 from pdcontroller import PDController
 

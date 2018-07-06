@@ -75,7 +75,8 @@ def rad2Deg(rad):
 
 def length(transV):
     if isinstance(transV, np.ndarray):
-        return math.sqrt(np.dot(transV, transV))
+        # return math.sqrt(np.dot(transV, transV))
+        return np.linalg.norm(transV)
     else:
         return math.sqrt(transV[0]*transV[0] + transV[1]*transV[1] + transV[2]*transV[2])
 #    return math.sqrt(transV[0]*transV[0] + transV[1]*transV[1] + transV[2]*transV[2])
