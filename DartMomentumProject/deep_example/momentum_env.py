@@ -20,8 +20,8 @@ class DeepDartModel(DartModel):
 
         self.action = np.zeros_like(self.reset_q)
 
-        self.Kt = 25.
-        self.Dt = 5.
+        self.Kt = 10.
+        self.Dt = .0
 
         self.body_foot_R = self.getBody('RightFoot')
         self.body_foot_L = self.getBody('LeftFoot')
@@ -32,9 +32,13 @@ class DeepDartModel(DartModel):
 
         self.w_q = 1.
         self.w_com = 1.
+        self.w_foot = 1.
+        self.w_foot_ori = 1.
 
-        self.w_q_exp = 1.
-        self.w_com_exp = 1.
+        self.w_q_exp = 2.
+        self.w_com_exp = 10.
+        self.w_foot_exp = 40.
+        self.w_foot_ori_exp = 40.
 
     def get_deep_state(self):
         com = self.getCOM()
@@ -58,22 +62,28 @@ class DeepDartModel(DartModel):
         self.f = self.fm * self.fv
 
     def deep_step(self, step_num=30):
-        ddth_des_flat = self.Kt * (self.get_q() - self.reset_q - self.action) - self.Dt *self.get_dq()
+        ddth_des_flat = self.Kt * (self.get_q() - self.reset_q - self.action.flatten()) - self.Dt * self.get_dq()
+        # ddth_des_flat = self.Kt * (self.get_q() - self.reset_q) - self.Dt * self.get_dq()
+        # ddth_des_flat[:6] = np.zeros(6)
         # print(self.world.time())
         for i in range(step_num):
             self.skeleton.set_accelerations(ddth_des_flat)
+            # self.skeleton.set_forces(ddth_des_flat)
 
             if self.ts <= self.world.time() <= self.te:
                 self.applyPenaltyForce([0], [np.zeros(3)], [self.f])
             self.world.step()
+        print(self.body_foot_L.world_transform()[:3, :3])
 
     def get_deep_reward(self):
         r_q = mm.square_sum(self.get_q() - self.reset_q)
         r_com = mm.square_sum(self.getCOM() - self.com_des)
-        return self.w_com * math.exp(-self.w_com_exp * r_com) + self.w_q * math.exp(-self.w_q * r_q)
+        r_foot = mm.square_sum([self.body_foot_L.to_world()[1], self.body_foot_R.to_world()[1], 0.])
+        r_foot_ori = mm.square_sum([self.body_foot_L.world_transform(), self.body_foot_R.to_world()[1], 0.])
+        return self.w_com * math.exp(-self.w_com_exp * r_com) + self.w_q * math.exp(-self.w_q_exp * r_q) + self.w_foot * math.exp(-self.w_foot_exp * r_foot)
 
     def is_terminal_state(self):
-        if self.getCOM()[1] < 0.65:
+        if self.getCOM()[1] < 0.1:
             return True
         elif True in np.isnan(np.asarray(self.get_q())):
             return True
@@ -106,6 +116,8 @@ class MomentumEnv(gym.Env):
 
         self.seed()
 
+        self.episode_times = np.array([0. for i in range(32)])
+
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
@@ -125,8 +137,10 @@ class MomentumEnv(gym.Env):
         return self.model.get_deep_state(), self.model.get_deep_reward(), self.model.is_terminal_state(), {}
 
     def reset(self):
-        if self.episode_num % 32 == 0:
-            print(self.model.world.time())
+        # self.model.initializeHybridDynamics()
+        self.episode_times[self.episode_num % 32] = self.model.world.time()
+        if self.episode_num % 32 == 31:
+            print(np.max(self.episode_times))
         #     self.model.WriteRecords("./output_momentum/"+str(self.episode_num))
         # self.env.WriteRecords("")
         self.episode_num += 1

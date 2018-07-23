@@ -265,7 +265,7 @@ def main():
     viewer.doc.setRendererVisible('rd_dH_des', False)
     # viewer.doc.addRenderer('rd_grf_des', yr.ForcesRenderer(rd_grf_des, rd_CP_des, (0,255,0), .001))
     viewer.doc.addRenderer('rd_CF', yr.VectorsRenderer(rd_CF, rd_CF_pos, (255,255,0)))
-    # viewer.doc.setRendererVisible('rd_CF', False)
+    viewer.doc.setRendererVisible('rd_CF', False)
     viewer.doc.addRenderer('rd_foot_ori', yr.OrientationsRenderer(rd_foot_ori, rd_foot_pos, (255,255,0)))
     viewer.doc.setRendererVisible('rd_foot_ori', False)
 
@@ -296,9 +296,9 @@ def main():
     initBl = .1
     initBh = .13
     # initSupKt = 17
-    initSupKt = 22
+    initSupKt = 28
 
-    initFm = 50.0
+    initFm = 60.0
 
     initComX = 0.
     initComY = 0.

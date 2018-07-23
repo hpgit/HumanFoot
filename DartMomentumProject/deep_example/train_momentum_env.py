@@ -39,15 +39,17 @@ def train(env_id, num_timesteps, seed):
                        lam=0.95, gamma=0.99, noptepochs=10, log_interval=1,
                        ent_coef=0.0,
                        lr=3e-4,
-                       cliprange=0.2, save_interval=2048,
+                       cliprange=0.2, save_interval=128,
                        total_timesteps=num_timesteps)
+
+    load_path = logger.get_dir() + '../log/checkpoints/04096'
 
     # model = ppo2.learn(policy=policy, env=env, nsteps=2048, nminibatches=32,
     #                    lam=0.95, gamma=0.99, noptepochs=10, log_interval=1,
     #                    ent_coef=0.0,
     #                    lr=3e-4,
-    #                    cliprange=0.2, save_interval=2048,
-    #                    total_timesteps=num_timesteps, load_path=logger.get_dir()+'/checkpoints/4096')
+    #                    cliprange=0.2, save_interval=512,
+    #                    total_timesteps=num_timesteps, load_path=load_path)
 
     return model, env
 
@@ -57,7 +59,7 @@ def main():
     pydart.init()
     args = mujoco_arg_parser().parse_args()
     logger.configure(dir='./log'+strftime("%Y%m%d%H%M")+'/')
-    model, env = train(args.env, num_timesteps=1000000, seed=args.seed)
+    model, env = train(args.env, num_timesteps=10000000, seed=args.seed)
 
     logger.log("Running trained model")
     obs = np.zeros((env.num_envs,) + env.observation_space.shape)

@@ -43,30 +43,46 @@ def load(env_id, num_timesteps, seed):
                        ent_coef=0.0, vf_coef=0.5, max_grad_norm=0.5)
 
     # Model loading
-    load_path = logger.get_dir() + "/checkpoints/04096"
+    load_path = './log' + '201807181601' + "/checkpoints/01024"
     model.load(load_path)
 
     return model, env
 
 
 def main():
+    from fltk import Fl
+    from PyCommon.modules.GUI import hpSimpleViewer as hsv
+    from PyCommon.modules.Renderer import ysRenderer as yr
+
     pydart.init()
     args = mujoco_arg_parser().parse_args()
-    logger.configure(dir="./log/")
+    logger.configure(dir="./run/")
     model, env = load(args.env, num_timesteps=10000000, seed=args.seed)
 
     logger.log("Running trained model")
     obs = np.zeros((env.num_envs,) + env.observation_space.shape)
     obs[:] = env.reset()
-    while True:
+
+    dart_model = env.venv.envs[0].env.model
+    viewer = hsv.hpSimpleViewer(viewForceWnd=False)
+    viewer.doc.addRenderer('controlModel', yr.DartRenderer(dart_model.world, (150,150,255), yr.POLYGON_FILL))
+
+    def simulateCallback(frame):
         actions = model.step(obs)
         res = env.step(actions[0])
         obs[:] = res[0]
         done = res[2]
-        if done[0]:
-            break
+        # if done[0]:
+        #     break
 
         # env.render()
+
+    viewer.setSimulateCallback(simulateCallback)
+    viewer.setMaxFrame(3000)
+    viewer.startTimer(1/30.)
+    viewer.show()
+
+    Fl.run()
 
 
 if __name__ == '__main__':

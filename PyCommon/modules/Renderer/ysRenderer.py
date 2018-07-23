@@ -62,7 +62,7 @@ LEFT_FOOT_ONLY = False
 RIGHT_FOOT_ONLY = False
 
 CAPSULE_SLICE_SIZE = 8
-SPHERE_SLICE_SIZE = 16
+SPHERE_SLICE_SIZE = 64
 
 
 class Renderer:
@@ -301,21 +301,22 @@ class VpWorldRenderer(Renderer):
                 self.rc.drawSphere(sphere_bump[0])
                 glPopMatrix()
 
-        for plane in self._world.get_plane_list():
-            if renderType == RENDER_OBJECT:
-                plane_normal = plane[0]
-                plane_origin = plane[1]
-                box_center = plane_origin - plane_normal*0.05
-                glColor3ubv(self._color)
-                glPushMatrix()
-                glTranslatef(box_center[0], box_center[1], box_center[2])
-                rot_vec = mm.logSO3(mm.getSO3FromVectors(mm.unitY(), plane_normal))
-                angle = numpy.linalg.norm(rot_vec)
-                if angle > 0.00001:
-                    axis = rot_vec/angle
-                    glRotatef(mm.rad2Deg(angle), axis[0], axis[1], axis[2])
-                self.rc.drawCenteredBox(4., 0.1, 4.)
-                glPopMatrix()
+        if False:
+            for plane in self._world.get_plane_list():
+                if renderType == RENDER_OBJECT:
+                    plane_normal = plane[0]
+                    plane_origin = plane[1]
+                    box_center = plane_origin - plane_normal*0.05
+                    glColor3ubv(self._color)
+                    glPushMatrix()
+                    glTranslatef(box_center[0], box_center[1], box_center[2])
+                    rot_vec = mm.logSO3(mm.getSO3FromVectors(mm.unitY(), plane_normal))
+                    angle = numpy.linalg.norm(rot_vec)
+                    if angle > 0.00001:
+                        axis = rot_vec/angle
+                        glRotatef(mm.rad2Deg(angle), axis[0], axis[1], axis[2])
+                    self.rc.drawCenteredBox(4., 0.1, 4.)
+                    glPopMatrix()
 
 
 class VpModelRenderer(Renderer):

@@ -783,7 +783,7 @@ def walkings(params=None, isCma=False):
 
 
     def viewer_onClose(data):
-        if plot!=None:
+        if plot is not None:
             plot.close()
         viewer.onClose(data)
     viewer.callback(viewer_onClose)
@@ -1056,7 +1056,7 @@ def walkings(params=None, isCma=False):
                 motion_swf_height[frame].setJointOrientationGlobal(swingFoot, R_foot)
                 motion_swf_height[frame].setJointOrientationGlobal(stanceFoot, R_stance_foot)
 
-                if plot!=None:
+                if plot is not None:
                     plot.addDataPoint('debug1', frame, offset_height)
                 #                    plot.addDataPoint('debug2', frame, height_cur)
                 #                    plot.addDataPoint('diff', frame, diff)
@@ -1131,8 +1131,8 @@ def walkings(params=None, isCma=False):
 
 
 
-        print("motion_seg_left_foot", mm.logSO3(motion_seg[frame].getJointOrientationGlobal(lID)))
-        print("controlModel_left_foot", mm.logSO3(controlModel.getJointOrientationGlobal(lID)))
+        # print("motion_seg_left_foot", mm.logSO3(motion_seg[frame].getJointOrientationGlobal(lID)))
+        # print("controlModel_left_foot", mm.logSO3(controlModel.getJointOrientationGlobal(lID)))
 
 
         # control trajectory
@@ -1181,7 +1181,7 @@ def walkings(params=None, isCma=False):
         contactPositions = None
 
         for i in range(stepsPerFrame):
-            if i % 5 == 0:
+            if i % 1 == 0:
                 bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
                 # bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp \
                 #     = hls.calcLCPForcesHD(motion_ori, vpWorld, controlModel, bodyIDsToCheck, 1., ddth_des_flat, ddth_des_flat, solver='qp', hdAccMask=hdAccMask)
@@ -1220,6 +1220,7 @@ def walkings(params=None, isCma=False):
             for i in rIDs+lIDs:
                 controlModel.setJointTorqueLocal(i, ddth_des[i])
             controlModel.setDOFAccelerations(ddth_des)
+            # controlModel.setDOFTorques(ddth_des)
             controlModel.solveHybridDynamics()
 
             if TORQUE_PLOT:
@@ -1346,7 +1347,8 @@ def walkings(params=None, isCma=False):
         if lastFrame:
             if segIndex < len(segments)-1:
                 print('%d (%d): end of %dth seg (%s, %s)'%(frame, frame-curInterval[1],segIndex, yba.GaitState.text[curState], curInterval))
-                if plot!=None: plot.addDataPoint('diff', frame, (frame-curInterval[1])*.01)
+                if plot is not None:
+                    plot.addDataPoint('diff', frame, (frame-curInterval[1])*.01)
 
                 if len(stanceFoots)>0 and len(swingFoots)>0:
                     #                    step_cur = controlModel.getJointPositionGlobal(swingFoots[0]) - controlModel.getJointPositionGlobal(stanceFoots[0])
@@ -1426,19 +1428,20 @@ def walkings(params=None, isCma=False):
         motionModel.update(motion_seg[frame])
 
         rd_CP[0] = CP
-        rd_CMP[0] = (CMreal[0] - (F[0]/F[1])*CMreal[1], 0, CMreal[2] - (F[2]/F[1])*CMreal[1])
+        if abs(F[1]) > 0.0001:
+            rd_CMP[0] = (CMreal[0] - (F[0]/F[1])*CMreal[1], 0, CMreal[2] - (F[2]/F[1])*CMreal[1])
 
-        if plot!=None:
+        if plot is not None:
             plot.addDataPoint('zero', frame, 0)
             plot.updatePoints()
-
 
     viewer.setSimulateCallback(simulateCallback)
 
     if MULTI_VIEWER:
         viewer.startTimer(frameTime / 1.4)
     else:
-        viewer.startTimer(frameTime * .1)
+        # viewer.startTimer(frameTime * .1)
+        viewer.startTimer(frameTime)
     viewer.show()
 
     Fl.run()

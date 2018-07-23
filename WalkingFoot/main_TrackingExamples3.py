@@ -610,7 +610,7 @@ def walkings():
     #     hdAccMask[3+3*i : 6+3*i] = [False]*3
 
 
-    lID = controlModel.name2id('LeftFoot');      rID = controlModel.name2id('RightFoot')
+    lID = controlModel.name2index('LeftFoot');      rID = controlModel.name2index('RightFoot')
     lUpLeg = skeleton.getJointIndex('LeftUpLeg');rUpLeg = skeleton.getJointIndex('RightUpLeg')
     lKnee = skeleton.getJointIndex('LeftLeg');   rKnee = skeleton.getJointIndex('RightLeg')
     lFoot = skeleton.getJointIndex('LeftFoot');  rFoot = skeleton.getJointIndex('RightFoot')

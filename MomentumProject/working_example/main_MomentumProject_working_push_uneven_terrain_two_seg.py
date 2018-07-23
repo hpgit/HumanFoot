@@ -20,9 +20,9 @@ from PyCommon.modules.ArticulatedBody import ysMomentum as ymt
 from PyCommon.modules.ArticulatedBody import ysControl as yct
 from PyCommon.modules.ArticulatedBody import hpInvKineDart as hik
 
-from MomentumProject.foot_example_segfoot_constraint import mtOptimize as mot
-from MomentumProject.foot_example_segfoot_constraint import mtInitialize as mit
-from MomentumProject.foot_example_segfoot_constraint.foot_window import FootWindow
+from MomentumProject.working_example import mtOptimize as mot
+from MomentumProject.working_example import mtInitialize as mit
+from MomentumProject.working_example.foot_window import FootWindow
 
 from PyCommon.modules.ArticulatedBody import hpFootIK as hfi
 # from scipy.spatial import Delaunay
@@ -56,12 +56,7 @@ def main():
     # np.set_printoptions(precision=4, linewidth=200)
     np.set_printoptions(precision=5, threshold=np.inf, suppress=True, linewidth=3000)
 
-    motionFile = 'wd2_tiptoe.bvh'
-    motionFile = 'wd2_tiptoe_zygote.bvh'
-    # motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped(motionFile, SEGMENT_FOOT_RAD=0.008)
-    motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped(motionFile, SEGMENT_FOOT_MAG=0.01, SEGMENT_FOOT_RAD=0.008)
-    # motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped()
-    # motion, mcfg, wcfg, stepsPerFrame, config = mit.create_jump_biped()
+    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped_zygote_two_seg()
 
     vpWorld = cvw.VpWorld(wcfg)
     sphere_radius = 0.5
@@ -78,7 +73,7 @@ def main():
     controlModel.initializeHybridDynamics()
 
     # controlToMotionOffset = (1.5, -0.02, 0)
-    controlToMotionOffset = (1.5, 0., 0)
+    controlToMotionOffset = (1.5, 0.02, 0)
     controlModel.translateByOffset(controlToMotionOffset)
     # controlModel_shadow_for_ik.set_q(controlModel.get_q())
     # controlModel_shadow_for_ik.computeJacobian(0, np.array([0., 0., 0.]))
@@ -303,7 +298,7 @@ def main():
     initBl = .1
     initBh = .13
     # initSupKt = 17
-    initSupKt = 22
+    initSupKt = 14.8
 
     initFm = 50.0
 
@@ -374,7 +369,7 @@ def main():
         idDic[motion[0].skeleton.getJointName(i)] = i
 
     # extendedFootName = ['Foot_foot_0_0', 'Foot_foot_0_1', 'Foot_foot_0_0_0', 'Foot_foot_0_1_0', 'Foot_foot_1_0']
-    extendedFootName = ['Foot_foot_0_0', 'Foot_foot_0_0_0', 'Foot_foot_0_1_0', 'Foot_foot_1_0']
+    extendedFootName = ['Foot', 'Toes']
     lIDdic = {'Left'+name: motion[0].skeleton.getJointIndex('Left'+name) for name in extendedFootName}
     rIDdic = {'Right'+name: motion[0].skeleton.getJointIndex('Right'+name) for name in extendedFootName}
     footIdDic = lIDdic.copy()
@@ -432,9 +427,10 @@ def main():
         # print(motion[frame].getJointOrientationLocal(footIdDic['RightFoot_foot_0_1_0']))
         # hfi.footAdjust(motion[frame], idDic, SEGMENT_FOOT_MAG=.03, SEGMENT_FOOT_RAD=.015, baseHeight=0.02)
         if frame == 0:
-            setParamVal('com Y offset', 0.02)
-        if frame == 60:
-            setParamVal('pha angle', 0.2)
+            # setParamVal('com Y offset', 0.02)
+            setParamVal('com Z offset', -0.06)
+        # if frame == 60:
+        #     setParamVal('pha angle', 0.2)
 
         if abs(getParamVal('tiptoe angle')) > 0.001:
             tiptoe_angle = getParamVal('tiptoe angle')
@@ -491,6 +487,8 @@ def main():
 
         if abs(getParamVal('pha angle')) > 0.001:
             pha_angle = getParamVal('pha angle')
+            # motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1_0'], mm.exp(mm.unitX(), math.pi * pha_angle))
+            # motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1_0'], mm.exp(mm.unitX(), math.pi * pha_angle))
             motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1_0'], mm.exp(mm.unitX(), math.pi * pha_angle))
             motion[frame].mulJointOrientationLocal(idDic['LeftFoot_foot_0_1_0'], mm.exp(mm.unitX(), math.pi * pha_angle))
             # motion[frame].mulJointOrientationLocal(idDic['RightFoot_foot_0_1_0'], mm.exp(mm.unitZ(), -math.pi * pha_angle))
@@ -540,27 +538,15 @@ def main():
         #################################################
 
         contact_des_ids = list()  # desired contact segments
-        if foot_viewer.check_om_l.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_0'))
         if foot_viewer.check_op_l.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_0_0'))
-        if foot_viewer.check_im_l is not None and foot_viewer.check_im_l.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_1'))
-        if foot_viewer.check_ip_l.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_0_1_0'))
+            contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftToes'))
         if foot_viewer.check_h_l.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot_foot_1_0'))
+            contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot'))
 
-        if foot_viewer.check_om_r.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_0'))
         if foot_viewer.check_op_r.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_0_0'))
-        if foot_viewer.check_im_r is not None and foot_viewer.check_im_r.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_1'))
-        if foot_viewer.check_ip_r.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_0_1_0'))
+            contact_des_ids.append(motion[0].skeleton.getJointIndex('RightToes'))
         if foot_viewer.check_h_r.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('RightFoot_foot_1_0'))
+            contact_des_ids.append(motion[0].skeleton.getJointIndex('RightFoot'))
 
         contact_ids = list()  # temp idx for balancing
         contact_ids.extend(contact_des_ids)
@@ -841,7 +827,8 @@ def main():
             control_model_renderer.geom_colors[foot_seg_id] = [(255, 240, 255)] * controlModel.getBodyGeomNum(foot_seg_id)
 
         for i in range(len(geomIDs)):
-            control_model_renderer.geom_colors[bodyIDs[i]][geomIDs[i]] = (255, 0, 0)
+            if controlModel.vpid2index(bodyIDs[i]) in footIdlist:
+                control_model_renderer.geom_colors[controlModel.vpid2index(bodyIDs[i])][geomIDs[i]] = (255, 0, 0)
         # for foot_seg_id in footIdlist:
         #     control_model_renderer.body_colors[foot_seg_id] = (255, 240, 255)
         #
@@ -931,13 +918,8 @@ def main():
 
             skeleton_renderer.appendFrameState(Ts)
 
-    def postFrameCallback(frame):
-        if foot_viewer is not None:
-            foot_viewer.foot_pressure_gl_window.refresh_foot_contact_info(frame, vpWorld, bodyIDsToCheck, mus, Ks, Ds)
-            foot_viewer.foot_pressure_gl_window.goToFrame(frame)
 
     viewer.setSimulateCallback(simulateCallback)
-    viewer.setPostFrameCallback_Always(postFrameCallback)
     viewer.startTimer(1/30.)
     # viewer.play()
     viewer.show()
