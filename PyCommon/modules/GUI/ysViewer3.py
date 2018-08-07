@@ -495,7 +495,7 @@ class GlWindow(Fl_Gl_Window):
                 
         glLineWidth(1.)
         # self.drawGround()
-        # self.drawAxis()
+        self.drawAxis()
         # self.drawCoordinate((0, 0, 0))
         self.drawGround_color()
         # self.drawGround()

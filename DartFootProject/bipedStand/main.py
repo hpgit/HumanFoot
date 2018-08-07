@@ -1,5 +1,5 @@
 import sys
-import pydart
+import pydart2 as pydart
 import numpy as np
 import controller
 print('Example: bipedStand')

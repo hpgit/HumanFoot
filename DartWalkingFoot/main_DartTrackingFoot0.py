@@ -54,8 +54,8 @@ CHARACTER_COLOR = (20, 166, 188)
 
 MAX_FRAME = 1500
 
-SEGMENT_FOOT = True
-DART_CONTACT_ON = True
+SEGMENT_FOOT = False
+DART_CONTACT_ON = False
 
 def buildMassMap():
     massMap = {}
@@ -1406,7 +1406,7 @@ def walkings(params, isCma=True):
             # bodyIDs, contactPositions, contactPositionLocals, contactForces, timeStamp = \
             #     hdls.calcLCPForces(motion_ori, dartModel.world, dartModel, bodyIDsToCheck, 1., _tau)
             if not DART_CONTACT_ON:
-                dartModel.applyPenaltyForce(bodyIDs, contactPositions, contactForces, localForce=False)
+                dartModel.applyPenaltyForce(bodyIDs, contactPositions, contactForces, localOffset=False)
             # print('penalty force sum: ', sum(contactForce for contactForce in contactForces))
 
             _ddq = pdController.compute()

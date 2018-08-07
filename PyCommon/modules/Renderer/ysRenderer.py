@@ -468,7 +468,7 @@ class DartRenderer(Renderer):
         glLineWidth(self._lineWidth)
 
         if renderType == RENDER_SHADOW:
-            glColor3ub(90, 90, 90)
+            glColor3ubv(shadow_color)
         else:
             glColor3ubv(self.totalColor)
 
@@ -551,6 +551,7 @@ class DartRenderer(Renderer):
         state = []
         for skeleton in self.world.skeletons:
             for body in skeleton.bodynodes:
+                body_name = body.name
                 bodyFrame = body.world_transform()
                 for shapeNode in body.shapenodes:
                     if shapeNode.has_visual_aspect():
@@ -572,25 +573,30 @@ class DartRenderer(Renderer):
                             data = [shape.radius(), shape.height()]
                         elif geomType[0] == 'E':
                             data = shape.size()
-                        state.append((geomType, geomT, data, color))
+                        state.append((body_name, geomType, geomT, data, color))
         return state
 
     def renderState(self, state, renderType=RENDER_OBJECT):
         """
 
-        :type state: list[tuple[str, numpy.ndarray, numpy.ndarray, tuple]]
+        :type state: list[tuple[str, str, numpy.ndarray, numpy.ndarray, tuple]]
         :return:
         """
         glLineWidth(self._lineWidth)
 
         for elem in state:
-            geomType, geomT, data, color = elem
+            body_name, geomType, geomT, data, color = elem
             glPushMatrix()
             glMultMatrixd(geomT.transpose())
+
+            if body_name == 'ground':
+                glPopMatrix()
+                continue
+
             if renderType != RENDER_SHADOW:
                 glColor3ubv(color)
             else:
-                glColor3ub(90, 90, 90)
+                glColor3ubv(shadow_color)
 
             if geomType[0] == 'B':
                 glTranslatef(-data[0]/2., -data[1]/2., -data[2]/2.)
@@ -695,6 +701,7 @@ class DartModelRenderer(Renderer):
         state = []
         for body in self.model.skeleton.bodynodes:
             bodyFrame = body.world_transform()
+            body_name = body.name
             for shapeNode in body.shapenodes:
                 if shapeNode.has_visual_aspect():
                     color = None
@@ -730,6 +737,7 @@ class DartModelRenderer(Renderer):
             geomType, geomT, data, color = elem
             glPushMatrix()
             glMultMatrixd(geomT.transpose())
+
             if renderType != RENDER_SHADOW:
                 glColor3ubv(color)
             else:

@@ -43,7 +43,8 @@ def load(env_id, num_timesteps, seed):
                        ent_coef=0.0, vf_coef=0.5, max_grad_norm=0.5)
 
     # Model loading
-    load_path = './log' + '201807181601' + "/checkpoints/01024"
+    load_path = './log' + '201808061023'
+    load_path += "/checkpoints/00001"
     model.load(load_path)
 
     return model, env
@@ -68,14 +69,15 @@ def main():
     viewer.doc.addRenderer('controlModel', yr.DartRenderer(dart_model.world, (150,150,255), yr.POLYGON_FILL))
 
     def simulateCallback(frame):
-        actions = model.step(obs)
-        res = env.step(actions[0])
-        obs[:] = res[0]
-        done = res[2]
-        # if done[0]:
-        #     break
+        for i in range(40):
+            actions = model.step(obs)
+            res = env.step(actions[0])
+            obs[:] = res[0]
+            done = res[2]
+            # if done[0]:
+            #     break
 
-        # env.render()
+            # env.render()
 
     viewer.setSimulateCallback(simulateCallback)
     viewer.setMaxFrame(3000)

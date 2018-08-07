@@ -28,20 +28,24 @@ class DartModel:
     :type geomPoints : list[list[np.ndarray]]
     """
 
-    def __init__(self, wcfg, posture, mcfg, isContainGround=True):
+    def __init__(self, wcfg, posture, mcfg, isContainGround=True, skel_path=None):
         """
         :type wcfg: ypc.WorldConfig
         :type posture: ym.JointPosture
         :type mcfg: ypc.ModelConfig
         """
-        xmlstr, self._boneTs = DartModelMaker().posture2dartSkelXmlStr("dartModel", posture, mcfg, isContainGround)
+        self.world = None
+        self.planeHeight = 0.
+        self.lockingVel = 0.
 
-        self.world = pydart.World(wcfg.timeStep, xmlstr.decode(), True)
-
-        self.config = mcfg
-
-        self.planeHeight = wcfg.planeHeight
-        self.lockingVel = wcfg.lockingVel
+        if skel_path is None:
+            xmlstr, self._boneTs = DartModelMaker().posture2dartSkelXmlStr("dartModel", posture, mcfg, isContainGround)
+            self.world = pydart.World(wcfg.timeStep, xmlstr.decode(), True)
+            self.planeHeight = wcfg.planeHeight
+            self.lockingVel = wcfg.lockingVel
+            self.update(posture)
+        else:
+            self.world = pydart.World(1./1000., skel_path)
 
         if self.world.skeletons[0].name == "grount skeleton":
             self.hasGround = True
@@ -50,7 +54,6 @@ class DartModel:
             self.hasGround = False
             self.skeleton = self.world.skeletons[0]
 
-        self.update(posture)
         self.reset_q = copy.deepcopy(self.get_q())
 
         self.geomPoints = [None]*self.getBodyNum()
@@ -103,7 +106,7 @@ class DartModel:
                     elif geomType == "SphereShape":
                         self.geomPoints[i] = [np.array([0., 0., 0.])]
 
-                    elif MULTIPLE_BOX and geomType == "BOX":
+                    elif MULTIPLE_BOX and geomType == "BoxShape":
                         rad, gap, row, col, height_ratio = .05, .01, 6, 6, .5
                         shape = shapeNode.shape # type: pydart.BoxShape
                         data = shape.size()/2. # type: np.ndarray
@@ -118,7 +121,7 @@ class DartModel:
                             geomPoint.extend(self.getContactSphere(posCenter, rad, row, col, height_ratio))
                         self.geomPoints[i] = geomPoint
 
-                    elif geomType == "BOX":
+                    elif geomType == "BoxShape":
                         shape = shapeNode.shape # type: pydart.BoxShape
                         data = shape.size()/2. # type: np.ndarray
                         geomPoint = list()
@@ -195,7 +198,7 @@ class DartModel:
                             positionLocals.append(body.to_local(lowestPoint))
                             #TODO:
                             # velocities.append(body.com_spatial_velocity())
-                    elif geomType == "BOX":
+                    elif geomType == "BoxShape":
                         shape = shapeNode.shape # type: pydart.BoxShape
                         data = shape.size()/2.
                         for perm in itertools.product([1, -1], repeat=3):
@@ -233,6 +236,7 @@ class DartModel:
                 vTangentialRelVel = velocity - vNormalRelVel
                 tangentialRelVel = npl.norm(vNormalRelVel)
 
+                # Ds = 0.
                 normalForce = max(0., -Ks*position[1] - Ds*velocity[1])
                 vNormalForce = np.array((0., normalForce, 0.))
                 frictionForce = mu * normalForce
@@ -289,7 +293,7 @@ class DartModel:
                                 velocities.append(velocity)
                                 forces.append(force)
 
-                    elif True and geomType == "BOX":
+                    elif True and geomType == "BoxShape":
                         # multiple point
                         shape = shapeNode.shape # type: pydart.BoxShape
                         geomPoint = self.geomPoints[bodyIdx]
@@ -301,9 +305,9 @@ class DartModel:
                         # geomT = body.world_transform()
                         for posIdx in range(len(geomPoint)):
                             positionGlobal = np.dot(geomT[:3, :3], geomPoint[posIdx]) + geomT[:3, 3]
-                            # print self.getBody(bodyIdx).name, positionGlobal
                             if positionGlobal[1] < 0.:
-                                velocity = bodyLinVel + np.cross(bodySpatialVel[:3], positionGlobal - body.com())
+                                # velocity = bodyLinVel + np.cross(bodySpatialVel[:3], positionGlobal - body.com())
+                                velocity = body.world_linear_velocity(body.to_local(positionGlobal))
                                 isPenetrated, force = _calcPenaltyForce(body, positionGlobal, velocity, mus[i], self.lockingVel)
                                 # print "positionGlobal", positionGlobal
                                 bodyIDs.append(body.index_in_skeleton())
@@ -312,7 +316,7 @@ class DartModel:
                                 velocities.append(velocity)
                                 forces.append(force)
 
-                    elif False and geomType == "BOX":
+                    elif False and geomType == "BoxShape":
                         # single point
                         shape = shapeNode.shape  # type: pydart.BoxShape
                         data = shape.size() / 2.  # type: np.ndarray

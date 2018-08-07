@@ -484,7 +484,7 @@ def walkings(params=None, isCma=False):
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
     wcfg.lockingVel = c_locking_vel
-    stepsPerFrame = 30
+    stepsPerFrame = 120
     wcfg.timeStep = (frameTime)/stepsPerFrame
 
     vpWorld = cvw.VpWorld(wcfg)

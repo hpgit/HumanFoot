@@ -31,7 +31,7 @@ def create_vchain_5():
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
-    stepsPerFrame = 60
+    stepsPerFrame = 30
     wcfg.timeStep = (1/30.)/stepsPerFrame
 
     # parameter
@@ -209,7 +209,7 @@ def create_biped():
     #motion.extend([motion[-1]]*5000)
 
     #motion = motion[30:151]
-    # motion = motion[30:]
+    motion = motion[30:]
     #motion = motion[30:31]
     #motion[5:5] = [motion[5]]*30
     motion[0:0] = [motion[0]]*2000
@@ -265,8 +265,8 @@ def create_biped():
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.
     wcfg.useDefaultContactModel = False
-    stepsPerFrame = 40
-    # stepsPerFrame = 30
+    # stepsPerFrame = 60
+    stepsPerFrame = 30
     frame_rate = 30
     wcfg.timeStep = 1./(frame_rate * stepsPerFrame)
     # wcfg.timeStep = (1/30.)/(stepsPerFrame)
@@ -286,16 +286,10 @@ def create_biped():
     config['Kt'] = 200;      config['Dt'] = 2*(config['Kt']**.5) # tracking gain
     config['Kl'] = .10;       config['Dl'] = 2*(config['Kl']**.5) # linear balance gain
     config['Kh'] = 0.1;       config['Dh'] = 2*(config['Kh']**.5) # angular balance gain
-    # config['Ks'] = 5000;   config['Ds'] = 2*(config['Ks']**.5) # penalty force spring gain
-    config['Ks'] = 20000;   config['Ds'] = config['Ks']**.5 # penalty force spring gain
+    config['Ks'] = 20000;   config['Ds'] = 2*(config['Ks']**.5) # penalty force spring gain
     config['Bt'] = 1.
     config['Bl'] = 1.#0.5
     config['Bh'] = 1.
-
-    config['PDweightMap'] = {'RightUpLeg': 1., 'RightLeg': 0.5, 'RightFoot': 0.3,
-                             'LeftUpLeg': 1., 'LeftLeg': 0.5, 'LeftFoot': 0.3,
-                             'Hips': 0., 'Spine': 1., 'Spine1': 0.2, 'LeftArm': 0.3, 'LeftForeArm': 0.1, 'RightArm': 0.3, 'RightForeArm': 0.1}
-
     #config['weightMap']={'RightArm':.2, 'RightForeArm':.2, 'LeftArm':.2, 'LeftForeArm':.2,\
                          #'Spine':1., 'Spine1':1., 'RightFoot':.5, 'LeftFoot':.5, 'Hips':1.5,\
                          #'RightUpLeg':1., 'RightLeg':1., 'LeftUpLeg':1., 'LeftLeg':1.}
