@@ -4,6 +4,7 @@ import pydart2 as pydart
 import itertools
 
 from PyCommon.modules.Math import mmMath as mm
+from PyCommon.modules.Optimization.csQPOASES import qp
 
 QP_MAX_ITER = 100
 QP_EPS = 0.001
@@ -16,6 +17,8 @@ MU_z = 1.
 
 LAMBDA_CONTAIN_NORMAL = False
 NON_HOLONOMIC = False
+
+QPOASES = False
 
 
 def calc_QP(skel, ddq_des, inv_h):
@@ -161,6 +164,7 @@ def calc_QP(skel, ddq_des, inv_h):
                     num_dof+num_tau+(QP_CONE_DIM+1)*i:num_dof+num_tau+(QP_CONE_DIM+1)*i + QP_CONE_DIM+1] = g
 
     forces = list()
+
     if num_contact > 0:
         result = solvers.qp(matrix(P), matrix(q), matrix(G), matrix(h), matrix(A), matrix(b))
         value_ddq = np.asarray(result['x']).flatten()[num_dof:]
