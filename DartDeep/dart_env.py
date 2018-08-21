@@ -1,7 +1,9 @@
 from rl.core import Env
 import pydart2 as pydart
 import numpy as np
-import gym
+import PyCommon.modules.Resource.ysMotionLoader as yf
+from math import exp
+# import gym
 
 
 class Box(gym.Space):
@@ -100,11 +102,18 @@ class PDController:
         return tau
 
 
+def exp_reward_term(w, exp_w, v0, v1):
+    norm = np.linalg.norm(v0 - v1)
+    return w * exp(-exp_w * norm * norm)
+
 class HpDartEnv(Env):
     def __init__(self):
-        self.world = pydart.World(1./1000., "../assets/woody_with_ground.xml")
+        self.world = pydart.World(1./1200., "../assets/woody_with_ground.xml")
         self.world.control_skel = self.world.skeletons[1]
         self.pdc = PDController(self.world.skel, self.world.time_step(), 200., 20.)
+        self.skel = self.world.skeletons[1]
+
+        self.ref_motion = yf.readBvhFile("woody_walk_normal.bvh", 0.01)
 
         self.w_p = 0.65
         self.w_v = 0.1
@@ -120,7 +129,8 @@ class HpDartEnv(Env):
         return
 
     def reward(self):
-        return
+        current_frame = int(self.world.time()*30)
+        return exp_reward_term(self.w_p, self.exp_p, self.skel.q, self.ref_motion[current_frame].get_q())
 
     def is_done(self):
         return self.world.skeletons[1].com()[1] < 0.5
@@ -138,8 +148,9 @@ class HpDartEnv(Env):
             done (boolean): Whether the episode has ended, in which case further step() calls will return undefined results.
             info (dict): Contains auxiliary diagnostic information (helpful for debugging, and sometimes learning).
         """
-        self.pdc.compute_flat(action)
-        self.world.step()
+        for i in range(40):
+            self.pdc.compute_flat(action)
+            self.world.step()
         return (self.state(), self.reward(), self.is_done(), dict())
 
     def reset(self):
