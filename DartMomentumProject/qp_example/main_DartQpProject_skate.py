@@ -46,7 +46,7 @@ preFootCenter = [None]
 
 DART_CONTACT_ON = False
 
-LEG_FLEXIBLE = True
+LEG_FLEXIBLE = False
 
 
 def main():
@@ -79,12 +79,12 @@ def main():
     s0q[pelvis_pos] = 0., .92, 0.
     # s0q[pelvis] = 0., -0.
     # s0q[upper_body] = 0.3, -0.
-    # s0q[right_leg] = -0., -0., 0.9, -1.5
-    # s0q[left_leg] = -INIT_ANGLE, 0., 0.0, 0.0
-    # s0q[foot] = 0., INIT_ANGLE, 0., 0.
-    s0q[right_leg] = -0., -0., 0.2, -.4
-    s0q[left_leg] = -0., 0., 0.2, -.4
-    s0q[foot] = 0.2, 0., 0.2, 0.
+    s0q[right_leg] = -0., -0., 0.9, -1.5
+    s0q[left_leg] = -INIT_ANGLE, 0., 0.0, 0.0
+    s0q[foot] = 0., INIT_ANGLE, 0., 0.
+    # s0q[right_leg] = -0., -0., 0.2, -.4
+    # s0q[left_leg] = -0., 0., 0.2, -.4
+    # s0q[foot] = 0.2, 0., 0.2, 0.
     # s0q[leg_y] = -0.785, 0.785
     s0q[arms] = 1.5, -1.5
 
@@ -527,8 +527,8 @@ def main():
 
             g_initFlag = 1
 
-        # contact = 2
-        contact = 1 + 2
+        contact = 2
+        # contact = 1 + 2
 
         # calculate jacobian
         body_num = dartModel.getBodyNum()
@@ -589,8 +589,8 @@ def main():
             CP_des[0] = CP + dCP * frame_step_size + .5 * ddCP_des*(frame_step_size**2)
             dH_des = np.cross(CP_des[0] - CM, dL_des_plane - totalMass*mm.s2v(dartModel.world.gravity()))
             # dH_des = np.cross(footCenter - CM, dL_des_plane - totalMass*mm.s2v(dartModel.world.gravity()))
-            H = np.dot(P, np.dot(Jsys, dth_flat))
-            dH_des = -Kh * H[3:]
+            # H = np.dot(P, np.dot(Jsys, dth_flat))
+            # dH_des = -Kh * H[3:]
         else:
             dH_des = None
 

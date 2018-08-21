@@ -3,8 +3,6 @@ from cvxopt import solvers, matrix
 import pydart2 as pydart
 import itertools
 
-from PyCommon.modules.Math import mmMath as mm
-from PyCommon.modules.Optimization.csQPOASES import qp
 
 QP_MAX_ITER = 100
 QP_EPS = 0.001
@@ -18,7 +16,9 @@ MU_z = 1.
 LAMBDA_CONTAIN_NORMAL = False
 NON_HOLONOMIC = False
 
-QPOASES = False
+
+def normalize(vec):
+    return vec / np.linalg.norm(vec)
 
 
 def calc_QP(skel, ddq_des, inv_h):
@@ -28,6 +28,8 @@ def calc_QP(skel, ddq_des, inv_h):
     :type skel: pydart.Skeleton
     :param ddq_des:
     :type ddq_des: np.ndarray
+    :param inv_h:
+    :type inv_h: float
     :return:
     """
     solvers.options['show_progress'] = False
@@ -52,8 +54,6 @@ def calc_QP(skel, ddq_des, inv_h):
 
                 for perm in itertools.product([1, -1], repeat=3):
                     position_local = np.dot(geom_local_T[:3, :3], np.multiply(np.array((data[0], data[1], data[2])), np.array(perm))) + geom_local_T[:3, 3]
-                    # print(data)
-                    # print(position_local)
                     position_global = body.to_world(position_local)
 
                     if position_global[1] < 0.:
@@ -127,12 +127,12 @@ def calc_QP(skel, ddq_des, inv_h):
                 V[3*i:3*i+3, (QP_CONE_DIM + 1)*i+3] = np.array((0., 0., 1.))
                 V[3*i:3*i+3, (QP_CONE_DIM + 1)*i+4] = np.array((0., 1., 0.))
             else:
-                V[3*i:3*i+3, QP_CONE_DIM*i+0] = mm.normalize(np.array((MU_x, 1., 0.)))
-                # V[3*i:3*i+3, QP_CONE_DIM*i+1] = mm.normalize(np.array((0., 1., -MU_z)))
-                V[3*i:3*i+3, QP_CONE_DIM*i+1] = mm.normalize(np.array((0., 0., -MU_z)))
-                V[3*i:3*i+3, QP_CONE_DIM*i+2] = mm.normalize(np.array((-MU_x, 1., 0.)))
-                # V[3*i:3*i+3, QP_CONE_DIM*i+3] = mm.normalize(np.array((0., 1., MU_z)))
-                V[3*i:3*i+3, QP_CONE_DIM*i+3] = mm.normalize(np.array((0., 0., MU_z)))
+                V[3*i:3*i+3, QP_CONE_DIM*i+0] = normalize(np.array((MU_x, 1., 0.)))
+                # V[3*i:3*i+3, QP_CONE_DIM*i+1] = normalize(np.array((0., 1., -MU_z)))
+                V[3*i:3*i+3, QP_CONE_DIM*i+1] = normalize(np.array((0., 0., -MU_z)))
+                V[3*i:3*i+3, QP_CONE_DIM*i+2] = normalize(np.array((-MU_x, 1., 0.)))
+                # V[3*i:3*i+3, QP_CONE_DIM*i+3] = normalize(np.array((0., 1., MU_z)))
+                V[3*i:3*i+3, QP_CONE_DIM*i+3] = normalize(np.array((0., 0., MU_z)))
 
         #####################################################
         # equality

@@ -37,22 +37,31 @@ class DartModel:
         self.world = None
         self.planeHeight = 0.
         self.lockingVel = 0.
+        self.skeleton = None
 
         if skel_path is None:
             xmlstr, self._boneTs = DartModelMaker().posture2dartSkelXmlStr("dartModel", posture, mcfg, isContainGround)
             self.world = pydart.World(wcfg.timeStep, xmlstr.decode(), True)
             self.planeHeight = wcfg.planeHeight
             self.lockingVel = wcfg.lockingVel
+
+            if self.world.skeletons[0].name == "grount skeleton":
+                self.hasGround = True
+                self.skeleton = self.world.skeletons[1]
+            else:
+                self.hasGround = False
+                self.skeleton = self.world.skeletons[0]
+
             self.update(posture)
         else:
             self.world = pydart.World(1./1000., skel_path)
 
-        if self.world.skeletons[0].name == "grount skeleton":
-            self.hasGround = True
-            self.skeleton = self.world.skeletons[1]
-        else:
-            self.hasGround = False
-            self.skeleton = self.world.skeletons[0]
+            if self.world.skeletons[0].name == "grount skeleton":
+                self.hasGround = True
+                self.skeleton = self.world.skeletons[1]
+            else:
+                self.hasGround = False
+                self.skeleton = self.world.skeletons[0]
 
         self.reset_q = copy.deepcopy(self.get_q())
 
