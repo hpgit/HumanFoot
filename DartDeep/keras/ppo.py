@@ -1,0 +1,304 @@
+from rl.core import Agent
+import numpy as np
+
+from collections import namedtuple
+from collections import deque
+from itertools import count
+import random
+import time
+
+MultiVariateNormal = torch.distributions.Normal
+temp = MultiVariateNormal.log_prob
+MultiVariateNormal.log_prob = lambda self, val: temp(self, val).sum(-1, keepdim=True)
+
+temp2 = MultiVariateNormal.entropy
+MultiVariateNormal.entropy = lambda self: temp2(self).sum(-1)
+MultiVariateNormal.mode = lambda self: self.mean
+
+
+class Model(nn.Module):
+    def __init__(self, num_states, num_actions):
+        super(Model, self).__init__()
+
+        hidden_layer_size1 = 64
+        hidden_layer_size2 = 32
+
+        '''Policy Mean'''
+        self.policy_fc1 = nn.Linear(num_states		,hidden_layer_size1)
+        self.policy_fc2 = nn.Linear(hidden_layer_size 1,hidden_layer_size2)
+        self.policy_fc3 = nn.Linear(hidden_layer_size 2,num_actions)
+        '''Policy Distributions'''
+        self.log_std = nn.Parameter(torch.zeros(num_actions))
+
+        '''Value'''
+        self.value_fc1 = nn.Linear(num_states		  ,hidden_layer_size1)
+        self.value_fc2 = nn.Linear(hidden_layer_siz1 ,hidden_layer_size2)
+        self.value_fc3 = nn.Linear(hidden_layer_siz2 ,1)
+
+        self.initParameters()
+
+    def initParameters(self):
+        '''Policy'''
+        if self.policy_fc1.bias is not None:
+            self.policy_fc1.bias.data.zero_()
+
+        if self.policy_fc2.bias is not None:
+            self.policy_fc2.bias.data.zero_()
+
+        if self.policy_fc3.bias is not None:
+            self.policy_fc3.bias.data.zero_()
+        torch.nn.init.xavier_uniform_(self.policy_fc1.weight)
+        torch.nn.init.xavier_uniform_(self.policy_fc2.weight)
+        torch.nn.init.xavier_uniform_(self.policy_fc3.weight)
+        '''Value'''
+        if self.value_fc1.bias is not None:
+            self.value_fc1.bias.data.zero_()
+
+        if self.value_fc2.bias is not None:
+            self.value_fc2.bias.data.zero_()
+
+        if self.value_fc3.bias is not None:
+            self.value_fc3.bias.data.zero_()
+        torch.nn.init.xavier_uniform_(self.value_fc1.weight)
+        torch.nn.init.xavier_uniform_(self.value_fc2.weight)
+        torch.nn.init.xavier_uniform_(self.value_fc3.weight)
+
+    def forward(sel f,x):
+        '''Policy'''
+        p_mean = F.relu(self.policy_fc1(x))
+        p_mean = F.relu(self.policy_fc2(p_mean))
+        p_mean = self.policy_fc3(p_mean)
+
+        p = MultiVariateNormal(p_mea n,self.log_std.exp())
+        '''Value'''
+        v = F.relu(self.value_fc1(x))
+        v = F.relu(self.value_fc2(v))
+        v = self.value_fc3(v)
+
+        return p,v
+
+
+Episode = namedtuple('Episode', ('s', 'a', 'r', 'value', 'logprob'))
+
+
+class EpisodeBuffer(object):
+    def __init__(self):
+        self.data = []
+
+    def push(self, *args):
+        self.data.append(Episode(*args))
+
+    def get_data(self):
+        return self.data
+
+
+Transition = namedtuple('Transition', ('s', 'a', 'logprob', 'TD', 'GAE'))
+
+
+class ReplayBuffer(object):
+    def __init__(self, buff_size = 10000):
+        super(ReplayBuffer, self).__init__()
+        self.buffer = deque(maxlen=buff_size)
+
+    def sample(self, batch_size):
+        index_buffer = [i for i in range(len(self.buffer))]
+        indices = random.sample(index_buffer, batch_size)
+        return indices, self.np_buffer[indices]
+
+    def push(self, *args):
+        self.buffer.append(Transition(*args))
+
+    def clear(self):
+        self.buffer.clear()
+
+
+class PPO(object):
+    def __init__(self, env_name, num_slaves):
+        np.random.seed(seed=int(time.time()))
+        self.env = Env(env_name, num_slaves)
+        self.num_slaves = num_slaves
+        self.num_state = self.env.GetNumState()
+        self.num_action = self.env.GetNumAction()
+        self.num_epochs = 10
+        self.num_evaluation = 0
+        self.num_training = 0
+
+        self.gamma = 0.99
+        self.lb = 0.95
+        self.clip_ratio = 0.2
+
+        self.buffer_size = 2048
+        self.batch_size = 128
+        self.replay_buffer = ReplayBuffer(10000)
+
+        self.model = Model(self.num_state, self.num_action)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
+        self.w_entropy = 0.0
+
+    def SaveModel(self):
+        torch.save(self.model.state_dict(), '../model/' + str(self.num_evaluation) + '.pt')
+
+    def LoadModel(self, model_path):
+        self.model.load_state_dict(torch.load(model_path))
+
+    def ComputeTDandGAE(self):
+        self.replay_buffer.Clear()
+        for epi in self.total_episodes:
+            data = epi.GetData()
+            size = len(data)
+            states, actions, rewards, values, logprobs = zip(*data)
+
+            values = np.concatenate((values, np.zeros(1)), axis=0)
+            advantages = np.zeros(size)
+            ad_t = 0
+
+            for i in reversed(range(len(data))):
+                delta = rewards[i] + values[i + 1] * self.gamma - values[i]
+                ad_t = delta + self.gamma * self.lb * ad_t
+                advantages[i] = ad_t
+
+            TD = values[:size] + advantages
+            for i in range(size):
+                self.replay_buffer.Push(states[i], actions[i], logprobs[i], TD[i], advantages[i])
+
+    def GenerateTransitions(self):
+        self.total_episodes = []
+        states = [None] * self.num_slaves
+        actions = [None] * self.num_slaves
+        rewards = [None] * self.num_slaves
+        states_next = [None] * self.num_slaves
+        episodes = [None] * self.num_slaves
+        for j in range(self.num_slaves):
+            episodes[j] = EpisodeBuffer()
+
+        self.env.Resets(True)
+
+        states = self.env.GetStates()
+
+        local_step = 0
+        terminated = [False] * self.num_slaves
+        # print('Generate Transtions...')
+
+        percent = 0
+        while True:
+            # new_percent = local_step*10//self.buffer_size
+            # if (new_percent == percent) is not True:
+            # percent = new_percent
+            # print('{}0%'.format(percent))
+            a_dist, v = self.model(torch.tensor(states))
+            actions = a_dist.sample().detach().numpy()
+            logprobs = a_dist.log_prob(torch.tensor(actions)).detach().numpy().reshape(-1)
+            values = v.detach().numpy().reshape(-1)
+
+            self.env.SetActions(actions)
+            self.env.Steps()
+            for j in range(self.num_slaves):
+                if terminated[j]:
+                    continue
+
+                nan_occur = False
+                if np.any(np.isnan(states[j])) or np.any(np.isnan(actions[j])):
+                    nan_occur = True
+                else:
+                    rewards[j] = self.env.GetReward(j)
+                    episodes[j].Push(states[j], actions[j], rewards[j], values[j], logprobs[j])
+                    local_step += 1
+
+                # if episode is terminated
+                if self.env.IsTerminalState(j) or (nan_occur is True):
+                    # push episodes
+                    self.total_episodes.append(episodes[j])
+
+                    # if data limit is exceeded, stop simulations
+                    if local_step < self.buffer_size:
+                        episodes[j] = EpisodeBuffer()
+                        self.env.Reset(True, j)
+                    else:
+                        terminated[j] = True
+            if local_step >= self.buffer_size:
+                all_terminated = True
+                for j in range(self.num_slaves):
+                    if terminated[j] is False:
+                        all_terminated = False
+
+                if all_terminated is True:
+                    break
+
+            # update states
+            states = self.env.GetStates()
+
+    # print('Done!')
+    def OptimizeModel(self):
+        # print('Optimize Model...')
+        self.ComputeTDandGAE()
+        all_transitions = np.array(self.replay_buffer.buffer)
+
+        for _ in range(self.num_epochs):
+            np.random.shuffle(all_transitions)
+            for i in range(len(all_transitions) // self.batch_size):
+                transitions = all_transitions[i * self.batch_size:(i + 1) * self.batch_size]
+                batch = Transition(*zip(*transitions))
+
+                stack_s = np.vstack(batch.s).astype(np.float32)
+                stack_a = np.vstack(batch.a).astype(np.float32)
+                stack_lp = np.vstack(batch.logprob).astype(np.float32)
+                stack_td = np.vstack(batch.TD).astype(np.float32)
+                stack_gae = np.vstack(batch.GAE).astype(np.float32)
+
+                a_dist, v = self.model(torch.tensor(stack_s))
+                '''Critic Loss'''
+                loss_critic = ((v - torch.tensor(stack_td)).pow(2)).mean()
+
+                '''Actor Loss'''
+                ratio = torch.exp(a_dist.log_prob(torch.tensor(stack_a)) - torch.tensor(stack_lp))
+                stack_gae = (stack_gae - stack_gae.mean()) / (stack_gae.std() + 1E-5)
+                surrogate1 = ratio * torch.tensor(stack_gae)
+                surrogate2 = torch.clamp(ratio, min=1.0 - self.clip_ratio, max=1.0 + self.clip_ratio) * torch.tensor(
+                    stack_gae)
+                loss_actor = - torch.min(surrogate1, surrogate2).mean()
+
+                '''Entropy Loss'''
+                loss_entropy = - self.w_entropy * a_dist.entropy().mean()
+
+                loss = loss_critic + loss_actor + loss_entropy
+                # loss = loss_critic + loss_actor
+                self.optimizer.zero_grad()
+                loss.backward(retain_graph=True)
+                for param in self.model.parameters():
+                    param.grad.data.clamp_(-0.5, 0.5)
+                self.optimizer.step()
+
+    # print('Done!')
+    def Train(self):
+        self.GenerateTransitions()
+        self.OptimizeModel()
+        self.num_training += 1
+
+    def Evaluate(self):
+        self.env.Resets(True)
+        self.env.Reset(False, 0)
+
+        total_reward = 0
+        total_step = 0
+        states = self.env.GetStates()
+        for t in count():
+            action_dist, _ = self.model(torch.tensor(states))
+            actions = action_dist.loc.detach().numpy()
+            self.env.SetActions(actions)
+            self.env.Steps()
+            for j in range(self.num_slaves):
+                if self.env.IsTerminalState(j) is False:
+                    total_step += 1
+                    total_reward += self.env.GetReward(j)
+            states = self.env.GetStates()
+            if all(terminate == True for terminate in self.env.IsTerminalStates()):
+                break
+        print('noise : {:.3f}'.format(ppo.model.log_std.exp().mean()))
+        if total_step is not 0:
+            print('Epi reward : {:.2f}, Step reward : {:.2f} Total step : {}'.format(total_reward / self.num_slaves,
+                                                                                     total_reward / total_step,
+                                                                                     total_step))
+        else:
+            print('bad..')
+        self.num_evaluation += 1
+        return total_reward / self.num_slaves

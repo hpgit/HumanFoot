@@ -55,7 +55,7 @@ CHARACTER_COLOR = (20, 166, 188)
 MAX_FRAME = 1500
 
 SEGMENT_FOOT = False
-DART_CONTACT_ON = False
+DART_CONTACT_ON = True
 
 def buildMassMap():
     massMap = {}

@@ -20,6 +20,8 @@ np.random.seed(123)
 env.seed(123)
 assert len(env.action_space.shape) == 1
 nb_actions = env.action_space.shape[0]
+env.reset()
+print(env.step(np.zeros(nb_actions)))
 
 # Next, we build a very simple model.
 actor = Sequential()
