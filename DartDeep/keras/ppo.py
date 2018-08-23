@@ -24,9 +24,9 @@ class Model(nn.Module):
         hidden_layer_size2 = 32
 
         '''Policy Mean'''
-        self.policy_fc1 = nn.Linear(num_states		,hidden_layer_size1)
-        self.policy_fc2 = nn.Linear(hidden_layer_size 1,hidden_layer_size2)
-        self.policy_fc3 = nn.Linear(hidden_layer_size 2,num_actions)
+        self.policy_fc1 = nn.Linear(num_states		  , hidden_layer_size1)
+        self.policy_fc2 = nn.Linear(hidden_layer_size1, hidden_layer_size2)
+        self.policy_fc3 = nn.Linear(hidden_layer_size2, num_actions)
         '''Policy Distributions'''
         self.log_std = nn.Parameter(torch.zeros(num_actions))
 
@@ -63,13 +63,13 @@ class Model(nn.Module):
         torch.nn.init.xavier_uniform_(self.value_fc2.weight)
         torch.nn.init.xavier_uniform_(self.value_fc3.weight)
 
-    def forward(sel f,x):
+    def forward(self, x):
         '''Policy'''
         p_mean = F.relu(self.policy_fc1(x))
         p_mean = F.relu(self.policy_fc2(p_mean))
         p_mean = self.policy_fc3(p_mean)
 
-        p = MultiVariateNormal(p_mea n,self.log_std.exp())
+        p = MultiVariateNormal(p_mean, self.log_std.exp())
         '''Value'''
         v = F.relu(self.value_fc1(x))
         v = F.relu(self.value_fc2(v))
@@ -142,7 +142,7 @@ class PPO(object):
         self.model.load_state_dict(torch.load(model_path))
 
     def ComputeTDandGAE(self):
-        self.replay_buffer.Clear()
+        self.replay_buffer.clear()
         for epi in self.total_episodes:
             data = epi.GetData()
             size = len(data)
@@ -159,7 +159,7 @@ class PPO(object):
 
             TD = values[:size] + advantages
             for i in range(size):
-                self.replay_buffer.Push(states[i], actions[i], logprobs[i], TD[i], advantages[i])
+                self.replay_buffer.push(states[i], actions[i], logprobs[i], TD[i], advantages[i])
 
     def GenerateTransitions(self):
         self.total_episodes = []
@@ -295,9 +295,8 @@ class PPO(object):
                 break
         print('noise : {:.3f}'.format(ppo.model.log_std.exp().mean()))
         if total_step is not 0:
-            print('Epi reward : {:.2f}, Step reward : {:.2f} Total step : {}'.format(total_reward / self.num_slaves,
-                                                                                     total_reward / total_step,
-                                                                                     total_step))
+            print('Epi reward : {:.2f}, Step reward : {:.2f} Total step : {}'
+                  .format(total_reward / self.num_slaves, total_reward / total_step, total_step))
         else:
             print('bad..')
         self.num_evaluation += 1

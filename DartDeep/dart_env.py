@@ -1,4 +1,4 @@
-from rl.core import Env
+# from rl.core import Env
 import pydart2 as pydart
 import numpy as np
 import PyCommon.modules.Resource.ysMotionLoader as yf
@@ -66,14 +66,14 @@ def exp_reward_term(w, exp_w, v0, v1):
     return w * exp(-exp_w * norm * norm)
 
 
-class HpDartEnv(Env):
+class HpDartEnv(gym.Env):
     def __init__(self):
         self.world = pydart.World(1./1200., "../data/woody_with_ground.xml")
         self.world.control_skel = self.world.skeletons[1]
         self.skel = self.world.skeletons[1]
         self.pdc = PDController(self.skel, self.world.time_step(), 200., 20.)
 
-        self.ref_motion = yf.readBvhFile("../data/woody_walk_normal.bvh")
+        self.ref_motion = yf.readBvhFile("../data/woody_walk_normal.bvh")[40:]
         self.ref_world = pydart.World(1./1200., "../data/woody_with_ground.xml")
         self.ref_skel = self.ref_world.skeletons[1]
 
@@ -186,7 +186,8 @@ class HpDartEnv(Env):
             observation (object): The initial observation of the space. Initial reward is assumed to be 0.
         """
         self.world.reset()
-        rand_frame = randrange(0, len(self.ref_motion)//2)
+        # rand_frame = randrange(0, len(self.ref_motion)//2)
+        rand_frame = randrange(0, len(self.ref_motion))
         if not self.rsi:
             rand_frame = 0
         self.time_offset = rand_frame / self.ref_motion.fps
@@ -229,8 +230,8 @@ class HpDartEnv(Env):
                 self.viewer.add_geom(axle)
 
         for i in range(self.body_num):
-            self.body_transform[i].set_translation(self.skel.body(i).world_transform()[:3, 3][0]-2., self.skel.body(i).world_transform()[:3, 3][1])
-            self.ref_body_transform[i].set_translation(self.ref_skel.body(i).world_transform()[:3, 3][0]-2., self.ref_skel.body(i).world_transform()[:3, 3][1])
+            self.body_transform[i].set_translation(self.skel.body(i).world_transform()[:3, 3][0]-1., self.skel.body(i).world_transform()[:3, 3][1])
+            self.ref_body_transform[i].set_translation(self.ref_skel.body(i).world_transform()[:3, 3][0]-1., self.ref_skel.body(i).world_transform()[:3, 3][1])
 
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
@@ -247,7 +248,7 @@ class HpDartEnv(Env):
         # Returns
             Returns the list of seeds used in this env's random number generators
         """
-        self.np_random, seed = seeding.np_random(seed)
+        self.np_random, seed = gym.utils.seeding.np_random(seed)
         return [seed]
 
 
