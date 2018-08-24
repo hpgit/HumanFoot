@@ -71,7 +71,7 @@ class HpDartEnv(gym.Env):
         self.world = pydart.World(1./1200., "../data/woody_with_ground.xml")
         self.world.control_skel = self.world.skeletons[1]
         self.skel = self.world.skeletons[1]
-        self.pdc = PDController(self.skel, self.world.time_step(), 200., 20.)
+        self.pdc = PDController(self.skel, self.world.time_step(), 400., 40.)
 
         self.ref_motion = yf.readBvhFile("../data/woody_walk_normal.bvh")[40:]
         self.ref_world = pydart.World(1./1200., "../data/woody_with_ground.xml")
@@ -192,7 +192,10 @@ class HpDartEnv(gym.Env):
             rand_frame = 0
         self.time_offset = rand_frame / self.ref_motion.fps
         self.skel.set_positions(self.ref_motion[rand_frame].get_q())
-        self.skel.set_velocities(self.ref_motion.get_dq(rand_frame))
+        dq = self.ref_motion.get_dq(rand_frame)
+        dq[3:6] = np.asarray(self.ref_motion.getDOFVelocitiesLocal(rand_frame)[0][:3])
+        self.skel.set_velocities(dq)
+        # self.skel.set_velocities(self.ref_motion.get_dq(rand_frame))
 
         return self.state()
 

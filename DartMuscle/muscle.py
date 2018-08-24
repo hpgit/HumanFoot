@@ -27,7 +27,9 @@ def g_pl_tilde(l_m):
     if l_m_tilde <= 1:
         return 0
     else:
-        return (exp(k_pe * (l_m_tilde - 1)/eps_m_o) - 1) / (exp(k_pe) - 1)
+        return (exp(k_pe * (l_m_tilde - 1)/eps_m_o) - 1) \
+               / \
+               (exp(k_pe) - 1)
 
 
 # Active Force-Length Relationship of Muscle
@@ -38,4 +40,13 @@ def g_al_tilde(l_m):
 
 # Force-Velocity Relationship of Muscle
 def g_vl_tilde(dot_l_m):
-    pass
+    dot_l_m_tilde = dot_l_m / l_m_o
+    if dot_l_m_tilde <= 0:
+        return (dot_l_m_tilde + dot_l_m_max_tilde) \
+               / \
+               (dot_l_m_max_tilde - dot_l_m_tilde/A_f)
+    else:
+        pass
+        _a = dot_l_m_tilde * (2. + 2./A_f)
+        _b = dot_l_m_max_tilde * (f_m_len_tilde - 1.)
+        return (f_m_len_tilde * _a + _b) / (_a + _b)
