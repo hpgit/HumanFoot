@@ -140,7 +140,7 @@ class PPO(object):
         self.batch_size = 128
         self.replay_buffer = ReplayBuffer(10000)
 
-        self.model = Model(self.num_state, self.num_action).double()
+        self.model = Model(self.num_state, self.num_action).float()
         self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
         self.w_entropy = 0.0
 
@@ -194,7 +194,7 @@ class PPO(object):
             # if (new_percent == percent) is not True:
             # percent = new_percent
             # print('{}0%'.format(percent))
-            a_dist, v = self.model(torch.tensor(states))
+            a_dist, v = self.model(torch.tensor(states).float())
             actions = a_dist.sample().detach().numpy()
             logprobs = a_dist.log_prob(torch.tensor(actions)).detach().numpy().reshape(-1)
             values = v.detach().numpy().reshape(-1)
@@ -253,7 +253,7 @@ class PPO(object):
                 stack_td = np.vstack(batch.TD).astype(np.float32)
                 stack_gae = np.vstack(batch.GAE).astype(np.float32)
 
-                a_dist, v = self.model(torch.tensor(stack_s))
+                a_dist, v = self.model(torch.tensor(stack_s).float())
                 '''Critic Loss'''
                 loss_critic = ((v - torch.tensor(stack_td)).pow(2)).mean()
 
