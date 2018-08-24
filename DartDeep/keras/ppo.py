@@ -145,7 +145,7 @@ class PPO(object):
         self.w_entropy = 0.0
 
     def SaveModel(self):
-        torch.save(self.model.state_dict(), '../model/' + str(self.num_evaluation) + '.pt')
+        torch.save(self.model.state_dict(), 'model/' + str(self.num_evaluation) + '.pt')
 
     def LoadModel(self, model_path):
         self.model.load_state_dict(torch.load(model_path))
@@ -196,7 +196,7 @@ class PPO(object):
             # print('{}0%'.format(percent))
             a_dist, v = self.model(torch.tensor(states).float())
             actions = a_dist.sample().detach().numpy()
-            logprobs = a_dist.log_prob(torch.tensor(actions)).detach().numpy().reshape(-1)
+            logprobs = a_dist.log_prob(torch.tensor(actions).float()).detach().numpy().reshape(-1)
             values = v.detach().numpy().reshape(-1)
 
             self.env.Steps(actions)
@@ -255,13 +255,13 @@ class PPO(object):
 
                 a_dist, v = self.model(torch.tensor(stack_s).float())
                 '''Critic Loss'''
-                loss_critic = ((v - torch.tensor(stack_td)).pow(2)).mean()
+                loss_critic = ((v - torch.tensor(stack_td).float()).pow(2)).mean()
 
                 '''Actor Loss'''
-                ratio = torch.exp(a_dist.log_prob(torch.tensor(stack_a)) - torch.tensor(stack_lp))
+                ratio = torch.exp(a_dist.log_prob(torch.tensor(stack_a).float()) - torch.tensor(stack_lp).float())
                 stack_gae = (stack_gae - stack_gae.mean()) / (stack_gae.std() + 1E-5)
-                surrogate1 = ratio * torch.tensor(stack_gae)
-                surrogate2 = torch.clamp(ratio, min=1.0 - self.clip_ratio, max=1.0 + self.clip_ratio) * torch.tensor(stack_gae)
+                surrogate1 = ratio * torch.tensor(stack_gae).float()
+                surrogate2 = torch.clamp(ratio, min=1.0 - self.clip_ratio, max=1.0 + self.clip_ratio) * torch.tensor(stack_gae).float()
                 loss_actor = - torch.min(surrogate1, surrogate2).mean()
 
                 '''Entropy Loss'''
@@ -289,7 +289,7 @@ class PPO(object):
         total_step = 0
         states = self.env.GetStates()
         for t in count():
-            action_dist, _ = self.model(torch.tensor(states))
+            action_dist, _ = self.model(torch.tensor(states).float())
             actions = action_dist.loc.detach().numpy()
             self.env.Steps(actions)
             for j in range(self.num_slaves):
@@ -345,5 +345,5 @@ if __name__=="__main__":
         ppo.SaveModel()
         print('# {}'.format(i))
         rewards.append(ppo.Evaluate())
-        Plot(np.asarray(rewards),'reward',1,False)
+        # Plot(np.asarray(rewards),'reward',1,False)
         print ("Elapsed time : {:.2f}s".format(time.time() - tic))
