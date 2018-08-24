@@ -251,6 +251,27 @@ class HpDartEnv(gym.Env):
         self.np_random, seed = gym.utils.seeding.np_random(seed)
         return [seed]
 
+    def GetStates(self):
+        return [self.state()]
+
+    def Resets(self, param):
+        self.reset()
+
+    def Reset(self, param, param1):
+        self.reset()
+
+    def Steps(self, actions):
+        self.step(actions[0])
+
+    def IsTerminalState(self, j):
+        return self.is_done()
+
+    def GetReward(self, j):
+        return self.reward()
+
+    def IsTerminalStates(self):
+        return [self.is_done()]
+
 
 if __name__ == '__main__':
     pydart.init()

@@ -28,7 +28,7 @@ def train(num_timesteps, seed):
         return env
 
     env = DummyVecEnv([make_env])
-    env = VecNormalize(env)
+    # env = VecNormalize(env)
 
     # set_global_seeds(seed)
     model = ppo2.learn(network='mlp', env=env,

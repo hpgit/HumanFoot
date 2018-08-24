@@ -1,11 +1,19 @@
-from rl.core import Agent
+# from rl.core import Agent
 import numpy as np
+
+import pydart2 as pydart
+from DartDeep.dart_env import HpDartEnv
 
 from collections import namedtuple
 from collections import deque
 from itertools import count
 import random
 import time
+
+import torch
+from torch import nn, optim
+import torch.nn.functional as F
+import torchvision.transforms as T
 
 MultiVariateNormal = torch.distributions.Normal
 temp = MultiVariateNormal.log_prob
@@ -32,8 +40,8 @@ class Model(nn.Module):
 
         '''Value'''
         self.value_fc1 = nn.Linear(num_states		  ,hidden_layer_size1)
-        self.value_fc2 = nn.Linear(hidden_layer_siz1 ,hidden_layer_size2)
-        self.value_fc3 = nn.Linear(hidden_layer_siz2 ,1)
+        self.value_fc2 = nn.Linear(hidden_layer_size1 ,hidden_layer_size2)
+        self.value_fc3 = nn.Linear(hidden_layer_size2 ,1)
 
         self.initParameters()
 
@@ -115,10 +123,11 @@ class ReplayBuffer(object):
 class PPO(object):
     def __init__(self, env_name, num_slaves):
         np.random.seed(seed=int(time.time()))
-        self.env = Env(env_name, num_slaves)
-        self.num_slaves = num_slaves
-        self.num_state = self.env.GetNumState()
-        self.num_action = self.env.GetNumAction()
+        self.env = HpDartEnv()
+        # self.num_slaves = num_slaves
+        self.num_slaves = 1
+        self.num_state = self.env.observation_space.shape[0]
+        self.num_action = self.env.action_space.shape[0]
         self.num_epochs = 10
         self.num_evaluation = 0
         self.num_training = 0
@@ -131,7 +140,7 @@ class PPO(object):
         self.batch_size = 128
         self.replay_buffer = ReplayBuffer(10000)
 
-        self.model = Model(self.num_state, self.num_action)
+        self.model = Model(self.num_state, self.num_action).double()
         self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
         self.w_entropy = 0.0
 
@@ -144,7 +153,7 @@ class PPO(object):
     def ComputeTDandGAE(self):
         self.replay_buffer.clear()
         for epi in self.total_episodes:
-            data = epi.GetData()
+            data = epi.get_data()
             size = len(data)
             states, actions, rewards, values, logprobs = zip(*data)
 
@@ -190,8 +199,7 @@ class PPO(object):
             logprobs = a_dist.log_prob(torch.tensor(actions)).detach().numpy().reshape(-1)
             values = v.detach().numpy().reshape(-1)
 
-            self.env.SetActions(actions)
-            self.env.Steps()
+            self.env.Steps(actions)
             for j in range(self.num_slaves):
                 if terminated[j]:
                     continue
@@ -201,7 +209,7 @@ class PPO(object):
                     nan_occur = True
                 else:
                     rewards[j] = self.env.GetReward(j)
-                    episodes[j].Push(states[j], actions[j], rewards[j], values[j], logprobs[j])
+                    episodes[j].push(states[j], actions[j], rewards[j], values[j], logprobs[j])
                     local_step += 1
 
                 # if episode is terminated
@@ -253,8 +261,7 @@ class PPO(object):
                 ratio = torch.exp(a_dist.log_prob(torch.tensor(stack_a)) - torch.tensor(stack_lp))
                 stack_gae = (stack_gae - stack_gae.mean()) / (stack_gae.std() + 1E-5)
                 surrogate1 = ratio * torch.tensor(stack_gae)
-                surrogate2 = torch.clamp(ratio, min=1.0 - self.clip_ratio, max=1.0 + self.clip_ratio) * torch.tensor(
-                    stack_gae)
+                surrogate2 = torch.clamp(ratio, min=1.0 - self.clip_ratio, max=1.0 + self.clip_ratio) * torch.tensor(stack_gae)
                 loss_actor = - torch.min(surrogate1, surrogate2).mean()
 
                 '''Entropy Loss'''
@@ -284,8 +291,7 @@ class PPO(object):
         for t in count():
             action_dist, _ = self.model(torch.tensor(states))
             actions = action_dist.loc.detach().numpy()
-            self.env.SetActions(actions)
-            self.env.Steps()
+            self.env.Steps(actions)
             for j in range(self.num_slaves):
                 if self.env.IsTerminalState(j) is False:
                     total_step += 1
@@ -293,7 +299,8 @@ class PPO(object):
             states = self.env.GetStates()
             if all(terminate == True for terminate in self.env.IsTerminalStates()):
                 break
-        print('noise : {:.3f}'.format(ppo.model.log_std.exp().mean()))
+        # print('noise : {:.3f}'.format(ppo.model.log_std.exp().mean()))
+        print('noise : {:.3f}'.format(self.model.log_std.exp().mean()))
         if total_step is not 0:
             print('Epi reward : {:.2f}, Step reward : {:.2f} Total step : {}'
                   .format(total_reward / self.num_slaves, total_reward / total_step, total_step))
@@ -301,3 +308,42 @@ class PPO(object):
             print('bad..')
         self.num_evaluation += 1
         return total_reward / self.num_slaves
+
+import matplotlib
+import matplotlib.pyplot as plt
+plt.ion()
+
+def Plot(y,title,num_fig=1,ylim=True):
+    global glob_count_for_plt
+
+    plt.figure(num_fig)
+    plt.clf()
+    plt.title(title)
+    plt.plot(y)
+    plt.show()
+    if ylim:
+        plt.ylim([0,1])
+    plt.pause(0.001)
+
+import argparse
+
+
+if __name__=="__main__":
+    pydart.init()
+    tic = time.time()
+    ppo = PPO('foot',1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m','--model',help='actor model directory')
+    args =parser.parse_args()
+    if args.model is not None:
+        print("load {}".format(args.model))
+        ppo.LoadModel(args.model)
+    rewards = []
+    # print('num states: {}, num actions: {}'.format(ppo.env.GetNumState(),ppo.env.GetNumAction()))
+    for i in range(50000):
+        ppo.Train()
+        ppo.SaveModel()
+        print('# {}'.format(i))
+        rewards.append(ppo.Evaluate())
+        Plot(np.asarray(rewards),'reward',1,False)
+        print ("Elapsed time : {:.2f}s".format(time.time() - tic))
