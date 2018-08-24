@@ -14,7 +14,7 @@ summary_writer = tf.summary.FileWriter('./summary_log/' + 'Walking')
 pydart2.init()
 env = HpDartEnv()
 chief = Worker('Walking', env, summary_writer, global_episodes,
-               visualize=True,
+               visualize=False,
                gamma=0.95, batch_size=128, a_lr=5e-5, c_lr=1e-2)
 
 with tf.Session() as sess:
