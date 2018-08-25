@@ -145,7 +145,7 @@ class PPO(object):
         self.w_entropy = 0.0
 
     def SaveModel(self):
-        torch.save(self.model.state_dict(), 'model/' + str(self.num_evaluation) + '.pt')
+        torch.save(self.model.state_dict(), 'model' + time.strftime("%Y%m%d%H%M") +'/' + str(self.num_evaluation) + '.pt')
 
     def LoadModel(self, model_path):
         self.model.load_state_dict(torch.load(model_path))
