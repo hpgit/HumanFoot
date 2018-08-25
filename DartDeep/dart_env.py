@@ -67,7 +67,7 @@ def exp_reward_term(w, exp_w, v0, v1):
 
 
 class HpDartEnv(gym.Env):
-    def __init__(self):
+    def __init__(self, env_name='walk', env_slaves=1):
         self.world = pydart.World(1./1200., "../data/woody_with_ground.xml")
         self.world.control_skel = self.world.skeletons[1]
         self.skel = self.world.skeletons[1]
@@ -254,13 +254,18 @@ class HpDartEnv(gym.Env):
         self.np_random, seed = gym.utils.seeding.np_random(seed)
         return [seed]
 
+    def GetState(self, param):
+        return self.state()
+
     def GetStates(self):
         return [self.state()]
 
-    def Resets(self, param):
+    def Resets(self, rsi):
+        self.rsi = rsi
         self.reset()
 
-    def Reset(self, param, param1):
+    def Reset(self, rsi, param1):
+        self.rsi = rsi
         self.reset()
 
     def Steps(self, actions):

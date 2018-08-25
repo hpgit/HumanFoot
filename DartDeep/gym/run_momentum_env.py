@@ -1,11 +1,7 @@
-#!/usr/bin/env python3
 import numpy as np
 from DartDeep.dart_env import HpDartEnv
 from baselines.common.cmd_util import mujoco_arg_parser
 from baselines import bench, logger
-
-# import os
-# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import pydart2 as pydart
 
