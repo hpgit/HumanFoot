@@ -144,8 +144,10 @@ class PPO(object):
         self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
         self.w_entropy = 0.0
 
+        self.save_directory = 'model'+time.strftime("%Y%m%d%H%M") + '/'
+
     def SaveModel(self):
-        torch.save(self.model.state_dict(), 'model' + time.strftime("%Y%m%d%H%M") +'/' + str(self.num_evaluation) + '.pt')
+        torch.save(self.model.state_dict(), self.save_directory + str(self.num_evaluation) + '.pt')
 
     def LoadModel(self, model_path):
         self.model.load_state_dict(torch.load(model_path))
