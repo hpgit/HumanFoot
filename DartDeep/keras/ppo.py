@@ -9,6 +9,7 @@ from collections import deque
 from itertools import count
 import random
 import time
+import os
 
 import torch
 from torch import nn, optim
@@ -145,6 +146,8 @@ class PPO(object):
         self.w_entropy = 0.0
 
         self.save_directory = 'model'+time.strftime("%Y%m%d%H%M") + '/'
+        if not os.path.exists(self.save_directory):
+            os.makedirs(self.save_directory)
 
     def SaveModel(self):
         torch.save(self.model.state_dict(), self.save_directory + str(self.num_evaluation) + '.pt')
