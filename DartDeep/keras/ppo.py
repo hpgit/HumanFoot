@@ -335,15 +335,20 @@ import argparse
 
 
 if __name__=="__main__":
+    import sys
     pydart.init()
     tic = time.time()
-    ppo = PPO('foot',1)
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-m','--model',help='actor model directory')
-    args =parser.parse_args()
-    if args.model is not None:
-        print("load {}".format(args.model))
-        ppo.LoadModel(args.model)
+    ppo = None  # type: PPO
+    if len(sys.argv) < 2:
+        ppo = PPO('walk', 1)
+    else:
+        ppo = PPO(sys.argv[1], 1)
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('-m','--model',help='actor model directory')
+    # args =parser.parse_args()
+    # if args.model is not None:
+    #     print("load {}".format(args.model))
+    #     ppo.LoadModel(args.model)
     rewards = []
     # print('num states: {}, num actions: {}'.format(ppo.env.GetNumState(),ppo.env.GetNumAction()))
     for i in range(50000):
