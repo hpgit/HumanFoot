@@ -123,7 +123,7 @@ class ReplayBuffer(object):
 class PPO(object):
     def __init__(self, env_name, num_slaves):
         np.random.seed(seed=int(time.time()))
-        self.env = HpDartEnv()
+        self.env = HpDartEnv(env_name)
         # self.num_slaves = num_slaves
         self.num_slaves = 1
         self.num_state = self.env.observation_space.shape[0]

@@ -73,9 +73,19 @@ class HpDartEnv(gym.Env):
         self.skel = self.world.skeletons[1]
         self.pdc = PDController(self.skel, self.world.time_step(), 400., 40.)
 
-        self.ref_motion = yf.readBvhFile("../data/woody_walk_normal.bvh")[40:]
+        self.ref_motion = None  # type: ym.Motion
+
+        if env_name == 'walk':
+            self.ref_motion = yf.readBvhFile("../data/woody_walk_normal.bvh")[40:]
+        elif env_name == 'spiral_walk':
+            self.ref_motion = yf.readBvhFile("../data/wd2_spiral_walk_normal05.bvh")
+        elif env_name == 'spin_walk':
+            self.ref_motion = yf.readBvhFile("../data/wd2_2foot_walk_turn2.bvh")
+        elif env_name == 'jump':
+            self.ref_motion = yf.readBvhFile("../data/wd2_jump0.bvh")[164:280]
         self.ref_world = pydart.World(1./1200., "../data/woody_with_ground.xml")
         self.ref_skel = self.ref_world.skeletons[1]
+        self.step_per_frame = round(1200. / self.ref_motion.fps)
 
         self.rsi = True
 
@@ -173,7 +183,7 @@ class HpDartEnv(gym.Env):
         current_frame = min(len(self.ref_motion)-1, int((self.world.time() + self.time_offset) * self.ref_motion.fps))
         self.ref_skel.set_positions(self.ref_motion[current_frame].get_q())
         self.ref_skel.set_velocities(self.ref_motion.get_dq(current_frame))
-        for i in range(40):
+        for i in range(self.step_per_frame):
             self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
             self.world.step()
         return tuple([self.state(), self.reward(), self.is_done(), dict()])

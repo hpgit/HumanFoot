@@ -177,7 +177,7 @@ def main():
     applyedExtraForce = [None]
     applyedExtraForce[0] = [0,0,0]
     
-    viewer = ysv.SimpleViewer()
+    viewer = ysv.SimpleViewer(rect=(0, 0, 1000, 800))
 #    viewer.record(False)
 #    viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,255,255), yr.LINK_BONE))
     viewer.doc.addObject('motion', motion)
@@ -207,6 +207,9 @@ def main():
     viewer.doc.addRenderer('rd_CM_plane_ref', yr.PointsRenderer(rd_CM_plane_ref, (255,255,0)))
         
     stage = 0
+
+    def preCallback(frame):
+        motionModel.update(motion[frame])
 
     def simulateCallback(frame):
         global g_initFlag
@@ -720,8 +723,9 @@ def main():
         if (forceApplyFrame == 0) :
             applyedExtraForce[0] = [0, 0, 0]
 
+    viewer.setPreFrameCallback_Always(preCallback)
     viewer.setSimulateCallback(simulateCallback)
-    
+
     viewer.startTimer(1/60.)
     viewer.show()
     

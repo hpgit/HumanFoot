@@ -10,12 +10,12 @@ def main():
 
     pydart.init()
 
-    ppo = PPO('foot', 1)
+    ppo = PPO('jump', 1)
     ppo.LoadModel('model/1473.pt')
     ppo.env.Resets(False)
 
     dart_world = ppo.env.world
-    viewer = hsv.hpSimpleViewer(viewForceWnd=False)
+    viewer = hsv.hpSimpleViewer(rect=(0, 0, 1000, 800), viewForceWnd=False)
     viewer.doc.addRenderer('MotionModel', yr.DartRenderer(ppo.env.ref_world, (150,150,255), yr.POLYGON_FILL))
     viewer.doc.addRenderer('controlModel', yr.DartRenderer(dart_world, (255,240,255), yr.POLYGON_FILL))
 

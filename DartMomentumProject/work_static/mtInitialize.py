@@ -54,6 +54,8 @@ def create_biped():
         #motionName = 'wd2_stand.bvh'        
         motionName = 'woddy2_jump0.bvh'
         motion = yf.readBvhFile(motionName, .01)
+
+        motion.translateByOffset((0., -0.023, 0.))
    
         yme.removeJoint(motion, 'HEad', False)
         yme.removeJoint(motion, 'RightShoulder', False)
@@ -75,6 +77,8 @@ def create_biped():
         
         #yme.rotateJointLocal(motion, 'RightLeg', mm.exp(mm.v3(1.0,0.0,0.), -.1), False)
         yme.updateGlobalT(motion)
+
+        # yf.writeBvhFile('wd2_jump0.bvh', motion)
     else :        
         motionName = 'ww13_41.bvh'
         motion = yf.readBvhFile(motionName, 0.056444)
@@ -117,6 +121,7 @@ def create_biped():
 
     ################
     motion = motion[515:555]
+    # motion = motion[164:280]
 
     #motion = motion[96:97]
     motion[0:0] = [motion[0]]*100
