@@ -73,13 +73,15 @@ class HpDartEnv(gym.Env):
         self.skel = self.world.skeletons[1]
         self.pdc = PDController(self.skel, self.world.time_step(), 400., 40.)
 
+        self.env_name = env_name
+
         self.ref_motion = None  # type: ym.Motion
 
         if env_name == 'walk':
             self.ref_motion = yf.readBvhFile("../data/woody_walk_normal.bvh")[40:]
         elif env_name == 'spiral_walk':
             self.ref_motion = yf.readBvhFile("../data/wd2_spiral_walk_normal05.bvh")
-        elif env_name == 'spin_walk':
+        elif env_name == 'walk_spin':
             self.ref_motion = yf.readBvhFile("../data/wd2_2foot_walk_turn2.bvh")
         elif env_name == 'jump':
             self.ref_motion = yf.readBvhFile("../data/wd2_jump0.bvh")[164:280]
@@ -157,7 +159,7 @@ class HpDartEnv(gym.Env):
               + exp_reward_term(self.w_c, self.exp_c, self.skel.com(), self.ref_skel.com())
 
     def is_done(self):
-        if self.skel.com()[1] < 0.5:
+        if self.skel.com()[1] < 0.4:
             return True
         elif True in np.isnan(np.asarray(self.skel.q)):
             return True

@@ -125,6 +125,7 @@ class PPO(object):
     def __init__(self, env_name, num_slaves):
         np.random.seed(seed=int(time.time()))
         self.env = HpDartEnv(env_name)
+        self.env_name = env_name
         # self.num_slaves = num_slaves
         self.num_slaves = 1
         self.num_state = self.env.observation_space.shape[0]
@@ -145,11 +146,15 @@ class PPO(object):
         self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
         self.w_entropy = 0.0
 
-        self.save_directory = env_name + '_' + 'model_'+time.strftime("%Y%m%d%H%M") + '/'
-        if not os.path.exists(self.save_directory):
-            os.makedirs(self.save_directory)
+        self.saved = False
 
     def SaveModel(self):
+        if not self.saved:
+            self.save_directory = self.env_name + '_' + 'model_'+time.strftime("%Y%m%d%H%M") + '/'
+            if not os.path.exists(self.save_directory):
+                os.makedirs(self.save_directory)
+            self.saved = True
+
         if self.num_evaluation % 10 == 0:
             torch.save(self.model.state_dict(), self.save_directory + str(self.num_evaluation) + '.pt')
 
