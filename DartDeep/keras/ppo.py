@@ -150,7 +150,8 @@ class PPO(object):
             os.makedirs(self.save_directory)
 
     def SaveModel(self):
-        torch.save(self.model.state_dict(), self.save_directory + str(self.num_evaluation) + '.pt')
+        if self.num_evaluation % 10 == 0:
+            torch.save(self.model.state_dict(), self.save_directory + str(self.num_evaluation) + '.pt')
 
     def LoadModel(self, model_path):
         self.model.load_state_dict(torch.load(model_path))
