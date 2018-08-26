@@ -145,7 +145,7 @@ class PPO(object):
         self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
         self.w_entropy = 0.0
 
-        self.save_directory = 'model'+time.strftime("%Y%m%d%H%M") + '/'
+        self.save_directory = env_name + '_' + 'model_'+time.strftime("%Y%m%d%H%M") + '/'
         if not os.path.exists(self.save_directory):
             os.makedirs(self.save_directory)
 
