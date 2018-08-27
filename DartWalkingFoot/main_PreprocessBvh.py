@@ -114,15 +114,15 @@ def preprocess(SEGMENT_FOOT=False):
         config = {'repeat':True, 'footRot': mm.rotX(-.4), 'yOffset':0., 'halfFootHeight': 0.0444444444444, 'scale':.01, 'type':'woody2'}
 
     paths = []
-    # paths.append(dir+'wd2_WalkSameSame01.bvh')
-    # paths.append(dir+'wd2_WalkForwardSlow01.bvh')
+    paths.append(dir+'wd2_WalkSameSame01.bvh')
+    paths.append(dir+'wd2_WalkForwardSlow01.bvh')
     paths.append(dir+'wd2_WalkForwardNormal00.bvh')
-    # paths.append(dir+'wd2_WalkHandWav00.bvh')
-    # paths.append(dir+'wd2_WalkForwardFast00.bvh')
-    # paths.append(dir+'wd2_WalkForwardVFast00.bvh')
-    # paths.append(dir+'wd2_WalkLean00.bvh')
+    paths.append(dir+'wd2_WalkHandWav00.bvh')
+    paths.append(dir+'wd2_WalkForwardFast00.bvh')
+    paths.append(dir+'wd2_WalkForwardVFast00.bvh')
+    paths.append(dir+'wd2_WalkLean00.bvh')
     # paths.append(dir+'wd2_WalkAzuma01.bvh')
-    # paths.append(dir+'wd2_WalkSoldier00.bvh')
+    paths.append(dir+'wd2_WalkSoldier00.bvh')
 #    paths.append(dir+'wd2_WalkSukiko00.bvh')
 #     paths.append(dir+'wd2_WalkBackward00.bvh')
 #    paths.append(dir+'wd2_WalkTongTong00.bvh')

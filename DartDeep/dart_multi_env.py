@@ -16,33 +16,29 @@ def exp_reward_term(w, exp_w, v0, v1):
     return w * exp(-exp_w * norm * norm)
 
 
-class HpDartEnv(gym.Env):
-    def __init__(self, env_name='walk', env_slaves=1):
+class HpDartMultiEnv(gym.Env):
+    def __init__(self, env_slaves=1):
         self.world = pydart.World(1./1200., "../data/woody_with_ground.xml")
         self.world.control_skel = self.world.skeletons[1]
         self.skel = self.world.skeletons[1]
         self.pdc = PDController(self.skel, self.world.time_step(), 400., 40.)
 
-        self.env_name = env_name
+        self.ref_motions = list()  # type: list[ym.Motion]
+        self.ref_motions.append(yf.readBvhFile("../data/woody_walk_normal.bvh")[40:])
+        self.ref_motions.append(yf.readBvhFile("../data/wd2_jump0.bvh")[164:280])
+        self.motion_num = len(self.ref_motions)
+        self.reward_weights_by_fps = [self.ref_motions[0].fps / self.ref_motions[i].fps for i in range(self.motion_num)]
 
-        self.ref_motion = None  # type: ym.Motion
-
-        if env_name == 'walk':
-            self.ref_motion = yf.readBvhFile("../data/woody_walk_normal.bvh")[40:]
-        elif env_name == 'spiral_walk':
-            self.ref_motion = yf.readBvhFile("../data/wd2_spiral_walk_normal05.bvh")
-        elif env_name == 'walk_spin':
-            self.ref_motion = yf.readBvhFile("../data/wd2_2foot_walk_turn2.bvh")
-        elif env_name == 'jump':
-            self.ref_motion = yf.readBvhFile("../data/wd2_jump0.bvh")[164:280]
-        elif env_name == 'walk_fast':
-            self.ref_motion = yf.readBvhFile("../data/wd2_WalkForwardVFast00.bvh")
+        self.ref_motion = self.ref_motions[0]
 
         self.ref_world = pydart.World(1./1200., "../data/woody_with_ground.xml")
         self.ref_skel = self.ref_world.skeletons[1]
-        self.step_per_frame = round((1./self.world.time_step()) / self.ref_motion.fps)
+        self.step_per_frame = None
 
         self.rsi = True
+
+        self.specified_motion_num = 0
+        self.is_motion_specified = False
 
         self.w_p = 0.65
         self.w_v = 0.1
@@ -63,7 +59,7 @@ class HpDartEnv(gym.Env):
 
         self.time_offset = 0.
 
-        state_num = 1 + (3*3 + 4) * self.body_num
+        state_num = 2 + (3*3 + 4) * self.body_num
         action_num = self.skel.num_dofs() - 6
 
         state_high = np.array([np.finfo(np.float32).max] * state_num)
@@ -79,7 +75,7 @@ class HpDartEnv(gym.Env):
         R_pelvis = self.skel.body(0).world_transform()[:3, :3]
 
         phase = (self.world.time() + self.time_offset)/self.total_time
-        state = [phase]
+        state = [self.specified_motion_num, phase]
 
         p = np.array([self.skel.body(i).to_world() - p_pelvis for i in range(self.body_num)]).flatten()
         # R = [mm.logSO3(np.dot(R_pelvis.T, self.skel.body(i).world_transform()[:3, :3]))/pi for i in range(self.body_num)]
@@ -106,13 +102,15 @@ class HpDartEnv(gym.Env):
         p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
         p_e = np.asarray([body.world_transform()[:3, 3] for body in self.body_e]).flatten()
 
-        return exp_reward_term(self.w_p, self.exp_p, self.skel.q, self.ref_skel.q) \
+        reward = exp_reward_term(self.w_p, self.exp_p, self.skel.q, self.ref_skel.q) \
               + exp_reward_term(self.w_v, self.exp_v, self.skel.dq, self.ref_skel.dq) \
               + exp_reward_term(self.w_e, self.exp_e, p_e, p_e_hat) \
               + exp_reward_term(self.w_c, self.exp_c, self.skel.com(), self.ref_skel.com())
 
+        return reward * self.reward_weights_by_fps[self.specified_motion_num]
+
     def is_done(self):
-        if self.skel.com()[1] < 0.4:
+        if self.skel.com()[1] < 0.45:
             return True
         elif True in np.isnan(np.asarray(self.skel.q)) or True in np.isnan(np.asarray(self.skel.dq)):
             return True
@@ -151,10 +149,17 @@ class HpDartEnv(gym.Env):
             observation (object): The initial observation of the space. Initial reward is assumed to be 0.
         """
         self.world.reset()
-        # rand_frame = randrange(0, len(self.ref_motion)//2)
+
+        if not self.is_motion_specified:
+            self.specified_motion_num = randrange(0, self.motion_num)
+
+        self.ref_motion = self.ref_motions[self.specified_motion_num]
+        self.step_per_frame = round((1./self.world.time_step()) / self.ref_motion.fps)
+
         rand_frame = randrange(0, len(self.ref_motion))
         if not self.rsi:
             rand_frame = 0
+
         self.time_offset = rand_frame / self.ref_motion.fps
         self.skel.set_positions(self.ref_motion[rand_frame].get_q())
         dq = self.ref_motion.get_dq(rand_frame)
@@ -244,4 +249,12 @@ class HpDartEnv(gym.Env):
 
     def IsTerminalStates(self):
         return [self.is_done()]
+
+    def specify_motion_num(self, num):
+        if 0 <= num < self.motion_num:
+            self.is_motion_specified = True
+            self.specified_motion_num = num
+        else:
+            self.is_motion_specified = False
+
 

@@ -3,6 +3,7 @@ import numpy as np
 
 import pydart2 as pydart
 from DartDeep.dart_env import HpDartEnv
+from DartDeep.dart_multi_env import HpDartMultiEnv
 
 from collections import namedtuple
 from collections import deque
@@ -122,12 +123,14 @@ class ReplayBuffer(object):
 
 
 class PPO(object):
-    def __init__(self, env_name, num_slaves):
+    def __init__(self, env_name, num_slaves=1):
         np.random.seed(seed=int(time.time()))
-        self.env = HpDartEnv(env_name)
         self.env_name = env_name
-        # self.num_slaves = num_slaves
-        self.num_slaves = 1
+        if self.env_name == 'multi':
+            self.env = HpDartMultiEnv()
+        else:
+            self.env = HpDartEnv(env_name)
+        self.num_slaves = num_slaves
         self.num_state = self.env.observation_space.shape[0]
         self.num_action = self.env.action_space.shape[0]
         self.num_epochs = 10
@@ -142,11 +145,14 @@ class PPO(object):
         self.batch_size = 128
         self.replay_buffer = ReplayBuffer(10000)
 
+        self.total_episodes = []
+
         self.model = Model(self.num_state, self.num_action).float()
         self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
         self.w_entropy = 0.0
 
         self.saved = False
+        self.save_directory = ''
 
     def SaveModel(self):
         if not self.saved:
@@ -155,7 +161,7 @@ class PPO(object):
                 os.makedirs(self.save_directory)
             self.saved = True
 
-        if self.num_evaluation % 10 == 0:
+        if self.num_evaluation % 5 == 0:
             torch.save(self.model.state_dict(), self.save_directory + str(self.num_evaluation) + '.pt')
 
     def LoadModel(self, model_path):
@@ -182,7 +188,7 @@ class PPO(object):
                 self.replay_buffer.push(states[i], actions[i], logprobs[i], TD[i], advantages[i])
 
     def GenerateTransitions(self):
-        self.total_episodes = []
+        del self.total_episodes[:]
         states = [None] * self.num_slaves
         actions = [None] * self.num_slaves
         rewards = [None] * self.num_slaves
@@ -299,10 +305,23 @@ class PPO(object):
         total_reward = 0
         total_step = 0
         states = self.env.GetStates()
+        for j in range(len(states)):
+            if np.any(np.isnan(states[j])):
+                print("state warning!!!!!!!! start")
+
         for t in count():
             action_dist, _ = self.model(torch.tensor(states).float())
             actions = action_dist.loc.detach().numpy()
+            for j in range(len(actions)):
+                if np.any(np.isnan(actions[j])):
+                    print("action warning!!!!!!!!", t)
+
             self.env.Steps(actions)
+
+            for j in range(len(states)):
+                if np.any(np.isnan(states[j])):
+                    print("state warning!!!!!!!!", t)
+
             for j in range(self.num_slaves):
                 if self.env.IsTerminalState(j) is False:
                     total_step += 1
@@ -310,7 +329,6 @@ class PPO(object):
             states = self.env.GetStates()
             if all(terminate == True for terminate in self.env.IsTerminalStates()):
                 break
-        # print('noise : {:.3f}'.format(ppo.model.log_std.exp().mean()))
         print('noise : {:.3f}'.format(self.model.log_std.exp().mean()))
         if total_step is not 0:
             print('Epi reward : {:.2f}, Step reward : {:.2f} Total step : {}'
@@ -339,7 +357,7 @@ def Plot(y,title,num_fig=1,ylim=True):
 import argparse
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     import sys
     pydart.init()
     tic = time.time()
@@ -348,6 +366,11 @@ if __name__=="__main__":
         ppo = PPO('walk', 1)
     else:
         ppo = PPO(sys.argv[1], 1)
+
+    if len(sys.argv) > 2:
+        print("load {}".format(sys.argv[2]))
+        ppo.LoadModel(sys.argv[2])
+
     # parser = argparse.ArgumentParser()
     # parser.add_argument('-m','--model',help='actor model directory')
     # args =parser.parse_args()

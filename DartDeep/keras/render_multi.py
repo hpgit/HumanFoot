@@ -12,11 +12,13 @@ def main():
 
     pydart.init()
 
-    env_name = 'jump'
+    env_name = 'multi'
 
     ppo = PPO(env_name, 1)
     if not MOTION_ONLY:
         ppo.LoadModel('model/' + env_name + '.pt')
+    ppo.env.specify_motion_num(0)
+
     ppo.env.Resets(False)
 
     # viewer settings
