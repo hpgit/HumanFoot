@@ -15,6 +15,80 @@ SCALAR_1_120 = 1./120.
 # ANGULAR_FIRST = False
 
 
+def ddq_dart_to_vp(skel, ddq):
+    """
+
+    :param skel:
+    :type skel: pydart.Skeleton
+    :param ddq:
+    :type ddq: np.ndarray
+    :return:
+    """
+    ddth = np.zeros_like(ddq)
+    for joint_idx in range(skel.num_joints()):
+        joint = skel.joint(joint_idx)  # type: pydart.Joint
+        if joint.num_dofs() == 6:
+            dof_start_idx = joint.dofs[0].index_in_skeleton()
+            # for the simplicity, just copy
+            ddth[dof_start_idx:dof_start_idx+joint.num_dofs()] = ddq[dof_start_idx:dof_start_idx+joint.num_dofs()]
+        if joint.num_dofs() == 3:
+            dof_start_idx = joint.dofs[0].index_in_skeleton()
+            ddth[dof_start_idx:dof_start_idx+3] = mm.accel2qdd(ddq[dof_start_idx:dof_start_idx+3], joint.velocity(), joint.position())
+
+    return ddth
+
+
+def ddth_vp_to_dart(skel, ddth):
+    """
+
+    :param skel:
+    :type skel: pydart.Skeleton
+    :param ddth:
+    :type ddth: np.ndarray
+    :return:
+    """
+    ddq = np.zeros_like(ddth)
+    for joint_idx in range(skel.num_joints()):
+        joint = skel.joint(joint_idx)  # type: pydart.Joint
+        if joint.num_dofs() == 6:
+            dof_start_idx = joint.dofs[0].index_in_skeleton()
+            # for the simplicity, just copy
+            ddq[dof_start_idx:dof_start_idx+joint.num_dofs()] = ddth[dof_start_idx:dof_start_idx+joint.num_dofs()]
+        if joint.num_dofs() == 3:
+            dof_start_idx = joint.dofs[0].index_in_skeleton()
+            ddq[dof_start_idx:dof_start_idx+3] = mm.qdd2accel(ddth[dof_start_idx:dof_start_idx+3], joint.velocity(), joint.position())
+
+    return ddq
+
+
+def get_dth_dart(skel):
+    ls = list()
+    rootGenVel = np.empty(6)
+    rootGenVel[0:3] = np.asarray(skel.dq[3:6])
+    rootGenVel[3:6] = mm.qd2vel(skel.dq[0:3], skel.q[0:3])
+    # ls.append(np.asarray(skel.dq[:6])[range(-3, 3)])
+    ls.append(rootGenVel)
+    for i in range(1, skel.num_joints()):
+        joint = skel.joint(i)
+        if joint.num_dofs() > 0:
+            ls.append(joint.velocity())
+
+    return ls
+
+
+def get_th_dart(skel):
+    ls = []
+    pyV = np.asarray(skel.q[3:6])
+    pyR = mm.exp(np.asarray(skel.q[:3]))
+    ls.append([pyV, pyR])
+    for i in range(1, len(skel.joints)):
+        joint = skel.joints[i]
+        if joint.num_dofs() > 0:
+            ls.append(joint.get_local_transform()[:3, :3])
+
+    return ls
+
+
 def get_bjoint_jacobian(m_rQ):
     t = np.linalg.norm(m_rQ)
     t2 = t * t
@@ -29,63 +103,6 @@ def get_bjoint_jacobian(m_rQ):
         gamma = (SCALAR_1 - cos(t)) / t2
 
     return alpha * mm.getDyadMatrixForm(m_rQ) + beta * np.eye(3) - gamma * mm.getCrossMatrixForm(m_rQ)
-
-
-def compute_jacobian(skel, idx_or_name, eff_global_pos, ANGULAR_FIRST=False):
-    """
-
-    :param skel:
-    :type skel: pydart.Skeleton
-    :param idx_or_name:
-    :type idx_or_name: str | int
-    :param eff_global_pos:
-    :type eff_global_pos: np.ndarray
-    :return:
-    """
-    parent_joint = skel.body(idx_or_name).parent_joint
-    ancestors = list()
-    while parent_joint is not None:
-        ancestors.append(parent_joint.id)
-        parent_joint = parent_joint.parent_bodynode.parent_joint if parent_joint.parent_bodynode is not None else None
-
-    J = np.zeros((6, skel.num_dofs()))
-
-    # root joint
-    if True:
-        J[0, 3] = 1.
-        J[1, 4] = 1.
-        J[2, 5] = 1.
-
-        joint_frame = skel.joint(0).get_world_frame_after_transform()
-        offset = eff_global_pos - joint_frame[3, :3]
-        _Jw = np.dot(joint_frame[:3, :3], get_bjoint_jacobian(mm.logSO3(joint_frame[:3, :3])))
-        _Jv = -np.dot(mm.getCrossMatrixForm(offset), _Jw)
-        if ANGULAR_FIRST:
-            J[3:6, 0:3] = _Jv
-            J[0:3, 0:3] = _Jw
-        else:
-            J[0:3, 0:3] = _Jv
-            J[3:6, 0:3] = _Jw
-
-    # internal joint
-    for i in range(skel.num_joints()):
-        if i in ancestors and skel.joint(i).num_dofs() == 3:
-            joint = skel.joint(i)
-            joint_frame = joint.get_world_frame_after_transform()
-            offset = eff_global_pos - joint_frame[3, :3]
-            dof_start_index = joint.dofs[0].index_in_skeleton()
-            _Jw = np.dot(joint_frame[:3, :3], get_bjoint_jacobian(skel.q[dof_start_index:dof_start_index+3]))
-            _Jv = -np.dot(mm.getCrossMatrixForm(offset), _Jw)
-            if ANGULAR_FIRST:
-                J[3:6, dof_start_index:dof_start_index+3] = _Jv
-                J[0:3, dof_start_index:dof_start_index+3] = _Jw
-            else:
-                J[0:3, dof_start_index:dof_start_index+3] = _Jv
-                J[3:6, dof_start_index:dof_start_index+3] = _Jw
-        else:
-            raise NotImplementedError("only ball joint")
-
-    return J
 
 
 def compute_J_dJdq(skel, ANGULAR_FIRST=False):
@@ -208,4 +225,4 @@ def compute_J_dJdq(skel, ANGULAR_FIRST=False):
                     dJdq[6*body_idx+0:6*body_idx+3] += _dJdqv
                     dJdq[6*body_idx+3:6*body_idx+6] += _dJdqw
 
-    return (J, dJdq)
+    return J, dJdq

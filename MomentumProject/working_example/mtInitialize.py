@@ -463,9 +463,9 @@ def create_biped():
     #motion.extend([motion[-1]]*5000)
 
     #motion = motion[30:151]
-    # motion = motion[30:]
+    motion = motion[30:]
     # motion = motion[30:31]
-    motion = motion[36:]
+    # motion = motion[36:]
     #motion[5:5] = [motion[5]]*30
     motion[0:0] = [motion[0]]*2000
     motion.extend([motion[-1]]*300)
@@ -513,23 +513,24 @@ def create_biped():
     node.width = .2
     node.mass = 2.
 
-    node = mcfg.getNode('RightFoot')
-    node.length = .23
-    # node.length = .18
-    #node.length = .2
-    #node.width = .15
-    node.width = .1
-    node.mass = 1.3
-    # node.offset = (0., 0., 0.02)
+    if False:
+        node = mcfg.getNode('RightFoot')
+        node.length = .23
+        # node.length = .18
+        #node.length = .2
+        #node.width = .15
+        node.width = .1
+        node.mass = 1.3
+        # node.offset = (0., 0., 0.02)
 
-    node = mcfg.getNode('LeftFoot')
-    node.length = .23
-    # node.length = .18
-    #node.length = .2
-    #node.width = .15
-    node.width = .1
-    node.mass = 1.3
-    # node.offset = (0., 0., 0.02)
+        node = mcfg.getNode('LeftFoot')
+        node.length = .23
+        # node.length = .18
+        #node.length = .2
+        #node.width = .15
+        node.width = .1
+        node.mass = 1.3
+        # node.offset = (0., 0., 0.02)
 
     wcfg = ypc.WorldConfig()
     wcfg.planeHeight = 0.

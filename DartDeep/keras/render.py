@@ -12,7 +12,7 @@ def main():
 
     pydart.init()
 
-    env_name = 'jump'
+    env_name = 'walk_u_turn'
 
     ppo = PPO(env_name, 1)
     if not MOTION_ONLY:
@@ -25,8 +25,9 @@ def main():
     dart_world = ppo.env.world
     viewer = hsv.hpSimpleViewer(rect=(0, 0, 1200, 800), viewForceWnd=False)
     viewer.doc.addRenderer('MotionModel', yr.DartRenderer(ppo.env.ref_world, (150,150,255), yr.POLYGON_FILL))
-    viewer.doc.addRenderer('controlModel', yr.DartRenderer(dart_world, (255,240,255), yr.POLYGON_FILL))
-    viewer.doc.addRenderer('contact', yr.VectorsRenderer(rd_contact_forces, rd_contact_positions, (255,0,0)))
+    if not MOTION_ONLY:
+        viewer.doc.addRenderer('controlModel', yr.DartRenderer(dart_world, (255,240,255), yr.POLYGON_FILL))
+        viewer.doc.addRenderer('contact', yr.VectorsRenderer(rd_contact_forces, rd_contact_positions, (255,0,0)))
 
     def preCallback(frame):
         ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(frame))

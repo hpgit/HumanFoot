@@ -17,7 +17,7 @@ def main():
     ppo = PPO(env_name, 1)
     if not MOTION_ONLY:
         ppo.LoadModel('model/' + env_name + '.pt')
-    ppo.env.specify_motion_num(0)
+    ppo.env.specify_motion_num(1)
 
     ppo.env.Resets(False)
 

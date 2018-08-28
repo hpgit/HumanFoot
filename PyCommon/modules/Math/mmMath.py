@@ -28,8 +28,10 @@ SCALAR_1_30 = 1./30.
 SCALAR_1_60 = 1./60.
 SCALAR_1_120 = 1./120.
 SCALAR_1_180 = 1./180.
+SCALAR_1_360 = 0.00277777777777777777778
 SCALAR_1_720 = 1./720.
 SCALAR_1_1260 = 1./1260.
+SCALAR_1_7560 = 0.000132275132275132275132
 
 def ACOS(x):
     if x > 1.0:
@@ -716,8 +718,8 @@ def square_sum(v):
     return v[0]*v[0] + v[1]*v[1] + v[2]* v[2]
 
 
-def cross(v1, v2):
-    return np.array([v1[1]*v2[2] - v1[2]*v2[1], v1[2]*v2[0] - v1[0]*v2[2], v1[0]*v2[1] - v1[1]*v2[0]])
+# def cross(v1, v2):
+#     return np.array([v1[1]*v2[2] - v1[2]*v2[1], v1[2]*v2[0] - v1[0]*v2[2], v1[0]*v2[1] - v1[1]*v2[0]])
 
 
 def vel2qd(angvel, m_rQ):
@@ -750,6 +752,35 @@ def qd2vel(m_rDq, m_rQ):
 
     w = (alpha * np.dot(m_rQ, m_rDq)) * m_rQ + beta * m_rDq + gamma * cross(m_rDq, m_rQ)
     return w
+
+
+def accel2qdd(DV, m_rDq, m_rQ):
+    V = qd2vel(m_rDq, m_rQ)
+    W = V
+    DW = DV
+    t = np.linalg.norm(m_rQ)
+    qw = np.dot(m_rQ, W)
+    t2 = t * t
+
+    if t < LIE_EPS:
+        delta = SCALAR_1_12 + SCALAR_1_720 * t2
+        zeta = SCALAR_1 - SCALAR_1_12 * t2
+
+        d_delta = (SCALAR_1_360 + SCALAR_1_7560 * t2) * qw
+        d_eta = -(SCALAR_1_6 + SCALAR_1_180 * t2) * qw
+    else:
+        beta = math.sin(t) / t
+        gamma = (SCALAR_1 - math.cos(t)) / t2
+
+        zeta = SCALAR_1_2 * beta / gamma
+        delta = (SCALAR_1 - zeta) / t2
+
+        d_eta = SCALAR_1_2 * (beta - SCALAR_1) / gamma / t2 * qw
+        d_delta = -(d_eta + SCALAR_2 * (SCALAR_1 - zeta) / t2 * qw) / t2
+    print((d_delta * qw + delta * (np.dot(m_rQ, DW) + np.dot(m_rDq, W))) * m_rQ )
+    print((delta * qw) * m_rDq + d_eta * W + zeta * DW + SCALAR_1_2 * (np.cross(m_rQ, DW) + np.cross(m_rDq, W)))
+
+    return (d_delta * qw + delta * (np.dot(m_rQ, DW) + np.dot(m_rDq, W))) * m_rQ + (delta * qw) * m_rDq + d_eta * W + zeta * DW + SCALAR_1_2 * (np.cross(m_rQ, DW) + np.cross(m_rDq, W))
 
 
 def qdd2accel(m_rDdq, m_rDq, m_rQ):

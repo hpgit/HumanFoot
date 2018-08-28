@@ -721,7 +721,7 @@ class DartModel:
 
     def initializeForwardDynamics(self):
         for i in range(self.skeleton.num_joints()):
-            joint = self.getJoint(i).set_actuator_type(pydart.Joint.FORCE)
+            self.getJoint(i).set_actuator_type(pydart.Joint.FORCE)
 
     def makeDOFFlatList(self):
         return [None] * self.getTotalDOF()
@@ -952,7 +952,8 @@ class DartModel:
         for i in range(1, len(self.skeleton.joints)):
             joint = self.skeleton.joints[i]
             # ls.append(mm.exp(np.array([dof.position() for dof in joint.dofs])))
-            ls.append(joint.get_local_transform()[:3, :3])
+            if joint.num_dofs() > 0:
+                ls.append(joint.get_local_transform()[:3, :3])
 
         return ls
 
@@ -966,12 +967,13 @@ class DartModel:
         # ls = self.getInternalJointAngVelocitiesLocal()
         # ls.insert(0, rootGenVel)
 
-        ls = []
+        ls = list()
         # ls.append(rootGenVel)
         ls.append(np.asarray(self.skeleton.dq[:6])[range(-3, 3)])
         for i in range(1, self.getJointNum()):
             joint = self.getJoint(i)
-            ls.append(np.array([dof.velocity() for dof in joint.dofs]))
+            if joint.num_dofs() > 0:
+                ls.append(np.array([dof.velocity() for dof in joint.dofs]))
 
         return ls
 

@@ -123,7 +123,7 @@ class ReplayBuffer(object):
 
 
 class PPO(object):
-    def __init__(self, env_name, num_slaves=1):
+    def __init__(self, env_name, num_slaves=1, eval_print=True, eval_log=True):
         np.random.seed(seed=int(time.time()))
         self.env_name = env_name
         if self.env_name == 'multi':
@@ -152,17 +152,17 @@ class PPO(object):
         self.w_entropy = 0.0
 
         self.saved = False
-        self.save_directory = ''
-
-    def SaveModel(self):
-        if not self.saved:
-            self.save_directory = self.env_name + '_' + 'model_'+time.strftime("%Y%m%d%H%M") + '/'
-            if not os.path.exists(self.save_directory):
-                os.makedirs(self.save_directory)
+        self.save_directory = self.env_name + '_' + 'model_'+time.strftime("%Y%m%d%H%M") + '/'
+        if not self.saved and not os.path.exists(self.save_directory):
+            os.makedirs(self.save_directory)
             self.saved = True
 
-        if self.num_evaluation % 5 == 0:
-            torch.save(self.model.state_dict(), self.save_directory + str(self.num_evaluation) + '.pt')
+        self.log_file = open(self.save_directory + 'log.txt', 'w')
+        self.eval_print = eval_print
+        self.eval_log = eval_log
+
+    def SaveModel(self):
+        torch.save(self.model.state_dict(), self.save_directory + str(self.num_evaluation) + '.pt')
 
     def LoadModel(self, model_path):
         self.model.load_state_dict(torch.load(model_path))
@@ -307,20 +307,20 @@ class PPO(object):
         states = self.env.GetStates()
         for j in range(len(states)):
             if np.any(np.isnan(states[j])):
-                print("state warning!!!!!!!! start")
+                self.print("state warning!!!!!!!! start")
 
         for t in count():
             action_dist, _ = self.model(torch.tensor(states).float())
             actions = action_dist.loc.detach().numpy()
             for j in range(len(actions)):
                 if np.any(np.isnan(actions[j])):
-                    print("action warning!!!!!!!!", t)
+                    self.print("action warning!!!!!!!!" + str(t))
 
             self.env.Steps(actions)
 
             for j in range(len(states)):
                 if np.any(np.isnan(states[j])):
-                    print("state warning!!!!!!!!", t)
+                    self.print("state warning!!!!!!!!"+str(t))
 
             for j in range(self.num_slaves):
                 if self.env.IsTerminalState(j) is False:
@@ -329,14 +329,20 @@ class PPO(object):
             states = self.env.GetStates()
             if all(terminate == True for terminate in self.env.IsTerminalStates()):
                 break
-        print('noise : {:.3f}'.format(self.model.log_std.exp().mean()))
+        self.print('noise : {:.3f}'.format(self.model.log_std.exp().mean()))
         if total_step is not 0:
-            print('Epi reward : {:.2f}, Step reward : {:.2f} Total step : {}'
+            self.print('Epi reward : {:.2f}, Step reward : {:.2f} Total step : {}'
                   .format(total_reward / self.num_slaves, total_reward / total_step, total_step))
         else:
-            print('bad..')
+            self.print('bad..')
         self.num_evaluation += 1
-        return total_reward / self.num_slaves
+        return total_reward / self.num_slaves, total_step / self.num_slaves
+
+    def print(self, s):
+        if self.eval_print:
+            print(s)
+        if self.eval_log:
+            self.log_file.write(s+"\n")
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -378,11 +384,24 @@ if __name__ == "__main__":
     #     print("load {}".format(args.model))
     #     ppo.LoadModel(args.model)
     rewards = []
+    steps = []
     # print('num states: {}, num actions: {}'.format(ppo.env.GetNumState(),ppo.env.GetNumAction()))
+
+    max_avg_steps = 0
+
     for i in range(50000):
         ppo.Train()
-        ppo.SaveModel()
         print('# {}'.format(i))
-        rewards.append(ppo.Evaluate())
+        ppo.log_file.write('# {}'.format(i) + "\n")
+        reward, step = ppo.Evaluate()
+        rewards.append(reward)
+        steps.append(step)
+        if i % 10 == 0 or max_avg_steps < step:
+            ppo.SaveModel()
+            if max_avg_steps < step:
+                max_avg_steps = step
+
         # Plot(np.asarray(rewards),'reward',1,False)
-        print ("Elapsed time : {:.2f}s".format(time.time() - tic))
+        print("Elapsed time : {:.2f}s".format(time.time() - tic))
+        ppo.log_file.write("Elapsed time : {:.2f}s".format(time.time() - tic) + "\n")
+        ppo.log_file.flush()

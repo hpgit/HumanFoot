@@ -5,6 +5,7 @@ from math import exp, pi
 from PyCommon.modules.Math import mmMath as mm
 from random import randrange
 import gym
+import gym.spaces
 from gym.utils import seeding
 
 import PyCommon.modules.Resource.ysMotionLoader as yf
@@ -37,6 +38,22 @@ class HpDartEnv(gym.Env):
             self.ref_motion = yf.readBvhFile("../data/wd2_jump0.bvh")[164:280]
         elif env_name == 'walk_fast':
             self.ref_motion = yf.readBvhFile("../data/wd2_WalkForwardVFast00.bvh")
+
+        elif env_name == 'walk_left_90':
+            self.ref_motion = yf.readBvhFile("../data/walk_left_90degree.bvh")
+        elif env_name == 'walk_left_45':
+            self.ref_motion = yf.readBvhFile("../data/walk_left_45degree.bvh")
+        elif env_name == 'walk_pick':
+            self.ref_motion = yf.readBvhFile("../data/wd2_pick_walk_1.bvh")
+        elif env_name == 'walk_u_turn':
+            self.ref_motion = yf.readBvhFile("../data/wd2_u-turn.bvh")[25:214]
+            self.ref_motion.translateByOffset([0., 0.03, 0.])
+
+        elif env_name == 'jump_whole':
+            self.ref_motion = yf.readBvhFile("../data/wd2_jump0.bvh")
+        elif env_name == 'walk_u_turn_whole':
+            self.ref_motion = yf.readBvhFile("../data/wd2_u-turn.bvh")
+            self.ref_motion.translateByOffset([0., 0.03, 0.])
 
         self.ref_world = pydart.World(1./1200., "../data/woody_with_ground.xml")
         self.ref_skel = self.ref_world.skeletons[1]
