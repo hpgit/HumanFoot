@@ -51,6 +51,10 @@ def addConstraint(problem, totalDOF, J, dJ, dth_flat, a_sup):
 	# subject to J_sup*ddth + dJ_sup*dth_flat = a_sup
 	problem.addConstraint_matrix(J, a_sup - np.dot(dJ, dth_flat))
 
+def addConstraint2(problem, totalDOF, J, dJdq, a_sup):
+	# subject to J_sup*ddth + dJ_sup_dq = a_sup
+	problem.addConstraint_matrix(J, a_sup - dJdq)
+
 
 # Quadratic Programming 
 # x = [ddotq tau lambda]

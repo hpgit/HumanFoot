@@ -12,8 +12,7 @@ SCALAR_1_6 = 1./6.
 SCALAR_1_24 = 1./24.
 SCALAR_1_120 = 1./120.
 
-
-ANGULAR_FIRST = False
+# ANGULAR_FIRST = False
 
 
 def get_bjoint_jacobian(m_rQ):
@@ -32,7 +31,7 @@ def get_bjoint_jacobian(m_rQ):
     return alpha * mm.getDyadMatrixForm(m_rQ) + beta * np.eye(3) - gamma * mm.getCrossMatrixForm(m_rQ)
 
 
-def compute_jacobian(skel, idx_or_name, eff_global_pos):
+def compute_jacobian(skel, idx_or_name, eff_global_pos, ANGULAR_FIRST=False):
     """
 
     :param skel:
@@ -89,7 +88,7 @@ def compute_jacobian(skel, idx_or_name, eff_global_pos):
     return J
 
 
-def compute_J_dJdq(skel):
+def compute_J_dJdq(skel, ANGULAR_FIRST=False):
     """
 
     :param skel:
