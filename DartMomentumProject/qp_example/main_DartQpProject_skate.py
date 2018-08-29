@@ -73,7 +73,7 @@ def main():
     leg_y = dartMotionModel.skeleton.dof_indices(["j_thigh_right_y", "j_thigh_left_y"])
 
 
-    INIT_ANGLE = 0.1
+    INIT_ANGLE = 0.09
 
     s0q = np.zeros(dartMotionModel.skeleton.ndofs)
     s0q[pelvis_pos] = 0., .92, 0.
@@ -449,7 +449,8 @@ def main():
         # contactR = 0
 
         # contMotionOffset = th[0][0] - th_r[0][0]
-        contMotionOffset = dartModel.getBodyPositionGlobal(0) - dartMotionModel.getBodyPositionGlobal(0)
+        # contMotionOffset = dartModel.getBodyPositionGlobal(0) - dartMotionModel.getBodyPositionGlobal(0)
+        contMotionOffset = controlToMotionOffset
 
         linkPositions = dartModel.getBodyPositionsGlobal()
         linkVelocities = dartModel.getBodyVelocitiesGlobal()

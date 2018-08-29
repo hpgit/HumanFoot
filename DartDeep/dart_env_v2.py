@@ -17,9 +17,21 @@ def exp_reward_term(w, exp_w, v0, v1):
     return w * exp(-exp_w * norm * norm)
 
 
+def get_velocity_from_pelvis(body, pelvis):
+    pelvis_transform = pelvis.world_transform()
+    pelvis_R = pelvis_transform[:3, :3]
+
+    body_vel_from_pelvis_in_world_coord = (body.world_linear_velocity() - pelvis.world_linear_velocity()) \
+                                        - mm.cross(body.to_world() - pelvis.to_world(), pelvis.world_angular_velocity())
+
+    body_vel_from_pelvis_in_pelvis_coord = np.dot(pelvis_R.T, body_vel_from_pelvis_in_world_coord)
+
+    return body_vel_from_pelvis_in_pelvis_coord
+
+
 class HpDartEnv(gym.Env):
     def __init__(self, env_name='walk', env_slaves=1):
-        self.world = pydart.World(1./1200., "../data/woody_with_ground.xml")
+        self.world = pydart.World(1./1200., "../data/woody_with_ground_v2.xml")
         self.world.control_skel = self.world.skeletons[1]
         self.skel = self.world.skeletons[1]
         self.pdc = PDController(self.skel, self.world.time_step(), 400., 40.)
@@ -92,17 +104,17 @@ class HpDartEnv(gym.Env):
         self.viewer = None
 
     def state(self):
-        p_pelvis = self.skel.body(0).world_transform()[:3, 3]
-        R_pelvis = self.skel.body(0).world_transform()[:3, :3]
+        pelvis = self.skel.body(0)
+        p_pelvis = pelvis.world_transform()[:3, 3]
+        R_pelvis = pelvis.world_transform()[:3, :3]
 
         phase = (self.world.time() + self.time_offset)/self.total_time
         state = [phase]
 
-        p = np.array([self.skel.body(i).to_world() - p_pelvis for i in range(self.body_num)]).flatten()
-        # R = [mm.logSO3(np.dot(R_pelvis.T, self.skel.body(i).world_transform()[:3, :3]))/pi for i in range(self.body_num)]
-        R = np.array([mm.rot2quat(np.dot(R_pelvis.T, self.skel.body(i).world_transform()[:3, :3])) for i in range(self.body_num)]).flatten()
-        v = np.array([self.skel.body(i).world_linear_velocity() for i in range(self.body_num)]).flatten()
-        w = np.array([self.skel.body(i).world_angular_velocity()/20. for i in range(self.body_num)]).flatten()
+        p = np.array([pelvis.to_local(body.to_world() - p_pelvis) for body in self.skel.bodynodes]).flatten()
+        R = np.array([mm.rot2quat(np.dot(R_pelvis.T, body.world_transform()[:3, :3])) for body in self.skel.bodynodes]).flatten()
+        v = np.array([np.dot(R_pelvis.T, body.world_linear_velocity()) for body in self.skel.bodynodes]).flatten()
+        w = np.array([np.dot(R_pelvis.T, body.world_angular_velocity())/20. for body in self.skel.bodynodes]).flatten()
 
         state.extend(p)
         state.extend(R)

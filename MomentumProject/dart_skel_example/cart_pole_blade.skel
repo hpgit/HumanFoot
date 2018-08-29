@@ -6,7 +6,38 @@
             <gravity>0 -9.81 0</gravity>
             <collision_detector>fcl_mesh</collision_detector>
         </physics>
-        
+
+        <skeleton name="ground skeleton">
+            <mobile>false</mobile>
+            <body name="ground">
+                <!-- <transformation>0 -0.92 0 0 0 0</transformation> -->
+                <transformation>0 -0.98 0 0 0 0</transformation>
+                <!-- <transformation>0 -1.0 0 0 0 0</transformation> -->
+                <visualization_shape>
+                    <transformation>0 0 0 0 0 0</transformation>
+                    <geometry>
+                        <box>
+                            <size>5.0 0.05 5.0</size>
+                        </box>
+                    </geometry>
+                    <!-- <color>1.0 0.9999 0.99 1.0 </color> -->
+                    <color>1.0 1.0 1.0 1.0 </color>
+                </visualization_shape>
+<!--                 <collision_shape>
+                    <transformation>0 0 0 0 0 0</transformation>
+                    <geometry>
+                        <box>
+                            <size>10.0 0.05 10.0</size>
+                        </box>
+                    </geometry>
+                </collision_shape> -->
+            </body>
+            <joint type="free" name="joint 1">
+                <parent>world</parent>
+                <child>ground</child>
+            </joint>
+        </skeleton>
+
         <skeleton name="fullbody1">
             <transformation>0 0 0 0 0 0</transformation>
             <body name="h_pelvis">
@@ -32,9 +63,9 @@
                             <size>0.1088 0.1088 0.23936</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
-            
+
             <!-- Left Leg -->
             <body name="h_thigh_left">
                 <transformation>0.01649408 -0.05774016 -0.09072832 0.0 0.0 0.0</transformation>
@@ -59,7 +90,7 @@
                             <size>0.093025 0.3721 0.093025</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
 
             <body name="h_shin_left">
@@ -85,7 +116,7 @@
                             <size>0.07474 0.3737 0.07474</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
 
             <body name="h_heel_left">
@@ -113,7 +144,7 @@
                             <size>0.2080 0.0540 0.1080</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
 
             <body name="h_blade_left">
@@ -126,7 +157,7 @@
                     <transformation>0.0216 -0.0216 0.0 0.0 0.0 0.0</transformation>
                     <geometry>
                         <box>
-                            <!--<size>0.2080 0.07 0.005</size>-->
+                            <!-- <size>0.2080 0.07 0.005</size> -->
                             <size>0.2080 0.07 0.1080</size>
                         </box>
                     </geometry>
@@ -136,11 +167,11 @@
                     <transformation>0.0216 -0.0216 0.0 0.0 0.0 0.0</transformation>
                     <geometry>
                         <box>
-                            <!--<size>0.2080 0.07 0.005</size>-->
+                            <!-- <size>0.2080 0.07 0.005</size> -->
                             <size>0.2080 0.07 0.1080</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
 
             <!-- Right Leg -->
@@ -167,7 +198,7 @@
                             <size>0.093025 0.3721 0.093025</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
 
             <body name="h_shin_right">
@@ -193,7 +224,7 @@
                             <size>0.07474 0.3737 0.07474</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
 
             <body name="h_heel_right">
@@ -221,7 +252,7 @@
                             <size>0.2080 0.0540 0.1080</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
 
             <body name="h_blade_right">
@@ -234,7 +265,8 @@
                     <transformation>0.0216 -0.0216 0.0 0.0 0.0 0.0</transformation>
                     <geometry>
                         <box>
-                            <size>0.2080 0.07 0.005</size>
+                            <!-- <size>0.2080 0.07 0.005</size> -->
+                            <size>0.2080 0.07 0.1080</size>
                         </box>
                     </geometry>
                     <color>1.0 0.0 0.5</color>
@@ -243,10 +275,11 @@
                     <transformation>0.0216 -0.0216 0.0 0.0 0.0 0.0</transformation>
                     <geometry>
                         <box>
-                            <size>0.2080 0.07 0.005</size>
+                            <!-- <size>0.2080 0.07 0.005</size> -->
+                            <size>0.2080 0.07 0.1080</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
 
             <!-- Upper Body -->
@@ -273,7 +306,7 @@
                             <size>0.12535 0.2507 0.17549</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
 
             <body name="h_spine">
@@ -299,7 +332,7 @@
                             <size>0.0908 0.1816 0.0908</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
 
             <body name="h_head">
@@ -326,7 +359,7 @@
                             <size>0.101725 0.1565 0.1252</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
 
             <!-- Left Arm -->
@@ -353,7 +386,7 @@
                             <size>0.09615 0.1923 0.09615</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
 
             <body name="h_bicep_left">
@@ -379,7 +412,7 @@
                             <size>0.07848 0.2616 0.07848</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
 
             <body name="h_forearm_left">
@@ -405,7 +438,7 @@
                             <size>0.0506 0.2024 0.0506</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
 
             <body name="h_hand_left">
@@ -432,7 +465,7 @@
                             <size>0.032975 0.1319 0.032975</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
 
             <!-- Right Arm -->
@@ -459,7 +492,7 @@
                             <size>0.09615 0.1923 0.09615</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
 
             <body name="h_bicep_right">
@@ -485,7 +518,7 @@
                             <size>0.07848 0.2616 0.07848</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
 
             <body name="h_forearm_right">
@@ -511,7 +544,7 @@
                             <size>0.0506 0.2024 0.0506</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
 
             <body name="h_hand_right">
@@ -538,7 +571,7 @@
                             <size>0.032975 0.1319 0.032975</size>
                         </box>
                     </geometry>
-                </collision_shape>                                
+                </collision_shape>
             </body>
 
             <!-- JOINT: Pelvis -->
@@ -550,38 +583,22 @@
             </joint>
 
             <!-- JOINT: Left Leg -->
-            <joint type="euler" name="j_thigh_left">
+            <joint type="ball" name="j_thigh_left">
                 <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
                 <parent>h_pelvis</parent>
                 <child>h_thigh_left</child>
-                <axis_order>zyx</axis_order>
-                <init_pos>0 0 0</init_pos>
-                <init_vel>0 0 0</init_vel>
             </joint>
 
-            <joint type="revolute" name="j_shin_left">
+            <joint type="ball" name="j_shin_left">
                 <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
                 <parent>h_thigh_left</parent>
                 <child>h_shin_left</child>
-                <axis>
-                    <xyz>0.0 0.0 1.0</xyz>
-                </axis>
-                <init_pos>-0.17</init_pos>
-                <init_vel>0</init_vel>
             </joint>
 
-            <joint type="universal" name="j_heel_left">
+            <joint type="ball" name="j_heel_left">
                 <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
                 <parent>h_shin_left</parent>
                 <child>h_heel_left</child>
-                <axis>
-                    <xyz>0.0 0.0 1.0</xyz>
-                </axis>
-                <axis2>
-                    <xyz>1.0 0.0 0.0</xyz>
-                </axis2>
-                <init_pos>0 0</init_pos>
-                <init_vel>0 0</init_vel>
             </joint>
 
             <joint type="weld" name="j_blade_left">
@@ -591,38 +608,22 @@
             </joint>
 
             <!-- JOINT: Right Leg -->
-            <joint type="euler" name="j_thigh_right">
+            <joint type="ball" name="j_thigh_right">
                 <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
                 <parent>h_pelvis</parent>
                 <child>h_thigh_right</child>
-                <axis_order>zyx</axis_order>
-                <init_pos>0 0 0</init_pos>
-                <init_vel>0 0 0</init_vel>
             </joint>
 
-            <joint type="revolute" name="j_shin_right">
+            <joint type="ball" name="j_shin_right">
                 <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
                 <parent>h_thigh_right</parent>
                 <child>h_shin_right</child>
-                <axis>
-                    <xyz>0.0 0.0 1.0</xyz>
-                </axis>
-                <init_pos>-0.17</init_pos>
-                <init_vel>0</init_vel>
             </joint>
 
-            <joint type="universal" name="j_heel_right">
+            <joint type="ball" name="j_heel_right">
                 <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
                 <parent>h_shin_right</parent>
                 <child>h_heel_right</child>
-                <axis>
-                    <xyz>0.0 0.0 1.0</xyz>
-                </axis>
-                <axis2>
-                    <xyz>1.0 0.0 0.0</xyz>
-                </axis2>
-                <init_pos>0 0</init_pos>
-                <init_vel>0 0</init_vel>
             </joint>
 
             <joint type="weld" name="j_blade_right">
@@ -632,131 +633,73 @@
             </joint>
 
             <!-- -->
-            <joint type="universal" name="j_abdomen">
+            <joint type="ball" name="j_abdomen">
                 <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
                 <parent>h_pelvis</parent>
                 <child>h_abdomen</child>
-                <axis>
-                    <xyz>1.0 0.0 0.0</xyz>
-                </axis>
-                <axis2>
-                    <xyz>0.0 0.0 1.0</xyz>
-                </axis2>
-                <init_pos>0 0</init_pos>
-                <init_vel>0 0</init_vel>
             </joint>
 
-            <joint type="revolute" name="j_spine">
+            <joint type="ball" name="j_spine">
                 <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
                 <parent>h_abdomen</parent>
                 <child>h_spine</child>
-                <axis>
-                    <xyz>0.0 1.0 0.0</xyz>
-                </axis>
-                <init_pos>0</init_pos>
-                <init_vel>0</init_vel>
             </joint>
 
-            <joint type="universal" name="j_head">
+            <joint type="ball" name="j_head">
                 <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
                 <parent>h_spine</parent>
                 <child>h_head</child>
-                <axis>
-                    <xyz>0.0 0.0 1.0</xyz>
-                </axis>
-                <axis2>
-                    <xyz>1.0 0.0 0.0</xyz>
-                </axis2>
-                <init_pos>0 0</init_pos>
-                <init_vel>0 0</init_vel>
             </joint>
 
             <!-- JOINT: Left Arm -->
-            <joint type="revolute" name="j_scapula_left">
+            <joint type="ball" name="j_scapula_left">
                 <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
                 <parent>h_spine</parent>
                 <child>h_scapula_left</child>
-                <axis>
-                    <xyz>1.0 0.0 0.0</xyz>
-                </axis>
-                <init_pos>0.0</init_pos>
-                <init_vel>0</init_vel>
             </joint>
 
-            <joint type="euler" name="j_bicep_left">
+            <joint type="ball" name="j_bicep_left">
                 <transformation>0.0 0.0 0.0 -1.2423 0.0 0.0</transformation>
                 <parent>h_scapula_left</parent>
                 <child>h_bicep_left</child>
-                <axis_order>zyx</axis_order>
-                <init_pos>0 0 0</init_pos>
-                <init_vel>0 0 0</init_vel>
             </joint>
 
-            <joint type="revolute" name="j_forearm_left">
+            <joint type="ball" name="j_forearm_left">
                 <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
                 <parent>h_bicep_left</parent>
                 <child>h_forearm_left</child>
-                <axis>
-                    <xyz>0.0 0.0 1.0</xyz>
-                </axis>
-                <init_pos>0</init_pos>
-                <init_vel>0</init_vel>
             </joint>
 
-            <joint type="revolute" name="j_hand_left">
+            <joint type="ball" name="j_hand_left">
                 <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
                 <parent>h_forearm_left</parent>
                 <child>h_hand_left</child>
-                <axis>
-                    <xyz>1.0 0.0 0.0</xyz>
-                </axis>
-                <init_pos>0</init_pos>
-                <init_vel>0</init_vel>
             </joint>
 
             <!-- JOINT: Right Arm -->
-            <joint type="revolute" name="j_scapula_right">
+            <joint type="ball" name="j_scapula_right">
                 <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
                 <parent>h_spine</parent>
                 <child>h_scapula_right</child>
-                <axis>
-                    <xyz>1.0 0.0 0.0</xyz>
-                </axis>
-                <init_pos>0</init_pos>
-                <init_vel>0</init_vel>
             </joint>
 
-            <joint type="euler" name="j_bicep_right">
+            <joint type="ball" name="j_bicep_right">
                 <transformation>0.0 0.0 0.0 1.2423 0.0 0.0</transformation>
                 <parent>h_scapula_right</parent>
                 <child>h_bicep_right</child>
-                <axis_order>zyx</axis_order>
-                <init_pos>0 0 0</init_pos>
-                <init_vel>0 0 0</init_vel>
             </joint>
 
-            <joint type="revolute" name="j_forearm_right">
+            <joint type="ball" name="j_forearm_right">
                 <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
                 <parent>h_bicep_right</parent>
                 <child>h_forearm_right</child>
-                <axis>
-                    <xyz>0.0 0.0 1.0</xyz>
-                </axis>
-                <init_pos>0</init_pos>
-                <init_vel>0</init_vel>
             </joint>
 
-            <joint type="revolute" name="j_hand_right">
+            <joint type="ball" name="j_hand_right">
                 <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
                 <parent>h_forearm_right</parent>
                 <child>h_hand_right</child>
-                <axis>
-                    <xyz>1.0 0.0 0.0</xyz>
-                </axis>
-                <init_pos>0</init_pos>
-                <init_vel>0</init_vel>
             </joint>
-
         </skeleton>
     </world>
 </skel>

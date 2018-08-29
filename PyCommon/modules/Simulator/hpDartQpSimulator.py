@@ -43,7 +43,7 @@ def calc_QP(skel, ddq_des, inv_h):
 
     for b in range(skel.num_bodynodes()):
         body = skel.body(b)  # type: pydart.BodyNode
-        if 'blade' not in body.name:
+        if 'Foot' not in body.name and 'blade' not in body.name:
             continue
         for i in range(body.num_shapenodes()):
             shapenode = body.shapenodes[i]  # type: pydart.ShapeNode

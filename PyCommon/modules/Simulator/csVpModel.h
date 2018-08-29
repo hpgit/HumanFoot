@@ -23,6 +23,7 @@ public:
     vpMaterial material;
     vpBJoint joint;
     vpRJoint joint_revolute;
+    vpWJoint joint_weld;
     int dof;
     int dof_start_index;
     bool use_joint;
@@ -372,6 +373,18 @@ public:	// expose to python
 	bp::list getEquationOfMotion(object& M, object& b);// buggy
 	//void stepKinematics( double dt, const object& acc);
 	void stepKinematics( double dt, const bp::list& accs);
+};
+
+
+class VpDartModel : public VpControlModel
+{
+private:
+    string name;
+    void skel_init(const char *skel_path);
+
+public:
+    VpDartModel(const char *skel_path) : VpControlModel(nullptr, object(), object()){skel_init(skel_path);}
+    ~VpDartModel(){delete _pWorld;}
 };
 
 #endif  // _CS_VP_MODEL_H_

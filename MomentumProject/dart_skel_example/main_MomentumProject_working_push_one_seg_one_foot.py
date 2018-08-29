@@ -78,7 +78,7 @@ def main():
     vpWorld_ik.initialize()
     controlModel_ik.set_q(np.zeros_like(controlModel.get_q()))
 
-
+    dartModel = cvm.VpDartModel("cart_pole_blade.skel")
 
     totalDOF = controlModel.getTotalDOF()
     DOFs = controlModel.getDOFs()

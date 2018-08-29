@@ -84,17 +84,20 @@ BOOST_PYTHON_MODULE(csVpWorld)
 VpWorld::VpWorld(const object& config)
 {
     boost::python::numpy::initialize();
-	_world.SetTimeStep(XD(config.attr("timeStep")));
-	_world.SetGravity(pyVec3_2_Vec3(config.attr("gravity")));
 	setOpenMP();
 
 	//std::cout << _world.GetGlobalDampling() << std::endl;
 	//_world.SetGlobalDamping(0.99);
 
-	_planeHeight = XD(config.attr("planeHeight"));
-	_lockingVel = XD(config.attr("lockingVel"));
+    if(!config.is_none())
+    {
+        _world.SetTimeStep(XD(config.attr("timeStep")));
+        _world.SetGravity(pyVec3_2_Vec3(config.attr("gravity")));
+        _planeHeight = XD(config.attr("planeHeight"));
+        _lockingVel = XD(config.attr("lockingVel"));
+	}
 
-	if(XB(config.attr("useDefaultContactModel")))
+	if(!config.is_none() && XB(config.attr("useDefaultContactModel")))
 	{
 		vpMaterial::GetDefaultMaterial()->SetRestitution(0.01);
 		vpMaterial::GetDefaultMaterial()->SetDynamicFriction(100);

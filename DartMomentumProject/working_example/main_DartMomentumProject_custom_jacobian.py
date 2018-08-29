@@ -507,7 +507,6 @@ def main():
         # calculate jacobian
         body_num = dartModel.getBodyNum()
         Jsys, dJsysdq = compute_J_dJdq(dartModel.skeleton)
-        # print(dJsysdq)
 
         JsupL = Jsys[6*supL:6*supL+6, :]
         dJsupLdq = dJsysdq[6*supL:6*supL+6]
@@ -540,10 +539,10 @@ def main():
         dL_des_plane = Kl*totalMass*(CM_ref_plane - CM_plane) - Dl*totalMass*dCM_plane
         dL_des_plane[1] = 0.
 
-        # CM_ref = footCenter.copy()
-        # CM_ref[1] = dartMotionModel.getCOM()[1]
+        CM_ref = footCenter.copy()
+        CM_ref[1] = dartMotionModel.getCOM()[1]
         # CM_ref += np.array((0., com_offset_y, 0.))
-        # dL_des_plane = Kl*totalMass*(CM_ref - CM)  - Dl*totalMass*dCM
+        dL_des_plane = Kl*totalMass*(CM_ref - CM)  - Dl*totalMass*dCM
 
         # angular momentum
         CP_ref = footCenter

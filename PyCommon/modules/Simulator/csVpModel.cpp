@@ -241,6 +241,9 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getEquationOfMotion", &VpControlModel::getEquationOfMotion)
 		.def("stepKinematics", &VpControlModel::stepKinematics)
 		;
+
+	class_<VpDartModel, bases<VpControlModel> >("VpDartModel", init<const char*>())
+	    ;
 }
 
 /*
@@ -256,14 +259,20 @@ static SE3 skewVec3(const Axis &v)
 //*/
  
 VpModel::VpModel( VpWorld* pWorld, const object& createPosture, const object& config ) 
-:_pWorld(&pWorld->_world), _config(config), _skeleton(createPosture.attr("skeleton"))
 {
-	int num = XI(createPosture.attr("skeleton").attr("getJointNum")());
-	_nodes.resize(num, NULL);
-	_boneTs.resize(num, SE3());
+    if(pWorld != nullptr)
+    {
+        _config = config;
+        _skeleton = createPosture.attr("skeleton");
 
-	createBodies(createPosture);
-	build_name2index();
+        _pWorld = &pWorld->_world;
+        int num = XI(createPosture.attr("skeleton").attr("getJointNum")());
+        _nodes.resize(num, NULL);
+        _boneTs.resize(num, SE3());
+
+        createBodies(createPosture);
+        build_name2index();
+	}
 }
 
 VpModel::~VpModel()
@@ -1301,46 +1310,49 @@ void VpMotionModel::_updateBody( const object& joint, const SE3& parentT, const 
 VpControlModel::VpControlModel( VpWorld* pWorld, const object& createPosture, const object& config )
 	:VpModel(pWorld, createPosture, config)
 {
-	addBodiesToWorld(createPosture);
-	ignoreCollisionBtwnBodies();
+    if(pWorld != nullptr)
+    {
+        addBodiesToWorld(createPosture);
+        ignoreCollisionBtwnBodies();
 
-	object tpose = createPosture.attr("getTPose")();
-	createJoints(tpose);
+        object tpose = createPosture.attr("getTPose")();
+        createJoints(tpose);
 
-	update(createPosture);
+        update(createPosture);
 
-    _nodes[0]->dof = 6;
-    m_total_dof = 0;
-	int dof_start_index = 0;
-	for(std::vector<int>::size_type i=0; i<_nodes.size(); i++)
-	{
-	    _nodes[i]->dof_start_index = dof_start_index;
-	    dof_start_index += _nodes[i]->dof;
-	    m_total_dof += _nodes[i]->dof;
-//	    for(std::vector<int>::size_type j=0; j<_nodes[i]->ancestors.size(); j++)
-//	        std::cout << _nodes[i]->ancestors[j] << " ";
-//	    std::cout << std::endl;
-	}
-
-	for(std::vector<int>::size_type body_idx=0; body_idx<_nodes.size(); body_idx++)
-	{
-        std::vector<int> &ancestors = _nodes[body_idx]->ancestors;
-        for(std::vector<int>::size_type j=0; j<_nodes.size(); j++)
+        _nodes[0]->dof = 6;
+        m_total_dof = 0;
+        int dof_start_index = 0;
+        for(std::vector<int>::size_type i=0; i<_nodes.size(); i++)
         {
-            if(std::find(ancestors.begin(), ancestors.end(), j) != ancestors.end())
+            _nodes[i]->dof_start_index = dof_start_index;
+            dof_start_index += _nodes[i]->dof;
+            m_total_dof += _nodes[i]->dof;
+    //	    for(std::vector<int>::size_type j=0; j<_nodes[i]->ancestors.size(); j++)
+    //	        std::cout << _nodes[i]->ancestors[j] << " ";
+    //	    std::cout << std::endl;
+        }
+
+        for(std::vector<int>::size_type body_idx=0; body_idx<_nodes.size(); body_idx++)
+        {
+            std::vector<int> &ancestors = _nodes[body_idx]->ancestors;
+            for(std::vector<int>::size_type j=0; j<_nodes.size(); j++)
             {
-                _nodes[body_idx]->is_ancestor.push_back(true);
+                if(std::find(ancestors.begin(), ancestors.end(), j) != ancestors.end())
+                {
+                    _nodes[body_idx]->is_ancestor.push_back(true);
+                }
+                else
+                {
+                    _nodes[body_idx]->is_ancestor.push_back(false);
+                }
             }
-            else
-            {
-                _nodes[body_idx]->is_ancestor.push_back(false);
-            }
-	    }
-	}
+        }
 
 
 
-//	addBody(true);
+    //	addBody(true);
+    }
 }
 
 std::string VpControlModel::__str__()
@@ -3586,3 +3598,162 @@ void VpControlModel::stepKinematics(double dt, const bp::list& accs)
 		//_nodes.at(i)->body.SetGenAcceleration(zero_se3);
 	//}
 }
+
+#include <tinyxml2.h>
+#include <sstream>
+#include <string>
+
+using namespace tinyxml2;
+
+#ifndef XMLCheckResult
+	#define XMLCheckResult(a_eResult) if (a_eResult != XML_SUCCESS) { printf("Error: %i\n", a_eResult); return;}
+#endif
+
+void getFloats(const char* text, int num, std::vector<float> &floats)
+{
+    string text_str(text);
+    std::istringstream in(text_str);      //make a stream for the line itself
+    float x, y, z, u, v, w;
+    floats.clear();
+    if (num == 3)
+    {
+        in >> x >> y >> z;
+        floats.push_back(x);
+        floats.push_back(y);
+        floats.push_back(z);
+    }
+    else if (num == 6)
+    {
+        in >> x >> y >> z >> u >> v >> w;
+        floats.push_back(x);
+        floats.push_back(y);
+        floats.push_back(z);
+        floats.push_back(u);
+        floats.push_back(v);
+        floats.push_back(w);
+    }
+}
+
+SE3 dof6_to_SE3(std::vector<float> &floats)
+{
+    SE3 t = Exp(Axis(floats[3], floats[4], floats[5]));
+    t.SetPosition(Vec3(floats[0], floats[1], floats[2]));
+    return t;
+}
+
+
+void VpDartModel::skel_init(const char *skel_path)
+{
+    XMLDocument xmlDoc;
+    XMLError eResult = xmlDoc.LoadFile(skel_path);
+    XMLCheckResult(eResult);
+
+    XMLElement *pSkel = xmlDoc.FirstChildElement();
+
+    XMLElement *pWorld = pSkel->FirstChildElement();
+    this->_pWorld = new vpWorld;
+
+    // physics
+    XMLElement *pPhysics = pWorld->FirstChildElement("physics");
+
+    XMLElement *pTime_step = pPhysics->FirstChildElement("time_step");
+    float time_step;
+    pTime_step->QueryFloatText(&time_step);
+    XMLElement *pGravity = pPhysics->FirstChildElement("gravity");
+    this->_pWorld->SetTimeStep(time_step);
+
+    std::vector<float> gravity;
+    getFloats(pGravity->GetText(), 3, gravity);
+    this->_pWorld->SetGravity(Vec3(gravity[0], gravity[1], gravity[2]));
+
+    // skeleton
+    XMLElement *pSkeleton = pWorld->FirstChildElement("skeleton");
+    this->name = pSkeleton->Attribute("name");
+    if(this->name.find(string("ground")) != std::string::npos)
+    {
+        pSkeleton = pSkeleton->NextSiblingElement("skeleton");
+        this->name = pSkeleton->Attribute("name");
+    }
+
+
+//    _nodes.resize(num, NULL);
+//    _boneTs.resize(num, SE3());
+//    Node* pNode = new Node(joint_name);
+//    _nodes[joint_index] = pNode;
+
+    // skeleton - body
+    XMLElement *pBody = pSkeleton->FirstChildElement("body");
+    int body_idx = 0;
+    std::vector<Node *> nodes;
+    std::vector<string> body_name;
+    std::vector<SE3> body_frame;
+    std::vector<float> body_mass;
+
+    while(pBody != nullptr)
+    {
+        std::cout << "TinyXml Debug: body "<< body_idx << std::endl;
+        string name = pBody->Attribute("name");
+        body_name.push_back(name);
+        std::cout << "TinyXml Debug: "<< name << std::endl;
+        Node* pNode = new Node(name);
+
+        std::vector<float> body_transform;
+        getFloats(pBody->FirstChildElement("transformation")->GetText(), 6, body_transform);
+        std::cout << "TinyXml Debug: "<< body_transform[0] << std::endl;
+        body_frame.push_back(dof6_to_SE3(body_transform));
+        std::cout << "TinyXml Debug: "<< body_transform[1] << std::endl;
+
+        pBody = pBody->NextSiblingElement("body");
+        std::cout << "TinyXml Debug: "<< body_transform[2] << std::endl;
+        body_idx++;
+        std::cout << "TinyXml Debug: "<< body_transform[3] << std::endl;
+    }
+
+    std::cout << "TinyXml Debug: body "<< body_idx << std::endl;
+    // skeleton - joint
+    XMLElement *pJoint = pSkeleton->FirstChildElement("joint");
+    int joint_idx = 0;
+    std::vector<string> joint_name;
+    std::vector<string> joint_type;
+    std::vector<SE3> joint_frame;
+    std::vector<string> joint_parent;
+    std::vector<string> joint_child;
+    std::cout << "TinyXml Debug: body "<< body_idx << std::endl;
+
+    while(pJoint != nullptr)
+    {
+    std::cout << "TinyXml Debug: joint "<< joint_idx << std::endl;
+        string name = pJoint->Attribute("name");
+        joint_name.push_back(name);
+    std::cout << "TinyXml Debug: "<< name << std::endl;
+
+        string type = pJoint->Attribute("type");
+        joint_type.push_back(type);
+    std::cout << "TinyXml Debug: "<< type << std::endl;
+
+        string parent = pJoint->FirstChildElement("parent")->GetText();
+        joint_parent.push_back(parent);
+    std::cout << "TinyXml Debug: "<< parent << std::endl;
+
+        string child = pJoint->FirstChildElement("child")->GetText();
+        joint_child.push_back(child);
+    std::cout << "TinyXml Debug: "<< child << std::endl;
+
+        std::vector<float> joint_transform;
+        if(pJoint->FirstChildElement("transformation") != nullptr)
+        {
+            getFloats(pJoint->FirstChildElement("transformation")->GetText(), 6, joint_transform);
+            joint_frame.push_back(dof6_to_SE3(joint_transform));
+        }
+        else
+        {
+            joint_frame.push_back(SE3());
+        }
+
+        std::cout << "TinyXml Debug: "<< name << type << parent << child << std::endl;
+
+        pJoint = pJoint->NextSiblingElement("joint");
+        joint_idx++;
+    }
+}
+
