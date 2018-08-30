@@ -238,6 +238,9 @@ def main():
     # viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_LINE))
     control_model_renderer = yr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_FILL)
     viewer.doc.addRenderer('controlModel', control_model_renderer)
+    viewer.doc.setRendererVisible('controlModel', False)
+
+    viewer.doc.addRenderer('dartModel', yr.VpModelRenderer(dartModel, (150,150,255), yr.POLYGON_FILL))
     skeleton_renderer = None
     if SKELETON_ON:
         # skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), offset_Y=-0.08)
@@ -814,11 +817,11 @@ def main():
     # viewer.play()
     viewer.show()
 
-    foot_viewer = FootWindow(viewer.x() + viewer.w() + 20, viewer.y(), 300, 500, 'foot contact modifier', controlModel)
-    foot_viewer.show()
-    foot_viewer.check_all_seg()
-    foot_viewer.check_h_r.value(False)
-    viewer.motionViewWnd.goToFrame(0)
+    # foot_viewer = FootWindow(viewer.x() + viewer.w() + 20, viewer.y(), 300, 500, 'foot contact modifier', controlModel)
+    # foot_viewer.show()
+    # foot_viewer.check_all_seg()
+    # foot_viewer.check_h_r.value(False)
+    # viewer.motionViewWnd.goToFrame(0)
 
     Fl.run()
 

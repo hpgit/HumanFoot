@@ -3615,6 +3615,12 @@ void getFloats(const char* text, int num, std::vector<float> &floats)
     std::istringstream in(text_str);      //make a stream for the line itself
     float x, y, z, u, v, w;
     floats.clear();
+    if (num == 2)
+    {
+        in >> x >> y;
+        floats.push_back(x);
+        floats.push_back(y);
+    }
     if (num == 3)
     {
         in >> x >> y >> z;
@@ -3636,9 +3642,7 @@ void getFloats(const char* text, int num, std::vector<float> &floats)
 
 SE3 dof6_to_SE3(std::vector<float> &floats)
 {
-    SE3 t = Exp(Axis(floats[3], floats[4], floats[5]));
-    t.SetPosition(Vec3(floats[0], floats[1], floats[2]));
-    return t;
+    return EulerXYZ(Vec3(floats[3], floats[4], floats[5]), Vec3(floats[0], floats[1], floats[2]));
 }
 
 
@@ -3688,6 +3692,9 @@ void VpDartModel::skel_init(const char *skel_path)
     std::vector<string> body_name;
     std::vector<SE3> body_frame;
     std::vector<float> body_mass;
+    std::vector<Vec3> body_com_offset;
+    std::vector< std::vector<vpGeom*> > body_geom;
+    std::vector< std::vector<SE3> > body_geom_transform;
 
     while(pBody != nullptr)
     {
@@ -3696,20 +3703,84 @@ void VpDartModel::skel_init(const char *skel_path)
         body_name.push_back(name);
         std::cout << "TinyXml Debug: "<< name << std::endl;
         Node* pNode = new Node(name);
+        nodes.push_back(pNode);
 
+        // skeleton - body - transform
         std::vector<float> body_transform;
         getFloats(pBody->FirstChildElement("transformation")->GetText(), 6, body_transform);
-        std::cout << "TinyXml Debug: "<< body_transform[0] << std::endl;
         body_frame.push_back(dof6_to_SE3(body_transform));
-        std::cout << "TinyXml Debug: "<< body_transform[1] << std::endl;
+
+        // skeleton - body - inertia
+        XMLElement *pInertia = pBody->FirstChildElement("inertia");
+        float mass;
+        std::vector<float> offset;
+        pInertia->FirstChildElement("mass")->QueryFloatText(&mass);
+        getFloats(pInertia->FirstChildElement("offset")->GetText(), 3, offset);
+        body_mass.push_back(mass);
+        body_com_offset.push_back(Vec3(offset[0], offset[1], offset[2]));
+
+        // skeleton - body - collision_shape
+        // ignoring visual shape because it does not affect simulation
+        std::vector<vpGeom* > _body_geom;
+        std::vector<SE3> _body_geom_transform;
+        XMLElement *pShape = pBody->FirstChildElement("collision_shape");
+        while(pShape != nullptr)
+        {
+            string geom_type = pShape->FirstChildElement("geometry")->FirstChildElement()->Value();
+            vpGeom *pGeom;
+            if(!geom_type.compare("box"))
+            {
+                std::vector<float> geom_size;
+                getFloats(pShape->FirstChildElement("geometry")->FirstChildElement("box")->FirstChildElement("size")->GetText(), 3, geom_size);
+                pGeom = new vpBox(Vec3(geom_size[0], geom_size[1], geom_size[2]));
+            }
+            else if(!geom_type.compare("sphere"))
+            {
+                float geom_size;
+                pShape->FirstChildElement("geometry")->FirstChildElement("sphere")->FirstChildElement("size")->QueryFloatText(&geom_size);
+                pGeom = new vpSphere();
+            }
+            else if(!geom_type.compare("capsule"))
+            {
+                float radius, height;
+                pShape->FirstChildElement("geometry")->FirstChildElement("capsule")->FirstChildElement("radius")->QueryFloatText(&radius);
+                pShape->FirstChildElement("geometry")->FirstChildElement("capsule")->FirstChildElement("height")->QueryFloatText(&height);
+                pGeom = new vpCapsule(radius, height);
+            }
+            else if(!geom_type.compare("cylinder"))
+            {
+                float radius, height;
+                pShape->FirstChildElement("geometry")->FirstChildElement("cylinder")->FirstChildElement("radius")->QueryFloatText(&radius);
+                pShape->FirstChildElement("geometry")->FirstChildElement("cylinder")->FirstChildElement("height")->QueryFloatText(&height);
+                pGeom = new vpCylinder(radius, height);
+            }
+            else
+            {
+                std::cout << "WARNING!! : " << geom_type << " is not implemented or not supported!" << std::endl;
+                continue;
+            }
+
+            std::vector<float> geom_transform;
+            getFloats(pShape->FirstChildElement("transformation")->GetText(), 6, geom_transform);
+            _body_geom_transform.push_back(dof6_to_SE3(geom_transform));
+            pNode->body.AddGeometry(pGeom, dof6_to_SE3(geom_transform));
+
+            pShape = pShape->NextSiblingElement("collision_shape");
+        }
 
         pBody = pBody->NextSiblingElement("body");
-        std::cout << "TinyXml Debug: "<< body_transform[2] << std::endl;
         body_idx++;
-        std::cout << "TinyXml Debug: "<< body_transform[3] << std::endl;
+    }
+    _nodes.resize(body_idx, NULL);
+    for(int i=0; i<body_idx; i++)
+    {
+        _nodes[i] = nodes[i];
+        _nodes[i]->body.SetFrame(body_frame[i]);
+        _pWorld->AddBody(&(_nodes[i]->body));
+        _nodes[i]->body.SetInertia(Inertia(body_mass[i]));
+//        std::cout << body_name[i] << " " << _nodes[i]->body.GetInertia().GetMass() << " " << body_mass[i] << std::endl;
     }
 
-    std::cout << "TinyXml Debug: body "<< body_idx << std::endl;
     // skeleton - joint
     XMLElement *pJoint = pSkeleton->FirstChildElement("joint");
     int joint_idx = 0;
@@ -3718,26 +3789,20 @@ void VpDartModel::skel_init(const char *skel_path)
     std::vector<SE3> joint_frame;
     std::vector<string> joint_parent;
     std::vector<string> joint_child;
-    std::cout << "TinyXml Debug: body "<< body_idx << std::endl;
 
     while(pJoint != nullptr)
     {
-    std::cout << "TinyXml Debug: joint "<< joint_idx << std::endl;
         string name = pJoint->Attribute("name");
         joint_name.push_back(name);
-    std::cout << "TinyXml Debug: "<< name << std::endl;
 
         string type = pJoint->Attribute("type");
         joint_type.push_back(type);
-    std::cout << "TinyXml Debug: "<< type << std::endl;
 
         string parent = pJoint->FirstChildElement("parent")->GetText();
         joint_parent.push_back(parent);
-    std::cout << "TinyXml Debug: "<< parent << std::endl;
 
         string child = pJoint->FirstChildElement("child")->GetText();
         joint_child.push_back(child);
-    std::cout << "TinyXml Debug: "<< child << std::endl;
 
         std::vector<float> joint_transform;
         if(pJoint->FirstChildElement("transformation") != nullptr)
@@ -3750,10 +3815,60 @@ void VpDartModel::skel_init(const char *skel_path)
             joint_frame.push_back(SE3());
         }
 
-        std::cout << "TinyXml Debug: "<< name << type << parent << child << std::endl;
+//        std::cout << "TinyXml Debug: "<< name << type << parent << child << std::endl;
 
         pJoint = pJoint->NextSiblingElement("joint");
         joint_idx++;
     }
+
+    int joint_dof_index = 0;
+
+    for(int i=0; i<joint_idx; i++)
+    {
+        if(!joint_type[i].compare("free"))
+            continue;
+
+        int child_node_idx = 0, parent_node_idx = 0;
+        while(True)
+        {
+            if(!_nodes[child_node_idx]->name.compare(joint_child[i]))
+            {
+                break;
+            }
+            child_node_idx++;
+        }
+
+        while(True)
+        {
+            if(!_nodes[parent_node_idx]->name.compare(joint_parent[i]))
+            {
+                break;
+            }
+            parent_node_idx++;
+        }
+        SE3 parent_body_to_joint;
+        SE3 joint_to_child_body;
+
+        if(!joint_type[i].compare("ball"))
+        {
+            _nodes[child_node_idx]->dof = 3;
+            _nodes[child_node_idx]->dof_start_index = joint_dof_index;
+            _nodes[child_node_idx]->use_joint = true;
+            joint_dof_index += 3;
+        }
+        else if(!joint_type[i].compare("weld"))
+        {
+            _nodes[child_node_idx]->dof = 0;
+            _nodes[child_node_idx]->dof_start_index = joint_dof_index;
+            _nodes[child_node_idx]->use_joint = false;
+        }
+        else
+        {
+            std::cout << "WARNING!! : " << geom_type << " is not implemented or not supported!" << std::endl;
+            continue;
+        }
+    }
+
+    _pWorld->Initialize();
 }
 
