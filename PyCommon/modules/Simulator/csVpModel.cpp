@@ -243,6 +243,7 @@ BOOST_PYTHON_MODULE(csVpModel)
 		;
 
 	class_<VpDartModel, bases<VpControlModel> >("VpDartModel", init<const char*>())
+		.def("step", &VpDartModel::step)
 	    ;
 }
 
@@ -2696,7 +2697,8 @@ bp::list VpControlModel::getInternalJointTorquesLocal()
 void VpControlModel::setJointTorqueLocal( int index, const object& torque )
 {
 //	int index = _jointElementIndexes[jointIndex];
-	_nodes[index]->joint.SetTorque(pyVec3_2_Vec3(torque));
+    if(_nodes[index]->dof == 3)
+        _nodes[index]->joint.SetTorque(pyVec3_2_Vec3(torque));
 }
 
 void VpControlModel::setInternalJointTorquesLocal( const bp::list& torques )
@@ -3680,8 +3682,6 @@ void VpDartModel::skel_init(const char *skel_path)
     }
 
 
-//    _nodes.resize(num, NULL);
-//    _boneTs.resize(num, SE3());
 //    Node* pNode = new Node(joint_name);
 //    _nodes[joint_index] = pNode;
 
@@ -3698,10 +3698,10 @@ void VpDartModel::skel_init(const char *skel_path)
 
     while(pBody != nullptr)
     {
-        std::cout << "TinyXml Debug: body "<< body_idx << std::endl;
+//        std::cout << "TinyXml Debug: body "<< body_idx << std::endl;
         string name = pBody->Attribute("name");
         body_name.push_back(name);
-        std::cout << "TinyXml Debug: "<< name << std::endl;
+//        std::cout << "TinyXml Debug: "<< name << std::endl;
         Node* pNode = new Node(name);
         nodes.push_back(pNode);
 
@@ -3771,12 +3771,14 @@ void VpDartModel::skel_init(const char *skel_path)
         pBody = pBody->NextSiblingElement("body");
         body_idx++;
     }
+
     _nodes.resize(body_idx, NULL);
+    _boneTs.resize(body_idx, SE3());
     for(int i=0; i<body_idx; i++)
     {
         _nodes[i] = nodes[i];
         _nodes[i]->body.SetFrame(body_frame[i]);
-        _pWorld->AddBody(&(_nodes[i]->body));
+//        _pWorld->AddBody(&(_nodes[i]->body));
         _nodes[i]->body.SetInertia(Inertia(body_mass[i]));
 //        std::cout << body_name[i] << " " << _nodes[i]->body.GetInertia().GetMass() << " " << body_mass[i] << std::endl;
     }
@@ -3825,11 +3827,8 @@ void VpDartModel::skel_init(const char *skel_path)
 
     for(int i=0; i<joint_idx; i++)
     {
-        if(!joint_type[i].compare("free"))
-            continue;
-
         int child_node_idx = 0, parent_node_idx = 0;
-        while(True)
+        while(true)
         {
             if(!_nodes[child_node_idx]->name.compare(joint_child[i]))
             {
@@ -3838,7 +3837,17 @@ void VpDartModel::skel_init(const char *skel_path)
             child_node_idx++;
         }
 
-        while(True)
+        if(!joint_type[i].compare("free"))
+        {
+            _nodes[child_node_idx]->dof = 6;
+            _nodes[child_node_idx]->dof_start_index = 0;
+            joint_dof_index += 6;
+            _boneTs[child_node_idx] = Inv(joint_frame[i]);
+            this->_pWorld->AddBody(&(_nodes[child_node_idx]->body));
+            continue;
+        }
+
+        while(true)
         {
             if(!_nodes[parent_node_idx]->name.compare(joint_parent[i]))
             {
@@ -3846,8 +3855,17 @@ void VpDartModel::skel_init(const char *skel_path)
             }
             parent_node_idx++;
         }
-        SE3 parent_body_to_joint;
-        SE3 joint_to_child_body;
+        std::cout << "TinyXml Debug: "<< joint_name[i] << joint_type[i] << joint_parent[i] << joint_child[i] << std::endl;
+        std::cout << "TinyXml Debug: "<< parent_node_idx << " " << child_node_idx << std::endl;
+
+        SE3 child_body_to_joint = joint_frame[i];
+        SE3 joint_to_child_body = Inv(joint_frame[i]);
+        SE3 parent_body_to_joint = Inv(_nodes[parent_node_idx]->body.GetFrame()) * _nodes[child_node_idx]->body.GetFrame() * Inv(child_body_to_joint);
+//        std::cout << _nodes[parent_node_idx]->body.GetFrame() << std::endl;
+//        std::cout << _nodes[child_node_idx]->body.GetFrame() << std::endl;
+//        std::cout << joint_frame[i] << std::endl;
+//        std::cout << _nodes[parent_node_idx]->body.GetFrame() * parent_body_to_joint << std::endl;
+//        std::cout << _nodes[child_node_idx]->body.GetFrame() * child_body_to_joint << std::endl;
 
         if(!joint_type[i].compare("ball"))
         {
@@ -3855,20 +3873,35 @@ void VpDartModel::skel_init(const char *skel_path)
             _nodes[child_node_idx]->dof_start_index = joint_dof_index;
             _nodes[child_node_idx]->use_joint = true;
             joint_dof_index += 3;
+            _nodes[parent_node_idx]->body.SetJoint(&(_nodes[child_node_idx]->joint), parent_body_to_joint);
+            _nodes[child_node_idx]->body.SetJoint(&(_nodes[child_node_idx]->joint), child_body_to_joint);
+            _boneTs[child_node_idx] = joint_to_child_body;
+
         }
         else if(!joint_type[i].compare("weld"))
         {
             _nodes[child_node_idx]->dof = 0;
             _nodes[child_node_idx]->dof_start_index = joint_dof_index;
             _nodes[child_node_idx]->use_joint = false;
+            _nodes[parent_node_idx]->body.SetJoint(&(_nodes[child_node_idx]->joint_weld), parent_body_to_joint);
+            _nodes[child_node_idx]->body.SetJoint(&(_nodes[child_node_idx]->joint_weld), child_body_to_joint);
+            _boneTs[child_node_idx] = joint_to_child_body;
         }
         else
         {
-            std::cout << "WARNING!! : " << geom_type << " is not implemented or not supported!" << std::endl;
+            std::cout << "WARNING!! : " << joint_type[i] << " is not implemented or not supported!" << std::endl;
             continue;
         }
     }
 
-    _pWorld->Initialize();
+    ignoreCollisionBtwnBodies();
+    this->_pWorld->Initialize();
+//	this->_pWorld->SetIntegrator(VP::IMPLICIT_EULER_FAST);
+	this->_pWorld->SetIntegrator(VP::EULER);
 }
 
+
+void VpDartModel::step()
+{
+    this->_pWorld->StepAhead();
+}

@@ -8,13 +8,13 @@ import pydart2 as pydart
 
 
 def main():
-    MOTION_ONLY = True
+    MOTION_ONLY = False
 
     pydart.init()
 
     env_name = 'walk'
 
-    ppo = PPO(env_name, 1)
+    ppo = PPO(env_name, 1, visualize_only=True)
     if not MOTION_ONLY:
         ppo.LoadModel('model/' + env_name + '.pt')
     ppo.env.Resets(False)

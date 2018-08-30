@@ -157,7 +157,9 @@ class PPO(object):
             os.makedirs(self.save_directory)
             self.saved = True
 
-        self.log_file = open(self.save_directory + 'log.txt', 'w')
+        self.log_file = None
+        if not visualize_only:
+            self.log_file = open(self.save_directory + 'log.txt', 'w')
         self.eval_print = eval_print
         self.eval_log = eval_log
 

@@ -62,7 +62,7 @@ class HpDartEnv(gym.Env):
             self.ref_motion.translateByOffset([0., 0.03, 0.])
 
         elif env_name == 'jump_whole':
-            self.ref_motion = yf.readBvhFile("../data/wd2_jump0.bvh")
+            self.ref_motion = yf.readBvhFile("../data/wd2_jump0.bvh")[315:966]
         elif env_name == 'walk_u_turn_whole':
             self.ref_motion = yf.readBvhFile("../data/wd2_u-turn.bvh")
             self.ref_motion.translateByOffset([0., 0.03, 0.])
@@ -111,7 +111,7 @@ class HpDartEnv(gym.Env):
         phase = (self.world.time() + self.time_offset)/self.total_time
         state = [phase]
 
-        p = np.array([pelvis.to_local(body.to_world() - p_pelvis) for body in self.skel.bodynodes]).flatten()
+        p = np.array([np.dot(R_pelvis.T, body.to_world() - p_pelvis) for body in self.skel.bodynodes]).flatten()
         R = np.array([mm.rot2quat(np.dot(R_pelvis.T, body.world_transform()[:3, :3])) for body in self.skel.bodynodes]).flatten()
         v = np.array([np.dot(R_pelvis.T, body.world_linear_velocity()) for body in self.skel.bodynodes]).flatten()
         w = np.array([np.dot(R_pelvis.T, body.world_angular_velocity())/20. for body in self.skel.bodynodes]).flatten()

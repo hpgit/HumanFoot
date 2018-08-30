@@ -385,6 +385,7 @@ private:
 public:
     VpDartModel(const char *skel_path) : VpControlModel(nullptr, object(), object()){skel_init(skel_path);}
     ~VpDartModel(){delete _pWorld;}
+    void step();
 };
 
 #endif  // _CS_VP_MODEL_H_

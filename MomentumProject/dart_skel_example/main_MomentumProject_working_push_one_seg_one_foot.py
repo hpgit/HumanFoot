@@ -79,12 +79,13 @@ def main():
     controlModel_ik.set_q(np.zeros_like(controlModel.get_q()))
 
     dartModel = cvm.VpDartModel("cart_pole_blade.skel")
+    dartModel.translateByOffset((0., 1.5, 0.))
+
+    for j in range(1, dartModel.getJointNum()):
+        print(j, dartModel.getJointOrientationLocal(j))
 
     totalDOF = controlModel.getTotalDOF()
     DOFs = controlModel.getDOFs()
-
-    print(totalDOF)
-    print(controlModel.getTotalMass())
 
     foot_dofs = []
     left_foot_dofs = []
@@ -173,6 +174,9 @@ def main():
     rd_foot_ori = [None]
     rd_foot_pos = [None]
 
+    rd_body_ori = [None]
+    rd_body_pos = [None]
+
     rd_root_ori = [None]
     rd_root_pos = [None]
 
@@ -241,12 +245,7 @@ def main():
     viewer.doc.setRendererVisible('controlModel', False)
 
     viewer.doc.addRenderer('dartModel', yr.VpModelRenderer(dartModel, (150,150,255), yr.POLYGON_FILL))
-    skeleton_renderer = None
-    if SKELETON_ON:
-        # skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), offset_Y=-0.08)
-        # skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), color=(230, 230, 230), offset_draw=(0.8, -0.02, 0.))
-        skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), color=(230, 230, 230), offset_draw=(0., -0.0, 0.))
-        viewer.doc.addRenderer('skeleton', skeleton_renderer)
+
     viewer.doc.addRenderer('rd_footCenter', yr.PointsRenderer(rd_footCenter))
     viewer.doc.setRendererVisible('rd_footCenter', False)
     viewer.doc.addRenderer('rd_footCenter_ref', yr.PointsRenderer(rd_footCenter_ref))
@@ -265,10 +264,12 @@ def main():
     viewer.doc.addRenderer('rd_CF', yr.VectorsRenderer(rd_CF, rd_CF_pos, (255,255,0)))
     # viewer.doc.setRendererVisible('rd_CF', False)
     viewer.doc.addRenderer('rd_foot_ori', yr.OrientationsRenderer(rd_foot_ori, rd_foot_pos, (255,255,0)))
-    # viewer.doc.setRendererVisible('rd_foot_ori', False)
+    viewer.doc.setRendererVisible('rd_foot_ori', False)
 
     viewer.doc.addRenderer('rd_root_ori', yr.OrientationsRenderer(rd_root_ori, rd_root_pos, (255,255,0)))
     viewer.doc.setRendererVisible('rd_root_ori', False)
+
+    viewer.doc.addRenderer('rd_body_ori', yr.OrientationsRenderer(rd_body_ori, rd_body_pos, (255,255,0)))
 
     viewer.doc.addRenderer('extraForce', yr.VectorsRenderer(rd_exf_des, extraForcePos, (0,255,0)))
     viewer.doc.setRendererVisible('extraForce', False)
@@ -457,11 +458,11 @@ def main():
         #################################################
 
         contact_des_ids = list()  # desired contact segments
-        if foot_viewer.check_h_l.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot'))
-
-        if foot_viewer.check_h_r.value():
-            contact_des_ids.append(motion[0].skeleton.getJointIndex('RightFoot'))
+        # if foot_viewer.check_h_l.value():
+        #     contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot'))
+        #
+        # if foot_viewer.check_h_r.value():
+        #     contact_des_ids.append(motion[0].skeleton.getJointIndex('RightFoot'))
 
         contact_ids = list()  # temp idx for balancing
         contact_ids.extend(contact_des_ids)
@@ -703,7 +704,11 @@ def main():
                 forceShowTime += wcfg.timeStep
                 vpWorld.applyPenaltyForce(selectedBodyId, localPos, extraForce)
 
-            vpWorld.step()
+            # vpWorld.step()
+            # for j in range(1, dartModel.getJointNum()):
+            #     dartModel.setJointTorqueLocal(j, 0.1 * np.ones(3))
+            # dartModel.setJointTorqueLocal(19, 0.1*np.ones(3))
+            dartModel.step()
 
         controlModel_ik.set_q(controlModel.get_q())
 
@@ -750,6 +755,15 @@ def main():
         rd_foot_pos.append(controlModel.getJointPositionGlobal(supL))
         rd_foot_pos.append(controlModel.getJointPositionGlobal(supR))
 
+        del rd_body_ori[:]
+        del rd_body_pos[:]
+        # for body_idx in range(dartModel.getBodyNum()):
+        for body_idx in range(19, 20):
+            # rd_body_ori.append(dartModel.getBodyOrientationGlobal(body_idx))
+            # rd_body_pos.append(dartModel.getBodyPositionGlobal(body_idx))
+            rd_body_ori.append(dartModel.getJointOrientationGlobal(body_idx))
+            rd_body_pos.append(dartModel.getJointPositionGlobal(body_idx))
+
         rd_root_des[0] = rootPos[0]
         rd_root_ori[0] = controlModel.getBodyOrientationGlobal(0)
         rd_root_pos[0] = controlModel.getBodyPositionGlobal(0)
@@ -770,40 +784,6 @@ def main():
         # extraForcePos[0] = controlModel.getBodyPositionGlobal(selectedBody)
         extraForcePos[0] = controlModel.getBodyPositionGlobal(selectedBody) - 0.1 * np.array([viewer.objectInfoWnd.labelForceX.value(), 0., viewer.objectInfoWnd.labelForceZ.value()])
 
-        # render contact_ids
-
-        # render skeleton
-        if SKELETON_ON:
-            Ts = dict()
-            Ts['pelvis'] = controlModel.getJointTransform(idDic['Hips'])
-            Ts['thigh_R'] = controlModel.getJointTransform(idDic['RightUpLeg'])
-            Ts['shin_R'] = controlModel.getJointTransform(idDic['RightLeg'])
-            Ts['foot_R'] = controlModel.getJointTransform(idDic['RightFoot'])
-            Ts['foot_heel_R'] = controlModel.getJointTransform(idDic['RightFoot'])
-            Ts['heel_R'] = np.eye(4)
-            Ts['outside_metatarsal_R'] = controlModel.getJointTransform(idDic['RightFoot_foot_0_0'])
-            Ts['outside_phalanges_R'] = controlModel.getJointTransform(idDic['RightFoot_foot_0_0_0'])
-            # Ts['inside_metatarsal_R'] = controlModel.getJointTransform(idDic['RightFoot_foot_0_1'])
-            Ts['inside_metatarsal_R'] = np.eye(4)
-            Ts['inside_phalanges_R'] = controlModel.getJointTransform(idDic['RightFoot_foot_0_1_0'])
-            Ts['spine_ribs'] = controlModel.getJointTransform(idDic['Spine'])
-            Ts['head'] = controlModel.getJointTransform(idDic['Spine1'])
-            Ts['upper_limb_R'] = controlModel.getJointTransform(idDic['RightArm'])
-            Ts['lower_limb_R'] = controlModel.getJointTransform(idDic['RightForeArm'])
-            Ts['thigh_L'] = controlModel.getJointTransform(idDic['LeftUpLeg'])
-            Ts['shin_L'] = controlModel.getJointTransform(idDic['LeftLeg'])
-            Ts['foot_L'] = controlModel.getJointTransform(idDic['LeftFoot'])
-            Ts['foot_heel_L'] = controlModel.getJointTransform(idDic['LeftFoot'])
-            Ts['heel_L'] = np.eye(4)
-            Ts['outside_metatarsal_L'] = controlModel.getJointTransform(idDic['LeftFoot_foot_0_0'])
-            Ts['outside_phalanges_L'] = controlModel.getJointTransform(idDic['LeftFoot_foot_0_0_0'])
-            # Ts['inside_metatarsal_L'] = controlModel.getJointTransform(idDic['LeftFoot_foot_0_1'])
-            Ts['inside_metatarsal_L'] = np.eye(4)
-            Ts['inside_phalanges_L'] = controlModel.getJointTransform(idDic['LeftFoot_foot_0_1_0'])
-            Ts['upper_limb_L'] = controlModel.getJointTransform(idDic['LeftArm'])
-            Ts['lower_limb_L'] = controlModel.getJointTransform(idDic['LeftForeArm'])
-
-            skeleton_renderer.appendFrameState(Ts)
 
     def postFrameCallback_Always(frame):
         pass
