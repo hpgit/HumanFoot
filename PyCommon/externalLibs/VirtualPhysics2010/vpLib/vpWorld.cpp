@@ -114,9 +114,9 @@ scalar vpWorld::GetBoundingSphere(Vec3 &center) const
 {
 	scalar radius = SCALAR_0;
 	center = SCALAR_0;
-	
+
 	if ( m_pBody.size() )
-	{	
+	{
 		center = m_pBody[0]->GetFrame().GetPosition();
 		radius = m_pBody[0]->GetBoundingSphereRadius();
 

@@ -3,6 +3,7 @@ import torch
 from DartDeep.sh_v2.ppo_v2 import PPO
 from PyCommon.modules.GUI import hpSimpleViewer as hsv
 from PyCommon.modules.Renderer import ysRenderer as yr
+import numpy as np
 
 import pydart2 as pydart
 
@@ -12,12 +13,13 @@ def main():
 
     pydart.init()
 
-    env_name = 'walk'
+    env_name = 'jump_whole'
 
     ppo = PPO(env_name, 1, visualize_only=True)
     if not MOTION_ONLY:
         ppo.LoadModel('model/' + env_name + '.pt')
     ppo.env.Resets(False)
+    ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(ppo.env.rand_frame))
 
     # viewer settings
     rd_contact_positions = [None]
@@ -29,7 +31,7 @@ def main():
         viewer.doc.addRenderer('controlModel', yr.DartRenderer(dart_world, (255,240,255), yr.POLYGON_FILL))
         viewer.doc.addRenderer('contact', yr.VectorsRenderer(rd_contact_forces, rd_contact_positions, (255,0,0)))
 
-    def preCallback(frame):
+    def postCallback(frame):
         ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(frame))
 
     def simulateCallback(frame):
@@ -47,7 +49,7 @@ def main():
             rd_contact_positions.append(contact.p)
 
     if MOTION_ONLY:
-        viewer.setPreFrameCallback_Always(preCallback)
+        viewer.setPostFrameCallback_Always(postCallback)
     else:
         viewer.setSimulateCallback(simulateCallback)
     viewer.setMaxFrame(len(ppo.env.ref_motion)-1)

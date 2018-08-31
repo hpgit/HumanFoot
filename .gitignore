@@ -13,4 +13,5 @@ pyenv
 /PyCommon/modules/Math/build/lib.windows8.1-x86/Release
 /PyCommon/modules/Math/csMath.lib
 /PyCommon/modules/Math/csMath.exp
+/PyCommon/externalLibs/VirtualPhysics2010/build
 venv

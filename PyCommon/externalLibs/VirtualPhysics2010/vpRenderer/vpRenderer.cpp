@@ -43,8 +43,14 @@ OF SUCH DAMAGE.
 
 #include "vpRenderer.h"
 #include <VP/vpCollisionDetector.h>
+
+#ifndef __APPLE__
 #include <GL/gl.h>
 #include <GL/glu.h>
+#else
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#endif
 #include <algorithm>
 
 #define _SLICE_SIZE		12

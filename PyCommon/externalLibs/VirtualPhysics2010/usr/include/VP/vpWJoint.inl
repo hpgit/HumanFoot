@@ -159,20 +159,23 @@ VP_INLINE void vpWJoint::UpdateTorqueHD(void)
 {
 }
 
-VP_INLINE void	vpWJoint::UpdateVelocity(const se3 &)
+VP_INLINE void	vpWJoint::UpdateVelocity(const se3 &V_parent)
 {
+	m_sV = V_parent;
 }
 
 VP_INLINE void	vpWJoint::UpdateAccelerationID(const se3 &)
 {
 }
 
-VP_INLINE void	vpWJoint::UpdateAccelerationFD(const se3 &)
+VP_INLINE void	vpWJoint::UpdateAccelerationFD(const se3 &DV)
 {
+	m_sDV = DV;
 }
 
-VP_INLINE void vpWJoint::UpdateAInertia(AInertia &)
+VP_INLINE void vpWJoint::UpdateAInertia(AInertia &tmpI)
 {
+	tmpI = m_sJ;
 }
 
 VP_INLINE void vpWJoint::UpdateLOTP(void)

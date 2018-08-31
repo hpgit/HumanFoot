@@ -195,7 +195,10 @@ public:
 protected:
 
 	void					_clear(void);
+
+#ifndef __APPLE__
 	bool					_loadBMP(const char file[]);
+#endif
 	bool					_loadDDS(const char file[]);
 	void					_loadRandom(void);
 
@@ -610,8 +613,10 @@ protected:
 };
 
 void saveFramebuffer2DDS(int x, int y, int width, int height, const char file_name[]);
+#ifndef __APPLE__
 void saveFramebuffer2BMP(int x, int y, int width, int height, const char file_name[]);
 void saveFramebuffer2JPG(int x, int y, int width, int height, const char file_name[]);
+#endif
 
 namespace GL_FRAMEWORK
 {

@@ -62,8 +62,14 @@ OF SUCH DAMAGE.
 #include <algorithm>
 #include <iostream>
 #include <float.h>
+#include <string.h>
 
+#ifndef __APPLE__
 #include <GL/glu.h>
+#else
+#include <OpenGL/glu.h>
+#include <mach/mach_time.h>
+#endif
 
 int glTransform::m_iWndSizeWidth = 512;
 int glTransform::m_iWndSizeHeight = 512;
@@ -536,6 +542,7 @@ void genNormalFromHeight(int width, int height, unsigned char **data)
 	*data = newPixels;
 }
 
+#ifndef __APPLE__
 bool glTexture::_loadBMP(const char file[])
 {
 	_clear();
@@ -600,6 +607,7 @@ bool glTexture::_loadBMP(const char file[])
 
 	return true;
 }
+#endif
 
 #pragma pack (push, 1)
 struct DDSHeader
@@ -861,8 +869,10 @@ IMG_FORMAT get_extension(const char file[])
 		if ( token ) strcpy(ext, token);
 	}
 
-	if ( strcmp(strlwr(ext), "bmp") == 0 ) return BMP;
-	if ( strcmp(strlwr(ext), "dds") == 0 ) return DDS;
+//	if ( strcmp(strlwr(ext), "bmp") == 0 ) return BMP;
+//	if ( strcmp(strlwr(ext), "dds") == 0 ) return DDS;
+	if ( strcmp(ext, "bmp") == 0 ) return BMP;
+	if ( strcmp(ext, "dds") == 0 ) return DDS;
 
 	cerr << "unknown texture format" << endl;
 	return UNKNOWN;
@@ -890,6 +900,7 @@ void glTexture::load(const char file[], bool generate_normal)
 
 	switch ( get_extension(file) )
 	{
+#ifndef __APPLE__
 	case BMP:
 		if ( !_loadBMP(file) )
 		{
@@ -907,6 +918,7 @@ void glTexture::load(const char file[], bool generate_normal)
 		bind(-1);
 		glTexImage2D(m_eTarget, 0, m_iInternalFormat, m_iWidth, m_iHeight, 0, m_eFormat, GL_UNSIGNED_BYTE, m_pData);
 		break;
+#endif
 	case DDS:
 		if ( !_loadDDS(file) )
 		{
@@ -2117,15 +2129,18 @@ GLuint glText::base = 0;
 
 void glText::print(int x, int y, const char * string, ...)
 {
+
 	if ( !base )
 	{
 		base = glGenLists(255);
 
+#ifndef __APPLE__
 		HFONT font = CreateFont(20, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, FF_DONTCARE|DEFAULT_PITCH, (LPCTSTR)"Arial");
 		HFONT oldfont = (HFONT)SelectObject(wglGetCurrentDC(), font);
 		wglUseFontBitmaps(wglGetCurrentDC(), 0, 255, base);
 		SelectObject(wglGetCurrentDC(), oldfont);
 		DeleteObject(font);
+#endif
 	}
 
 	char text[1024];
@@ -2151,34 +2166,44 @@ void glText::setFont(const char font_name[], int font_height, int font_width)
 	if ( base ) glDeleteLists(base, 255);
 	base = glGenLists(255);
 
+#ifndef __APPLE__
 	HFONT font = CreateFont(font_height, font_width, 0, 0, FW_BOLD, 0, 0, 0, ANSI_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, FF_DONTCARE|DEFAULT_PITCH, (LPCTSTR)font_name);
 	HFONT oldfont = (HFONT)SelectObject(wglGetCurrentDC(), font);
 	wglUseFontBitmaps(wglGetCurrentDC(), 0, 255, base);
 	SelectObject(wglGetCurrentDC(), oldfont);
 	DeleteObject(font);
+#endif
 }
 
 float		glTimer::m_fResolution = 0.0f;
 int			glTimer::m_nLowshift = 0;
-LONGLONG	glTimer::m_sStart;
+clock_t		glTimer::m_sStart;
 glTimer		glTimer::m_sDefaultTimer;
 bool		glTimer::m_bSuspend = false;
-LONGLONG	glTimer::m_sSuspend;
+clock_t		glTimer::m_sSuspend;
 
-inline LONGLONG __clock()
+inline clock_t __clock()
 {
+#ifndef __APPLE__
 	LARGE_INTEGER Count;
 	QueryPerformanceCounter(&Count);
 	return Count.QuadPart;
+#else
+	return mach_absolute_time();
+#endif
 }
 
 glTimer::glTimer()
 {
 	if ( m_fResolution == 0 || m_nLowshift == 0 )
 	{
+#ifndef __APPLE__
 		LARGE_INTEGER m_Frequency;
 		QueryPerformanceFrequency(&m_Frequency);
-		LONGLONG nShift = m_Frequency.QuadPart;
+		clock_t nShift = m_Frequency.QuadPart;
+#else
+		clock_t nShift = mach_absolute_time();
+#endif
 		m_nLowshift = 0;
 		while ( nShift > 1000000 )
 		{
@@ -2205,7 +2230,7 @@ float glTimer::toc(void )
 float glTimer::getFPS(void)
 {
 	const int QSIZE = 60;
-	static LONGLONG Qsec[QSIZE];
+	static clock_t Qsec[QSIZE];
 	static int Qidx = 0;
 	Qsec[Qidx] = __clock();
 	float fps = (float)(QSIZE-1) / ((float)((Qsec[Qidx] - Qsec[(Qidx + 1) % QSIZE]) >> m_nLowshift) * m_fResolution);
@@ -3595,6 +3620,7 @@ void saveFramebuffer2DDS(int x, int y, int m_iWidth, int m_iHeight, const char f
 	fout.close();
 }
 
+#ifndef __APPLE__
 void saveFramebuffer2BMP(int x, int y, int width, int height, const char file_name[])
 {
 	BITMAPINFOHEADER	bmpInfoHeader;
@@ -3672,6 +3698,7 @@ void saveFramebuffer2JPG(int x, int y, int width, int height, const char fname[]
 
 	delete [] data;
 }
+#endif
 
 glGraph::glGraph(int num)
 {

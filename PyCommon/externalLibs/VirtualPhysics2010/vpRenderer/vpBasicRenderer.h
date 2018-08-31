@@ -44,7 +44,12 @@ OF SUCH DAMAGE.
 #ifdef _WIN64
 	#include <GL/freeglut.h>
 #else
+#ifndef __APPLE__
 	#include <GL/glut.h>
+#else
+
+#include <GLUT/glut.h>
+#endif
 #endif
 
 #include <stdarg.h>
@@ -106,8 +111,8 @@ void resetPerspective(void)
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(45.0, (double)glutGet(GLUT_WINDOW_WIDTH) / (double)glutGet(GLUT_WINDOW_HEIGHT), max(1.0f, dist - world_radius), dist + world_radius);
-	glMatrixMode(GL_MODELVIEW);	
+	gluPerspective(45.0, (double)glutGet(GLUT_WINDOW_WIDTH) / (double)glutGet(GLUT_WINDOW_HEIGHT), max(double(1.0f), dist - world_radius), dist + world_radius);
+	glMatrixMode(GL_MODELVIEW);
 }
 
 void reshapeFunc(int w, int h)

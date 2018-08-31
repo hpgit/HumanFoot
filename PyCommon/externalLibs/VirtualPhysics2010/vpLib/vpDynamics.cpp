@@ -594,11 +594,10 @@ void vpSystem::UpdateFrame(bool updateVelocity)
 
 void vpSystem::ForwardDynamics(void)
 {
-	int i;
 	//for ( i = 0; i < m_pBody.size(); i++ ) m_pBody[i]->BackupForce();
 	FDIteration1();
-	for ( i = 0; i < m_pJoint.size(); i++ ) m_pJoint[i]->UpdateSpringDamperTorque();
-	for ( i = 0; i < m_pSpring.size(); i++ ) m_pSpring[i]->UpdateForce();
+	for ( int i = 0; i < m_pJoint.size(); i++ ) m_pJoint[i]->UpdateSpringDamperTorque();
+	for ( int i = 0; i < m_pSpring.size(); i++ ) m_pSpring[i]->UpdateForce();
 	FDIteration2();
 	FDIteration3();
 	//for ( i = 0; i < m_pBody.size(); i++ ) m_pBody[i]->RollbackForce();
@@ -634,6 +633,7 @@ void vpSystem::FDIteration1(void)
 		
 		if ( pParent ) pCurrent->UpdateVelocity(InvAd(pCurrent->m_sRelativeFrame, pParent->m_sV));
 		else pCurrent->UpdateVelocity(InvAd(pCurrent->m_sRelativeFrame, m_pRoot->m_sV));
+		// m_sW : eta
 
 		pCurrent->m_pRightBody->m_sFrame  = pCurrent->m_pLeftBody->m_sFrame;
 		pCurrent->m_pRightBody->m_sFrame *= pCurrent->m_sLeftBodyFrame;
@@ -658,6 +658,7 @@ void vpSystem::FDIteration2(void)
 		pCurrent = m_pJoint[i];
 
 		pCurrent->m_sJ = pCurrent->m_sI;
+		// m_sJ : I hat
 		pCurrent->m_sB.dad(pCurrent->m_sV, pCurrent->m_sI * pCurrent->m_sV);
 		pCurrent->m_sB *= -SCALAR_1;
 
@@ -665,17 +666,24 @@ void vpSystem::FDIteration2(void)
 		{
 			pChild = pCurrent->m_pChildJoints[j];
 			pChild->UpdateAInertia(tmpI);
+			// tmpI : Large pi
 			pCurrent->m_sJ.AddTransform(tmpI, Inv(pChild->m_sRelativeFrame));
 			
 			pCurrent->m_sB += InvdAd(pChild->m_sRelativeFrame, pChild->m_sC + pChild->GetLP());
+			// m_sC + GetLP : small beta
 		}
 
 		tmp_b.dAd(pCurrent->m_sRightBodyFrame, pCurrent->m_pRightBody->GetForce());
 		pCurrent->m_sB -= tmp_b;
 		pCurrent->m_sC = pCurrent->m_sJ * pCurrent->m_sW;
 		pCurrent->m_sC += pCurrent->m_sB;
+		// m_sC : I hat * eta + B hat
 
 		pCurrent->UpdateLOTP();
+		// m_sL : Si.T * I hat
+		// m_sO : Si * Large psi
+		// m_sT : taui - Si.T * m_sC
+		// m_sP : m_sO * m_sT
 	}
 
 	if ( m_pRoot->m_bIsGround ) return;

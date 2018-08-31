@@ -3828,14 +3828,16 @@ void VpDartModel::skel_init(const char *skel_path)
     for(int i=0; i<joint_idx; i++)
     {
         int child_node_idx = 0, parent_node_idx = 0;
-        while(true)
+        while(child_node_idx < _nodes.size())
         {
-            if(!_nodes[child_node_idx]->name.compare(joint_child[i]))
+            if(_nodes[child_node_idx]->name == joint_child[i])
             {
                 break;
             }
             child_node_idx++;
         }
+        if(child_node_idx == _nodes.size())
+            continue;
 
         if(!joint_type[i].compare("free"))
         {
@@ -3847,14 +3849,17 @@ void VpDartModel::skel_init(const char *skel_path)
             continue;
         }
 
-        while(true)
+        while(parent_node_idx < _nodes.size())
         {
-            if(!_nodes[parent_node_idx]->name.compare(joint_parent[i]))
+            if(_nodes[parent_node_idx]->name == joint_parent[i])
             {
                 break;
             }
             parent_node_idx++;
         }
+
+        if(parent_node_idx == _nodes.size())
+            continue;
         std::cout << "TinyXml Debug: "<< joint_name[i] << joint_type[i] << joint_parent[i] << joint_child[i] << std::endl;
         std::cout << "TinyXml Debug: "<< parent_node_idx << " " << child_node_idx << std::endl;
 
@@ -3869,6 +3874,7 @@ void VpDartModel::skel_init(const char *skel_path)
 
         if(!joint_type[i].compare("ball"))
         {
+            _nodes[child_node_idx]->joint.m_szName = joint_name[i];
             _nodes[child_node_idx]->dof = 3;
             _nodes[child_node_idx]->dof_start_index = joint_dof_index;
             _nodes[child_node_idx]->use_joint = true;
@@ -3880,6 +3886,7 @@ void VpDartModel::skel_init(const char *skel_path)
         }
         else if(!joint_type[i].compare("weld"))
         {
+            _nodes[child_node_idx]->joint_weld.m_szName = joint_name[i];
             _nodes[child_node_idx]->dof = 0;
             _nodes[child_node_idx]->dof_start_index = joint_dof_index;
             _nodes[child_node_idx]->use_joint = false;

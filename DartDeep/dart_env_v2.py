@@ -103,6 +103,8 @@ class HpDartEnv(gym.Env):
 
         self.viewer = None
 
+        self.rand_frame = 0
+
     def state(self):
         pelvis = self.skel.body(0)
         p_pelvis = pelvis.world_transform()[:3, 3]
@@ -181,13 +183,13 @@ class HpDartEnv(gym.Env):
         """
         self.world.reset()
         # rand_frame = randrange(0, len(self.ref_motion)//2)
-        rand_frame = randrange(0, len(self.ref_motion))
+        self.rand_frame = randrange(0, len(self.ref_motion))
         if not self.rsi:
-            rand_frame = 0
-        self.time_offset = rand_frame / self.ref_motion.fps
-        self.skel.set_positions(self.ref_motion[rand_frame].get_q())
-        dq = self.ref_motion.get_dq(rand_frame)
-        dq[3:6] = np.asarray(self.ref_motion.getDOFVelocitiesLocal(rand_frame)[0][:3])
+            self.rand_frame = 0
+        self.time_offset = self.rand_frame / self.ref_motion.fps
+        self.skel.set_positions(self.ref_motion[self.rand_frame].get_q())
+        dq = self.ref_motion.get_dq(self.rand_frame)
+        dq[3:6] = np.asarray(self.ref_motion.getDOFVelocitiesLocal(self.rand_frame)[0][:3])
         self.skel.set_velocities(dq)
         # self.skel.set_velocities(self.ref_motion.get_dq(rand_frame))
 

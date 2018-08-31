@@ -45,7 +45,6 @@ vpWorld		world;
 vpBody		ground, pendulum_left, pendulum_right;
 vpRJoint	joint;
 vpRJoint	joint_right;
-vpSpring	spring;
 
 double spring_dist=2;
 
@@ -63,13 +62,7 @@ void initialize(void)
 
 	pendulum_right.AddGeometry(new vpSphere(0.5));
 	pendulum_right.AddGeometry(new vpCapsule(0.2, 4), Vec3(0, 0, 2));
-	
-	spring.SetInitialDistance(2.0);
-	spring.SetDamping(1);
-	spring.SetElasticity(10.0);
-	spring.Connect(&pendulum_right, &pendulum_left, Vec3(0,0,0), Vec3(0,0,0));
 
-	
 	pendulum_left.SetJoint(&joint, Vec3(0, 0, 5));
 	ground.SetJoint(&joint, Vec3(1, 0, 0));
 	joint.SetAxis(Vec3(0, 1, 0));
@@ -99,5 +92,4 @@ void frame(void)
 void keyboard(unsigned char key, int x, int y)
 {
 	if ( key == ' ' ) world.SetGravity(-1.0 * world.GetGravity());
-	if ( key == 's' ) spring.SetInitialDistance((spring_dist+=0.5));
 }
