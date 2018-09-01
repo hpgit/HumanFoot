@@ -117,9 +117,9 @@ BOOST_PYTHON_MODULE(csVpDartModel)
 
 VpDartModel::~VpDartModel()
 {
-    delete _pWorld;
-	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
-	    delete _nodes[i];
+//    delete _pWorld;
+//	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
+//	    delete _nodes[i];
 }
 
 static void getFloats(const char* text, int num, std::vector<float> &floats)
@@ -429,8 +429,10 @@ void VpDartModel::skel_init(const char *skel_path)
 	    for (auto pNode1 : _nodes)
             _pWorld->IgnoreCollision(&pNode0->body, &pNode1->body);
 
+    this->_pWorld->SetGlobalDamping(0.999);
     this->_pWorld->Initialize();
 	this->_pWorld->SetIntegrator(VP::IMPLICIT_EULER_FAST);
+//	this->_pWorld->SetIntegrator(VP::RK4);
 //	this->_pWorld->SetIntegrator(VP::EULER);
 
     for(int i=0; i<body_idx; i++)
@@ -527,7 +529,7 @@ boost::python::tuple VpDartModel::calcPenaltyForce( const bp::list& bodyIDsToChe
 	const vpGeom* pGeom;
 	char type;
 	scalar data[3];
-	static Vec3 position, velocity, force, positionLocal;
+	static Vec3 position, velocity, force, positionLocal, _positionLocal;
 
 	for(int i=0; i<len(bodyIDsToCheck); ++i)
 	{
@@ -542,10 +544,14 @@ boost::python::tuple VpDartModel::calcPenaltyForce( const bp::list& bodyIDsToChe
 
 			for( int p=0; p<8; ++p)
 			{
-				positionLocal[0] = (p & MAX_X) ? data[0]/2. : -data[0]/2.;
-				positionLocal[1] = (p & MAX_Y) ? data[1]/2. : -data[1]/2.;
-				positionLocal[2] = (p & MAX_Z) ? data[2]/2. : -data[2]/2.;
-				position = geomFrame * positionLocal;
+				_positionLocal[0] = (p & MAX_X) ? data[0]/2. : -data[0]/2.;
+				_positionLocal[1] = (p & MAX_Y) ? data[1]/2. : -data[1]/2.;
+				_positionLocal[2] = (p & MAX_Z) ? data[2]/2. : -data[2]/2.;
+
+				SE3 body_frame = pBody->GetFrame();
+
+				position = geomFrame * _positionLocal;
+				positionLocal = Inv(body_frame) * position;
 
 				velocity = pBody->GetLinVelocity(positionLocal);
 
@@ -1581,7 +1587,7 @@ bp::tuple VpDartModel::computeCom_J_dJdq()
         for(std::vector<Node*>::size_type body_idx=1; body_idx < _nodes.size(); body_idx++)
         {
             std::vector<bool> &is_body_ancestors = _nodes[body_idx]->is_ancestor;
-            effector_position = _nodes[body_idx]->get_body_position();
+            effector_position = _nodes[body_idx]->get_com_position();
             effector_velocity = _nodes[body_idx]->get_body_com_velocity();
             if(is_body_ancestors[i])
             {

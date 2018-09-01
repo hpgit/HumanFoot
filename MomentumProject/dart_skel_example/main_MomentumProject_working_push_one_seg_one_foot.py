@@ -45,7 +45,7 @@ maxContactChangeCount = 30
 
 preFootCenter = [None]
 
-LEG_FLEXIBLE = True
+LEG_FLEXIBLE = False
 
 
 def main():
@@ -109,15 +109,15 @@ def main():
 
     # linear balance gain
     Kl = 100.
-    Dl = 2.*(Kt**.5)
+    Dl = 2.*(Kl**.5)
 
     # angular balance gain
     Kh = 100.
-    Dh = 2.*(Kt**.5)
+    Dh = 2.*(Kh**.5)
 
     # penalty force spring gain
     Ks = 15000.
-    Ds = 2.*(Kt**.5)
+    Ds = 2.*(Ks**.5)
 
     # objective weight
     Bt = 1.
@@ -129,6 +129,8 @@ def main():
 
     supL = controlModel.name2index('h_blade_left')
     supR = controlModel.name2index('h_blade_right')
+    # supL = controlModel.name2index('h_heel_left')
+    # supR = controlModel.name2index('h_heel_right')
 
     # momentum matrix
     linkMasses = controlModel.getBodyMasses()
@@ -144,6 +146,7 @@ def main():
 
     # penalty method
     # bodyIDsToCheck = list(range(controlModel.getBodyNum()))
+    # bodyIDsToCheck = [supL, supR]
     bodyIDsToCheck = [supL]
     # mus = [1.]*len(bodyIDsToCheck)
     mus = [.5]*len(bodyIDsToCheck)
@@ -421,7 +424,7 @@ def main():
         #################################################
 
         contact_des_ids = list()  # desired contact segments
-        contact_des_ids.append(controlModel.name2index('h_blade_left'))
+        contact_des_ids.append(supL)
         # if foot_viewer.check_h_l.value():
         #     contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot'))
         #
@@ -637,7 +640,10 @@ def main():
         rootPos[0] = controlModel.getBodyPositionGlobal(selectedBody)
         localPos = [[0, 0, 0]]
 
-        for i in range(stepsPerFrame):
+        for _ in range(stepsPerFrame):
+            bodyIDs, contactPositions, contactPositionLocals, contactForces = controlModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+            controlModel.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
+
             # apply penalty force
             controlModel.setDOFAccelerations(ddth_sol)
             # controlModel.setDOFAccelerations(ddth_des)
@@ -655,8 +661,6 @@ def main():
                 forceShowTime += controlModel.getTimeStep()
                 controlModel.applyPenaltyForce(selectedBodyId, localPos, extraForce)
 
-            bodyIDs, contactPositions, contactPositionLocals, contactForces = controlModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
-            controlModel.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
             controlModel.step()
 
         # rendering

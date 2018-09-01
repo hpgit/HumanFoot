@@ -50,7 +50,7 @@ m.sources.append('myGeom.cpp')
 modules.append(m)
 
 m = setupmodule('csVpDartModel')
-m.libraries = [boost_lib, numpy_lib, 'vpLib', ompLib]
+m.libraries = [boost_lib, numpy_lib, 'vpLib', ompLib, 'tinyxml2']
 if isMAC and isOMP:
     m.extra_compile_args=['-Xpreprocessor', '-fopenmp', '-D __APPLE_OMP__']
 elif isOMP:

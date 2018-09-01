@@ -51,7 +51,7 @@ object R2euler(const object& pyR, int order)
 //    printf(" Roll   Pitch  Yaw	  (radians)\n");
 //    printf("%6.3f %6.3f %6.3f\n", outAngs.x, outAngs.y, outAngs.z);
 
-	static np::ndarray O = np::array(make_tuple(0.,0.,0.));
+	static np::ndarray O = np::array(bp::make_tuple(0.,0.,0.));
 	static HMatrix H;
 
     //np::ndarray O = np::array(bp::make_tuple(0., 0., 0.));
@@ -75,7 +75,7 @@ object exp_py( const object& axis_angle_vec )
         np_initialized = true;
     }
 
-	static np::ndarray I = np::array( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+	static np::ndarray I = np::array( bp::make_tuple(bp::make_tuple(1.,0.,0.), bp::make_tuple(0.,1.,0.), bp::make_tuple(0.,0.,1.)) );
 	static Vec3 vAxis;
 	//np::ndarray I = np::array( bp::make_tuple(
         //bp::make_tuple(1.,0.,0.), 
@@ -103,14 +103,14 @@ object log_py( const object& rotation_mat )
         np_initialized = true;
     }
 
-	//static numeric::array O(make_tuple(0.,0.,0.));
+	//static numeric::array O(bp::make_tuple(0.,0.,0.));
 	static SE3 T;
 	static se3 d;
 
 
 	pySO3_2_SE3(rotation_mat, T);
 	d = Log(T);
-	np::ndarray pyV = np::array(make_tuple(0.,0.,0.));
+	np::ndarray pyV = np::array(bp::make_tuple(0.,0.,0.));
 //	object pyV;
 //  make_pyVec3(pyV);
 	pyV[0] = d[0];
@@ -121,7 +121,7 @@ object log_py( const object& rotation_mat )
 
 object slerp_py( const object& R1, const object& R2, scalar t )
 {
-	//static numeric::array I( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+	//static numeric::array I( bp::make_tuple(bp::make_tuple(1.,0.,0.), bp::make_tuple(0.,1.,0.), bp::make_tuple(0.,0.,1.)) );
 	static SE3 T1;
 	static SE3 T2;
 	static SE3 T_slerp;
@@ -150,7 +150,7 @@ object cross_py( const object& vec1, const object& vec2 )
         np::initialize();
         np_initialized = true;
     }
-	np::ndarray O = np::array(make_tuple(0.,0.,0.));
+	np::ndarray O = np::array(bp::make_tuple(0.,0.,0.));
 	O[0] = vec1[1]*vec2[2] - vec1[2] * vec2[1];
 	O[1] = vec1[2]*vec2[0] - vec1[0] * vec2[2];
 	O[2] = vec1[0]*vec2[1] - vec1[1] * vec2[0];

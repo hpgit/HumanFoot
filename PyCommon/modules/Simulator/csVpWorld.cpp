@@ -8,7 +8,8 @@
 #include "myGeom.h"
 #include <VP/PrimColDet.h>
 
-using boost::python::make_tuple;
+//using boost::python::make_tuple;
+namespace bp = boost::python;
 namespace np = boost::python::numpy;
 using boost::python::numpy::ndarray;
 
@@ -225,7 +226,7 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 {
 	bp::list bodyIDs, positions, forces, positionLocals, velocities;
 	int bodyID;
-	ndarray O_Vec3 = np::array(make_tuple(0., 0., 0.));
+	ndarray O_Vec3 = np::array(bp::make_tuple(0., 0., 0.));
 	const vpBody* pBody;
 	vpGeom* pGeom;
 	char type;
@@ -466,7 +467,7 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 	/*
 	bp::list bodyIDs, positions, forces, positionLocals;
 	int bodyID;
-	static numeric::array O_Vec3(make_tuple(0.,0.,0.));
+	static numeric::array O_Vec3(bp::make_tuple(0.,0.,0.));
 	const vpBody* pBody;
 	const vpGeom* pGeom;
 	char type;
@@ -514,7 +515,7 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
 		}
 	}
 	*/
-	return make_tuple(bodyIDs, positions, positionLocals, forces);
+	return bp::make_tuple(bodyIDs, positions, positionLocals, forces);
 }
 
 bool VpWorld::_calcPenaltyForce( const vpBody* pBody, const Vec3& position, const Vec3& velocity, Vec3& force, scalar Ks, scalar Ds, scalar mu )
@@ -679,7 +680,7 @@ boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
 {
 	bp::list bodyIDs, positions, forces, positionLocals, velocities;
 	int bodyID;
-	ndarray O_Vec3 = np::array(make_tuple(0., 0., 0.));
+	ndarray O_Vec3 = np::array(bp::make_tuple(0., 0., 0.));
 	const vpBody* pBody;
 	vpGeom* pGeom;
 	char type;
@@ -785,7 +786,7 @@ boost::python::tuple VpWorld::getContactPoints( const bp::list& bodyIDsToCheck)
 	}
 
 
-	return make_tuple(bodyIDs, positions, positionLocals, velocities);
+	return bp::make_tuple(bodyIDs, positions, positionLocals, velocities);
 }
 
 
@@ -794,7 +795,7 @@ boost::python::tuple VpWorld::getContactInfoForcePlate( const bp::list& bodyIDsT
 {
 	bp::list bodyIDs, geomIDs, positionLocals;
 	int bodyID;
-	ndarray O_Vec3 = np::array(make_tuple(0., 0., 0.));
+	ndarray O_Vec3 = np::array(bp::make_tuple(0., 0., 0.));
 	const vpBody* pBody;
 	vpGeom* pGeom;
 	char type;
@@ -974,7 +975,7 @@ boost::python::tuple VpWorld::getContactInfoForcePlate( const bp::list& bodyIDsT
         }
 	}
 
-	return make_tuple(bodyIDs, geomIDs, positionLocals);
+	return bp::make_tuple(bodyIDs, geomIDs, positionLocals);
 }
 
 /*********************
@@ -1031,7 +1032,7 @@ object VpWorld::GetBoundingSphere()
 {
 	Vec3 center;
 	scalar rad = _world.GetBoundingSphere(center);
-	return make_tuple(rad, Vec3_2_pyVec3(center));
+	return bp::make_tuple(rad, Vec3_2_pyVec3(center));
 }
 
 void VpWorld::SetGravity(const object &g)
