@@ -52,7 +52,6 @@ def main():
     # np.set_printoptions(precision=4, linewidth=200)
     np.set_printoptions(precision=5, threshold=np.inf, suppress=True, linewidth=3000)
 
-    motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
     config = dict()
     config['weightMap'] = {'j_scapula_left':.2, 'j_bicep_left':.2, 'j_forearm_left':.2, 'j_hand_left':.2,
                            'j_scapula_right':.2, 'j_bicep_right':.2, 'j_forearm_right':.2, 'j_hand_right':.2,
@@ -60,11 +59,14 @@ def main():
                            'j_thigh_left':5., 'j_shin_left':.5, 'j_thigh_right':5., 'j_shin_right':.5}
 
     motionModel = cvdm.VpDartModel("cart_pole_blade.skel")
-    motionModel.translateByOffset((1.5, 1.0, 0.))
+    motionModel.translateByOffset((1.5, 0.9, 0.))
     controlModel = cvdm.VpDartModel("cart_pole_blade.skel")
-    controlModel.translateByOffset((0., 1.0, 0.))
+    controlModel.translateByOffset((0., 0.9, 0.))
     # vpWorld.SetGlobalDamping(0.999)
     controlModel.initializeHybridDynamics()
+
+    render_fps = 40
+    stepsPerFrame = round(1./(controlModel.getTimeStep() * render_fps))
 
     # for j in range(1, dartModel.getJointNum()):
     #     print(j, dartModel.getJointOrientationLocal(j))
@@ -114,7 +116,7 @@ def main():
     Dh = 2.*(Kt**.5)
 
     # penalty force spring gain
-    Ks = 20000.
+    Ks = 15000.
     Ds = 2.*(Kt**.5)
 
     # objective weight
@@ -123,11 +125,10 @@ def main():
     Bh = 0.13
 
     # selectedBody = motion[0].skeleton.getJointIndex(config['end'])
-    selectedBody = motion[0].skeleton.getJointIndex('Spine')
-    constBody = motion[0].skeleton.getJointIndex('RightFoot')
+    selectedBody = controlModel.name2index('h_spine')
 
-    supL = motion[0].skeleton.getJointIndex('LeftFoot')
-    supR = motion[0].skeleton.getJointIndex('RightFoot')
+    supL = controlModel.name2index('h_blade_left')
+    supR = controlModel.name2index('h_blade_right')
 
     # momentum matrix
     linkMasses = controlModel.getBodyMasses()
@@ -142,7 +143,8 @@ def main():
     CP_old = [mm.v3(0., 0., 0.)]
 
     # penalty method
-    bodyIDsToCheck = list(range(controlModel.getBodyNum()))
+    # bodyIDsToCheck = list(range(controlModel.getBodyNum()))
+    bodyIDsToCheck = [supL]
     # mus = [1.]*len(bodyIDsToCheck)
     mus = [.5]*len(bodyIDsToCheck)
 
@@ -200,7 +202,8 @@ def main():
     viewer = hsv.hpSimpleViewer(rect=[0, 0, 960+300, 1+1080+55], viewForceWnd=False)
     # viewer.record(False)
     # viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,255,255), yr.LINK_BONE))
-    viewer.doc.addObject('motion', motion)
+    # viewer.doc.addObject('motion', motion)
+    viewer.setMaxFrame(2000)
     viewer.doc.addRenderer('motionModel', yr.VpModelRenderer(motionModel, (150,150,255), yr.POLYGON_FILL))
     viewer.doc.setRendererVisible('motionModel', False)
     control_model_renderer = yr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_FILL)
@@ -321,24 +324,24 @@ def main():
         viewer.objectInfoWnd.setVal(paramname, val)
 
     idDic = dict()
-    for i in range(motion[0].skeleton.getJointNum()):
-        idDic[motion[0].skeleton.getJointName(i)] = i
+    for i in range(controlModel.getBodyNum()):
+        idDic[controlModel.index2name(i)] = i
 
     # extendedFootName = ['Foot_foot_0_0', 'Foot_foot_0_1', 'Foot_foot_0_0_0', 'Foot_foot_0_1_0', 'Foot_foot_1_0']
-    extendedFootName = ['Foot']
-    lIDdic = {'Left'+name: motion[0].skeleton.getJointIndex('Left'+name) for name in extendedFootName}
-    rIDdic = {'Right'+name: motion[0].skeleton.getJointIndex('Right'+name) for name in extendedFootName}
+    extendedFootName = ['h_blade']
+    # lIDdic = {'Left'+name: motion[0].skeleton.getJointIndex('Left'+name) for name in extendedFootName}
+    # rIDdic = {'Right'+name: motion[0].skeleton.getJointIndex('Right'+name) for name in extendedFootName}
+    lIDdic = {name + '_left' : controlModel.name2index(name + '_left') for name in extendedFootName}
+    rIDdic = {name + '_right': controlModel.name2index(name + '_right') for name in extendedFootName}
     footIdDic = lIDdic.copy()
     footIdDic.update(rIDdic)
 
-    lIDlist = [motion[0].skeleton.getJointIndex('Left'+name) for name in extendedFootName]
-    rIDlist = [motion[0].skeleton.getJointIndex('Right'+name) for name in extendedFootName]
+    lIDlist = [controlModel.name2index(name + '_left') for name in extendedFootName]
+    rIDlist = [controlModel.name2index(name + '_right') for name in extendedFootName]
     footIdlist = []
     footIdlist.extend(lIDlist)
     footIdlist.extend(rIDlist)
     print(footIdlist)
-
-    joint_names = [motion[0].skeleton.getJointName(i) for i in range(motion[0].skeleton.getJointNum())]
 
     def fix_dofs(_DOFs, nested_dof_values, _mcfg, _joint_names):
         fixed_nested_dof_values = list()
@@ -435,14 +438,14 @@ def main():
         contact_body_vel = list(map(controlModel.getBodyVelocityGlobal, contact_ids))
         contact_body_angvel = list(map(controlModel.getBodyAngVelocityGlobal, contact_ids))
 
-        ref_joint_ori = list(map(motion[frame].getJointOrientationGlobal, contact_ids))
-        ref_joint_pos = list(map(motion[frame].getJointPositionGlobal, contact_ids))
-        ref_joint_vel = [motion.getJointVelocityGlobal(joint_idx, frame) for joint_idx in contact_ids]
-        ref_joint_angvel = [motion.getJointAngVelocityGlobal(joint_idx, frame) for joint_idx in contact_ids]
+        ref_joint_ori = list(map(motionModel.getJointOrientationGlobal, contact_ids))
+        ref_joint_pos = list(map(motionModel.getJointPositionGlobal, contact_ids))
+        ref_joint_vel = [motionModel.getJointVelocityGlobal(joint_idx) for joint_idx in contact_ids]
+        ref_joint_angvel = [motionModel.getJointAngVelocityGlobal(joint_idx) for joint_idx in contact_ids]
         ref_body_ori = list(map(motionModel.getBodyOrientationGlobal, contact_ids))
         ref_body_pos = list(map(motionModel.getBodyPositionGlobal, contact_ids))
         # ref_body_vel = list(map(controlModel.getBodyVelocityGlobal, contact_ids))
-        ref_body_angvel = [motion.getJointAngVelocityGlobal(joint_idx, frame) for joint_idx in contact_ids]
+        ref_body_angvel = [motionModel.getJointAngVelocityGlobal(joint_idx) for joint_idx in contact_ids]
         ref_body_vel = [ref_joint_vel[i] + np.cross(ref_joint_angvel[i], ref_body_pos[i] - ref_joint_pos[i])
                         for i in range(len(ref_joint_vel))]
 
@@ -536,7 +539,7 @@ def main():
             CP_des = CP + dCP_des * (1/30.)
             # CP_des = footCenter
             CP_des = CP + dCP*(1/30.) + .5*ddCP_des*((1/30.)**2)
-            dH_des = np.cross((CP_des - CM), (dL_des_plane + totalMass * mm.s2v(wcfg.gravity)))
+            dH_des = np.cross((CP_des - CM), (dL_des_plane + totalMass * controlModel.getGravity()))
             if contactChangeCount > 0:  # and contactChangeType == 'DtoS':
                 dH_des *= (maxContactChangeCount - contactChangeCount)/maxContactChangeCount
         else:
@@ -649,7 +652,7 @@ def main():
             forceforce = np.array([viewer.objectInfoWnd.labelForceX.value(), viewer.objectInfoWnd.labelForceY.value(), viewer.objectInfoWnd.labelForceZ.value()])
             extraForce[0] = getParamVal('Fm') * mm.normalize2(forceforce)
             if viewer_GetForceState():
-                forceShowTime += wcfg.timeStep
+                forceShowTime += controlModel.getTimeStep()
                 controlModel.applyPenaltyForce(selectedBodyId, localPos, extraForce)
 
             bodyIDs, contactPositions, contactPositionLocals, contactForces = controlModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
@@ -687,7 +690,7 @@ def main():
             rd_dL_des_plane[0] = [dL_des_plane[0]/100, dL_des_plane[1]/100, dL_des_plane[2]/100]
             rd_dH_des[0] = dH_des
 
-            rd_grf_des[0] = dL_des_plane - totalMass * mm.s2v(wcfg.gravity)
+            rd_grf_des[0] = dL_des_plane - totalMass * controlModel.getGravity()
 
         del rd_foot_ori[:]
         del rd_foot_pos[:]
@@ -732,7 +735,7 @@ def main():
 
     viewer.setPostFrameCallback_Always(postFrameCallback_Always)
     viewer.setSimulateCallback(simulateCallback)
-    viewer.startTimer(1/30.)
+    viewer.startTimer(1./render_fps)
     # viewer.play()
     viewer.show()
 
