@@ -88,6 +88,9 @@ public:
 
     void step();
 
+    scalar getTimeStep(){return _pWorld->GetTimeStep();}
+    object getGravity();
+
 	bp::tuple calcPenaltyForce(const bp::list& bodyIDsToCheck, const bp::list& mus, scalar Ks, scalar Ds);
 	bool _calcPenaltyForce(const vpBody* pBody, const Vec3& position, const Vec3& velocity, Vec3& force, scalar Ks, scalar Ds, scalar mu);
 	void applyPenaltyForce(const bp::list& bodyIDs, const bp::list& positions, const bp::list& forces);

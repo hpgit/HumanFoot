@@ -41,6 +41,9 @@ BOOST_PYTHON_MODULE(csVpDartModel)
 	class_<VpDartModel>("VpDartModel", init<const char *>())
 		.def("step", &VpDartModel::step)
 
+		.def("getTimeStep", &VpDartModel::getTimeStep)
+		.def("getGravity", &VpDartModel::getGravity)
+
 		.def("calcPenaltyForce", &VpDartModel::calcPenaltyForce)
 		.def("applyPenaltyForce", &VpDartModel::applyPenaltyForce)
 
@@ -466,6 +469,14 @@ void VpDartModel::skel_init(const char *skel_path)
 void VpDartModel::step()
 {
     this->_pWorld->StepAhead();
+}
+
+object VpDartModel::getGravity()
+{
+	object pyV;
+	make_pyVec3(pyV);
+	Vec3_2_pyVec3(_pWorld->GetGravity(), pyV);
+	return pyV;
 }
 
 bool VpDartModel::_calcPenaltyForce( const vpBody* pBody, const Vec3& position, const Vec3& velocity, Vec3& force, scalar Ks, scalar Ds, scalar mu )
