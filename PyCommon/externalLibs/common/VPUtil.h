@@ -58,7 +58,7 @@ void make_pySO3(object &pyR)
 
 inline bool checkPyVlen(const object& pyV, int _len)
 {
-    const tuple	&_shape = extract<tuple>(pyV.attr("shape"));
+    const boost::python::tuple &_shape = extract<boost::python::tuple>(pyV.attr("shape"));
     return (  
     		(
     		 (XI(pyV.attr("ndim")) == 1) &&
