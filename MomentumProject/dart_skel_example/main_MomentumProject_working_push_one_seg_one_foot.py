@@ -9,16 +9,13 @@ if '../..' not in sys.path:
 from PyCommon.modules.Math import mmMath as mm
 from PyCommon.modules.Resource import ysMotionLoader as yf
 from PyCommon.modules.Renderer import ysRenderer as yr
-from PyCommon.modules.Simulator import csVpWorld as cvw
-from PyCommon.modules.Simulator import csVpModel as cvm
-# from PyCommon.modules.GUI import ysSimpleViewer as ysv
+from PyCommon.modules.Simulator import csVpDartModel as cvdm
 from PyCommon.modules.GUI import hpSimpleViewer as hsv
 from PyCommon.modules.Optimization import ysAnalyticConstrainedOpt as yac
 from PyCommon.modules.Util import ysPythonEx as ype
 from PyCommon.modules.ArticulatedBody import ysReferencePoints as yrp
 from PyCommon.modules.ArticulatedBody import ysMomentum as ymt
 from PyCommon.modules.ArticulatedBody import ysControl as yct
-from PyCommon.modules.ArticulatedBody import hpInvKineDart as hik
 
 from MomentumProject.working_example import mtOptimize as mot
 from MomentumProject.working_example import mtInitialize as mit
@@ -48,8 +45,7 @@ maxContactChangeCount = 30
 
 preFootCenter = [None]
 
-DART_CONTACT_ON = False
-SKELETON_ON = False
+LEG_FLEXIBLE = True
 
 
 def main():
@@ -57,32 +53,21 @@ def main():
     np.set_printoptions(precision=5, threshold=np.inf, suppress=True, linewidth=3000)
 
     motion, mcfg, wcfg, stepsPerFrame, config = mit.create_biped()
+    config = dict()
+    config['weightMap'] = {'j_scapula_left':.2, 'j_bicep_left':.2, 'j_forearm_left':.2, 'j_hand_left':.2,
+                           'j_scapula_right':.2, 'j_bicep_right':.2, 'j_forearm_right':.2, 'j_hand_right':.2,
+                           'j_abdomen':.6, 'j_spine':.6, 'j_head':.6, 'j_heel_right':.2, 'j_heel_left':.2, 'j_pelvis':0.5,
+                           'j_thigh_left':5., 'j_shin_left':.5, 'j_thigh_right':5., 'j_shin_right':.5}
 
-    vpWorld = cvw.VpWorld(wcfg)
+    motionModel = cvdm.VpDartModel("cart_pole_blade.skel")
+    motionModel.translateByOffset((1.5, 1.0, 0.))
+    controlModel = cvdm.VpDartModel("cart_pole_blade.skel")
+    controlModel.translateByOffset((0., 1.0, 0.))
     # vpWorld.SetGlobalDamping(0.999)
-    motionModel = cvm.VpMotionModel(vpWorld, motion[0], mcfg)
-    controlModel = cvm.VpControlModel(vpWorld, motion[0], mcfg)
-    # controlModel_shadow_for_ik = cvm.VpControlModel(vpWorld, motion[0], mcfg)
-    vpWorld.initialize()
     controlModel.initializeHybridDynamics()
 
-    # controlToMotionOffset = (1.5, -0.02, 0)
-    controlToMotionOffset = (1.5, 0., 0)
-    controlModel.translateByOffset(controlToMotionOffset)
-    # controlModel_shadow_for_ik.set_q(controlModel.get_q())
-    # controlModel_shadow_for_ik.computeJacobian(0, np.array([0., 0., 0.]))
-
-    wcfg_ik = copy.deepcopy(wcfg)
-    vpWorld_ik = cvw.VpWorld(wcfg_ik)
-    controlModel_ik = cvm.VpControlModel(vpWorld_ik, motion[0], mcfg)
-    vpWorld_ik.initialize()
-    controlModel_ik.set_q(np.zeros_like(controlModel.get_q()))
-
-    dartModel = cvm.VpDartModel("cart_pole_blade.skel")
-    dartModel.translateByOffset((0., 1.5, 0.))
-
-    for j in range(1, dartModel.getJointNum()):
-        print(j, dartModel.getJointOrientationLocal(j))
+    # for j in range(1, dartModel.getJointNum()):
+    #     print(j, dartModel.getJointOrientationLocal(j))
 
     totalDOF = controlModel.getTotalDOF()
     DOFs = controlModel.getDOFs()
@@ -116,14 +101,26 @@ def main():
                 right_foot_seg_dofs.extend(foot_dofs_temp)
 
     # parameter
-    Kt = config['Kt']; Dt = config['Dt']  # tracking gain
-    Kl = config['Kl']; Dl = config['Dl']  # linear balance gain
-    Kh = config['Kh']; Dh = config['Dh']  # angular balance gain
-    Ks = config['Ks']; Ds = config['Ds']  # penalty force spring gain
+    # tracking gain
+    Kt = 25.
+    Dt = 2.*(Kt**.5)
 
-    Bt = config['Bt']
-    Bl = config['Bl']
-    Bh = config['Bh']
+    # linear balance gain
+    Kl = 100.
+    Dl = 2.*(Kt**.5)
+
+    # angular balance gain
+    Kh = 100.
+    Dh = 2.*(Kt**.5)
+
+    # penalty force spring gain
+    Ks = 20000.
+    Ds = 2.*(Kt**.5)
+
+    # objective weight
+    Bt = 1.
+    Bl = 0.1
+    Bh = 0.13
 
     # selectedBody = motion[0].skeleton.getJointIndex(config['end'])
     selectedBody = motion[0].skeleton.getJointIndex('Spine')
@@ -145,7 +142,7 @@ def main():
     CP_old = [mm.v3(0., 0., 0.)]
 
     # penalty method
-    bodyIDsToCheck = list(range(vpWorld.getBodyNum()))
+    bodyIDsToCheck = list(range(controlModel.getBodyNum()))
     # mus = [1.]*len(bodyIDsToCheck)
     mus = [.5]*len(bodyIDsToCheck)
 
@@ -198,37 +195,6 @@ def main():
     rightVectorZ = [None]
     rightPos = [None]
 
-    def makeEmptyBasicSkeletonTransformDict(init=None):
-        Ts = dict()
-        Ts['pelvis'] = init
-        Ts['spine_ribs'] = init
-        Ts['head'] = init
-        Ts['thigh_R'] = init
-        Ts['shin_R'] = init
-        Ts['foot_heel_R'] = init
-        Ts['foot_R'] = init
-        Ts['heel_R'] = init
-        Ts['outside_metatarsal_R'] = init
-        Ts['outside_phalanges_R'] = init
-        Ts['inside_metatarsal_R'] = init
-        Ts['inside_phalanges_R'] = init
-        Ts['upper_limb_R'] = init
-        Ts['lower_limb_R'] = init
-        Ts['thigh_L'] = init
-        Ts['shin_L'] = init
-        Ts['foot_heel_L'] = init
-        Ts['foot_L'] = init
-        Ts['heel_L'] = init
-        Ts['outside_metatarsal_L'] = init
-        Ts['outside_phalanges_L'] = init
-        Ts['inside_metatarsal_L'] = init
-        Ts['inside_phalanges_L'] = init
-
-        Ts['upper_limb_L'] = init
-        Ts['lower_limb_L'] = init
-
-        return Ts
-
     # viewer = ysv.SimpleViewer()
     # viewer = hsv.hpSimpleViewer(rect=[0, 0, 1024, 768], viewForceWnd=False)
     viewer = hsv.hpSimpleViewer(rect=[0, 0, 960+300, 1+1080+55], viewForceWnd=False)
@@ -237,14 +203,8 @@ def main():
     viewer.doc.addObject('motion', motion)
     viewer.doc.addRenderer('motionModel', yr.VpModelRenderer(motionModel, (150,150,255), yr.POLYGON_FILL))
     viewer.doc.setRendererVisible('motionModel', False)
-    viewer.doc.addRenderer('ikModel', yr.VpModelRenderer(controlModel_ik, (150,150,255), yr.POLYGON_LINE))
-    viewer.doc.setRendererVisible('ikModel', False)
-    # viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_LINE))
     control_model_renderer = yr.VpModelRenderer(controlModel, (255,240,255), yr.POLYGON_FILL)
     viewer.doc.addRenderer('controlModel', control_model_renderer)
-    viewer.doc.setRendererVisible('controlModel', False)
-
-    viewer.doc.addRenderer('dartModel', yr.VpModelRenderer(dartModel, (150,150,255), yr.POLYGON_FILL))
 
     viewer.doc.addRenderer('rd_footCenter', yr.PointsRenderer(rd_footCenter))
     viewer.doc.setRendererVisible('rd_footCenter', False)
@@ -402,9 +362,7 @@ def main():
 
     up_vec_in_each_link = dict()
     for foot_id in footIdlist:
-        up_vec_in_each_link[foot_id] = controlModel_ik.getBodyOrientationGlobal(foot_id)[1, :]
         up_vec_in_each_link[foot_id] = mm.unitY()
-    controlModel_ik.set_q(controlModel.get_q())
 
     ###################################
     # simulate
@@ -415,9 +373,9 @@ def main():
 
         # hfi.footAdjust(motion[frame], idDic, SEGMENT_FOOT_MAG=.03, SEGMENT_FOOT_RAD=.015, baseHeight=0.02)
 
-        motionModel.update(motion[frame])
+        # motionModel.update(motion[frame])
         motionModel.translateByOffset(np.array([getParamVal('com X offset'), getParamVal('com Y offset'), getParamVal('com Z offset')]))
-        controlModel_ik.set_q(controlModel.get_q())
+        # controlModel_ik.set_q(controlModel.get_q())
 
         global g_initFlag
         global forceShowTime
@@ -441,15 +399,17 @@ def main():
         dt_sup = 2*(kt_sup**.5)
 
         # tracking
-        th_r = motion.getDOFPositions(frame)
+        # th_r = motion.getDOFPositions(frame)
+        th_r = motionModel.getDOFPositions()
         th = controlModel.getDOFPositions()
-        dth_r = motion.getDOFVelocities(frame)
+        # dth_r = motion.getDOFVelocities(frame)
         dth = controlModel.getDOFVelocities()
-        ddth_r = motion.getDOFAccelerations(frame)
-        ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
+        # ddth_r = motion.getDOFAccelerations(frame)
+        ddth_des = yct.getDesiredDOFAccelerations(th_r, th, None, dth, None, Kt, Dt)
 
         # ype.flatten(fix_dofs(DOFs, ddth_des, mcfg, joint_names), ddth_des_flat)
         # ype.flatten(fix_dofs(DOFs, dth, mcfg, joint_names), dth_flat)
+        # print(ddth_des)
         ype.flatten(ddth_des, ddth_des_flat)
         ype.flatten(dth, dth_flat)
 
@@ -458,6 +418,7 @@ def main():
         #################################################
 
         contact_des_ids = list()  # desired contact segments
+        contact_des_ids.append(controlModel.name2index('h_blade_left'))
         # if foot_viewer.check_h_l.value():
         #     contact_des_ids.append(motion[0].skeleton.getJointIndex('LeftFoot'))
         #
@@ -491,10 +452,10 @@ def main():
 
         contMotionOffset = th[0][0] - th_r[0][0]
 
-        linkPositions = controlModel.getBodyPositionsGlobal()
-        linkVelocities = controlModel.getBodyVelocitiesGlobal()
-        linkAngVelocities = controlModel.getBodyAngVelocitiesGlobal()
-        linkInertias = controlModel.getBodyInertiasGlobal()
+        linkPositions = [controlModel.getBodyComPositionGlobal(i) for i in range(controlModel.getBodyNum())]
+        linkVelocities = [controlModel.getBodyComVelocityGlobal(i) for i in range(controlModel.getBodyNum())]
+        linkAngVelocities = [controlModel.getBodyAngVelocityGlobal(i) for i in range(controlModel.getBodyNum())]
+        linkInertias = [controlModel.getBodyInertiaGlobal(i) for i in range(controlModel.getBodyNum())]
 
         CM = yrp.getCM(linkPositions, linkMasses, totalMass)
         dCM = yrp.getCM(linkVelocities, linkMasses, totalMass)
@@ -516,13 +477,13 @@ def main():
 
         # calculate footCenter
         footCenter = sum(contact_body_pos) / len(contact_body_pos) if len(contact_body_pos) > 0 \
-            else .5 * (controlModel.getBodyPositionGlobal(supL) + controlModel.getBodyPositionGlobal(supR))
+            else .5 * (controlModel.getBodyComPositionGlobal(supL) + controlModel.getBodyComPositionGlobal(supR))
         footCenter[1] = 0.
         # if len(contact_body_pos) > 2:
         #     hull = ConvexHull(contact_body_pos)
 
         footCenter_ref = sum(ref_body_pos) / len(ref_body_pos) if len(ref_body_pos) > 0 \
-            else .5 * (motionModel.getBodyPositionGlobal(supL) + motionModel.getBodyPositionGlobal(supR))
+            else .5 * (motionModel.getBodyComPositionGlobal(supL) + motionModel.getBodyComPositionGlobal(supR))
         footCenter_ref = footCenter_ref + contMotionOffset
         # if len(ref_body_pos) > 2:
         #     hull = ConvexHull(ref_body_pos)
@@ -561,7 +522,7 @@ def main():
         # angular momentum
         CP_ref = footCenter
         # CP_ref = footCenter_ref
-        bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+        bodyIDs, contactPositions, contactPositionLocals, contactForces = controlModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
         CP = yrp.getCP(contactPositions, contactForces)
         if CP_old[0] is None or CP is None:
             dCP = None
@@ -580,14 +541,6 @@ def main():
                 dH_des *= (maxContactChangeCount - contactChangeCount)/maxContactChangeCount
         else:
             dH_des = None
-
-        # convex hull
-        contact_pos_2d = np.asarray([np.array([contactPosition[0], contactPosition[2]]) for contactPosition in contactPositions])
-        p = np.array([CM_plane[0], CM_plane[2]])
-        # hull = None  # type: Delaunay
-        # if contact_pos_2d.shape[0] > 0:
-        #     hull = Delaunay(contact_pos_2d)
-        #     print(hull.find_simplex(p) >= 0)
 
         # set up equality constraint
         # TODO:
@@ -636,27 +589,26 @@ def main():
         #######################################################
         # optimization
         #######################################################
-        # if contact == 2 and footCenterR[1] > doubleTosingleOffset/2:
-        if contact_left and not contact_right:
-            config['weightMap']['RightUpLeg'] = .8
-            config['weightMap']['RightLeg'] = .8
-            config['weightMap']['RightFoot'] = .8
-        else:
-            config['weightMap']['RightUpLeg'] = .1
-            config['weightMap']['RightLeg'] = .25
-            config['weightMap']['RightFoot'] = .2
+        if LEG_FLEXIBLE:
+            if contact == 2:
+                config['weightMap']['j_thigh_right'] = .8
+                config['weightMap']['j_shin_right'] = .8
+                config['weightMap']['j_heel_right'] = .8
+            else:
+                config['weightMap']['j_thigh_right'] = .1
+                config['weightMap']['j_shin_right'] = .25
+                config['weightMap']['j_heel_right'] = .2
 
-        # if contact == 1 and footCenterL[1] > doubleTosingleOffset/2:
-        if contact_right and not contact_left:
-            config['weightMap']['LeftUpLeg'] = .8
-            config['weightMap']['LeftLeg'] = .8
-            config['weightMap']['LeftFoot'] = .8
-        else:
-            config['weightMap']['LeftUpLeg'] = .1
-            config['weightMap']['LeftLeg'] = .25
-            config['weightMap']['LeftFoot'] = .2
+            if contact == 1:
+                config['weightMap']['j_thigh_left'] = .8
+                config['weightMap']['j_shin_left'] = .8
+                config['weightMap']['j_heel_left'] = .8
+            else:
+                config['weightMap']['j_thigh_left'] = .1
+                config['weightMap']['j_shin_left'] = .25
+                config['weightMap']['j_heel_left'] = .2
 
-        w = mot.getTrackingWeight(DOFs, motion[0].skeleton, config['weightMap'])
+        w = mot.getTrackingWeightVp(DOFs, controlModel, config['weightMap'])
 
         mot.addTrackingTerms(problem, totalDOF, Bt, w, ddth_des_flat)
         if dH_des is not None:
@@ -684,10 +636,6 @@ def main():
 
         for i in range(stepsPerFrame):
             # apply penalty force
-            bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
-            # bodyIDs, contactPositions, contactPositionLocals, contactForces, contactVelocities = vpWorld.calcManyPenaltyForce(0, bodyIDsToCheck, mus, Ks, Ds)
-            vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
-
             controlModel.setDOFAccelerations(ddth_sol)
             # controlModel.setDOFAccelerations(ddth_des)
             # controlModel.set_ddq(ddth_sol_flat)
@@ -702,25 +650,21 @@ def main():
             extraForce[0] = getParamVal('Fm') * mm.normalize2(forceforce)
             if viewer_GetForceState():
                 forceShowTime += wcfg.timeStep
-                vpWorld.applyPenaltyForce(selectedBodyId, localPos, extraForce)
+                controlModel.applyPenaltyForce(selectedBodyId, localPos, extraForce)
 
-            # vpWorld.step()
-            # for j in range(1, dartModel.getJointNum()):
-            #     dartModel.setJointTorqueLocal(j, 0.1 * np.ones(3))
-            # dartModel.setJointTorqueLocal(19, 0.1*np.ones(3))
-            dartModel.step()
-
-        controlModel_ik.set_q(controlModel.get_q())
+            bodyIDs, contactPositions, contactPositionLocals, contactForces = controlModel.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+            controlModel.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
+            controlModel.step()
 
         # rendering
-        bodyIDs, geomIDs, positionLocalsForGeom = vpWorld.getContactInfoForcePlate(bodyIDsToCheck)
-        for foot_seg_id in footIdlist:
-            control_model_renderer.body_colors[foot_seg_id] = (255, 240, 255)
-            control_model_renderer.geom_colors[foot_seg_id] = [(255, 240, 255)] * controlModel.getBodyGeomNum(foot_seg_id)
+        # bodyIDs, geomIDs, positionLocalsForGeom = vpWorld.getContactInfoForcePlate(bodyIDsToCheck)
+        # for foot_seg_id in footIdlist:
+        #     control_model_renderer.body_colors[foot_seg_id] = (255, 240, 255)
+        #     control_model_renderer.geom_colors[foot_seg_id] = [(255, 240, 255)] * controlModel.getBodyGeomNum(foot_seg_id)
 
-        for i in range(len(geomIDs)):
-            if controlModel.vpid2index(bodyIDs[i]) in footIdlist:
-                control_model_renderer.geom_colors[controlModel.vpid2index(bodyIDs[i])][geomIDs[i]] = (255, 0, 0)
+        # for i in range(len(geomIDs)):
+        #     if controlModel.vpid2index(bodyIDs[i]) in footIdlist:
+        #         control_model_renderer.geom_colors[controlModel.vpid2index(bodyIDs[i])][geomIDs[i]] = (255, 0, 0)
         # for foot_seg_id in footIdlist:
         #     control_model_renderer.body_colors[foot_seg_id] = (255, 240, 255)
         #
@@ -758,11 +702,6 @@ def main():
         del rd_body_ori[:]
         del rd_body_pos[:]
         # for body_idx in range(dartModel.getBodyNum()):
-        for body_idx in range(19, 20):
-            # rd_body_ori.append(dartModel.getBodyOrientationGlobal(body_idx))
-            # rd_body_pos.append(dartModel.getBodyPositionGlobal(body_idx))
-            rd_body_ori.append(dartModel.getJointOrientationGlobal(body_idx))
-            rd_body_pos.append(dartModel.getJointPositionGlobal(body_idx))
 
         rd_root_des[0] = rootPos[0]
         rd_root_ori[0] = controlModel.getBodyOrientationGlobal(0)

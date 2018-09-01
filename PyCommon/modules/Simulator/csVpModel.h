@@ -381,11 +381,16 @@ class VpDartModel : public VpControlModel
 private:
     string name;
     void skel_init(const char *skel_path);
+    scalar _planeHeight;
+    scalar _lockingVel;
 
 public:
-    VpDartModel(const char *skel_path) : VpControlModel(nullptr, object(), object()){skel_init(skel_path);}
+    VpDartModel(const char *skel_path) : VpControlModel(nullptr, object(), object()){_lockingVel=0.; _planeHeight=0.; skel_init(skel_path);}
     ~VpDartModel(){delete _pWorld;}
     void step();
+	bp::tuple calcPenaltyForce(const bp::list& bodyIDsToCheck, const bp::list& mus, scalar Ks, scalar Ds);
+	bool _calcPenaltyForce(const vpBody* pBody, const Vec3& position, const Vec3& velocity, Vec3& force, scalar Ks, scalar Ds, scalar mu);
+	void applyPenaltyForce(const bp::list& bodyIDs, const bp::list& positions, const bp::list& forces);
 };
 
 #endif  // _CS_VP_MODEL_H_

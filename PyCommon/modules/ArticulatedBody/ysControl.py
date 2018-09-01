@@ -22,15 +22,15 @@ def getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMap=N
 
     p_r0 = th_r[0][0]
     p0 = th[0][0]
-    v_r0 = dth_r[0][0:3]
+    # v_r0 = dth_r[0][0:3]
     v0 = dth[0][0:3]
-    a_r0 = ddth_r[0][0:3]
+    # a_r0 = ddth_r[0][0:3]
     
     th_r0 = th_r[0][1]
     th0 = th[0][1]
-    dth_r0 = dth_r[0][3:6]
+    # dth_r0 = dth_r[0][3:6]
     dth0 = dth[0][3:6]
-    ddth_r0 = ddth_r[0][3:6]
+    # ddth_r0 = ddth_r[0][3:6]
 
     kt = Kt
     dt = Dt
@@ -52,7 +52,10 @@ def getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMap=N
             # dt = 0.
 
         # ddth_des[i] = kt*(mm.logSO3(np.dot(th[i].transpose(), th_r[i]))) + dt*(dth_r[i] - dth[i]) #+ ddth_r[i]
-        ddth_des[i] = kt*(mm.logSO3(np.dot(th[i].transpose(), th_r[i]))) + dt*(-dth[i]) #+ ddth_r[i]
+        if th[i].shape[0] == 3:
+            ddth_des[i] = kt*(mm.logSO3(np.dot(th[i].transpose(), th_r[i]))) + dt*(-dth[i]) #+ ddth_r[i]
+        else:
+            ddth_des[i] = np.zeros(0)
 
     return ddth_des
 
