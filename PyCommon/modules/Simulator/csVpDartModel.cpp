@@ -9,7 +9,7 @@
 
 //#define make_tuple boost::python::make_tuple
 
-using boost::python::make_tuple;
+//using boost::python::make_tuple;
 namespace bp = boost::python;
 namespace np = boost::python::numpy;
 using boost::python::numpy::ndarray;
@@ -522,7 +522,7 @@ boost::python::tuple VpDartModel::calcPenaltyForce( const bp::list& bodyIDsToChe
 {
 	bp::list bodyIDs, positions, forces, positionLocals;
 	int bodyID;
-	static ndarray O_Vec3 = np::array(make_tuple(0.,0.,0.));
+	static ndarray O_Vec3 = np::array(bp::make_tuple(0.,0.,0.));
 	const vpBody* pBody;
 	const vpGeom* pGeom;
 	char type;
@@ -569,7 +569,7 @@ boost::python::tuple VpDartModel::calcPenaltyForce( const bp::list& bodyIDsToChe
 			}
 		}
 	}
-	return make_tuple(bodyIDs, positions, positionLocals, forces);
+	return bp::make_tuple(bodyIDs, positions, positionLocals, forces);
 }
 
 
@@ -696,12 +696,12 @@ void VpDartModel::getBodyInertiaLocal(int index, SE3& Tin)
 
 //	ss << "I11 I22 I33 I12 I13 I23 offset.x offset.y offset.z mass" << endl;
 
-//	pyIn[make_tuple(0,0)] = in[0];
-//	pyIn[make_tuple(1,1)] = in[1];
-//	pyIn[make_tuple(2,2)] = in[2];
-//	pyIn[make_tuple(0,1)] = pyIn[make_tuple(1,0)] = in[3];
-//	pyIn[make_tuple(0,2)] = pyIn[make_tuple(2,0)] = in[4];
-//	pyIn[make_tuple(1,2)] = pyIn[make_tuple(2,1)] = in[5];
+//	pyIn[bp::make_tuple(0,0)] = in[0];
+//	pyIn[bp::make_tuple(1,1)] = in[1];
+//	pyIn[bp::make_tuple(2,2)] = in[2];
+//	pyIn[bp::make_tuple(0,1)] = pyIn[bp::make_tuple(1,0)] = in[3];
+//	pyIn[bp::make_tuple(0,2)] = pyIn[bp::make_tuple(2,0)] = in[4];
+//	pyIn[bp::make_tuple(1,2)] = pyIn[bp::make_tuple(2,1)] = in[5];
 
 //		| T[0]	T[3]	T[6]	T[ 9] |
 //		| T[1]	T[4]	T[7]	T[10] |
@@ -719,7 +719,7 @@ void VpDartModel::getBodyInertiaLocal(int index, SE3& Tin)
 
 boost::python::object VpDartModel::getBodyInertiaLocal_py( int index )
 {
-	ndarray I = np::array( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+	ndarray I = np::array( bp::make_tuple(bp::make_tuple(1.,0.,0.), bp::make_tuple(0.,1.,0.), bp::make_tuple(0.,0.,1.)) );
 	SE3 Tin;
 	object pyIn = I.copy();
 
@@ -730,7 +730,7 @@ boost::python::object VpDartModel::getBodyInertiaLocal_py( int index )
 
 boost::python::object VpDartModel::getBodyInertiaGlobal_py( int index )
 {
-	ndarray I = np::array( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+	ndarray I = np::array( bp::make_tuple(bp::make_tuple(1.,0.,0.), bp::make_tuple(0.,1.,0.), bp::make_tuple(0.,0.,1.)) );
 	SE3 Tin_local, bodyFrame;
 	object pyIn = I.copy();
 
@@ -784,7 +784,7 @@ object VpDartModel::getCOM()
 
 object VpDartModel::getBodyComPositionGlobal( int index )
 {
-	ndarray O = np::array(make_tuple(0.,0.,0.));
+	ndarray O = np::array(bp::make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 	Vec3 positionLocal_ = _nodes[index]->body.GetCenterOfMass();
     Vec3_2_pyVec3(getBodyPositionGlobal(index, &positionLocal_), pyV);
@@ -793,7 +793,7 @@ object VpDartModel::getBodyComPositionGlobal( int index )
 
 object VpDartModel::getBodyComVelocityGlobal( int index )
 {
-	ndarray O = np::array(make_tuple(0.,0.,0.));
+	ndarray O = np::array(bp::make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 	Vec3 positionLocal_ = _nodes[index]->body.GetCenterOfMass();
     Vec3_2_pyVec3(getBodyVelocityGlobal(index, positionLocal_), pyV);
@@ -811,7 +811,7 @@ object VpDartModel::getBodyFrame(int index)
 
 object VpDartModel::getBodyPositionGlobal_py( int index, const object& positionLocal/*=object() */ )
 {
-	ndarray O = np::array(make_tuple(0.,0.,0.));
+	ndarray O = np::array(bp::make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 	Vec3 positionLocal_;
 
@@ -827,7 +827,7 @@ object VpDartModel::getBodyPositionGlobal_py( int index, const object& positionL
 
 object VpDartModel::getBodyOrientationGlobal(int index)
 {
-	ndarray I = np::array(make_tuple(make_tuple(1., 0., 0.), make_tuple(0., 1., 0.), make_tuple(0., 0., 1.)));
+	ndarray I = np::array(bp::make_tuple(bp::make_tuple(1., 0., 0.), bp::make_tuple(0., 1., 0.), bp::make_tuple(0., 0., 1.)));
 	SE3 bodyFrame;
 	object pyR = I.copy();
 
@@ -838,7 +838,7 @@ object VpDartModel::getBodyOrientationGlobal(int index)
 
 object VpDartModel::getBodyVelocityGlobal_py( int index, const object& positionLocal/*=object() */ )
 {
-	ndarray O = np::array(make_tuple(0.,0.,0.));
+	ndarray O = np::array(bp::make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 	Vec3 positionLocal_;
 
@@ -856,7 +856,7 @@ object VpDartModel::getBodyAccelerationGlobal_py(int index, const object& positi
 {
 	se3 genAcc;
 	Vec3 positionLocal_;
-	ndarray O = np::array(make_tuple(0.,0.,0.));
+	ndarray O = np::array(bp::make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 
 	if(positionLocal.is_none())
@@ -873,7 +873,7 @@ object VpDartModel::getBodyAccelerationGlobal_py(int index, const object& positi
 object VpDartModel::getBodyAngVelocityGlobal( int index )
 {
 	se3 genVel;
-	ndarray O = np::array(make_tuple(0.,0.,0.));
+	ndarray O = np::array(bp::make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 
 	genVel = _nodes[index]->body.GetGenVelocity();
@@ -886,7 +886,7 @@ object VpDartModel::getBodyAngVelocityGlobal( int index )
 object VpDartModel::getBodyAngAccelerationGlobal( int index )
 {
 	se3 genAcc;
-	ndarray O = np::array(make_tuple(0.,0.,0.));
+	ndarray O = np::array(bp::make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 
 	genAcc = _nodes[index]->body.GetGenAcceleration();
@@ -946,7 +946,7 @@ bp::list VpDartModel::getBodyGeomsSize(int index)
 
 	for(int i=0; i<_nodes[index]->body.GetNumGeometry(); ++i)
     {
-        ndarray O = np::array(make_tuple(0.,0.,0.));
+        ndarray O = np::array(bp::make_tuple(0.,0.,0.));
         _nodes[index]->body.GetGeometry(i)->GetShape(&type, data);
         object pyV = O.copy();
         pyV[0] = data[0];
@@ -964,18 +964,18 @@ bp::list VpDartModel::getBodyGeomsLocalFrame(int index)
 
 	for(int i=0; i<_nodes[index]->body.GetNumGeometry(); ++i)
     {
-        ndarray O = np::array(make_tuple(
-                            make_tuple(0.,0.,0.,0.),
-                            make_tuple(0.,0.,0.,0.),
-                            make_tuple(0.,0.,0.,0.),
-                            make_tuple(0.,0.,0.,1.)
+        ndarray O = np::array(bp::make_tuple(
+                            bp::make_tuple(0.,0.,0.,0.),
+                            bp::make_tuple(0.,0.,0.,0.),
+                            bp::make_tuple(0.,0.,0.,0.),
+                            bp::make_tuple(0.,0.,0.,1.)
                             )
                         );
         const SE3& geomFrame = _nodes[index]->body.GetGeometry(i)->GetLocalFrame();
         object pyT = O.copy();
 
         for(int j=0; j<12; j++)
-            pyT[make_tuple(j%3, j/3)] = geomFrame[j];
+            pyT[bp::make_tuple(j%3, j/3)] = geomFrame[j];
 
         ls.append(pyT);
     }
@@ -989,18 +989,18 @@ bp::list VpDartModel::getBodyGeomsGlobalFrame(int index)
 
 	for(int i=0; i<_nodes[index]->body.GetNumGeometry(); ++i)
     {
-        ndarray O = np::array(make_tuple(
-                            make_tuple(0.,0.,0.,0.),
-                            make_tuple(0.,0.,0.,0.),
-                            make_tuple(0.,0.,0.,0.),
-                            make_tuple(0.,0.,0.,1.)
+        ndarray O = np::array(bp::make_tuple(
+                            bp::make_tuple(0.,0.,0.,0.),
+                            bp::make_tuple(0.,0.,0.,0.),
+                            bp::make_tuple(0.,0.,0.,0.),
+                            bp::make_tuple(0.,0.,0.,1.)
                             )
                         );
         const SE3& geomFrame = _nodes[index]->body.GetGeometry(i)->GetGlobalFrame();
         object pyT = O.copy();
 
         for(int j=0; j<12; j++)
-            pyT[make_tuple(j%3, j/3)] = geomFrame[j];
+            pyT[bp::make_tuple(j%3, j/3)] = geomFrame[j];
 
         ls.append(pyT);
     }
@@ -1010,7 +1010,7 @@ bp::list VpDartModel::getBodyGeomsGlobalFrame(int index)
 
 object VpDartModel::getJointPositionGlobal( int index, const object& positionLocal/*=object() */ )
 {
-	ndarray O = np::array(make_tuple(0.,0.,0.));
+	ndarray O = np::array(bp::make_tuple(0.,0.,0.));
 	SE3 bodyFrame;
 	object pyV = O.copy();
 	Vec3 positionLocal_;
@@ -1030,7 +1030,7 @@ object VpDartModel::getJointPositionGlobal( int index, const object& positionLoc
 
 boost::python::object VpDartModel::getJointOrientationGlobal( int index )
 {
-	ndarray I = np::array( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+	ndarray I = np::array( bp::make_tuple(bp::make_tuple(1.,0.,0.), bp::make_tuple(0.,1.,0.), bp::make_tuple(0.,0.,1.)) );
 	SE3 bodyFrame;
 	object pyR = I.copy();
 
@@ -1042,7 +1042,7 @@ boost::python::object VpDartModel::getJointOrientationGlobal( int index )
 
 object VpDartModel::getJointVelocityGlobal( int index )
 {
-	ndarray O = np::array(make_tuple(0.,0.,0.));
+	ndarray O = np::array(bp::make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 
 	Vec3_2_pyVec3(getBodyVelocityGlobal(index, Inv(_boneTs[index]).GetPosition()), pyV);
@@ -1056,7 +1056,7 @@ boost::python::object VpDartModel::getJointAngVelocityGlobal( int index )
 
 object VpDartModel::getJointAccelerationGlobal( int index )
 {
-	ndarray O = np::array(make_tuple(0.,0.,0.));
+	ndarray O = np::array(bp::make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 	Vec3 pospos = Inv(_boneTs[index]).GetPosition();
 
@@ -1071,7 +1071,7 @@ boost::python::object VpDartModel::getJointAngAccelerationGlobal( int index )
 
 boost::python::object VpDartModel::getJointOrientationLocal( int index )
 {
-	ndarray I = np::array( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
+	ndarray I = np::array( bp::make_tuple(bp::make_tuple(1.,0.,0.), bp::make_tuple(0.,1.,0.), bp::make_tuple(0.,0.,1.)) );
 
 	if(index == 0)
 		return getJointOrientationGlobal(index);
@@ -1094,7 +1094,7 @@ boost::python::object VpDartModel::getJointOrientationLocal( int index )
 
 boost::python::object VpDartModel::getJointAngVelocityLocal( int index )
 {
-	ndarray O = np::array(make_tuple(0.,0.,0.));
+	ndarray O = np::array(bp::make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 
 	if(index == 0)
@@ -1127,7 +1127,7 @@ boost::python::object VpDartModel::getJointAngVelocityLocal( int index )
 
 boost::python::object VpDartModel::getJointAngAccelerationLocal( int index )
 {
-	ndarray O = np::array(make_tuple(0.,0.,0.));
+	ndarray O = np::array(bp::make_tuple(0.,0.,0.));
 	object pyV = O.copy();
 
 	if(index == 0)
@@ -1182,15 +1182,15 @@ void VpDartModel::setJointAccelerationGlobal( int index, const object& acc )
 
 bp::list VpDartModel::getDOFPositions()
 {
-//	static ndarray rootFrame( make_tuple(make_tuple(1.,0.,0.,0.), make_tuple(0.,1.,0.,0.), make_tuple(0.,0.,1.,0.), make_tuple(0.,0.,0.,1.)) );
+//	static ndarray rootFrame( bp::make_tuple(bp::make_tuple(1.,0.,0.,0.), bp::make_tuple(0.,1.,0.,0.), bp::make_tuple(0.,0.,1.,0.), bp::make_tuple(0.,0.,0.,1.)) );
 //
 //	bp::list ls = getInternalJointOrientationsLocal();
 //	SE3_2_pySE3(_nodes[0]->body.GetFrame() * Inv(_boneTs[0]), rootFrame);
 //	ls.insert(0, rootFrame );
 //	return ls;
 
-	ndarray I = np::array( make_tuple(make_tuple(1.,0.,0.), make_tuple(0.,1.,0.), make_tuple(0.,0.,1.)) );
-	ndarray O = np::array(make_tuple(0.,0.,0.));
+	ndarray I = np::array( bp::make_tuple(bp::make_tuple(1.,0.,0.), bp::make_tuple(0.,1.,0.), bp::make_tuple(0.,0.,1.)) );
+	ndarray O = np::array(bp::make_tuple(0.,0.,0.));
 	SE3 rootFrame;
 
 	object pyR = I.copy();
@@ -1215,13 +1215,13 @@ bp::list VpDartModel::getDOFPositions()
 	Vec3_2_pyVec3(rootFrame.GetPosition(), pyV);
 	SE3_2_pySO3(rootFrame, pyR);
 
-	ls.insert(0, make_tuple(pyV, pyR));
+	ls.insert(0, bp::make_tuple(pyV, pyR));
 	return ls;
 }
 
 bp::list VpDartModel::getDOFVelocities()
 {
-	ndarray rootGenVel = np::array(make_tuple(0.,0.,0.,0.,0.,0.));
+	ndarray rootGenVel = np::array(bp::make_tuple(0.,0.,0.,0.,0.,0.));
 
 	rootGenVel.slice(0,3) = getJointVelocityGlobal(0);
 //	rootGenVel.slice(3,6) = getJointAngVelocityGlobal(0);
@@ -1247,7 +1247,7 @@ bp::list VpDartModel::getDOFVelocities()
 
 bp::list VpDartModel::getDOFAccelerations()
 {
-	ndarray rootGenAcc = np::array(make_tuple(0.,0.,0.,0.,0.,0.));
+	ndarray rootGenAcc = np::array(bp::make_tuple(0.,0.,0.,0.,0.,0.));
 
 	rootGenAcc.slice(0,3) = getJointAccelerationGlobal(0);
 //	rootGenAcc.slice(3,6) = getJointAngAccelerationGlobal(0);
@@ -1268,7 +1268,7 @@ bp::list VpDartModel::getDOFAccelerations()
 
 void VpDartModel::setDOFAccelerations( const bp::list& dofaccs)
 {
-	ndarray O = np::array(make_tuple(0.,0.,0.));
+	ndarray O = np::array(bp::make_tuple(0.,0.,0.));
 
 	setJointAccelerationGlobal(0, dofaccs[0].slice(0,3));
 	setJointAngAccelerationLocal(0, dofaccs[0].slice(3,6));
