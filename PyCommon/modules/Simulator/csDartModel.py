@@ -586,13 +586,8 @@ class DartModel:
         return [self.getBodyPositionGlobal(i) for i in range(self.getBodyNum())]
 
     def getBodyAngAccelerationGlobal(self, index):
-        pyV = np.zeros(3)
-
-        genAcc = self._nodes[index].body.GetGenAcceleration()
-        pyV[0] = genAcc[0]
-        pyV[1] = genAcc[1]
-        pyV[2] = genAcc[2]
-        return pyV
+        return self.skeleton.body(index).world_spatial_acceleration()[0:3]
+        # return self.skeleton.body(index).world_angular_acceleration()
 
     def getBodyAngAccelerationsGlobal(self):
         ls = []
@@ -952,7 +947,7 @@ class DartModel:
         for i in range(1, len(self.skeleton.joints)):
             joint = self.skeleton.joints[i]
             # ls.append(mm.exp(np.array([dof.position() for dof in joint.dofs])))
-            if joint.num_dofs() > 0:
+            if joint.num_dofs() == 3:
                 ls.append(joint.get_local_transform()[:3, :3])
 
         return ls
@@ -1166,9 +1161,8 @@ class DartModel:
             self._nodes[i].joint.SetAccelerationLocal(pyVec3_2_Vec3(angaccs[i-1]))
 
     def setDOFAccelerations(self, dofaccs):
-        self.setJointAccelerationGlobal(0, dofaccs[0][0:3])
-        # self.setJointAngAccelerationGlobal(0, dofaccs[0][3:6])
-        self.setJointAngAccelerationLocal(0, dofaccs[0][3:6])
+        # self.setJointAccelerationGlobal(0, dofaccs[0][0:3])
+        # self.setJointAngAccelerationLocal(0, dofaccs[0][3:6])
         self.setInternalJointAngAccelerationsLocal(dofaccs[1:])
 
     def setDOFAccelerationsFlatFromExtendDOF(self, dofaccs):

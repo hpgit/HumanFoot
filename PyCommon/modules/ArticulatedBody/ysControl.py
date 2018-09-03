@@ -3,6 +3,35 @@ import numpy as np
 from PyCommon.modules.Math import mmMath as mm
 
 
+# joint_dof_info : list(tuple(dof_start_index, dof)), [(0, 6), (6, 3), ....]
+def getDesiredDOFAccelerations_flat(th_r, th, dth_r, dth, ddth_r, Kt, Dt, joint_dof_info, weightMap=None):
+    ddth_des_flat = np.zeros_like(th)  # type: list[np.ndarray]
+
+    kt = Kt
+    dt = Dt
+
+    for i in range(len(joint_dof_info)):
+        dof_start_index, dof = joint_dof_info[i]
+        _th_r = th_r[dof_start_index:dof_start_index+dof]
+        _th = th[dof_start_index:dof_start_index+dof]
+        _dth = dth[dof_start_index:dof_start_index+dof]
+
+        if weightMap is not None:
+            kt = Kt * weightMap[i]
+            dt = Dt * (weightMap[i]**.5)
+            # dt = 0.
+        if dof == 0:
+            continue
+        if dof == 6:
+            ddth_des_flat[dof_start_index+0:dof_start_index+3] = kt*(_th_r[:3] - _th[:3]) + dt*(-_dth[:3]) #+ ddth_r[i]
+            ddth_des_flat[dof_start_index+3:dof_start_index+6] = kt*(mm.logSO3(np.dot(mm.exp(_th[3:]).T, mm.exp(_th_r[3:])))) + dt*(-_dth[3:]) #+ ddth_r[i]
+        if dof == 3:
+            ddth_des_flat[dof_start_index+0:dof_start_index+3] = kt*(mm.logSO3(np.dot(mm.exp(_th).T, mm.exp(_th_r)))) + dt*(-_dth) #+ ddth_r[i]
+        else:
+            ddth_des_flat[dof_start_index+0:dof_start_index+dof] = kt*(_th_r - _th) + dt*(-_dth) #+ ddth_r[i]
+
+    return ddth_des_flat
+
 # th_r[0], th[0] : (Vec3, SO3), th_r[1:], th[1:] : SO3
 # dth_r, dth : Vec3
 # ddth_r : Vec3
@@ -53,6 +82,8 @@ def getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMap=N
 
         # ddth_des[i] = kt*(mm.logSO3(np.dot(th[i].transpose(), th_r[i]))) + dt*(dth_r[i] - dth[i]) #+ ddth_r[i]
         if th[i].shape[0] == 3:
+            ddth_des[i] = kt*(mm.logSO3(np.dot(th[i].transpose(), th_r[i]))) + dt*(-dth[i]) #+ ddth_r[i]
+        elif th[i].shape[0] > 0:
             ddth_des[i] = kt*(mm.logSO3(np.dot(th[i].transpose(), th_r[i]))) + dt*(-dth[i]) #+ ddth_r[i]
         else:
             ddth_des[i] = np.zeros(0)

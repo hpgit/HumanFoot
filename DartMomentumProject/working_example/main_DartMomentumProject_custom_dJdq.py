@@ -49,8 +49,8 @@ DART_CONTACT_ON = False
 
 
 def main():
-    np.set_printoptions(precision=4, linewidth=200)
-    # np.set_printoptions(precision=4, linewidth=1000, threshold=np.inf)
+    # np.set_printoptions(precision=4, linewidth=200)
+    np.set_printoptions(precision=4, linewidth=1000, threshold=np.inf)
 
     #motion, mcfg, wcfg, stepsPerFrame, config = mit.create_vchain_5()
     motion, mcfg, wcfg, stepsPerFrame, config, frame_rate= mit.create_biped()
@@ -119,9 +119,9 @@ def main():
     mus = [.5]*len(bodyIDsToCheck)
 
     # flat data structure
-    # ddth_des_flat = ype.makeFlatList(totalDOF)
-    # dth_flat = ype.makeFlatList(totalDOF)
-    # ddth_sol = ype.makeNestedList(DOFs)
+    ddth_des_flat = ype.makeFlatList(totalDOF)
+    dth_flat = ype.makeFlatList(totalDOF)
+    ddth_sol = ype.makeNestedList(DOFs)
 
     # viewer
     rd_footCenter = [None]
@@ -366,9 +366,9 @@ def main():
         th = dartModel.getDOFPositions()
         th_r_flat = dartMotionModel.get_q()
         # dth_r = motion.getDOFVelocities(frame)
-        # dth = dartModel.getDOFVelocities()
+        dth = dartModel.getDOFVelocities()
         # ddth_r = motion.getDOFAccelerations(frame)
-        # ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
+        # ddth_des = yct.getDesiredDOFAccelerations(th_r, th, None, dth, None, Kt, Dt)
         dth_flat = dartModel.get_dq()
         # dth_flat = np.concatenate(dth)
         # ddth_des_flat = pdcontroller.compute(dartMotionModel.get_q())
@@ -381,7 +381,7 @@ def main():
         #################################################
         # jacobian
         #################################################
-        contact_des_ids = [dartModel.skeleton.bodynode_index("LeftFoot"), dartModel.skeleton.bodynode_index("RightFoot")]
+        contact_des_ids = [dartModel.skeleton.bodynode_index("LeftFoot")]
         contact_ids = list()  # temp idx for balancing
         contact_ids.extend(contact_des_ids)
 
@@ -400,7 +400,7 @@ def main():
         ref_body_pos = list(map(dartMotionModel.getBodyPositionGlobal, contact_ids))
 
         for idx in range(len(ref_body_pos)):
-            ref_body_pos[1] = dartModel.skeleton.body("RightFoot").shapenodes[0].shape.size()[1]/2.
+            ref_body_pos[idx] = dartModel.skeleton.body("RightFoot").shapenodes[0].shape.size()[1]/2.
         # ref_body_vel = list(map(controlModel.getBodyVelocityGlobal, contact_ids))
         ref_body_angvel = [motion.getJointAngVelocityGlobal(joint_idx, frame) for joint_idx in contact_ids]
         ref_body_vel = [ref_joint_vel[i] + np.cross(ref_joint_angvel[i], ref_body_pos[i] - ref_joint_pos[i])
@@ -467,12 +467,32 @@ def main():
         body_num = dartModel.getBodyNum()
         Jsys = np.zeros((6*body_num, totalDOF))
         dJsys = np.zeros((6*body_num, totalDOF))
-        _, dJsysdq = compute_J_dJdq(dartModel.skeleton)
+        Jsys_, dJsysdq = compute_J_dJdq(dartModel.skeleton)
         # dJsys = np.zeros((6*body_num, totalDOF))
         for i in range(dartModel.getBodyNum()):
             Jsys[6*i:6*i+6, :] = dartModel.getBody(i).world_jacobian()[range(-3, 3), :]
             dJsys[6*i:6*i+6, :] = dartModel.getBody(i).world_jacobian_classic_deriv()[range(-3, 3), :]
         dJsysdq = np.dot(dJsys, dartModel.skeleton.dq)
+        # print(Jsys_ - Jsys)
+        # print(Jsys_.dot(dth_flat))
+        # print(Jsys.dot(dth_flat))
+        # print(dartModel.getBody(0).world_linear_velocity())
+        # print(np.dot(Jsys[:3, :3], Jsys[0:3, 3:6].T))
+        print('dq', np.asarray(dartModel.skeleton.dq)[6:9])
+        print('joint vel', dartModel.skeleton.joint(1).velocity())
+        # print('bjoint', mm.exp(dartModel.skeleton.q[6:9]).dot(get_bjoint_jacobian(dartModel.skeleton.q[6:9]).dot(np.asarray(dartModel.skeleton.dq)[6:9])))
+        # print('not bjoint', mm.exp(dartModel.skeleton.q[6:9]).dot(np.asarray(dartModel.skeleton.dq)[6:9]))
+        print('frombody', dartModel.getJointOrientationGlobal(1).T.dot(dartModel.getJointAngVelocityGlobal(1) - dartModel.getJointAngVelocityGlobal(0)))
+
+        print('ddq', np.asarray(dartModel.skeleton.ddq)[6:9])
+        # print('bjoint', mm.exp(dartModel.skeleton.q[6:9]).dot(get_bjoint_jacobian(dartModel.skeleton.q[6:9]).dot(np.asarray(dartModel.skeleton.dq)[6:9])))
+        # print('not bjoint', mm.exp(dartModel.skeleton.q[6:9]).dot(np.asarray(dartModel.skeleton.dq)[6:9]))
+
+        bodybody = dartModel.skeleton.body(1)
+        joint_trans = dartModel.skeleton.joint(1).get_world_frame_after_transform()
+        joint_pos = bodybody.to_local(joint_trans[:3, 3])
+        print('com spati', dartModel.getJointOrientationGlobal(1).T.dot(
+            dartModel.skeleton.body(1).world_angular_acceleration() - dartModel.skeleton.body(0).world_angular_acceleration()))
 
         J_contacts = []  # type: list[np.ndarray]
         dJ_contacts = []  # type: list[np.ndarray]
@@ -525,11 +545,14 @@ def main():
             dH_des = None
 
         # set up equality constraint
-        a_oris = list(map(mm.logSO3, [np.dot(np.dot(ref_body_ori[i], mm.getSO3FromVectors(np.dot(ref_body_ori[i], mm.unitY()), mm.unitY())), contact_body_ori[i].T) for i in range(len(contact_body_ori))]))
+        a_oris = list(map(mm.logSO3, [mm.getSO3FromVectors(np.dot(contact_body_ori[i], mm.unitY()), mm.unitY()) for i in range(len(contact_body_ori))]))
         KT_SUP = np.diag([kt_sup/10., kt_sup, kt_sup/10.])
         a_sups = [np.append(np.dot(KT_SUP, (ref_body_pos[i] - contact_body_pos[i] + contMotionOffset)) - dt_sup * contact_body_vel[i],
                             kt_sup*a_oris[i] - dt_sup * contact_body_angvel[i]) for i in range(len(a_oris))]
-        print(a_sups)
+        # print(a_sups)
+        # print(np.asarray(dartModel.skeleton.dq)[0:3])
+        # print(dartModel.getJointAngVelocityGlobal(0))
+        # print(dartModel.getJointAngVelocityLocal(0))
 
         # momentum matrix
         RS = np.dot(P, Jsys)
@@ -562,6 +585,7 @@ def main():
             config['weightMap']['LeftLeg'] = .25
             config['weightMap']['LeftFoot'] = .2
 
+        # print('vel2', np.dot(dartModel.getJointOrientationGlobal(0).T, dartModel.skeleton.body(0).world_linear_velocity()))
         w = mot.getTrackingWeight(DOFs, motion[0].skeleton, config['weightMap'])
 
         #if contact == 2:
@@ -583,8 +607,8 @@ def main():
 
         r = problem.solve()
         problem.clear()
+        ddth_sol_flat = np.asarray(r['x'])
         # ype.nested(r['x'], ddth_sol)
-        ddth_sol = np.asarray(r['x'])
         # ddth_sol[:6] = np.zeros(6)
 
         rootPos[0] = dartModel.getBodyPositionGlobal(selectedBody)
@@ -594,9 +618,11 @@ def main():
         _bodyIDs, _contactPositions, _contactPositionLocals, _contactForces = [], [], [], []
         for i in range(stepsPerFrame):
             # apply penalty force
-            _ddq, _tau, _bodyIDs, _contactPositions, _contactPositionLocals, _contactForces = hqp.calc_QP(dartModel.skeleton, ddth_sol, inv_h)
+            _ddq, _tau, _bodyIDs, _contactPositions, _contactPositionLocals, _contactForces = hqp.calc_QP(dartModel.skeleton, ddth_sol_flat, inv_h)
+            # _bodyIDs, _contactPositions, _contactPositionLocals, _contactForces = dartModel.calcPenaltyForce(bodyIDsToCheck,mus, Ks, Ds)
             dartModel.applyPenaltyForce(_bodyIDs, _contactPositionLocals, _contactForces)
             dartModel.skeleton.set_forces(_tau)
+            # dartModel.setDOFAccelerations(ddth_sol)
 
             if forceShowTime > viewer.objectInfoWnd.labelForceDur.value():
                 forceShowTime = 0
@@ -611,7 +637,6 @@ def main():
             dartModel.step()
 
         del bodyIDs[:]
-        del contactPositions[:]
         del contactPositions[:]
         del contactPositionLocals[:]
         del contactForces[:]

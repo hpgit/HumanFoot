@@ -106,13 +106,15 @@ public:
 
 	std::string index2name(int index){return _nodes[index]->name;}
 	int index2vpid(int index){return _nodes[index]->body.GetID();}
-	int name2index(std::string name){return _name2index[name];}
+	int getJointIndex(std::string name){return _name2index[name];}
 	int vpid2index(int vpid){return _id2index[vpid];}
 
 	int getBodyNum() { return _nodes.size(); }
     int getTotalDOF(){ return m_total_dof; }
     bp::list getDOFs();
     bp::list getJointDOFIndexes(int index);
+    bp::list getJointDOFIndexesByName(std::string name){return getJointDOFIndexes(_name2index[name]);}
+    bp::list getJointDOFInfo();
     int getJointNum(){ return (int)_nodes.size();}
     scalar getTotalMass();
     bp::list getBodyMasses();
@@ -168,7 +170,19 @@ public:
 	void setDOFAccelerations(const bp::list& dofaccs);
 	void setDOFTorques(const bp::list& dofTorque);
 
+	void set_q(const object& q);
+	object get_q();
+	object get_dq();
+	object get_ddq();
+	void set_ddq(const object& ddq);
+
+	boost::python::numpy::ndarray get_force();
+	void set_force(const object& force);
+
 	bp::tuple computeCom_J_dJdq();
+
+	object getMassMatrix();
+	boost::python::numpy::ndarray getCoriAndGrav();
 };
 
 #endif  // _CS_VP_DART_MODEL_H_

@@ -7,22 +7,6 @@ if '../PyCommon/modules' not in sys.path:
 import PyCommon.modules.Math.mmMath as mm
 import PyCommon.modules.Util.ysPythonEx as ype
 
-def getTrackingWeightVp(DOFs, model, weightMap, rootPositionWeight=0.):
-    weights = [1.]*model.getJointNum()
-    for name, weight in weightMap.items():
-        index = model.name2index('h'+name[1:])
-        weights[index] = weight
-
-    totalDOF = 0
-    for dof in DOFs:
-        totalDOF += dof
-
-    weights_ext = [None]*totalDOF
-    ype.repeatListElements(weights, weights_ext, DOFs)
-    weights_ext[0:3] = [rootPositionWeight, rootPositionWeight, rootPositionWeight]
-
-    return weights_ext
-
 def getTrackingWeight(DOFs, skeleton, weightMap, rootPositionWeight=0.):
     weights = [1.]*skeleton.getJointNum()
     for name, weight in weightMap.items():

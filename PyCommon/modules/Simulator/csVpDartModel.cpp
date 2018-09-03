@@ -58,11 +58,13 @@ BOOST_PYTHON_MODULE(csVpDartModel)
 
 		.def("index2name", &VpDartModel::index2name)
 		.def("index2vpid", &VpDartModel::index2vpid)
-		.def("name2index", &VpDartModel::name2index)
+		.def("getJointIndex", &VpDartModel::getJointIndex)
 
 		.def("getTotalDOF", &VpDartModel::getTotalDOF)
 		.def("getDOFs", &VpDartModel::getDOFs)
 		.def("getJointDOFIndexes", &VpDartModel::getJointDOFIndexes)
+		.def("getJointDOFIndexesByName", &VpDartModel::getJointDOFIndexesByName)
+		.def("getJointDOFInfo", &VpDartModel::getJointDOFInfo)
 		.def("getJointNum", &VpDartModel::getJointNum)
 		.def("getBodyNum", &VpDartModel::getBodyNum)
 		.def("getBodyMasses", &VpDartModel::getBodyMasses)
@@ -110,7 +112,19 @@ BOOST_PYTHON_MODULE(csVpDartModel)
 		.def("setDOFAccelerations", &VpDartModel::setDOFAccelerations)
 		.def("setDOFTorques", &VpDartModel::setDOFTorques)
 
+		.def("set_q", &VpDartModel::set_q)
+		.def("get_q", &VpDartModel::get_q)
+		.def("get_dq", &VpDartModel::get_dq)
+		.def("get_ddq", &VpDartModel::get_ddq)
+		.def("set_ddq", &VpDartModel::set_ddq)
+
+		.def("get_force", &VpDartModel::get_force)
+		.def("set_force", &VpDartModel::set_force)
+
         .def("computeCom_J_dJdq", &VpDartModel::computeCom_J_dJdq)
+
+		.def("getMassMatrix", &VpDartModel::getMassMatrix)
+		.def("getCoriAndGrav", &VpDartModel::getCoriAndGrav)
 	    ;
 }
 
@@ -275,6 +289,8 @@ void VpDartModel::skel_init(const char *skel_path)
             std::vector<float> geom_transform;
             getFloats(pShape->FirstChildElement("transformation")->GetText(), 6, geom_transform);
             _body_geom_transform.push_back(dof6_to_SE3(geom_transform));
+            pNode->material.SetDensity(mass / pGeom->GetInertia(1.).GetMass());
+            pNode->body.SetMaterial(&(pNode->material));
             pNode->body.AddGeometry(pGeom, dof6_to_SE3(geom_transform));
 
             pShape = pShape->NextSiblingElement("collision_shape");
@@ -293,7 +309,7 @@ void VpDartModel::skel_init(const char *skel_path)
         this->_name2index[body_name[i]] = i;
         this->_id2index[_nodes[i]->body.GetID()] = i;
 //        _pWorld->AddBody(&(_nodes[i]->body));
-        _nodes[i]->body.SetInertia(Inertia(body_mass[i]));
+//        _nodes[i]->body.SetInertia(Inertia(body_mass[i]));
 //        std::cout << body_name[i] << " " << _nodes[i]->body.GetInertia().GetMass() << " " << body_mass[i] << std::endl;
     }
 
@@ -381,7 +397,7 @@ void VpDartModel::skel_init(const char *skel_path)
 
         SE3 child_body_to_joint = joint_frame[i];
         SE3 joint_to_child_body = Inv(joint_frame[i]);
-        SE3 parent_body_to_joint = Inv(_nodes[parent_node_idx]->body.GetFrame()) * _nodes[child_node_idx]->body.GetFrame() * Inv(child_body_to_joint);
+        SE3 parent_body_to_joint = Inv(_nodes[parent_node_idx]->body.GetFrame()) * _nodes[child_node_idx]->body.GetFrame() * child_body_to_joint;
 //        std::cout << _nodes[parent_node_idx]->body.GetFrame() << std::endl;
 //        std::cout << _nodes[child_node_idx]->body.GetFrame() << std::endl;
 //        std::cout << joint_frame[i] << std::endl;
@@ -678,7 +694,18 @@ bp::list VpDartModel::getJointDOFIndexes(int index)
     for(int i=0; i<_nodes[index]->dof; i++)
         ls.append(dof_index++);
     return ls;
+}
 
+bp::list VpDartModel::getJointDOFInfo()
+{
+    bp::list ls;
+    for(std::vector<Node*>::size_type i=0; i<_nodes.size(); i++)
+    {
+        int dof_index = _nodes[i]->dof_start_index;
+        int dof = _nodes[i]->dof_start_index;
+        ls.append(bp::make_tuple(dof_index, dof));
+    }
+    return ls;
 }
 
 bp::list VpDartModel::getBodyMasses()
@@ -1241,7 +1268,7 @@ bp::list VpDartModel::getDOFVelocities()
         else if (_nodes[i]->dof == 0)
         {
             bp::tuple shape = bp::make_tuple(0);
-            np::dtype dtype = np::dtype::get_builtin<float>();
+            np::dtype dtype = np::dtype::get_builtin<double>();
             ndarray m_np = np::empty(shape, dtype);
             ls.append(m_np);
         }
@@ -1299,8 +1326,257 @@ void VpDartModel::setDOFTorques(const bp::list& dofTorque)
 	}
 }
 
+void VpDartModel::set_q(const object &q)
+{
+    for(auto pNode : this->_nodes)
+    {
+        int dof_start_index = pNode->dof_start_index;
+        int dof = pNode->dof;
+        if ( dof == 6)
+        {
+            SE3 rootJointFrame = Exp(pyVec3_2_Axis(q.slice(3, 6)));
+            rootJointFrame.SetPosition(pyVec3_2_Vec3(q.slice(0, 3)));
+            SE3 rootBodyFrame = rootJointFrame * _boneTs[0];
+
+            _nodes[0]->body.SetFrame(rootBodyFrame);
+        }
+        else if ( dof == 3)
+        {
+            vpBJoint *joint = static_cast<vpBJoint*>(pNode->m_pJoint);
+            joint->SetOrientation(Exp(pyVec3_2_Axis(q.slice(dof_start_index, dof_start_index+dof))));
+        }
+        else if (dof == 2)
+        {
+            vpUJoint *joint = static_cast<vpUJoint*>(pNode->m_pJoint);
+            joint->SetAngle(0, XD(q[dof_start_index+0]));
+            joint->SetAngle(1, XD(q[dof_start_index+1]));
+        }
+        else if ( dof == 1)
+        {
+            vpRJoint *joint = static_cast<vpRJoint*>(pNode->m_pJoint);
+            joint->SetAngle(XD(q[dof_start_index]));
+        }
+        else continue;
+    }
+
+    // update frame
+    _pWorld->UpdateFrame();
+    for(auto pNode : this->_nodes)
+        pNode->body.UpdateGeomFrame();
+}
+
+object VpDartModel::get_q()
+{
+    bp::tuple shape = bp::make_tuple(this->m_total_dof);
+    np::dtype dtype = np::dtype::get_builtin<double>();
+    ndarray q_np = np::zeros(shape, dtype);
+
+	ndarray O = np::array(bp::make_tuple(0.,0.,0.));
+	SE3 rootFrame;
+
+	object pyR = O.copy();
+	object pyV = O.copy();
+
+	rootFrame = _nodes[0]->body.GetFrame() * Inv(_boneTs[0]);
+
+	Vec3_2_pyVec3(rootFrame.GetPosition(), pyV);
+	Axis_2_pyVec3(LogR(rootFrame), pyR);
+
+	q_np.slice(0,3) = pyV;
+	q_np.slice(3,6) = pyR;
+
+	for(std::vector<Node*>::size_type i=1; i<_nodes.size(); ++i)
+	{
+	    int dof_start_index = _nodes[i]->dof_start_index;
+	    int dof = _nodes[i]->dof;
+
+	    if (dof == 3)
+	    {
+		    vpBJoint *joint = static_cast<vpBJoint*>(_nodes[i]->m_pJoint);
+	        Axis_2_pyVec3(LogR(joint->GetOrientation()), pyR);
+            q_np.slice(dof_start_index, dof_start_index+3) = pyR;
+        }
+	    else if (dof == 2)
+	    {
+		    vpUJoint *joint = static_cast<vpUJoint*>(_nodes[i]->m_pJoint);
+            q_np[dof_start_index] = joint->GetAngle(0);
+            q_np[dof_start_index+1] = joint->GetAngle(1);
+        }
+	    else if (dof == 1)
+            q_np[dof_start_index] = static_cast<vpRJoint*>(_nodes[i]->m_pJoint)->GetAngle();
+        else if (dof == 0) { }
+	}
+
+	return q_np;
+}
+
+object VpDartModel::get_dq()
+{
+    bp::tuple shape = bp::make_tuple(this->m_total_dof);
+    np::dtype dtype = np::dtype::get_builtin<double>();
+    ndarray dq_np = np::zeros(shape, dtype);
+
+	ndarray O = np::array(bp::make_tuple(0.,0.,0.));
+	object pyV = O.copy();
+
+	dq_np.slice(0,3) = getJointVelocityGlobal(0);
+	dq_np.slice(3,6) = getJointAngVelocityLocal(0);
+
+	for(std::vector<Node*>::size_type i=1; i<_nodes.size(); ++i)
+	{
+	    int dof_start_index = _nodes[i]->dof_start_index;
+	    int dof = _nodes[i]->dof;
+
+	    if (dof == 3)
+	    {
+		    vpBJoint *joint = static_cast<vpBJoint*>(_nodes[i]->m_pJoint);
+            Vec3_2_pyVec3(joint->GetVelocity(), pyV);
+            dq_np.slice(dof_start_index, dof_start_index+3) = pyV;
+        }
+	    else if (dof == 2)
+	    {
+		    vpUJoint *joint = static_cast<vpUJoint*>(_nodes[i]->m_pJoint);
+            dq_np[dof_start_index] = joint->GetVelocity(0);
+            dq_np[dof_start_index+1] = joint->GetVelocity(1);
+        }
+	    else if (dof == 1)
+            dq_np[dof_start_index] = static_cast<vpRJoint*>(_nodes[i]->m_pJoint)->GetVelocity();
+        else if (dof == 0) { }
+	}
+
+	return dq_np;
+}
+
+object VpDartModel::get_ddq()
+{
+    bp::tuple shape = bp::make_tuple(this->m_total_dof);
+    np::dtype dtype = np::dtype::get_builtin<double>();
+    ndarray ddq_np = np::zeros(shape, dtype);
+
+	ndarray O = np::array(bp::make_tuple(0.,0.,0.));
+	object pyV = O.copy();
+
+	ddq_np.slice(0,3) = getJointAccelerationGlobal(0);
+	ddq_np.slice(3,6) = getJointAngAccelerationLocal(0);
+
+	for(std::vector<Node*>::size_type i=1; i<_nodes.size(); ++i)
+	{
+	    int dof_start_index = _nodes[i]->dof_start_index;
+	    int dof = _nodes[i]->dof;
+
+	    if (dof == 3)
+	    {
+		    vpBJoint *joint = static_cast<vpBJoint*>(_nodes[i]->m_pJoint);
+            Vec3_2_pyVec3(joint->GetAcceleration(), pyV);
+            ddq_np.slice(dof_start_index, dof_start_index+3) = pyV;
+        }
+	    else if (dof == 2)
+	    {
+		    vpUJoint *joint = static_cast<vpUJoint*>(_nodes[i]->m_pJoint);
+            ddq_np[dof_start_index] = joint->GetAcceleration(0);
+            ddq_np[dof_start_index+1] = joint->GetAcceleration(1);
+        }
+	    else if (dof == 1)
+            ddq_np[dof_start_index] = static_cast<vpRJoint*>(_nodes[i]->m_pJoint)->GetAcceleration();
+        else if (dof == 0) { }
+	}
+
+	return ddq_np;
+}
+
+void VpDartModel::set_ddq( const object& ddq)
+{
+	setJointAccelerationGlobal(0, ddq.slice(0,3));
+	setJointAngAccelerationLocal(0, ddq.slice(3,6));
+
+	for(std::vector<Node*>::size_type i=1; i<_nodes.size(); ++i)
+	{
+	    int dof_start_index = _nodes[i]->dof_start_index;
+	    int dof = _nodes[i]->dof;
+
+	    if (dof == 3)
+	    {
+		    vpBJoint *joint = static_cast<vpBJoint*>(_nodes[i]->m_pJoint);
+            joint->SetAcceleration(pyVec3_2_Vec3(ddq.slice(dof_start_index, dof_start_index+3)));
+        }
+	    else if (dof == 2)
+	    {
+		    vpUJoint *joint = static_cast<vpUJoint*>(_nodes[i]->m_pJoint);
+            joint->SetAcceleration(0, XD(ddq[dof_start_index+0]));
+            joint->SetAcceleration(1, XD(ddq[dof_start_index+1]));
+        }
+	    else if (dof == 1)
+            static_cast<vpRJoint*>(_nodes[i]->m_pJoint)->SetAcceleration(XD(ddq[dof_start_index]));
+        else if (dof == 0) { }
+	}
+}
+
+void VpDartModel::set_force( const object& force)
+{
+//	setJointAccelerationGlobal(0, ddq.slice(0,3));
+//	setJointAngAccelerationLocal(0, ddq.slice(3,6));
+
+//	for(std::vector<Node*>::size_type i=1; i<_nodes.size(); ++i)
+	for(auto pNode : this->_nodes)
+	{
+	    int dof_start_index = pNode->dof_start_index;
+	    int dof = pNode->dof;
+
+	    if (dof == 3)
+	    {
+		    vpBJoint *joint = static_cast<vpBJoint*>(pNode->m_pJoint);
+            joint->SetTorque(pyVec3_2_Vec3(force.slice(dof_start_index, dof_start_index+3)));
+        }
+	    else if (dof == 2)
+	    {
+		    vpUJoint *joint = static_cast<vpUJoint*>(pNode->m_pJoint);
+            joint->SetTorque(0, XD(force[dof_start_index+0]));
+            joint->SetTorque(1, XD(force[dof_start_index+1]));
+        }
+	    else if (dof == 1)
+            static_cast<vpRJoint*>(pNode->m_pJoint)->SetTorque(XD(force[dof_start_index]));
+        else if (dof == 0) { }
+	}
+}
+
+ndarray VpDartModel::get_force()
+{
+//	setJointAccelerationGlobal(0, ddq.slice(0,3));
+//	setJointAngAccelerationLocal(0, ddq.slice(3,6));
+
+//	for(std::vector<Node*>::size_type i=1; i<_nodes.size(); ++i)
+	bp::tuple shape_force = bp::make_tuple(m_total_dof);
+    np::dtype dtype = np::dtype::get_builtin<double>();
+	ndarray force = np::zeros(shape_force, dtype);
 
 
+
+	for(auto pNode : this->_nodes)
+	{
+	    int dof_start_index = pNode->dof_start_index;
+	    int dof = pNode->dof;
+
+        if ( dof == 6)
+        {
+
+        }
+	    if (dof == 3)
+	    {
+		    vpBJoint *joint = static_cast<vpBJoint*>(pNode->m_pJoint);
+            force.slice(dof_start_index, dof_start_index+dof) = Vec3_2_pyVec3(joint->GetTorque());
+        }
+	    else if (dof == 2)
+	    {
+		    vpUJoint *joint = static_cast<vpUJoint*>(pNode->m_pJoint);
+		    force[dof_start_index+0] = joint->GetTorque(0);
+		    force[dof_start_index+1] = joint->GetTorque(1);
+        }
+	    else if (dof == 1)
+            force[dof_start_index] = static_cast<vpRJoint*>(pNode->m_pJoint)->GetTorque();
+        else if (dof == 0) { }
+	}
+	return force;
+}
 
 
 static ublas::vector<double> ToUblasVector(const Vec3 &v_vp)
@@ -1489,7 +1765,7 @@ static Axis GetBJointDJDQ(const Axis &m_rQ, const Axis &m_rDq)
 static object ToNumpyArray(const ublas::matrix<double> &m)
 {
 	bp::tuple shape = bp::make_tuple(m.size1(), m.size2());
-    np::dtype dtype = np::dtype::get_builtin<float>();
+    np::dtype dtype = np::dtype::get_builtin<double>();
 	ndarray m_np = np::empty(shape, dtype);
 	for(ublas::matrix<double>::size_type i=0; i<m.size1(); i++)
 	{
@@ -1507,7 +1783,7 @@ bp::tuple VpDartModel::computeCom_J_dJdq()
 
 	bp::tuple shape_J = bp::make_tuple(6*body_num, m_total_dof);
 	bp::tuple shape_dJdq = bp::make_tuple(6*body_num);
-    np::dtype dtype = np::dtype::get_builtin<float>();
+    np::dtype dtype = np::dtype::get_builtin<double>();
 	ndarray J = np::zeros(shape_J, dtype);
 	ndarray dJdq = np::zeros(shape_dJdq, dtype);
 	ublas::vector<double> offset, offset_velocity;
@@ -1533,10 +1809,8 @@ bp::tuple VpDartModel::computeCom_J_dJdq()
             J[6*body_idx + dof_index][dof_index] = 1.;
             for (int j=0; j<3; j++)
             {
-//                J[6*body_idx + 0 + j][3 + dof_index] = joint_frames[0][3*dof_index + j];
                 J[6*body_idx + 0 + j][3+dof_index] = _Jv(j, dof_index);
                 J[6*body_idx + 3 + j][3+dof_index] = _Jw(j, dof_index);
-
             }
         }
     }
@@ -1572,13 +1846,35 @@ bp::tuple VpDartModel::computeCom_J_dJdq()
 
         if (_nodes[i]->dof == 3)
         {
+            // ball joint
             _Jw = SE3ToUblasRotate(joint_frames[i]);
             // joint_global_ang_vel = Rotate(joint_frames[i], _nodes[i]->joint.GetVelocity());
+        }
+        else if(_nodes[i]->dof == 2)
+        {
+            // universal joint
+            vpUJoint *ujoint = static_cast<vpUJoint*>(_nodes[i]->m_pJoint);
+            ublas::matrix<double> ujoint_matrix(3, 2);
+            Vec3 axis0 = ujoint->GetAxis(0);
+            Vec3 axis1 = ujoint->GetAxis(1);
+            Vec3 first_axis_angle_vec = ujoint->GetAngle(0) * axis0;
+            Axis first_axis_angle(first_axis_angle_vec[0], first_axis_angle_vec[1], first_axis_angle_vec[2]);
+            Vec3 second_axis_joint_coord = Exp(first_axis_angle) * axis1;
+
+            for(int ujoint_index=0; ujoint_index<3; ujoint_index++)
+            {
+                ujoint_matrix(ujoint_index, 0) = axis0[ujoint_index];
+                ujoint_matrix(ujoint_index, 1) = second_axis_joint_coord[ujoint_index];
+            }
+
+            _Jw = prod(SE3ToUblasRotate(joint_frames[i]), ujoint_matrix);
+            // joint_global_ang_vel = Rotate(joint_frames[i], _nodes[i]->joint_revolute.GetVelocity() * _nodes[i]->joint_revolute.GetAxis());
         }
         else if(_nodes[i]->dof == 1)
         {
             // revolute joint
-            _Jw = prod(SE3ToUblasRotate(joint_frames[i]), ToUblasMatrix(static_cast<vpRJoint*>(_nodes[i]->m_pJoint)->GetAxis()));
+            vpRJoint *rjoint = static_cast<vpRJoint*>(_nodes[i]->m_pJoint);
+            _Jw = prod(SE3ToUblasRotate(joint_frames[i]), ToUblasMatrix(rjoint->GetAxis()));
             // joint_global_ang_vel = Rotate(joint_frames[i], _nodes[i]->joint_revolute.GetVelocity() * _nodes[i]->joint_revolute.GetAxis());
         }
 
@@ -1618,4 +1914,37 @@ bp::tuple VpDartModel::computeCom_J_dJdq()
 	}
 
 	return bp::make_tuple(J, dJdq);
+}
+
+
+object VpDartModel::getMassMatrix()
+{
+	bp::tuple shape_ddq = bp::make_tuple(m_total_dof);
+    np::dtype dtype = np::dtype::get_builtin<double>();
+	ndarray ddq = np::zeros(shape_ddq, dtype);
+	bp::tuple shape_M = bp::make_tuple(m_total_dof, m_total_dof);
+	ndarray M = np::empty(shape_M, dtype);
+
+	ndarray c = this->getCoriAndGrav();
+
+	for(int i=0; i < m_total_dof; i++)
+	{
+	    if (i > 0) ddq[i-1] = 0.;
+	    ddq[i] = 1.;
+        set_ddq(ddq);
+        _nodes[0]->body.GetSystem()->InverseDynamics();
+        M.slice(_, i) = get_force() - c;
+	}
+	return M;
+}
+
+// must be called at first:clear all torques and accelerations
+np::ndarray VpDartModel::getCoriAndGrav()
+{
+	bp::tuple shape_ddq = bp::make_tuple(m_total_dof);
+    np::dtype dtype = np::dtype::get_builtin<double>();
+	ndarray ddq = np::zeros(shape_ddq, dtype);
+	set_ddq(ddq);
+	_nodes[0]->body.GetSystem()->InverseDynamics();
+	return get_force();
 }

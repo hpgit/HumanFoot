@@ -53,17 +53,25 @@ def main():
     np.set_printoptions(precision=5, threshold=np.inf, suppress=True, linewidth=3000)
 
     config = dict()
-    config['weightMap'] = {'j_scapula_left':.2, 'j_bicep_left':.2, 'j_forearm_left':.2, 'j_hand_left':.2,
-                           'j_scapula_right':.2, 'j_bicep_right':.2, 'j_forearm_right':.2, 'j_hand_right':.2,
-                           'j_abdomen':.6, 'j_spine':.6, 'j_head':.6, 'j_heel_right':.2, 'j_heel_left':.2, 'j_pelvis':0.5,
-                           'j_thigh_left':5., 'j_shin_left':.5, 'j_thigh_right':5., 'j_shin_right':.5}
+    config['weightMap'] = {'h_scapula_left':.4, 'h_bicep_left':.3, 'h_forearm_left':.2, 'h_hand_left':.2,
+                           'h_scapula_right':.4, 'h_bicep_right':.3, 'h_forearm_right':.2, 'h_hand_right':.2,
+                           'h_abdomen':.6, 'h_spine':.6, 'j_head':.6, 'h_heel_right':.2, 'h_heel_left':.2, 'h_pelvis':0.5,
+                           'h_thigh_left':5., 'h_shin_left':.5, 'h_thigh_right':5., 'h_shin_right':.5}
 
     motionModel = cvdm.VpDartModel("cart_pole_blade.skel")
-    motionModel.translateByOffset((1.5, 0.9, 0.))
+    motionModel.translateByOffset((1.5, 0.93, 0.))
+    init_q = motionModel.get_q()
+    init_q[motionModel.getJointDOFIndexesByName('h_thigh_right')] = np.array((0., 0., math.pi/8.))
+    init_q[motionModel.getJointDOFIndexesByName('h_shin_right')] = np.array((0., 0., -math.pi/4.))
+    init_q[motionModel.getJointDOFIndexesByName('h_heel_right')] = np.array((0., 0., math.pi/8.))
+    motionModel.set_q(init_q)
+    init_q[0] = 0.
     controlModel = cvdm.VpDartModel("cart_pole_blade.skel")
-    controlModel.translateByOffset((0., 0.9, 0.))
     # vpWorld.SetGlobalDamping(0.999)
+    controlModel.set_q(init_q)
     controlModel.initializeHybridDynamics()
+    # print(controlModel.getTotalMass())
+
 
     render_fps = 40
     stepsPerFrame = round(1./(controlModel.getTimeStep() * render_fps))
@@ -125,12 +133,12 @@ def main():
     Bh = 0.13
 
     # selectedBody = motion[0].skeleton.getJointIndex(config['end'])
-    selectedBody = controlModel.name2index('h_spine')
+    selectedBody = controlModel.getJointIndex('h_spine')
 
-    supL = controlModel.name2index('h_blade_left')
-    supR = controlModel.name2index('h_blade_right')
-    # supL = controlModel.name2index('h_heel_left')
-    # supR = controlModel.name2index('h_heel_right')
+    supL = controlModel.getJointIndex('h_blade_left')
+    supR = controlModel.getJointIndex('h_blade_right')
+    # supL = controlModel.getJointIndex('h_heel_left')
+    # supR = controlModel.getJointIndex('h_heel_right')
 
     # momentum matrix
     linkMasses = controlModel.getBodyMasses()
@@ -334,13 +342,13 @@ def main():
     extendedFootName = ['h_blade']
     # lIDdic = {'Left'+name: motion[0].skeleton.getJointIndex('Left'+name) for name in extendedFootName}
     # rIDdic = {'Right'+name: motion[0].skeleton.getJointIndex('Right'+name) for name in extendedFootName}
-    lIDdic = {name + '_left' : controlModel.name2index(name + '_left') for name in extendedFootName}
-    rIDdic = {name + '_right': controlModel.name2index(name + '_right') for name in extendedFootName}
+    lIDdic = {name + '_left' : controlModel.getJointIndex(name + '_left') for name in extendedFootName}
+    rIDdic = {name + '_right': controlModel.getJointIndex(name + '_right') for name in extendedFootName}
     footIdDic = lIDdic.copy()
     footIdDic.update(rIDdic)
 
-    lIDlist = [controlModel.name2index(name + '_left') for name in extendedFootName]
-    rIDlist = [controlModel.name2index(name + '_right') for name in extendedFootName]
+    lIDlist = [controlModel.getJointIndex(name + '_left') for name in extendedFootName]
+    rIDlist = [controlModel.getJointIndex(name + '_right') for name in extendedFootName]
     footIdlist = []
     footIdlist.extend(lIDlist)
     footIdlist.extend(rIDlist)
@@ -405,19 +413,27 @@ def main():
         dt_sup = 2*(kt_sup**.5)
 
         # tracking
-        # th_r = motion.getDOFPositions(frame)
-        th_r = motionModel.getDOFPositions()
-        th = controlModel.getDOFPositions()
-        # dth_r = motion.getDOFVelocities(frame)
-        dth = controlModel.getDOFVelocities()
-        # ddth_r = motion.getDOFAccelerations(frame)
-        ddth_des = yct.getDesiredDOFAccelerations(th_r, th, None, dth, None, Kt, Dt)
+        # # th_r = motion.getDOFPositions(frame)
+        # th_r = motionModel.getDOFPositions()
+        # th = controlModel.getDOFPositions()
+        # # dth_r = motion.getDOFVelocities(frame)
+        # dth = controlModel.getDOFVelocities()
+        # # ddth_r = motion.getDOFAccelerations(frame)
+        # ddth_des = yct.getDesiredDOFAccelerations(th_r, th, None, dth, None, Kt, Dt)
+        #
+        # # ype.flatten(fix_dofs(DOFs, ddth_des, mcfg, joint_names), ddth_des_flat)
+        # # ype.flatten(fix_dofs(DOFs, dth, mcfg, joint_names), dth_flat)
+        # # print(ddth_des)
+        # ype.flatten(ddth_des, ddth_des_flat)
+        # ype.flatten(dth, dth_flat)
 
-        # ype.flatten(fix_dofs(DOFs, ddth_des, mcfg, joint_names), ddth_des_flat)
-        # ype.flatten(fix_dofs(DOFs, dth, mcfg, joint_names), dth_flat)
-        # print(ddth_des)
-        ype.flatten(ddth_des, ddth_des_flat)
-        ype.flatten(dth, dth_flat)
+        th_r_flat = motionModel.get_q()
+        th_flat = controlModel.get_q()
+        dth_flat = controlModel.get_dq()
+        joint_dof_info = controlModel.getJointDOFInfo()
+
+        ddth_des_flat = yct.getDesiredDOFAccelerations_flat(th_r_flat, th_flat, None, dth_flat, None, Kt, Dt, joint_dof_info)
+        # print(controlModel.getCoriAndGrav())
 
         #################################################
         # jacobian
@@ -456,7 +472,8 @@ def main():
         contact_right = len(set(contact_des_ids).intersection(rIDlist)) > 0
         contact_left = len(set(contact_des_ids).intersection(lIDlist)) > 0
 
-        contMotionOffset = th[0][0] - th_r[0][0]
+        # contMotionOffset = th_flat[0:3] - th_r_flat[0:3]
+        contMotionOffset = np.array((1.5, 0., 0.))
 
         linkPositions = [controlModel.getBodyComPositionGlobal(i) for i in range(controlModel.getBodyNum())]
         linkVelocities = [controlModel.getBodyComVelocityGlobal(i) for i in range(controlModel.getBodyNum())]
@@ -597,24 +614,24 @@ def main():
         #######################################################
         if LEG_FLEXIBLE:
             if contact == 2:
-                config['weightMap']['j_thigh_right'] = .8
-                config['weightMap']['j_shin_right'] = .8
-                config['weightMap']['j_heel_right'] = .8
+                config['weightMap']['h_thigh_right'] = .8
+                config['weightMap']['h_shin_right'] = .8
+                config['weightMap']['h_heel_right'] = .8
             else:
-                config['weightMap']['j_thigh_right'] = .1
-                config['weightMap']['j_shin_right'] = .25
-                config['weightMap']['j_heel_right'] = .2
+                config['weightMap']['h_thigh_right'] = .1
+                config['weightMap']['h_shin_right'] = .25
+                config['weightMap']['h_heel_right'] = .2
 
             if contact == 1:
-                config['weightMap']['j_thigh_left'] = .8
-                config['weightMap']['j_shin_left'] = .8
-                config['weightMap']['j_heel_left'] = .8
+                config['weightMap']['h_thigh_left'] = .8
+                config['weightMap']['h_shin_left'] = .8
+                config['weightMap']['h_heel_left'] = .8
             else:
-                config['weightMap']['j_thigh_left'] = .1
-                config['weightMap']['j_shin_left'] = .25
-                config['weightMap']['j_heel_left'] = .2
+                config['weightMap']['h_thigh_left'] = .1
+                config['weightMap']['h_shin_left'] = .25
+                config['weightMap']['h_heel_left'] = .2
 
-        w = mot.getTrackingWeightVp(DOFs, controlModel, config['weightMap'])
+        w = mot.getTrackingWeight(DOFs, controlModel, config['weightMap'])
 
         mot.addTrackingTerms(problem, totalDOF, Bt, w, ddth_des_flat)
         if dH_des is not None:
@@ -635,7 +652,7 @@ def main():
         problem.clear()
         ddth_sol_flat = np.asarray(r['x'])
         # ddth_sol_flat[foot_seg_dofs] = np.array(ddth_des_flat)[foot_seg_dofs]
-        ype.nested(ddth_sol_flat, ddth_sol)
+        # ype.nested(ddth_sol_flat, ddth_sol)
 
         rootPos[0] = controlModel.getBodyPositionGlobal(selectedBody)
         localPos = [[0, 0, 0]]
@@ -645,9 +662,9 @@ def main():
             controlModel.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
 
             # apply penalty force
-            controlModel.setDOFAccelerations(ddth_sol)
+            # controlModel.setDOFAccelerations(ddth_sol)
             # controlModel.setDOFAccelerations(ddth_des)
-            # controlModel.set_ddq(ddth_sol_flat)
+            controlModel.set_ddq(ddth_sol_flat)
             # controlModel.set_ddq(ddth_des_flat)
             controlModel.solveHybridDynamics()
 

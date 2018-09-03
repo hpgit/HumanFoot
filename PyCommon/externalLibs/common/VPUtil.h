@@ -82,6 +82,14 @@ inline void pyVec3_2_Vec3(const object& pyV, Vec3& V)
 {
 	V[0]=XD(pyV[0]); V[1]=XD(pyV[1]); V[2]=XD(pyV[2]);
 }
+inline Axis pyVec3_2_Axis(const object& pyV)
+{
+	return Axis( XD(pyV[0]), XD(pyV[1]), XD(pyV[2]) );
+}
+inline void pyVec3_2_Axis(const object& pyV, Axis& V)
+{
+	V[0]=XD(pyV[0]); V[1]=XD(pyV[1]); V[2]=XD(pyV[2]);
+}
 inline object Vec3_2_pyVec3(const Vec3& V)
 {
 	return numpy::array(bp::make_tuple(V[0], V[1], V[2]));
@@ -91,6 +99,10 @@ inline object Axis_2_pyVec3(const Axis& V)
 	return numpy::array(bp::make_tuple(V[0], V[1], V[2]));
 }
 inline void Vec3_2_pyVec3(const Vec3& V, object& pyV)
+{
+	pyV[0] = V[0]; pyV[1] = V[1]; pyV[2] = V[2];
+}
+inline void Axis_2_pyVec3(const Axis& V, object& pyV)
 {
 	pyV[0] = V[0]; pyV[1] = V[1]; pyV[2] = V[2];
 }

@@ -104,6 +104,20 @@ def get_bjoint_jacobian(m_rQ):
 
     return alpha * mm.getDyadMatrixForm(m_rQ) + beta * np.eye(3) - gamma * mm.getCrossMatrixForm(m_rQ)
 
+def get_th(skel):
+    """
+
+    :param skel:
+    :type skel: pydart.Skeleton
+    :return:
+    """
+    q = skel.q
+    th = np.zeros_like(q)
+    th[0:3] = q[3:6]
+
+
+
+
 
 def compute_J_dJdq(skel, ANGULAR_FIRST=False):
     """
@@ -149,30 +163,31 @@ def compute_J_dJdq(skel, ANGULAR_FIRST=False):
     ##############################################
     # jacobian
     _Jw = joint_frames[0][:3, :3]
+    # _Jw = np.dot(joint_frames[0][:3, :3], get_bjoint_jacobian(skel.q[:3]))
     for body_idx in range(body_num):
-        eff_pos = skel.body(body_idx).to_world()
-        offset = eff_pos - joint_frames[0][3, :3]
+        eff_pos = skel.body(body_idx).com()
+        offset = eff_pos - joint_frames[0][:3, 3]
         _Jv = -np.dot(mm.getCrossMatrixForm(offset), _Jw)
 
-        J[6*body_idx+0:6*body_idx+3, 0:3] = np.eye(3)
+        J[6*body_idx+0:6*body_idx+3, 3:6] = joint_frames[0][:3, :3]
         if ANGULAR_FIRST:
-            J[6*body_idx+3:6*body_idx+6, 3:6] = _Jv
-            J[6*body_idx+0:6*body_idx+3, 3:6] = _Jw
+            J[6*body_idx+3:6*body_idx+6, 0:3] = _Jv
+            J[6*body_idx+0:6*body_idx+3, 0:3] = _Jw
         else:
-            J[6*body_idx+0:6*body_idx+3, 3:6] = _Jv
-            J[6*body_idx+3:6*body_idx+6, 3:6] = _Jw
+            J[6*body_idx+0:6*body_idx+3, 0:3] = _Jv
+            J[6*body_idx+3:6*body_idx+6, 0:3] = _Jw
 
     # jacobian derivative
-    joint_global_pos = joint_frames[0][3, :3]
+    joint_global_pos = joint_frames[0][:3, 3]
     #TODO: check global velocity
     joint_global_velocity = skel.body(0).world_linear_velocity(skel.joint(0).transform_from_child_body_node()[3, :3])
     joint_global_ang_vel = skel.body(0).world_angular_velocity()
 
     _dJdqw = np.zeros(3)
     for body_idx in range(body_num):
-        eff_pos = skel.body(body_idx).to_world()
+        eff_pos = skel.body(body_idx).com()
         offset = eff_pos - joint_global_pos
-        eff_vel = skel.body(body_idx).world_linear_velocity()
+        eff_vel = skel.body(body_idx).com_linear_velocity()
         offset_velocity = eff_vel - joint_global_velocity
         _dJdqv = -mm.cross(offset, _dJdqw) - mm.cross(offset_velocity, joint_global_ang_vel)
 
@@ -190,18 +205,19 @@ def compute_J_dJdq(skel, ANGULAR_FIRST=False):
         joint = skel.joint(joint_idx)  # type: pydart.Joint
         parent_joint_index = joint.parent_bodynode.parent_joint.id
         dof_start_index = joint.dofs[0].index_in_skeleton()
-        joint_global_pos = joint_frames[joint_idx][3, :3]
+        joint_global_pos = joint_frames[joint_idx][:3, 3]
         #TODO: check global velocity
         joint_global_velocity = joint.child_bodynode.world_linear_velocity(joint.transform_from_child_body_node()[3, :3])
         joint_global_ang_vel = joint.child_bodynode.world_angular_velocity() - joint.parent_bodynode.world_angular_velocity()
 
         _Jw = joint_frames[joint_idx][:3, :3]
+        # _Jw = np.dot(joint_frames[joint_idx][:3, :3], get_bjoint_jacobian(joint.position()))
         _dJdqw = mm.cross(joint.parent_bodynode.world_angular_velocity(), joint_global_ang_vel)
 
         for body_idx in range(1, body_num):
             if joint_idx in ancestors[body_idx]:
-                eff_pos = skel.body(body_idx).to_world()
-                eff_vel = skel.body(body_idx).world_linear_velocity()
+                eff_pos = skel.body(body_idx).com()
+                eff_vel = skel.body(body_idx).com_linear_velocity()
 
                 # jacobian
                 offset = eff_pos - joint_global_pos
