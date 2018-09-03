@@ -13,7 +13,7 @@ def main():
 
     pydart.init()
 
-    env_name = 'jump_whole'
+    env_name = 'walk_spin'
 
     ppo = PPO(env_name, 1, visualize_only=True)
     if not MOTION_ONLY:
@@ -38,7 +38,10 @@ def main():
         state = ppo.env.GetState(0)
         action_dist, _ = ppo.model(torch.tensor(state.reshape(1, -1)).float())
         action = action_dist.loc.detach().numpy()
-        res = ppo.env.Steps(action)
+        res = ppo.env.Steps(np.zeros_like(action))
+        print(frame, ppo.env.ref_skel.current_frame, ppo.env.world.time()*ppo.env.ref_motion.fps)
+        if res[2]:
+            print(frame, 'Done')
 
         # contact rendering
         contacts = ppo.env.world.collision_result.contacts

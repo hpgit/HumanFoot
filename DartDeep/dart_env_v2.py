@@ -130,9 +130,10 @@ class HpDartEnv(gym.Env):
         return np.asarray(state).flatten()
 
     def reward(self):
-        current_frame = min(len(self.ref_motion)-1, int((self.world.time() + self.time_offset) * self.ref_motion.fps))
-        self.ref_skel.set_positions(self.ref_motion[current_frame].get_q())
-        self.ref_skel.set_velocities(self.ref_motion.get_dq(current_frame))
+        # current_frame = min(len(self.ref_motion)-1, int((self.world.time() + self.time_offset) * self.ref_motion.fps))
+        current_time = self.world.time() + self.time_offset
+        self.ref_skel.set_positions(self.ref_motion.get_q_by_time(current_time))
+        self.ref_skel.set_velocities(self.ref_motion.get_dq_dart_by_time(current_time))
 
         p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
         p_e = np.asarray([body.world_transform()[:3, 3] for body in self.body_e]).flatten()
@@ -166,9 +167,10 @@ class HpDartEnv(gym.Env):
         """
         action = np.hstack((np.zeros(6), _action/10.))
 
-        current_frame = min(len(self.ref_motion)-1, int((self.world.time() + self.time_offset) * self.ref_motion.fps))
-        self.ref_skel.set_positions(self.ref_motion[current_frame].get_q())
-        self.ref_skel.set_velocities(self.ref_motion.get_dq(current_frame))
+        current_frame = min(len(self.ref_motion)-1, int((self.world.time() + self.time_offset) * self.ref_motion.fps)+1)
+        self.ref_skel.set_positions(self.ref_motion.get_q(current_frame))
+        self.ref_skel.set_velocities(self.ref_motion.get_dq_dart(current_frame))
+        self.ref_skel.current_frame = current_frame
         for i in range(self.step_per_frame):
             self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
             self.world.step()
@@ -182,16 +184,13 @@ class HpDartEnv(gym.Env):
             observation (object): The initial observation of the space. Initial reward is assumed to be 0.
         """
         self.world.reset()
-        # rand_frame = randrange(0, len(self.ref_motion)//2)
         self.rand_frame = randrange(0, len(self.ref_motion))
         if not self.rsi:
             self.rand_frame = 0
         self.time_offset = self.rand_frame / self.ref_motion.fps
-        self.skel.set_positions(self.ref_motion[self.rand_frame].get_q())
-        dq = self.ref_motion.get_dq(self.rand_frame)
-        dq[3:6] = np.asarray(self.ref_motion.getDOFVelocitiesLocal(self.rand_frame)[0][:3])
+        self.skel.set_positions(self.ref_motion.get_q(self.rand_frame))
+        dq = self.ref_motion.get_dq_dart(self.rand_frame)
         self.skel.set_velocities(dq)
-        # self.skel.set_velocities(self.ref_motion.get_dq(rand_frame))
 
         return self.state()
 

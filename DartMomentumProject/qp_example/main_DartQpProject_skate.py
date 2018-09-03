@@ -409,6 +409,7 @@ def main():
         # ype.flatten(ddth_des, ddth_des_flat)
         # ype.flatten(dth, dth_flat)
 
+        print(dartModel.skeleton.get_spd_tau(th_r_flat, Kt, Dt))
 
         #################################################
         # jacobian

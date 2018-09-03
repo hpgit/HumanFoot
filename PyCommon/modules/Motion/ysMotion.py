@@ -391,22 +391,72 @@ class JointMotion(Motion):
         '''
         get generalized position in joint coordinate
 
-        linear first and linear part is independent on root body
+        linear second and linear part is on world frame
         :param frame:
         :return:
         '''
         return self[frame].get_q()
 
+    def get_q_by_time(self, t):
+        """
+        get generalized position in joint coordinate in continuous time
+
+        linear second and linear part is on world frame
+        :param t:
+        :return:
+        """
+        frame0 = int(t * self.fps)
+        frame1 = frame0 + 1
+        if t <= 0:
+            return self[0].get_q()
+
+        if frame1 >= len(self):
+            return self[-1].get_q()
+
+        return self[frame0].blendPosture(self[frame1], t - frame0/self.fps).get_q()
+
     def get_dq(self, frame0, frame1=None):
-        '''
+        """
         get generalized velocity in joint coordinate
 
-        linear first and linear part is independent on root body
+        linear second and linear part is dependent on root body frame
         :param frame0:
         :param frame1:
         :return:
-        '''
+        """
         return self._getDerivativeBasic(frame0, frame1, self.get_q, lambda x, y: x-y)
+
+    def get_dq_dart(self, frame0, frame1=None):
+        """
+        get generalized velocity in joint coordinate
+
+        linear second and linear part is dependent on root body frame
+        :param frame0:
+        :param frame1:
+        :return:
+        """
+        dof_vel = self.getDOFVelocitiesLocal(frame0)
+        dof_vel[0][0:3], dof_vel[0][3:6] = dof_vel[0][3:6], dof_vel[0][0:3]
+
+        return np.concatenate(dof_vel)
+
+    def get_dq_dart_by_time(self, t):
+        """
+        get generalized velocity in joint coordinate in continuous time
+
+        linear second and linear part is dependent on root body frame
+        :param t:
+        :return:
+        """
+        frame0 = int(t * self.fps)
+        frame1 = frame0 + 1
+        if t <= 0:
+            return self.get_dq_dart(0)
+
+        if frame1 >= len(self):
+            return self.get_dq_dart(len(self)-1)
+        dt = t - frame0 * self.fps
+        return (1.-dt) * self.get_dq_dart(frame0) + dt * self.get_dq_dart(frame1)
 
     def get_ddq(self, frame0, frame1=None):
         '''
@@ -1045,7 +1095,7 @@ class JointPosture(Posture):
             p.updateGlobalT()
         # p.updateGlobalT()
         return p
-    
+
     #===========================================================================
     # joint index based new functions
     #===========================================================================

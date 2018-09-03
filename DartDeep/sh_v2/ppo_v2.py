@@ -301,6 +301,7 @@ class PPO(object):
         self.num_training += 1
 
     def Evaluate(self):
+        self.num_evaluation += 1
         self.env.Resets(True)
         self.env.Reset(False, 0)
 
@@ -329,7 +330,7 @@ class PPO(object):
                     total_step += 1
                     total_reward += self.env.GetReward(j)
             states = self.env.GetStates()
-            if all(terminate == True for terminate in self.env.IsTerminalStates()):
+            if all(self.env.IsTerminalStates()):
                 break
         self.print('noise : {:.3f}'.format(self.model.log_std.exp().mean()))
         if total_step is not 0:
@@ -337,7 +338,6 @@ class PPO(object):
                   .format(total_reward / self.num_slaves, total_reward / total_step, total_step))
         else:
             self.print('bad..')
-        self.num_evaluation += 1
         return total_reward / self.num_slaves, total_step / self.num_slaves
 
     def print(self, s):
@@ -371,7 +371,7 @@ if __name__ == "__main__":
     tic = time.time()
     ppo = None  # type: PPO
     if len(sys.argv) < 2:
-        ppo = PPO('walk', 1)
+        ppo = PPO('walk_spin', 1)
     else:
         ppo = PPO(sys.argv[1], 1)
 
