@@ -38,8 +38,8 @@ def main():
         state = ppo.env.GetState(0)
         action_dist, _ = ppo.model(torch.tensor(state.reshape(1, -1)).float())
         action = action_dist.loc.detach().numpy()
-        res = ppo.env.Steps(np.zeros_like(action))
-        print(frame, ppo.env.ref_skel.current_frame, ppo.env.world.time()*ppo.env.ref_motion.fps)
+        res = ppo.env.Steps(action)
+        # print(frame, ppo.env.ref_skel.current_frame, ppo.env.world.time()*ppo.env.ref_motion.fps)
         if res[2]:
             print(frame, 'Done')
 

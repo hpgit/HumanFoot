@@ -371,7 +371,7 @@ if __name__ == "__main__":
     tic = time.time()
     ppo = None  # type: PPO
     if len(sys.argv) < 2:
-        ppo = PPO('walk_spin', 1)
+        ppo = PPO('walk', 1)
     else:
         ppo = PPO(sys.argv[1], 1)
 
@@ -393,8 +393,8 @@ if __name__ == "__main__":
 
     for i in range(50000):
         ppo.Train()
-        print('# {}'.format(i))
-        ppo.log_file.write('# {}'.format(i) + "\n")
+        print('# {}'.format(i+1))
+        ppo.log_file.write('# {}'.format(i+1) + "\n")
         reward, step = ppo.Evaluate()
         rewards.append(reward)
         steps.append(step)

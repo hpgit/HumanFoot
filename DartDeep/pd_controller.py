@@ -11,15 +11,10 @@ class PDController:
         self.h = h
         self.skel = skel
         self.Kp, self.Kd = Kp, Kd
-        ndofs = self.skel.ndofs
-        self.Kp = np.diagflat([Kp] * ndofs)
-        self.Kd = np.diagflat([Kd] * ndofs)
         self.preoffset = 0.0
 
     def setKpKd(self, Kp, Kd):
-        ndofs = self.skel.ndofs
-        self.Kp = np.diagflat([Kp] * ndofs)
-        self.Kd = np.diagflat([Kd] * ndofs)
+        self.Kp, self.Kd = Kp, Kd
 
     def compute_flat(self, qhat, robustPD=True):
         skel = self.skel
@@ -27,13 +22,13 @@ class PDController:
         dq = skel.dq
 
         if robustPD:
-            invM = np.linalg.inv(skel.M + self.Kd * self.h)
-            p = -self.Kp.dot(-skel.position_differences(q, qhat) + dq * self.h)
-            d = -self.Kd.dot(dq)
+            invM = np.linalg.inv(skel.M + self.Kd * np.eye(skel.ndofs) * self.h)
+            p = self.Kp * (skel.position_differences(qhat, q) - dq * self.h)
+            d = -self.Kd * dq
             qddot = invM.dot(-skel.c + p + d + skel.constraint_forces())
-            tau = p + d - self.Kd.dot(qddot) * self.h
+            tau = p + d - self.Kd * qddot * self.h
         else:
-            tau = self.Kp * skel.position_differences(q, qhat) - self.Kd.dot(skel.dq)
+            tau = self.Kp * skel.position_differences(qhat, q) - self.Kd * skel.dq
         tau[0:6] = np.zeros(6)
 
         return tau

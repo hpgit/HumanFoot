@@ -11,22 +11,12 @@ from gym.utils import seeding
 import PyCommon.modules.Resource.ysMotionLoader as yf
 from DartDeep.pd_controller import PDController
 
+from multiprocessing import Pool
+
 
 def exp_reward_term(w, exp_w, v0, v1):
     norm = np.linalg.norm(v0 - v1)
     return w * exp(-exp_w * norm * norm)
-
-
-def get_velocity_from_pelvis(body, pelvis):
-    pelvis_transform = pelvis.world_transform()
-    pelvis_R = pelvis_transform[:3, :3]
-
-    body_vel_from_pelvis_in_world_coord = (body.world_linear_velocity() - pelvis.world_linear_velocity()) \
-                                        - mm.cross(body.to_world() - pelvis.to_world(), pelvis.world_angular_velocity())
-
-    body_vel_from_pelvis_in_pelvis_coord = np.dot(pelvis_R.T, body_vel_from_pelvis_in_world_coord)
-
-    return body_vel_from_pelvis_in_pelvis_coord
 
 
 class HpDartEnv(gym.Env):
@@ -69,7 +59,8 @@ class HpDartEnv(gym.Env):
 
         self.ref_world = pydart.World(1./1200., "../data/woody_with_ground.xml")
         self.ref_skel = self.ref_world.skeletons[1]
-        self.step_per_frame = round((1./self.world.time_step()) / self.ref_motion.fps)
+        # self.step_per_frame = round((1./self.world.time_step()) / self.ref_motion.fps)
+        self.step_per_frame = 40
 
         self.rsi = True
 
@@ -122,10 +113,6 @@ class HpDartEnv(gym.Env):
         state.extend(R)
         state.extend(v)
         state.extend(w)
-        # print('p', np.linalg.norm(p))
-        # print('R', np.linalg.norm(R))
-        # print('v', np.linalg.norm(v))
-        # print('w', np.linalg.norm(w))
 
         return np.asarray(state).flatten()
 
@@ -167,10 +154,9 @@ class HpDartEnv(gym.Env):
         """
         action = np.hstack((np.zeros(6), _action/10.))
 
-        current_frame = min(len(self.ref_motion)-1, int((self.world.time() + self.time_offset) * self.ref_motion.fps)+1)
-        self.ref_skel.set_positions(self.ref_motion.get_q(current_frame))
-        self.ref_skel.set_velocities(self.ref_motion.get_dq_dart(current_frame))
-        self.ref_skel.current_frame = current_frame
+        next_frame_time = self.world.time() + self.time_offset + self.world.time_step() * self.step_per_frame
+        self.ref_skel.set_positions(self.ref_motion.get_q_by_time(next_frame_time))
+        self.ref_skel.set_velocities(self.ref_motion.get_dq_dart_by_time(next_frame_time))
         for i in range(self.step_per_frame):
             self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
             self.world.step()
@@ -259,7 +245,7 @@ class HpDartEnv(gym.Env):
         self.rsi = rsi
         self.reset()
 
-    def Reset(self, rsi, param1):
+    def Reset(self, rsi, idx):
         self.rsi = rsi
         self.reset()
 
@@ -274,4 +260,3 @@ class HpDartEnv(gym.Env):
 
     def IsTerminalStates(self):
         return [self.is_done()]
-

@@ -413,7 +413,7 @@ class JointMotion(Motion):
         if frame1 >= len(self):
             return self[-1].get_q()
 
-        return self[frame0].blendPosture(self[frame1], t - frame0/self.fps).get_q()
+        return self[frame0].blendPosture(self[frame1], t * self.fps - frame0).get_q()
 
     def get_dq(self, frame0, frame1=None):
         """
@@ -436,7 +436,9 @@ class JointMotion(Motion):
         :return:
         """
         dof_vel = self.getDOFVelocitiesLocal(frame0)
-        dof_vel[0][0:3], dof_vel[0][3:6] = dof_vel[0][3:6], dof_vel[0][0:3]
+        temp = dof_vel[0][0:3].copy()
+        dof_vel[0][0:3] = dof_vel[0][3:6]
+        dof_vel[0][3:6] = temp
 
         return np.concatenate(dof_vel)
 
@@ -455,7 +457,7 @@ class JointMotion(Motion):
 
         if frame1 >= len(self):
             return self.get_dq_dart(len(self)-1)
-        dt = t - frame0 * self.fps
+        dt = t * self.fps - frame0
         return (1.-dt) * self.get_dq_dart(frame0) + dt * self.get_dq_dart(frame1)
 
     def get_ddq(self, frame0, frame1=None):
