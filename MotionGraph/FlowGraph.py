@@ -65,26 +65,146 @@ class FlowGraph:
         self.unit_end_i = list()  # type: list[int]
         self.unit_size = 0
 
-    def init(self, int, motion_list):
+    def init(self, n_motions, motion_list):
         # Concatenate motion clips
         # motion_frames = new PmLinearMotion(manager->human );
-        motion_frames = PmLinearMotion(motion_list[0]->getBody() )
-        for (int k=0; k < n_motions; k++)
-            motion_frames->concat(*(motion_list[k]));
+        self.motion_frames = PmLinearMotion( motion_list[0].getBody() )
+        for k in range(n_motions):
+            self.motion_frames.concat(*(motion_list[k]))
 
-        printf("Number of motion clips = %d\n", n_motions);
-        printf("Number of motion frames = %d\n", motion_frames->getSize() );
+        print("Number of motion clips = %d".format(n_motions))
+        print("Number of motion frames = %d".format(self.motion_frames.getSize()) )
 
-        size = motion_frames->getSize();
+        self.size = self.motion_frames.getSize()
 
-        flow_graph = new
-        FlowEntityHead[size];
+        self.flow_graph = [FlowEntityHead() for i in range(self.size)]
 
-        return size;
-        pass
+        return self.size
 
-    def build(self, int, motion_list):
-        pass
+    def build(self, n_motions, motion_list):
+        print('initialize the flow graph...')
+
+        buffer1, buffer2, buffer3 = [0.]*self.size, [0.]*self.size, [0.]*self.size
+        total, prune1, prune2, prune3 = 0, 0, 0, 0
+
+        # Estimate Velocity
+        self.velocity_frames = PmVectorArray()
+        self.velocity_frames.setSize(self.size)
+
+        v = PmVector()
+
+        j = 0
+        for k in range(n_motions):
+            for i in range(motion_list[k].getSize()):
+                motion_list[j].getPositionVelocity(i, v)
+                self.velocity_frames.setVector(j, v)
+                j += 1
+
+        # Construct Flow Graph
+        for j in range(self.size):
+            buffer1[j] = 0.
+            buffer2[j] = 0.
+            buffer3[j] = 0.
+
+        i, j = 0, 0
+        for k in range(n_motions):
+            j += 1
+            l = 1
+            while l < motion_list[k].getSize() - MAX_BUFFER_SIZE:
+                if i == j-1:
+                    buffer1[j] = 1.
+                elif abs(i-j) > self.min_jump:
+                    buffer1[j] = self.distance(i, j-1)
+                else:
+                    buffer1[j] = 0.
+                j += 1
+
+            while l < motion_list[k].getSize():
+                l += 1
+                j += 1
+
+        i, j = 1, 0
+        for k in range(n_motions):
+            j += 1
+            l = 1
+            while l < motion_list[k].getSize() - MAX_BUFFER_SIZE:
+                if i == j-1:
+                    buffer2[j] = 1.
+                elif abs(i-j) > self.min_jump:
+                    buffer2[j] = self.distance(i, j-1)
+                else:
+                    buffer2[j] = 0.
+                j += 1
+
+            while l < motion_list[k].getSize():
+                l += 1
+                j += 1
+
+        for i in range(self.size):
+            if i % 100 == 0:
+                print('%d frames processed...'.format(i))
+
+            j = 0
+            for k in range(n_motions):
+                j += 1
+                l = 1
+                while l < motion_list[k].getSize() - MAX_BUFFER_SIZE:
+                    if i == j-1:
+                        buffer3[j] = 1.
+                    elif abs(i-j) > self.min_jump:
+                        buffer3[j] = self.distance(i, j-1)
+                    else:
+                        buffer3[j] = 0.
+                    j += 1
+
+                while l < motion_list[k].getSize():
+                    l += 1
+                    j += 1
+
+            while self.flow_graph[i].entity is not None:
+                self.removeEntity(i, self.flow_graph[i].entity.id)
+
+            for j in range(self.size-1):
+                total += 1
+                if buffer2[j] > 0.:
+                    prune1 += 1
+                if buffer2[j] > self.threshold:
+                    prune2 += 1
+                if buffer2[j] > self.threshold \
+                        and buffer2[j] > buffer2[j-1] \
+                        and buffer2[j] >= buffer2[j+1] \
+                        and buffer2[j] >= buffer1[j] \
+                        and buffer2[j] >= buffer3[j] \
+                        and buffer2[j] >= buffer1[j-1] \
+                        and buffer2[j] >= buffer3[j-1] \
+                        and buffer2[j] >= buffer1[j-1] \
+                        and buffer2[j] >= buffer3[j-1]:
+                    prune3 += 1
+                    self.setValue(i-1, j, buffer2[j])
+
+            for j in range(self.size):
+                buffer1[j] = buffer2[j]
+                buffer2[j] = buffer3[j]
+
+            # Evaluate probability
+            sum = 0.
+            e = self.flow_graph[i].entity
+            while e is not None:
+                sum += e.value
+                e = e.next
+
+            e = self.flow_graph[i].entity
+            while e is not None:
+                e.value /= sum
+                e = e.next
+
+        print('The flow graph is constructed.')
+        print('The total number of edges: %d'.format(total))
+        print('pruning by contact: %d'.format(prune1))
+        print('pruning by likelihood: %d'.format(prune2))
+        print('pruning by local maxima: %d'.format(prune3))
+
+        return self.size
 
     def getSize(self):
         return self.size
