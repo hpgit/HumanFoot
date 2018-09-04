@@ -28,7 +28,7 @@ class FlowEntityHead:
         self.scc_component = 0
         self.scc_low = 0
         self.scc_number = 0
-        self.visited = False
+        self.scc_visited = False
         self.scc_in_stack = False
 
 
@@ -300,11 +300,32 @@ class FlowGraph:
                     self.addEntity(x, y, v, e)
                     return
 
-    def distance(self, int, int):
-        pass
+    def distance(self, f1, f2):
+        if f1 == f2:
+            # same frames
+            return 1
+        #TODO:
+        # check distance_matrix set value
+        d = self.distance_matrix.getValue(f1, f2)
+        if d == 0:
+            # not included in the knn
+            return 0
+        else:
+            return math.exp(-d/self.variance)
 
     def segmentation(self):
-        pass
+        self.flow_graph[0].is_break_point = False
+        self.flow_graph[self.getSize() - 1].is_break_point = False
+
+        for i in range(1, self.getSize()-1):
+            e0 = self.motion_frames.getKineticEnergy(i-1)
+            e1 = self.motion_frames.getKineticEnergy(i)
+            e2 = self.motion_frames.getKineticEnergy(i+1)
+
+            if e0 > e1 and e1 < e2:
+                self.flow_graph[i].is_break_point = True
+            else:
+                self.flow_graph[i].is_break_point = False
 
     def setLocalCoordinate(self, lc):
         self.local_coordinate = lc
@@ -325,6 +346,12 @@ class FlowGraph:
         self.pelvis_weight = w
 
     def setVariance(self, v):
+        """
+
+        :param v:
+        :type v: float
+        :return:
+        """
         self.variance = v
 
     def setPelvisConstraints(self, speed):
@@ -351,36 +378,202 @@ class FlowGraph:
     def setTransitionAtRightToeOff(self, b ):
         self.transition_at_right_toe_off = b
 
-    def getNextPosture(self, PmPosture , PmPosture , int):
-        pass
+    def getNextPosture(self, p_cur, p_next, next_frame, calib=None):
+        # TODO:
+        #if calib is not None, calib should be call by reference
+        p_prev = self.getFrame(next_frame - 1)
 
-    def getNextPosture(self, PmPosture , PmPosture , int, transf):
-        pass
+        t1 = p_cur.getGlobalTransf(PELVIS)
+        t2 = p_prev.getGlobalTransf(PELVIS)
 
-    def getNextTransf(self, transf, int):
-        pass
+        t1 = PlaneProject(p_cur)
+        t2 = PlaneProject(p_prev)
+
+        calib = t2.inverse() * t1
+
+        if self.angle_fixed:
+            calib = translate_transf(calib.getTranslation())
+
+        p_next.setTransf(PELVIS, p_next.getTransf(PELVIS) * calib)
+
+    def getNextTransf(self, p_cur, next_frame):
+        p_prev = self.getFrame(next_frame - 1).getGlobalTransf(PELVIS)
+        p_next = self.getFrame(next_frame).getGlobalTransf(PELVIS)
+
+        t1 = PlaneProject(p_cur)
+        t2 = PlaneProject(p_prev)
+
+        calib = t2.inverse() * t1
+
+        if self.angle_fixed:
+            calib = translate_transf(calib.getTranslation())
+
+        return p_next * calib
+
+    # used for scc
+    StartTime = 0
+    stack = list()
+    visit_count = 0
 
     # strongly connected component
     def stronglyConnectedComponents(self):
-        pass
+        self.StartTime = 0
 
-    def SCC(self, int):
-        pass
+        del self.stack[:]
 
-    def preventDeadLock(self, int):
-        pass
+        for i in range(self.size):
+            self.flow_graph[i].scc_in_stack = False
+            self.flow_graph[i].scc_visited = False
+
+        max_cluster_seed = 0
+        max_cluster_size = 0
+
+        for i in range(self.size):
+            if not self.flow_graph[i].scc_visited:
+                self.visit_count = 0
+                self.SCC(i)
+
+                if self.visit_count > max_cluster_size:
+                    max_cluster_size = self.visit_count
+                    max_cluster_seed = self.scc_seed
+
+        return max_cluster_seed
+
+    def SCC(self, v):
+        self.StartTime += 1
+
+        self.flow_graph[v].scc_low = self.StartTime
+        self.flow_graph[v].scc_number = self.StartTime
+
+        self.flow_graph[v].scc_visited = True
+        self.flow_graph[v].scc_in_stack = True
+
+        self.stack.append(v)
+
+        self.visit_count += 1
+
+        e = self.flow_graph[v].entity
+        while e is not None:
+            if not self.flow_graph[e.id].scc_visited:
+                self.SCC(e.id)
+                self.flow_graph[v].scc_low = min(self.flow_graph[v].scc_low, self.flow_graph[e.id].scc_low)
+            elif self.flow_graph[e.id].scc_number < self.flow_graph[v].scc_number \
+                    and self.flow_graph[e.id].scc_in_stack:
+                self.flow_graph[v].scc_low = min(self.flow_graph[v].scc_low, self.flow_graph[e.id].scc_number)
+            e = e.next
+
+        if self.flow_graph[v].scc_low == self.flow_graph[v].scc_number:
+            while self.stack and self.flow_graph[self.stack[-1]].scc_number >= self.flow_graph[v].scc_number:
+                if v != self.stack[-1]:
+                    self.scc_seed = v
+                self.flow_graph[self.stack[-1]].scc_in_stack = False
+                self.flow_graph[self.stack[-1]].scc_component = v
+                self.stack.pop()
+
+
+    def preventDeadLock(self, seed):
+        self.scc_index = [0] * self.getSize()
+        self.scc_size = 0
+
+        for i in range(self.size):
+            if self.flow_graph[i].scc_component != seed:
+                self.flow_graph[i].scc_component = -1
+            else:
+                self.scc_index[self.scc_size] = i
+                self.scc_size += 1
+
+            e = self.flow_graph[i].entity
+            while e is not None:
+                if self.flow_graph[e.id].scc_component != seed:
+                    self.removeEntity(i, e.id)
+                    e = self.flow_graph[i].entity
+                else:
+                    e = e.next
+
+            # normalize
+            sum = 0.
+            e = self.flow_graph[i].entity
+            while e is not None:
+                sum += e.value
+                e = e.next
+
+            e = self.flow_graph[i].entity
+            while e is not None:
+                e.value /= sum
+                e = e.next
 
     # terrain
     def evaluateConnectivity(self):
         pass
 
     # File IO
-    def open(self, char):
-        pass
+    def open(self, filename):
+        with open(filename, 'r') as file:
+            for i in range(self.getSize()):
+                for j in range(self.getSize()):
+                    self.setValue(i, j, 0)
 
-    def save(self, char):
-        pass
+            num_of_data = int(file.read())
 
-    def vectorize(self, char):
-        pass
+            for i in range(num_of_data):
+                row, col, value = int(file.read()), int(file.read()), float(file.read())
+                self.setValue(row, col, value)
+
+            for i in range(self.size):
+                sum = 0.
+                e = self.flow_graph[i].entity
+                while e is not None:
+                    sum += e.value
+                    e = e.next
+
+                e = self.flow_graph[i].entity
+                while e is not None:
+                    e.value /= sum
+                    e = e.next
+
+    def save(self, filename):
+        with open(filename, 'w') as file:
+            num_of_data = 0
+            for i in range(self.getSize()):
+                num_of_data += self.flow_graph[i].num
+
+            file.write('%d\n'.format(num_of_data))
+
+            for i in range(self.getSize()):
+                e = self.flow_graph[i].entity
+                while e is not None:
+                    file.write('%d %d %lf\n'.format(i, e.id, e.value))
+                    e = e.next
+
+    def vectorize(self, filename):
+        dim = 0
+        with open(filename, 'w') as file:
+            for i in range(self.motion_frames.getSize()):
+                dim = 0
+                p = self.motion_frames.getPostures(i)
+                v = self.velocity_frames.getVector(i)
+
+                t = PlaneProject(p.getGlobalTransf(0)).inverse()
+
+                file.write('%f'.format(p.getGlobalPosition(0).y()))
+                dim += 1
+
+                for j in range(PM_HUMAN_NUM_LINKS):
+                    if self.motion_frames.getMask() & MaskBit(j):
+                        a = p.getGlobalPosition(j)
+                        file.write('%f %f %f'.format(a.x(), a.y(), a.z()))
+                        dim += 3
+
+                file.write('\n')
+
+                if i % 100 == 0:
+                    print(i, '/', self.motion_frames.getSize())
+
+        print()
+
+        return dim
+
+
+
+
 
