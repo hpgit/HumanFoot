@@ -546,6 +546,30 @@ def projectRotation2(axis, R):
     axisR = cm.exp(projectionOnVector(cm.log(R), s2v(axis)))
     residualR = np.dot(R, axisR.T)
     return axisR, residualR
+
+
+def PlaneProject(T):
+    T_ret = np.eye(4)
+    t = T[:3, 3]
+    q = R2Quat(T[:3, :3])
+
+    a = q[0]
+    b = np.dot(unitY(), q[1:])
+
+    alpha = math.atan2(a, b)
+
+    t1 = -2 * alpha + math.pi
+    t2 = -2 * alpha - math.pi
+
+    def _getValue(_t):
+        return exp(_t * unitY() / 2.0)
+
+    if np.dot(q, R2Quat(_getValue(t1))) > np.dot(q, R2Quat(_getValue(t2))):
+        T[:3, :3], T[:3, 3] = _getValue(t1), np.array((t[0], 0., t[2]))
+    else:
+        T[:3, :3], T[:3, 3] = _getValue(t2), np.array((t[0], 0., t[2]))
+    return T_ret
+
 #===============================================================================
 # list vector manipulation functions
 #===============================================================================

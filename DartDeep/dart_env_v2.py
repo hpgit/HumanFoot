@@ -24,6 +24,7 @@ class HpDartEnv(gym.Env):
         self.world = pydart.World(1./1200., "../data/woody_with_ground_v2.xml")
         self.world.control_skel = self.world.skeletons[1]
         self.skel = self.world.skeletons[1]
+        self.Kp, self.Kd = 400., 40.
         self.pdc = PDController(self.skel, self.world.time_step(), 400., 40.)
 
         self.env_name = env_name
@@ -158,6 +159,7 @@ class HpDartEnv(gym.Env):
         self.ref_skel.set_positions(self.ref_motion.get_q_by_time(next_frame_time))
         self.ref_skel.set_velocities(self.ref_motion.get_dq_dart_by_time(next_frame_time))
         for i in range(self.step_per_frame):
+            # self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
             self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
             self.world.step()
         return tuple([self.state(), self.reward(), self.is_done(), dict()])

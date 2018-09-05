@@ -4,14 +4,14 @@ from MotionGraph.FlowGraph import FlowGraph
 if __name__ == '__main__':
     n_motions = 1
     motion_files = ['wd2_jump0.bvh']
-    motions = yf.readBvhFile("data/woody_walk_normal.bvh")[40:]
+    # motions = yf.readBvhFile("data/woody_walk_normal.bvh")[40:]
 
-    human = PmHuman(HUMAN_FILE)
     motions = []
 
     for i in range(n_motions):
-        motions.append(PmLinearMotion(human))
-        motions[i].openAMC(motion_files[i], 1, 1)
+        # motions.append(PmLinearMotion(human))
+        # motions[i].openAMC(motion_files[i], 1, 1)
+        motions.append(yf.readBvhFile(motion_files[i]))
 
     # create FlowGraph
     fGraph = FlowGraph()

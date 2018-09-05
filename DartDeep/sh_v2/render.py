@@ -39,6 +39,7 @@ def main():
         action_dist, _ = ppo.model(torch.tensor(state.reshape(1, -1)).float())
         action = action_dist.loc.detach().numpy()
         res = ppo.env.Steps(action)
+        # res = ppo.env.Steps(np.zeros_like(action))
         # print(frame, ppo.env.ref_skel.current_frame, ppo.env.world.time()*ppo.env.ref_motion.fps)
         if res[2]:
             print(frame, 'Done')
@@ -56,7 +57,7 @@ def main():
     else:
         viewer.setSimulateCallback(simulateCallback)
     viewer.setMaxFrame(len(ppo.env.ref_motion)-1)
-    viewer.startTimer(1/ppo.env.ref_motion.fps)
+    viewer.startTimer(1./30.)
     viewer.show()
 
     Fl.run()

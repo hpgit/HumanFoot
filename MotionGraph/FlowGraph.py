@@ -1,4 +1,9 @@
 import math
+import numpy as np
+
+from MotionGraph.pm import *
+from PyCommon.modules.Motion import ysMotion as ym
+from PyCommon.modules.Math.mmMath import PlaneProject, invertSE3
 
 MAX_SCAN_DEPTH = 180
 MAX_MOTIONS = 40
@@ -35,7 +40,7 @@ class FlowEntityHead:
 class FlowGraph:
     def __init__(self):
         self.size = 0
-        self.motion_frames = None  # type: PmLinearMotion
+        self.motion_frames = None  # type: ym.JointMotion
         self.velocity_frames = None  # type: PmVectorAray
 
         self.flow_graph = None  # type: list[FlowEntityHead]
@@ -67,13 +72,14 @@ class FlowGraph:
 
     def init(self, n_motions, motion_list):
         # Concatenate motion clips
-        # motion_frames = new PmLinearMotion(manager->human );
-        self.motion_frames = PmLinearMotion( motion_list[0].getBody() )
+        # self.motion_frames = PmLinearMotion( motion_list[0].getBody() )
+        self.motion_frames = ym.JointMotion()
         for k in range(n_motions):
-            self.motion_frames.concat(*(motion_list[k]))
+            # self.motion_frames.concat(*(motion_list[k]))
+            self.motion_frames += motion_list[k]
 
-        print("Number of motion clips = %d".format(n_motions))
-        print("Number of motion frames = %d".format(self.motion_frames.getSize()) )
+        print("Number of motion clips = {}".format(n_motions))
+        print("Number of motion frames = {}".format(self.motion_frames.getSize()) )
 
         self.size = self.motion_frames.getSize()
 
@@ -82,6 +88,14 @@ class FlowGraph:
         return self.size
 
     def build(self, n_motions, motion_list):
+        """
+
+        :param n_motions:
+        :type n_motions: int
+        :param motion_list:
+        :type motion_list: list[ym.JointMotion]
+        :return:
+        """
         print('initialize the flow graph...')
 
         buffer1, buffer2, buffer3 = [0.]*self.size, [0.]*self.size, [0.]*self.size
@@ -142,7 +156,7 @@ class FlowGraph:
 
         for i in range(self.size):
             if i % 100 == 0:
-                print('%d frames processed...'.format(i))
+                print('{} frames processed...'.format(i))
 
             j = 0
             for k in range(n_motions):
@@ -199,10 +213,10 @@ class FlowGraph:
                 e = e.next
 
         print('The flow graph is constructed.')
-        print('The total number of edges: %d'.format(total))
-        print('pruning by contact: %d'.format(prune1))
-        print('pruning by likelihood: %d'.format(prune2))
-        print('pruning by local maxima: %d'.format(prune3))
+        print('The total number of edges: {}'.format(total))
+        print('pruning by contact: {}'.format(prune1))
+        print('pruning by likelihood: {}'.format(prune2))
+        print('pruning by local maxima: {}'.format(prune3))
 
         return self.size
 
@@ -216,7 +230,7 @@ class FlowGraph:
         return n
 
     def getFrame(self, i):
-        return self.motion_frames.getPostures(i)
+        return self.motion_frames.getPosture(i)
 
     def getConstraint(self, i):
         return self.motion_frames.getConstraint(i)
@@ -257,7 +271,6 @@ class FlowGraph:
             self.flow_graph[x].entity = e
 
         self.flow_graph[x].num += 1
-
 
     def removeEntity(self, x, y):
         e = self.flow_graph[x].entity
@@ -306,7 +319,7 @@ class FlowGraph:
             return 1
         #TODO:
         # check distance_matrix set value
-        d = self.distance_matrix.getValue(f1, f2)
+        d = self.distance_matrix[f1, f2]
         if d == 0:
             # not included in the knn
             return 0
@@ -470,7 +483,6 @@ class FlowGraph:
                 self.flow_graph[self.stack[-1]].scc_component = v
                 self.stack.pop()
 
-
     def preventDeadLock(self, seed):
         self.scc_index = [0] * self.getSize()
         self.scc_size = 0
@@ -550,19 +562,23 @@ class FlowGraph:
         with open(filename, 'w') as file:
             for i in range(self.motion_frames.getSize()):
                 dim = 0
-                p = self.motion_frames.getPostures(i)
-                v = self.velocity_frames.getVector(i)
+                p = self.motion_frames.getPosture(i)
+                # v = self.velocity_frames.getVector(i)
 
-                t = PlaneProject(p.getGlobalTransf(0)).inverse()
+                t = invertSE3(PlaneProject(p.getGlobalTransf(0)))
 
-                file.write('%f'.format(p.getGlobalPosition(0).y()))
+                file.write('{}'.format(p.getGlobalPosition(0)[1]))
                 dim += 1
 
                 for j in range(PM_HUMAN_NUM_LINKS):
                     if self.motion_frames.getMask() & MaskBit(j):
                         a = p.getGlobalPosition(j)
-                        file.write('%f %f %f'.format(a.x(), a.y(), a.z()))
+                        file.write('{} {} {}'.format(a[0], a[1], a[2]))
                         dim += 3
+
+                        # b = v.getAngularVector(j)
+                        # file.write('{} {} {}'.format(b[0], b[1], b[2]))
+                        # dim += 3
 
                 file.write('\n')
 

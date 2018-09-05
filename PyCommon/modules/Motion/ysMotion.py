@@ -382,6 +382,23 @@ class JointMotion(Motion):
             return motion
         else:
             raise TypeError
+
+    def getSize(self):
+        return len(self)
+
+    def getPosture(self, i):
+        """
+
+        :param i:
+        :return:
+        :rtype: JointPosture
+        """
+        return self[i]
+
+    def getMask(self):
+        raise NotImplementedError
+
+
     # lv : linear velocity, av : angular velocity, la : linear acceleration, aa : angular acceleration
     # p: Vec3(position), R : SO3(orientation)
     # _g : w.r.t. global frame, _l : w.r.t. local frame
@@ -676,6 +693,7 @@ class JointMotion(Motion):
             p.updateGlobalT()
 
 
+
 class JointSkeleton(Skeleton):
     """
     :type root : Joint
@@ -900,6 +918,7 @@ class JointPosture(Posture):
             return m2
         else:
             raise TypeError
+
     def __sub__(self, other):
         # m2 - m1 : m2.__sub__(m1)
         # d = m2 - m1
@@ -1084,6 +1103,7 @@ class JointPosture(Posture):
         
     def getPosition(self, index):
         return mm.T2p(self.globalTs[index])
+
     def getPositions(self):
         return [self.getPosition(i) for i in range(self.skeleton.getElementNum())]
     
@@ -1215,6 +1235,15 @@ class JointPosture(Posture):
         if update:
             self.updateGlobalT()
 
+    ###############################################
+    # Pmqm style functions
+    ###############################################
+    def getGlobalTransf(self, i):
+        return self.globalTs[i]
+
+    def getGlobalPosition(self, i):
+        return mm.T2p(self.globalTs[i])
+
 
 class JointDisplacement(JointPosture):
     def __init__(self, jointSkeleton):
@@ -1301,6 +1330,7 @@ class MMPosture(Posture):
             raise TypeError
     def getPointPositions(self):
         return copy.deepcopy(self.points)
+
 class MMSkeleton(Skeleton):
     def __init__(self):
         self.links = []

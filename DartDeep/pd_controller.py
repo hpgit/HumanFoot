@@ -29,6 +29,7 @@ class PDController:
             tau = p + d - self.Kd * qddot * self.h
         else:
             tau = self.Kp * skel.position_differences(qhat, q) - self.Kd * skel.dq
-        tau[0:6] = np.zeros(6)
 
+        tau[0:6] = np.zeros(6)
         return tau
+
