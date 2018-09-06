@@ -1,8 +1,9 @@
 import math
 import numpy as np
 
-from MotionGraph.pm import *
-from PyCommon.modules.Motion import ysMotion as ym
+from PyCommon.modules.Motion.pmConstants import *
+# from PyCommon.modules.Motion import ysMotion as ym
+from PyCommon.modules.Motion import pmMotion as pm
 from PyCommon.modules.Math.mmMath import PlaneProject, invertSE3
 
 MAX_SCAN_DEPTH = 180
@@ -40,7 +41,7 @@ class FlowEntityHead:
 class FlowGraph:
     def __init__(self):
         self.size = 0
-        self.motion_frames = None  # type: ym.JointMotion
+        self.motion_frames = None  # type: pm.PmLinearMotion
         self.velocity_frames = None  # type: PmVectorAray
 
         self.flow_graph = None  # type: list[FlowEntityHead]
@@ -73,13 +74,13 @@ class FlowGraph:
     def init(self, n_motions, motion_list):
         # Concatenate motion clips
         # self.motion_frames = PmLinearMotion( motion_list[0].getBody() )
-        self.motion_frames = ym.JointMotion()
+        self.motion_frames = pm.PmLinearMotion()
         for k in range(n_motions):
             # self.motion_frames.concat(*(motion_list[k]))
             self.motion_frames += motion_list[k]
 
         print("Number of motion clips = {}".format(n_motions))
-        print("Number of motion frames = {}".format(self.motion_frames.getSize()) )
+        print("Number of motion frames = {}".format(self.motion_frames.getSize()))
 
         self.size = self.motion_frames.getSize()
 
@@ -392,6 +393,16 @@ class FlowGraph:
         self.transition_at_right_toe_off = b
 
     def getNextPosture(self, p_cur, p_next, next_frame, calib=None):
+        """
+
+        :param p_cur:
+        :type p_cur: pm.PmPosture
+        :param p_next:
+        :type p_next: pm.PmPosture
+        :param next_frame:
+        :param calib:
+        :return:
+        """
         # TODO:
         #if calib is not None, calib should be call by reference
         p_prev = self.getFrame(next_frame - 1)
@@ -571,13 +582,15 @@ class FlowGraph:
                 dim += 1
 
                 for j in range(PM_HUMAN_NUM_LINKS):
-                    if self.motion_frames.getMask() & MaskBit(j):
-                        a = p.getGlobalPosition(j)
-                        file.write('{} {} {}'.format(a[0], a[1], a[2]))
+                    # if self.motion_frames.getMask() & MaskBit(j):
+                    index = self.motion_frames.getPosture(0).skeleton.getElementIndex(human_part_name[j])
+                    if index is not None:
+                        a = p.getGlobalPosition(index)
+                        file.write('{} {} {} '.format(a[0], a[1], a[2]))
                         dim += 3
 
                         # b = v.getAngularVector(j)
-                        # file.write('{} {} {}'.format(b[0], b[1], b[2]))
+                        # file.write('{} {} {} '.format(b[0], b[1], b[2]))
                         # dim += 3
 
                 file.write('\n')

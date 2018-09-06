@@ -8,7 +8,7 @@ def MaskBit(j):
     return 0x01 << j
 
 
-class PmHuman(Enum):
+class PmHumanEnum(Enum):
     UNDEFINED = -1
     PELVIS = 0
     SPINE_1 = 1
@@ -68,6 +68,7 @@ class PmHuman(Enum):
     LEFT_FINGER_51 = 55
     LEFT_FINGER_52 = 56
     LEFT_FINGER_53 = 57
+
 
 human_part_name = [
           "Hips",

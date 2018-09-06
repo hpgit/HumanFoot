@@ -1,6 +1,6 @@
 from fltk import Fl
 import torch
-from DartDeep.sh_v2.ppo_v2 import PPO
+from DartDeep.sh_v3.ppo_v3 import PPO
 from PyCommon.modules.GUI import hpSimpleViewer as hsv
 from PyCommon.modules.Renderer import ysRenderer as yr
 import numpy as np
@@ -18,8 +18,8 @@ def main():
     ppo = PPO(env_name, 1, visualize_only=True)
     if not MOTION_ONLY:
         ppo.LoadModel('model/' + env_name + '.pt')
-    ppo.env.Resets(False)
-    ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(ppo.env.phase_frame))
+    ppo.env.Resets(True)
+    ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q_by_time(ppo.env.time_offset))
 
     # viewer settings
     rd_contact_positions = [None]
@@ -44,9 +44,9 @@ def main():
         # print(frame, res[0][0])
         # if res[0][0] > 0.46:
         #     ppo.env.continue_from_now_by_phase(0.2)
-        if res[2]:
-            print(frame, 'Done')
-            ppo.env.reset()
+        # if res[2]:
+        #     print(frame, 'Done')
+        #     ppo.env.reset()
 
         # contact rendering
         contacts = ppo.env.world.collision_result.contacts
@@ -58,10 +58,11 @@ def main():
 
     if MOTION_ONLY:
         viewer.setPostFrameCallback_Always(postCallback)
+        viewer.setMaxFrame(ppo.env.motion_len-1)
     else:
         viewer.setSimulateCallback(simulateCallback)
+        viewer.setMaxFrame(3000)
     # viewer.setMaxFrame(len(ppo.env.ref_motion)-1)
-    viewer.setMaxFrame(3000)
     viewer.startTimer(1./30.)
     viewer.show()
 

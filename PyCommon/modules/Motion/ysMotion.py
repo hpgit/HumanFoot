@@ -644,7 +644,8 @@ class JointMotion(Motion):
         return self._getDerivatives(frame0, frame1, self.getInternalJointAngVelocitiesGlobal, op.sub)
 
     def rotateTrajectory(self, R_offset, fixedPos=None, update=True):
-        if fixedPos==None: fixedPos = self[0].rootPos
+        if fixedPos is None:
+            fixedPos = self[0].rootPos
         for p in self:
             relRootPos = p.rootPos - fixedPos
             relRootPos = np.dot(R_offset, relRootPos)
@@ -1055,9 +1056,9 @@ class JointPosture(Posture):
         T = np.dot(T, mm.R2T(self.localRs[index]))
         self.globalTs[index] = T
         for childJoint in joint.children:
-            if '_Effector' not in childJoint.name:
-                self._updateGlobalT(childJoint, T)
-            # self._updateGlobalT(childJoint, T)
+            # if '_Effector' not in childJoint.name:
+            #     self._updateGlobalT(childJoint, T)
+            self._updateGlobalT(childJoint, T)
     
     # do not use!
     # have to replace to IK version

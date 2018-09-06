@@ -1,6 +1,24 @@
 from PyCommon.modules.Motion.ysMotion import *
+from copy import deepcopy
 
-class pmLinearMotion(JointMotion):
+
+class PmLinearMotion(JointMotion):
+    def __add__(self, nextMotion):
+        """
+
+        :param nextMotion:
+        :type nextMotion: PmLinearMotionMotion
+        :return: PmLinearMotion
+        """
+        if isinstance(nextMotion, PmLinearMotion):
+            motion = PmLinearMotion(self.data)
+            motion.data.extend(nextMotion.data)
+            motion.fps = self.fps
+            motion.resourceName = self.resourceName
+            return motion
+        else:
+            raise TypeError
+
     def getSize(self):
         return len(self)
 
@@ -9,7 +27,7 @@ class pmLinearMotion(JointMotion):
 
         :param i:
         :return:
-        :rtype: JointPosture
+        :rtype: PmPosture
         """
         return self[i]
 
@@ -21,9 +39,10 @@ class pmLinearMotion(JointMotion):
         return mask
 
 
-class pmPosture(JointPosture):
+class PmPosture(JointPosture):
     def __init__(self, skeleton):
-        JointPosture.__init__(self, skeleton)
+        super(PmPosture, self).__init__(skeleton)
+        self.skeleton = skeleton  # type: PmHuman
 
         # pmqm
         self.mask = 0x00
@@ -50,10 +69,9 @@ class pmPosture(JointPosture):
         return mm.T2p(self.globalTs[i])
 
     def getMask(self):
-        pass
+        return self.mask
 
 
-
-class pmHuman(JointSkeleton):
+class PmHuman(JointSkeleton):
     pass
 

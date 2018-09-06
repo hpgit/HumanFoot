@@ -4,6 +4,7 @@ import math
 from PyCommon.modules.Math import mmMath as mm
 from PyCommon.modules.Math import csMath as cm
 from PyCommon.modules.Motion import ysMotion as ym
+from PyCommon.modules.Motion import pmMotion as pm
 
 import copy
 
@@ -387,7 +388,36 @@ class Bvh:
         skeleton.initialize()
         
         return skeleton
-    
+
+    def toPmLinearMotion(self, scale, applyRootOffset):
+        skeleton = self.toPmHuman(scale, applyRootOffset)
+
+        pm_motion = pm.PmLinearMotion()
+        for i in range(len(self.motionList)):
+            pm_posture = pm.PmPosture(skeleton)
+            self.addJointSO3FromBvhJoint(pm_posture, self.joints[0], self.motionList[i], scale)
+            pm_posture.updateGlobalT()
+            pm_motion.append(pm_posture)
+
+        pm_motion.fps = 1./self.frameTime
+        return pm_motion
+
+    def toPmHuman(self, scale, applyRootOffset):
+        # build joint hierarchy
+        jointMap = {}
+        root = self.addJointFromBvhJoint(jointMap, self.joints[0].name, self.joints[0], None, scale, applyRootOffset)
+
+        # build joint array
+        skeleton = pm.PmHuman(root)
+        for bvhJoint in self.joints:
+            skeleton.addElement(jointMap[bvhJoint.name], bvhJoint.name)
+        skeleton.rootIndex = skeleton.getElementIndex(root.name)
+
+        # initialize
+        skeleton.initialize()
+
+        return skeleton
+
     def addJointFromBvhJoint(self, jointMap, jointName, bvhJoint, parentJoint, scale, applyOffset):
         joint = ym.Joint(jointName, parentJoint)
         if applyOffset:

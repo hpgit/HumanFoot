@@ -98,6 +98,9 @@ class HpDartEnv(gym.Env):
 
         self.phase_frame = 0
 
+        # max training time
+        self.training_time = 3.
+
     def state(self):
         pelvis = self.skel.body(0)
         p_pelvis = pelvis.world_transform()[:3, 3]
@@ -137,7 +140,7 @@ class HpDartEnv(gym.Env):
             return True
         elif True in np.isnan(np.asarray(self.skel.q)) or True in np.isnan(np.asarray(self.skel.dq)):
             return True
-        elif self.world.time() + self.time_offset > self.motion_time:
+        elif self.world.time() > self.training_time:
             return True
         return False
 
@@ -156,6 +159,8 @@ class HpDartEnv(gym.Env):
         """
         action = np.hstack((np.zeros(6), _action/10.))
 
+        current_phase = self.get_phase_from_time(self.world.time() + self.time_offset)
+
         next_frame_time = self.world.time() + self.time_offset + self.world.time_step() * self.step_per_frame
         self.ref_skel.set_positions(self.ref_motion.get_q_by_time(next_frame_time))
         self.ref_skel.set_velocities(self.ref_motion.get_dq_dart_by_time(next_frame_time))
@@ -163,14 +168,73 @@ class HpDartEnv(gym.Env):
             # self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
             self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
             self.world.step()
+
+        """
+        next_phase = self.get_phase_from_time(next_frame_time)
+        rand_num = randrange(2)
+
+        if current_phase < 0.1 <= next_phase:
+            goto 0.1
+            goto 0.9
+        elif current_phase < 0.2 <= next_phase:
+            goto 0.2
+            goto 0.8
+        elif current_phase < 0.8 <= next_phase:
+            goto 0.2
+            goto 0.8
+        elif current_phase < 0.9 <= next_phase:
+            goto 0.1
+            goto 0.9
+        elif current_phase < 1.0 <= next_phase:
+            goto 0.0
+        """
+
         return tuple([self.state(), self.reward(), self.is_done(), dict()])
 
-    def continue_from_now_by_phase(self, phase):
-        self.phase_frame = round(phase * self.motion_len)
-        skel_pelvis_offset = self.skel.joint(0).position_in_world_frame() - self.ref_motion[self.phase_frame].getJointPositionGlobal(0)
+    def get_phase_from_time(self, t):
+        frame = t * self.ref_motion.frame
+        if self.env_name == 'walk':
+            if 0 <= frame < 11:
+                return 0.1 * frame/11.
+            elif 11 <= frame < 30:
+                return 0.1 + 0.1 * (frame-30.)/19.
+            elif 30 <= frame < 73:
+                return 0.2 + 0.6 * (frame-30.)/43.
+            elif 73 <= frame < 117:
+                return 0.2 + 0.6 * (frame-73.)/44.
+            elif 117 <= frame < 145:
+                return 0.8 + 0.1 * (frame-117.)/28.
+            else:  # 145 <= frame < 159:
+                return 0.9 + 0.1 * (frame-145.)/42.
+        raise NotImplementedError
+
+    def get_time_from_phase(self, phase):
+        if self.env_name == 'walk':
+            if 0. <= phase < 0.1:
+                return
+
+        return round(phase * self.motion_len)
+
+    def continue_from_now_by_time(self, t):
+        # self.phase_frame = frame
+        # t = frame /self.ref_motion.fps
+
+        motion_pelvis_q = self.ref_motion.get_q_by_time(t)
+        motion_pelvis_ori = mm.exp(motion_pelvis_q[:3])
+
+        # skel_pelvis_offset = self.skel.joint(0).position_in_world_frame() - self.ref_motion[self.phase_frame].getJointPositionGlobal(0)
+        skel_pelvis_offset = self.skel.joint(0).position_in_world_frame() - motion_pelvis_q[3:6]
         skel_pelvis_offset[1] = 0.
         self.ref_motion.translateByOffset(skel_pelvis_offset)
-        self.time_offset = - self.world.time() + (self.phase_frame / self.ref_motion.fps)
+
+        skel_pelvis_x = self.skel.joint(0).orientation_in_world_frame()[:3, 0]
+        skel_pelvis_x[1] = 0.
+        # motion_pelvis_x = self.ref_motion[self.phase_frame].getJointOrientationGlobal(0)[:3, 0]
+        motion_pelvis_x = motion_pelvis_ori[:3, 0]
+        motion_pelvis_x[1] = 0.
+        self.ref_motion.rotateTrajectory(mm.getSO3FromVectors(motion_pelvis_x, skel_pelvis_x), fixedPos=self.skel.joint(0).position_in_world_frame())
+
+        self.time_offset = -self.world.time() + t
 
     def reset(self):
         """
@@ -180,10 +244,12 @@ class HpDartEnv(gym.Env):
             observation (object): The initial observation of the space. Initial reward is assumed to be 0.
         """
         self.world.reset()
-        self.continue_from_now_by_phase(random())
-        self.skel.set_positions(self.ref_motion.get_q(self.phase_frame))
-        dq = self.ref_motion.get_dq_dart(self.phase_frame)
+        self.continue_from_now_by_time(self.motion_time * random())
+        self.skel.set_positions(self.ref_motion.get_q_by_time(self.time_offset))
+        dq = self.ref_motion.get_dq_dart_by_time(self.time_offset)
         self.skel.set_velocities(dq)
+
+        self.ref_skel.set_positions(self.ref_motion.get_q_by_time(self.time_offset))
 
         return self.state()
 
