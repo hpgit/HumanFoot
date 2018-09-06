@@ -12,6 +12,10 @@ if __name__ == '__main__':
         # motions.append(PmLinearMotion(human))
         # motions[i].openAMC(motion_files[i], 1, 1)
         motions.append(yf.readBvhFile(motion_files[i]))
+    skeleton = motions[0][0].skeleton
+
+    for i in range(skeleton.getElementNum()):
+        print(skeleton.getElement(i))
 
     # create FlowGraph
     fGraph = FlowGraph()

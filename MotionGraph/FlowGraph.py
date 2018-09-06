@@ -430,9 +430,9 @@ class FlowGraph:
 
     # strongly connected component
     def stronglyConnectedComponents(self):
-        self.StartTime = 0
+        FlowGraph.StartTime = 0
 
-        del self.stack[:]
+        del FlowGraph.stack[:]
 
         for i in range(self.size):
             self.flow_graph[i].scc_in_stack = False
@@ -443,17 +443,17 @@ class FlowGraph:
 
         for i in range(self.size):
             if not self.flow_graph[i].scc_visited:
-                self.visit_count = 0
+                FlowGraph.visit_count = 0
                 self.SCC(i)
 
-                if self.visit_count > max_cluster_size:
-                    max_cluster_size = self.visit_count
+                if FlowGraph.visit_count > max_cluster_size:
+                    max_cluster_size = FlowGraph.visit_count
                     max_cluster_seed = self.scc_seed
 
         return max_cluster_seed
 
     def SCC(self, v):
-        self.StartTime += 1
+        FlowGraph.StartTime += 1
 
         self.flow_graph[v].scc_low = self.StartTime
         self.flow_graph[v].scc_number = self.StartTime
@@ -461,9 +461,9 @@ class FlowGraph:
         self.flow_graph[v].scc_visited = True
         self.flow_graph[v].scc_in_stack = True
 
-        self.stack.append(v)
+        FlowGraph.stack.append(v)
 
-        self.visit_count += 1
+        FlowGraph.visit_count += 1
 
         e = self.flow_graph[v].entity
         while e is not None:
@@ -476,12 +476,12 @@ class FlowGraph:
             e = e.next
 
         if self.flow_graph[v].scc_low == self.flow_graph[v].scc_number:
-            while self.stack and self.flow_graph[self.stack[-1]].scc_number >= self.flow_graph[v].scc_number:
-                if v != self.stack[-1]:
+            while FlowGraph.stack and self.flow_graph[FlowGraph.stack[-1]].scc_number >= self.flow_graph[v].scc_number:
+                if v != FlowGraph.stack[-1]:
                     self.scc_seed = v
-                self.flow_graph[self.stack[-1]].scc_in_stack = False
-                self.flow_graph[self.stack[-1]].scc_component = v
-                self.stack.pop()
+                self.flow_graph[FlowGraph.stack[-1]].scc_in_stack = False
+                self.flow_graph[FlowGraph.stack[-1]].scc_component = v
+                FlowGraph.stack.pop()
 
     def preventDeadLock(self, seed):
         self.scc_index = [0] * self.getSize()

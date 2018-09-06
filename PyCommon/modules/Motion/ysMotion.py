@@ -64,25 +64,20 @@ class MotionSystem:
 #         motion.resourceName = self.resourceName
 #         return motion
 class Motion:
-    """
-    :type data : list[Posture]
-    :type fps : float
-    :type resoureceName : str
-    """
     def __init__(self, ls=None):
         """
 
         :param ls: list[Posture]
         """
         # list.__init__(self, ls)
-        self.data = []
+        self.data = []  # type: list[Posture]
         if ls is not None:
             for l in ls:
                 self.data.append(l)
 
-        self.frame = 0
-        self.fps = 30.
-        self.resourceName = 'unnamed'
+        self.frame = 0  # type: int
+        self.fps = 30.  # type: float
+        self.resourceName = 'unnamed'  # type: str
 
     # def __getslice__(self, i, j):
     #     motion = Motion(self.data[i:j])
@@ -227,13 +222,9 @@ class Motion:
 
 
 class Skeleton:
-    """
-    :type elementNames: list[str]
-
-    """
     def __init__(self):
         self.elements = []
-        self.elementNames = []
+        self.elementNames = []  # type: list[str]
         self.reverseElementNames = {}
 
     def __str__(self):
@@ -282,11 +273,8 @@ class Skeleton:
 
 
 class Posture:
-    """
-    :type skeleton : Skeleton
-    """
     def __init__(self, skeleton):
-        self.skeleton = skeleton
+        self.skeleton = skeleton  # type: Skeleton
     def getPosition(self, index):
         raise NotImplementedError
     def getPositions(self):
@@ -339,13 +327,11 @@ class PointPosture(Posture):
 # link[0]: (root body) 
 #===============================================================================
 class JointMotion(Motion):
-    """
-    :type data : list[JointPosture]
-    """
     def __init__(self, ls=None):
         """
 
-        :param ls: list[JointPosture]
+        :param ls:
+        :type ls: list[JointPosture]
         """
         # Motion.__init__(self, None)
         super(JointMotion, self).__init__(ls)
@@ -382,21 +368,6 @@ class JointMotion(Motion):
             return motion
         else:
             raise TypeError
-
-    def getSize(self):
-        return len(self)
-
-    def getPosture(self, i):
-        """
-
-        :param i:
-        :return:
-        :rtype: JointPosture
-        """
-        return self[i]
-
-    def getMask(self):
-        raise NotImplementedError
 
 
     # lv : linear velocity, av : angular velocity, la : linear acceleration, aa : angular acceleration
@@ -841,15 +812,10 @@ class JointSkeleton(Skeleton):
 
 
 class Joint:
-    """
-    :type name : str
-    :type parent : Joint
-    :type children : list[Joint]
-    """
     def __init__(self, name, parent):
-        self.name = name
-        self.parent = parent
-        self.children = []
+        self.name = name  # type: str
+        self.parent = parent  # type: Joint
+        self.children = []  # type: list[Joint]
         self.offset = mm.O_Vec3()
     def addChild(self, name_or_joint, offset=None):
         if isinstance(name_or_joint, Joint):
@@ -875,6 +841,7 @@ class Joint:
         # string += '  offset: '+repr(self.offset)
 #        string += ', globalOffset: '+self.calcGlobalOffset().__str__()
         return string
+
     def __strHierarchy__(self, depth = 0):
         s = ''
         tab = '  '*depth
@@ -886,14 +853,13 @@ class Joint:
 
 
 class JointPosture(Posture):
-    """
-    :type skeleton: JointSkeleton
-    """
     def __init__(self, skeleton):
         Posture.__init__(self, skeleton)
+        self.skeleton = skeleton  # type: JointSkeleton
         self.rootPos = mm.O_Vec3()
         self.localRs = [None]*skeleton.getElementNum()
         self.globalTs = [None]*skeleton.getElementNum()
+
 
     # m1 + d : m1.__add__(d)
     # m2 = m1 + d
@@ -1234,15 +1200,6 @@ class JointPosture(Posture):
         self.rootPos *= scale
         if update:
             self.updateGlobalT()
-
-    ###############################################
-    # Pmqm style functions
-    ###############################################
-    def getGlobalTransf(self, i):
-        return self.globalTs[i]
-
-    def getGlobalPosition(self, i):
-        return mm.T2p(self.globalTs[i])
 
 
 class JointDisplacement(JointPosture):

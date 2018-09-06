@@ -366,6 +366,18 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
         }
     }
 
+    double contact_point_sample[9][3] = {
+    {-1., -1., -1.},
+    {+0., -1., -1.},
+    {+1., -1., -1.},
+    {-1., -1., +0.},
+    {+0., -1., +0.},
+    {+1., -1., +0.},
+    {-1., -1., +1.},
+    {+0., -1., +1.},
+    {+1., -1., +1.}
+    };
+
 
 
     // body to plane check
@@ -386,11 +398,16 @@ boost::python::tuple VpWorld::calcPenaltyForce( const bp::list& bodyIDsToCheck, 
                 {
                     const SE3& geomFrame = pGeom->GetGlobalFrame();
 
-                    for (int p = 0; p<8; ++p)
+//                    for (int p = 0; p<8; ++p)
+//                    {
+//                        positionLocal[0] = (p & MAX_X) ? data[0] / 2. : -data[0] / 2.;
+//                        positionLocal[1] = (p & MAX_Y) ? data[1] / 2. : -data[1] / 2.;
+//                        positionLocal[2] = (p & MAX_Z) ? data[2] / 2. : -data[2] / 2.;
+                    for (int p = 0; p<9; ++p)
                     {
-                        positionLocal[0] = (p & MAX_X) ? data[0] / 2. : -data[0] / 2.;
-                        positionLocal[1] = (p & MAX_Y) ? data[1] / 2. : -data[1] / 2.;
-                        positionLocal[2] = (p & MAX_Z) ? data[2] / 2. : -data[2] / 2.;
+                        positionLocal[0] = contact_point_sample[p][0] * data[0] / 2.;
+                        positionLocal[1] = -data[1] / 2.;
+                        positionLocal[2] = contact_point_sample[p][2] * data[2] / 2.;
                         position = geomFrame * positionLocal;
 
                         velocity = pBody->GetLinVelocity(positionLocal);

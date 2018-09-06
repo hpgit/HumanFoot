@@ -68,3 +68,30 @@ class PmHuman(Enum):
     LEFT_FINGER_51 = 55
     LEFT_FINGER_52 = 56
     LEFT_FINGER_53 = 57
+
+human_part_name = [
+          "Hips",
+          "_Spine1", "_Spine2", "_Spine3", "_Spine4",
+    "Spine",  # chest
+      "Spine1",  # neck
+    "Spine1_Effector",  # head
+          "right_shoulder", "left_shoulder",
+          "right_collar", "left_collar",
+      "RightArm", "LeftArm", "RightForeArm", "LeftForeArm",
+      "RightUpLeg", "LeftUpLeg", "RightLeg", "LeftLeg",
+      "RightFoot", "LeftFoot",
+    "RightFoot_Effector",  # right toe
+    "LeftFoot_Effector",   # left toe
+      "right_palm", "left_palm",
+          "right_heel", "left_heel",
+      "right_finger_11", "right_finger_12", "right_finger_13",
+      "right_finger_21", "right_finger_22", "right_finger_23",
+      "right_finger_31", "right_finger_32", "right_finger_33",
+      "right_finger_41", "right_finger_42", "right_finger_43",
+      "right_finger_51", "right_finger_52", "right_finger_53",
+      "left_finger_11", "left_finger_12", "left_finger_13",
+      "left_finger_21", "left_finger_22", "left_finger_23",
+      "left_finger_31", "left_finger_32", "left_finger_33",
+      "left_finger_41", "left_finger_42", "left_finger_43",
+      "left_finger_51", "left_finger_52", "left_finger_53"
+]

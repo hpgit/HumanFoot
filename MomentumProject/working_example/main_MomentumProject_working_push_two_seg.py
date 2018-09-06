@@ -226,8 +226,8 @@ def main():
         return Ts
 
     # viewer = ysv.SimpleViewer()
-    # viewer = hsv.hpSimpleViewer(rect=[0, 0, 1024, 768], viewForceWnd=False)
-    viewer = hsv.hpSimpleViewer(rect=[0, 0, 960+300, 1+1080+55], viewForceWnd=False)
+    viewer = hsv.hpSimpleViewer(rect=[0, 0, 1024, 768], viewForceWnd=False)
+    # viewer = hsv.hpSimpleViewer(rect=[0, 0, 960+300, 1+1080+55], viewForceWnd=False)
     # viewer.record(False)
     # viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,255,255), yr.LINK_BONE))
     viewer.doc.addObject('motion', motion)
@@ -260,7 +260,7 @@ def main():
     viewer.doc.setRendererVisible('rd_dH_des', False)
     # viewer.doc.addRenderer('rd_grf_des', yr.ForcesRenderer(rd_grf_des, rd_CP_des, (0,255,0), .001))
     viewer.doc.addRenderer('rd_CF', yr.VectorsRenderer(rd_CF, rd_CF_pos, (255,255,0)))
-    viewer.doc.setRendererVisible('rd_CF', False)
+    # viewer.doc.setRendererVisible('rd_CF', False)
     viewer.doc.addRenderer('rd_foot_ori', yr.OrientationsRenderer(rd_foot_ori, rd_foot_pos, (255,255,0)))
     viewer.doc.setRendererVisible('rd_foot_ori', False)
 
