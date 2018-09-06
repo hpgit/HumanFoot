@@ -39,6 +39,7 @@ def main():
         action_dist, _ = ppo.model(torch.tensor(state.reshape(1, -1)).float())
         action = action_dist.loc.detach().numpy()
         res = ppo.env.Steps(action)
+        # print(res[0][0])
         # res = ppo.env.Steps(np.zeros_like(action))
         # print(frame, ppo.env.ref_skel.current_frame, ppo.env.world.time()*ppo.env.ref_motion.fps)
         # print(frame, res[0][0])

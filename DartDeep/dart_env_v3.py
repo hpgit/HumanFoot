@@ -101,6 +101,8 @@ class HpDartEnv(gym.Env):
         # max training time
         self.training_time = 3.
 
+        self.evaluation = False
+
     def state(self):
         pelvis = self.skel.body(0)
         p_pelvis = pelvis.world_transform()[:3, 3]
@@ -140,7 +142,9 @@ class HpDartEnv(gym.Env):
             return True
         elif True in np.isnan(np.asarray(self.skel.q)) or True in np.isnan(np.asarray(self.skel.dq)):
             return True
-        elif self.world.time() > self.training_time:
+        elif self.world.time() > self.training_time and not self.evaluation:
+            return True
+        elif self.world.time() + self.time_offset > self.motion_time and self.evaluation:
             return True
         return False
 
@@ -169,35 +173,60 @@ class HpDartEnv(gym.Env):
             self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
             self.world.step()
 
-        """
-        next_phase = self.get_phase_from_time(next_frame_time)
-        rand_num = randrange(2)
+        if not self.evaluation:
+            next_phase = self.get_phase_from_time(next_frame_time)
+            rand_num = randrange(2)
 
-        if current_phase < 0.1 <= next_phase:
-            goto 0.1
-            goto 0.9
-        elif current_phase < 0.2 <= next_phase:
-            goto 0.2
-            goto 0.8
-        elif current_phase < 0.8 <= next_phase:
-            goto 0.2
-            goto 0.8
-        elif current_phase < 0.9 <= next_phase:
-            goto 0.1
-            goto 0.9
-        elif current_phase < 1.0 <= next_phase:
-            goto 0.0
-        """
+            if current_phase <= 0.1 <= next_phase:
+                if rand_num == 0:
+                    t = self.get_time_from_phase(next_phase - 0.1 + 0.1)
+                    self.continue_from_now_by_time(t)
+                    # print('0 to 1')
+                else:
+                    t = self.get_time_from_phase(next_phase - 0.1 + 0.9)
+                    self.continue_from_now_by_time(t)
+                    # print('0 to 0')
+            elif current_phase <= 0.2 <= next_phase:
+                if rand_num == 0:
+                    t = self.get_time_from_phase(next_phase - 0.2 + 0.2)
+                    self.continue_from_now_by_time(t)
+                    # print('1 to 2')
+                else:
+                    t = self.get_time_from_phase(next_phase - 0.2 + 0.8)
+                    self.continue_from_now_by_time(t)
+                    # print('1 to 1')
+            elif current_phase <= 0.8 <= next_phase:
+                if rand_num == 0:
+                    t = self.get_time_from_phase(next_phase - 0.8 + 0.2)
+                    self.continue_from_now_by_time(t)
+                    # print('2 to 2')
+                else:
+                    t = self.get_time_from_phase(next_phase - 0.8 + 0.8)
+                    self.continue_from_now_by_time(t)
+                    # print('2 to 1')
+            elif current_phase <= 0.9 <= next_phase:
+                if rand_num == 0:
+                    t = self.get_time_from_phase(next_phase - 0.9 + 0.1)
+                    self.continue_from_now_by_time(t)
+                    # print('1 to 1')
+                else:
+                    t = self.get_time_from_phase(next_phase - 0.9 + 0.9)
+                    self.continue_from_now_by_time(t)
+                    # print('1 to 0')
+            elif current_phase <= 1.0 <= next_phase:
+                t = self.get_time_from_phase(next_phase - 1.0 + 0.0)
+                self.continue_from_now_by_time(t)
+                # print('0 to 0, cycle')
 
         return tuple([self.state(), self.reward(), self.is_done(), dict()])
 
     def get_phase_from_time(self, t):
-        frame = t * self.ref_motion.frame
+        frame = t * self.ref_motion.fps
         if self.env_name == 'walk':
             if 0 <= frame < 11:
                 return 0.1 * frame/11.
             elif 11 <= frame < 30:
-                return 0.1 + 0.1 * (frame-30.)/19.
+                return 0.1 + 0.1 * (frame-11.)/19.
             elif 30 <= frame < 73:
                 return 0.2 + 0.6 * (frame-30.)/43.
             elif 73 <= frame < 117:
@@ -211,9 +240,17 @@ class HpDartEnv(gym.Env):
     def get_time_from_phase(self, phase):
         if self.env_name == 'walk':
             if 0. <= phase < 0.1:
-                return
+                return phase / 0.1 * 11. / self.ref_motion.fps
+            elif 0.1 <= phase < 0.2:
+                return ((phase - 0.1)/0.1 * 19. + 11) / self.ref_motion.fps
+            elif 0.2 <= phase < 0.8:
+                return [(phase-0.2)/0.6 * 43. + 30, (phase-0.2)/0.6 * 44. + 73][randrange(2)] /self.ref_motion.fps
+            elif 0.8 <= phase < 0.9:
+                return ((phase - 0.8)/0.1 * 28. + 117) /self.ref_motion.fps
+            else:  # 0.9 <= phase <= 1.0
+                return ((phase - 0.9)/0.1 * 42. + 145) /self.ref_motion.fps
 
-        return round(phase * self.motion_len)
+        raise NotImplementedError
 
     def continue_from_now_by_time(self, t):
         # self.phase_frame = frame
@@ -244,7 +281,7 @@ class HpDartEnv(gym.Env):
             observation (object): The initial observation of the space. Initial reward is assumed to be 0.
         """
         self.world.reset()
-        self.continue_from_now_by_time(self.motion_time * random())
+        self.continue_from_now_by_time(self.motion_time * random() if self.rsi else 0.)
         self.skel.set_positions(self.ref_motion.get_q_by_time(self.time_offset))
         dq = self.ref_motion.get_dq_dart_by_time(self.time_offset)
         self.skel.set_velocities(dq)

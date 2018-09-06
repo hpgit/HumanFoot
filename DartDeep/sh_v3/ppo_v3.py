@@ -307,6 +307,7 @@ class PPO(object):
         self.num_evaluation += 1
         self.env.Resets(True)
         self.env.Reset(False, 0)
+        self.env.evaluation = True
 
         total_reward = 0
         total_step = 0
@@ -341,6 +342,7 @@ class PPO(object):
                   .format(total_reward / self.num_slaves, total_reward / total_step, total_step))
         else:
             self.print('bad..')
+        self.env.evaluation = False
         return total_reward / self.num_slaves, total_step / self.num_slaves
 
     def print(self, s):
