@@ -16,9 +16,10 @@ def main():
     env_name = 'walk'
 
     ppo = PPO(env_name, 1, visualize_only=True)
+    ppo.env.visualize = True
     if not MOTION_ONLY:
         ppo.LoadModel('model/' + env_name + '.pt')
-    ppo.env.Resets(True)
+    ppo.env.Resets(False)
     ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q_by_time(ppo.env.time_offset))
 
     # viewer settings
@@ -27,9 +28,25 @@ def main():
     dart_world = ppo.env.world
     viewer = hsv.hpSimpleViewer(rect=(0, 0, 1200, 800), viewForceWnd=False)
     viewer.doc.addRenderer('MotionModel', yr.DartRenderer(ppo.env.ref_world, (150,150,255), yr.POLYGON_FILL))
+
+    motion_state = [0]
+
     if not MOTION_ONLY:
         viewer.doc.addRenderer('controlModel', yr.DartRenderer(dart_world, (255,240,255), yr.POLYGON_FILL))
         viewer.doc.addRenderer('contact', yr.VectorsRenderer(rd_contact_forces, rd_contact_positions, (255,0,0)))
+
+        def callback_0(_):
+            motion_state[0] = 0
+
+        def callback_1(_):
+            motion_state[0] = 1
+
+        def callback_2(_):
+            motion_state[0] = 2
+
+        viewer.objectInfoWnd.addBtn('0', callback_0)
+        viewer.objectInfoWnd.addBtn('1', callback_1)
+        viewer.objectInfoWnd.addBtn('2', callback_2)
 
     def postCallback(frame):
         ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(frame))
@@ -38,6 +55,7 @@ def main():
         state = ppo.env.GetState(0)
         action_dist, _ = ppo.model(torch.tensor(state.reshape(1, -1)).float())
         action = action_dist.loc.detach().numpy()
+        ppo.env.visualize_select_motion = motion_state[0]
         res = ppo.env.Steps(action)
         # print(res[0][0])
         # res = ppo.env.Steps(np.zeros_like(action))

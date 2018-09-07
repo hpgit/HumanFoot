@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import IntEnum
 
 PM_HUMAN_NUM_LINKS = 58
 
@@ -8,7 +8,7 @@ def MaskBit(j):
     return 0x01 << j
 
 
-class PmHumanEnum(Enum):
+class PmHumanEnum(IntEnum):
     UNDEFINED = -1
     PELVIS = 0
     SPINE_1 = 1

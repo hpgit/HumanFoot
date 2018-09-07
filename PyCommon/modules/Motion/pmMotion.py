@@ -1,4 +1,5 @@
 from PyCommon.modules.Motion.ysMotion import *
+from PyCommon.modules.Motion.pmConstants import *
 from copy import deepcopy
 
 
@@ -38,6 +39,17 @@ class PmLinearMotion(JointMotion):
 
         return mask
 
+    def getPositionVelocity(self, i, v):
+        """
+
+        :param i:
+        :type i: int
+        :param v:
+        :type v: PmVector
+        :return:
+        """
+        raise NotImplementedError
+
 
 class PmPosture(JointPosture):
     def __init__(self, skeleton):
@@ -45,22 +57,22 @@ class PmPosture(JointPosture):
         self.skeleton = skeleton  # type: PmHuman
 
         # pmqm
-        self.mask = 0x00
-        self.mask |= 0x01 << 0
-        self.mask |= 0x01 << 5
-        self.mask |= 0x01 << 6
-        self.mask |= 0x01 << 12
-        self.mask |= 0x01 << 13
-        self.mask |= 0x01 << 14
-        self.mask |= 0x01 << 15
-        self.mask |= 0x01 << 16
-        self.mask |= 0x01 << 17
-        self.mask |= 0x01 << 18
-        self.mask |= 0x01 << 19
-        self.mask |= 0x01 << 20
-        self.mask |= 0x01 << 21
-        self.mask |= 0x01 << 22
-        self.mask |= 0x01 << 23
+        self.mask = PmHumanEnum.UNDEFINED
+        self.mask |= MaskBit(PmHumanEnum.PELVIS)
+        self.mask |= MaskBit(PmHumanEnum.CHEST)
+        self.mask |= MaskBit(PmHumanEnum.NECK)
+        self.mask |= MaskBit(PmHumanEnum.UPPER_RIGHT_ARM)
+        self.mask |= MaskBit(PmHumanEnum.UPPER_LEFT_ARM)
+        self.mask |= MaskBit(PmHumanEnum.LOWER_RIGHT_ARM)
+        self.mask |= MaskBit(PmHumanEnum.LOWER_LEFT_ARM)
+        self.mask |= MaskBit(PmHumanEnum.UPPER_RIGHT_LEG)
+        self.mask |= MaskBit(PmHumanEnum.UPPER_LEFT_LEG)
+        self.mask |= MaskBit(PmHumanEnum.LOWER_RIGHT_LEG)
+        self.mask |= MaskBit(PmHumanEnum.LOWER_LEFT_LEG)
+        self.mask |= MaskBit(PmHumanEnum.RIGHT_FOOT)
+        self.mask |= MaskBit(PmHumanEnum.LEFT_FOOT)
+        self.mask |= MaskBit(PmHumanEnum.RIGHT_TOE)
+        self.mask |= MaskBit(PmHumanEnum.LEFT_TOE)
 
     def getGlobalTransf(self, i):
         return self.globalTs[i]
@@ -74,4 +86,71 @@ class PmPosture(JointPosture):
 
 class PmHuman(JointSkeleton):
     pass
+
+
+class PmVectorArray:
+    def __init__(self, joint_num):
+        self.data = []  # type: list[PmVector]
+        self.joint_num = joint_num
+
+    def setSize(self, size):
+        for i in range(size):
+            self.data.append(PmVector(self.joint_num))
+
+    def setVector(self, j, v):
+        self.data[j] = deepcopy(v)
+
+
+class PmVector:
+    def __init__(self, joint_num):
+        # pmqm
+        self.mask = PmHumanEnum.UNDEFINED
+        self.mask |= MaskBit(PmHumanEnum.PELVIS)
+        self.mask |= MaskBit(PmHumanEnum.CHEST)
+        self.mask |= MaskBit(PmHumanEnum.NECK)
+        self.mask |= MaskBit(PmHumanEnum.UPPER_RIGHT_ARM)
+        self.mask |= MaskBit(PmHumanEnum.UPPER_LEFT_ARM)
+        self.mask |= MaskBit(PmHumanEnum.LOWER_RIGHT_ARM)
+        self.mask |= MaskBit(PmHumanEnum.LOWER_LEFT_ARM)
+        self.mask |= MaskBit(PmHumanEnum.UPPER_RIGHT_LEG)
+        self.mask |= MaskBit(PmHumanEnum.UPPER_LEFT_LEG)
+        self.mask |= MaskBit(PmHumanEnum.LOWER_RIGHT_LEG)
+        self.mask |= MaskBit(PmHumanEnum.LOWER_LEFT_LEG)
+        self.mask |= MaskBit(PmHumanEnum.RIGHT_FOOT)
+        self.mask |= MaskBit(PmHumanEnum.LEFT_FOOT)
+        self.mask |= MaskBit(PmHumanEnum.RIGHT_TOE)
+        self.mask |= MaskBit(PmHumanEnum.LEFT_TOE)
+
+        self.linear = np.zeros(3)
+        self.angular = [np.zeros(3) for i in range(joint_num)]
+
+    def getMask(self):
+        return self.mask
+
+    def positionDifference(self, p1, p2):
+        """
+
+        :param p1:
+        :type p1: PmPosture
+        :param p2:
+        :type p2: PmPosture
+        :return:
+        """
+        self.mask = p1.getMask() & p2.getMask()
+
+        t1 = mm.PlaneProject(p1.getTransf(0))
+        t2 = mm.PlaneProject(p2.getTransf(0))
+
+        calib = mm.invertSE3(t2) * t1
+
+        self.setLinearVector(np.zeros(3))
+
+        for i in range(PM_HUMAN_NUM_LINKS):
+            if self.getMask() & MaskBit(i):
+                a1 = (np.zeros(3) + p1.getGlobalTranslation(i))
+                a2 = (np.zeros(3) + p2.getGlobalTranslation(i)) * calib
+
+                self.setAngularVector(i, a2 - a1)
+
+        return self
 

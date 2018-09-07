@@ -103,6 +103,9 @@ class HpDartEnv(gym.Env):
 
         self.evaluation = False
 
+        self.visualize = False
+        self.visualize_select_motion = 0
+
     def state(self):
         pelvis = self.skel.body(0)
         p_pelvis = pelvis.world_transform()[:3, 3]
@@ -142,7 +145,7 @@ class HpDartEnv(gym.Env):
             return True
         elif True in np.isnan(np.asarray(self.skel.q)) or True in np.isnan(np.asarray(self.skel.dq)):
             return True
-        elif self.world.time() > self.training_time and not self.evaluation:
+        elif self.world.time() > self.training_time and (not self.evaluation and not self.visualize):
             return True
         elif self.world.time() + self.time_offset > self.motion_time and self.evaluation:
             return True
@@ -169,54 +172,78 @@ class HpDartEnv(gym.Env):
         self.ref_skel.set_positions(self.ref_motion.get_q_by_time(next_frame_time))
         self.ref_skel.set_velocities(self.ref_motion.get_dq_dart_by_time(next_frame_time))
         for i in range(self.step_per_frame):
-            # self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
-            self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
+            self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
+            # self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
             self.world.step()
 
         if not self.evaluation:
             next_phase = self.get_phase_from_time(next_frame_time)
-            rand_num = randrange(2)
 
             if current_phase <= 0.1 <= next_phase:
-                if rand_num == 0:
+                rand_num = randrange(2) if not self.visualize else self.visualize_select_motion
+                if rand_num == 1 or rand_num == 2:
                     t = self.get_time_from_phase(next_phase - 0.1 + 0.1)
                     self.continue_from_now_by_time(t)
-                    # print('0 to 1')
-                else:
+                    if self.visualize:
+                        print('0 to 1')
+                else:  # 0 only
                     t = self.get_time_from_phase(next_phase - 0.1 + 0.9)
                     self.continue_from_now_by_time(t)
-                    # print('0 to 0')
+                    if self.visualize:
+                        print('0 to 0')
             elif current_phase <= 0.2 <= next_phase:
-                if rand_num == 0:
+                rand_num = randrange(1, 3) if not self.visualize else self.visualize_select_motion
+                if rand_num == 2:
                     t = self.get_time_from_phase(next_phase - 0.2 + 0.2)
                     self.continue_from_now_by_time(t)
-                    # print('1 to 2')
-                else:
+                    if self.visualize:
+                        print('1 to 2')
+                else:  # 0 or 1
                     t = self.get_time_from_phase(next_phase - 0.2 + 0.8)
                     self.continue_from_now_by_time(t)
-                    # print('1 to 1')
+                    if self.visualize:
+                        print('1 to 1')
             elif current_phase <= 0.8 <= next_phase:
-                if rand_num == 0:
+                rand_num = randrange(1, 3) if not self.visualize else self.visualize_select_motion
+                if rand_num == 2:
                     t = self.get_time_from_phase(next_phase - 0.8 + 0.2)
                     self.continue_from_now_by_time(t)
-                    # print('2 to 2')
-                else:
+                    if self.visualize:
+                        print('2 to 2')
+                else:  # 0 or 1
                     t = self.get_time_from_phase(next_phase - 0.8 + 0.8)
                     self.continue_from_now_by_time(t)
-                    # print('2 to 1')
+                    if self.visualize:
+                        print('2 to 1')
+            elif (current_phase <= 0.8 and 0.2 <= next_phase) and next_phase < current_phase:
+                rand_num = randrange(1, 3) if not self.visualize else self.visualize_select_motion
+                if rand_num == 2:
+                    t = self.get_time_from_phase(next_phase - 0.2 + 0.2)
+                    self.continue_from_now_by_time(t)
+                    if self.visualize:
+                        print('2 to 2')
+                else:  # 0 or 1
+                    t = self.get_time_from_phase(next_phase - 0.2 + 0.8)
+                    self.continue_from_now_by_time(t)
+                    if self.visualize:
+                        print('2 to 1')
             elif current_phase <= 0.9 <= next_phase:
-                if rand_num == 0:
+                rand_num = randrange(2) if not self.visualize else self.visualize_select_motion
+                if rand_num == 1 or rand_num == 2:
                     t = self.get_time_from_phase(next_phase - 0.9 + 0.1)
                     self.continue_from_now_by_time(t)
-                    # print('1 to 1')
-                else:
+                    if self.visualize:
+                        print('1 to 1')
+                else:  # 0 only
                     t = self.get_time_from_phase(next_phase - 0.9 + 0.9)
                     self.continue_from_now_by_time(t)
-                    # print('1 to 0')
+                    if self.visualize:
+                        print('1 to 0')
             elif current_phase <= 1.0 <= next_phase:
                 t = self.get_time_from_phase(next_phase - 1.0 + 0.0)
                 self.continue_from_now_by_time(t)
-                # print('0 to 0, cycle')
+                if self.visualize:
+                    print('0 to 0, cycle')
 
         return tuple([self.state(), self.reward(), self.is_done(), dict()])
 
@@ -281,7 +308,8 @@ class HpDartEnv(gym.Env):
             observation (object): The initial observation of the space. Initial reward is assumed to be 0.
         """
         self.world.reset()
-        self.continue_from_now_by_time(self.motion_time * random() if self.rsi else 0.)
+        # self.continue_from_now_by_time(self.motion_time * random() if self.rsi else 0.)
+        self.continue_from_now_by_time(self.get_time_from_phase(random()) if self.rsi else 0.)
         self.skel.set_positions(self.ref_motion.get_q_by_time(self.time_offset))
         dq = self.ref_motion.get_dq_dart_by_time(self.time_offset)
         self.skel.set_velocities(dq)

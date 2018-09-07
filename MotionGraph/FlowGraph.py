@@ -42,7 +42,7 @@ class FlowGraph:
     def __init__(self):
         self.size = 0
         self.motion_frames = None  # type: pm.PmLinearMotion
-        self.velocity_frames = None  # type: PmVectorAray
+        self.velocity_frames = None  # type: pm.PmVectorAray
 
         self.flow_graph = None  # type: list[FlowEntityHead]
 
@@ -94,7 +94,7 @@ class FlowGraph:
         :param n_motions:
         :type n_motions: int
         :param motion_list:
-        :type motion_list: list[ym.JointMotion]
+        :type motion_list: list[pm.PmLinearMotion]
         :return:
         """
         print('initialize the flow graph...')
@@ -102,11 +102,13 @@ class FlowGraph:
         buffer1, buffer2, buffer3 = [0.]*self.size, [0.]*self.size, [0.]*self.size
         total, prune1, prune2, prune3 = 0, 0, 0, 0
 
+        joint_num = motion_list[0][0].skeleton.getElementNum()
+
         # Estimate Velocity
-        self.velocity_frames = PmVectorArray()
+        self.velocity_frames = pm.PmVectorArray(joint_num)
         self.velocity_frames.setSize(self.size)
 
-        v = PmVector()
+        v = pm.PmVector(joint_num)
 
         j = 0
         for k in range(n_motions):
@@ -578,7 +580,7 @@ class FlowGraph:
 
                 t = invertSE3(PlaneProject(p.getGlobalTransf(0)))
 
-                file.write('{}'.format(p.getGlobalPosition(0)[1]))
+                file.write('{} '.format(p.getGlobalPosition(0)[1]))
                 dim += 1
 
                 for j in range(PM_HUMAN_NUM_LINKS):

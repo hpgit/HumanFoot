@@ -565,9 +565,9 @@ def PlaneProject(T):
         return exp(_t * unitY() / 2.0)
 
     if np.dot(q, R2Quat(_getValue(t1))) > np.dot(q, R2Quat(_getValue(t2))):
-        T[:3, :3], T[:3, 3] = _getValue(t1), np.array((t[0], 0., t[2]))
+        T_ret[:3, :3], T_ret[:3, 3] = _getValue(t1), np.array((t[0], 0., t[2]))
     else:
-        T[:3, :3], T[:3, 3] = _getValue(t2), np.array((t[0], 0., t[2]))
+        T_ret[:3, :3], T_ret[:3, 3] = _getValue(t2), np.array((t[0], 0., t[2]))
     return T_ret
 
 #===============================================================================

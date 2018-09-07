@@ -1,5 +1,6 @@
 import PyCommon.modules.Resource.ysMotionLoader as yf
 from MotionGraph.FlowGraph import FlowGraph
+from MotionGraph.FrameDistance import AllPointKNearest, readPts
 
 if __name__ == '__main__':
     n_motions = 1
@@ -32,7 +33,7 @@ if __name__ == '__main__':
     poseDimension = fGraph.vectorize(pointSetFile)
 
     # frame distance
-    AllPointKNearest(fGraph.getSize(), poseDimension, fGraph.getSize()/20, pointSetFile, distFile, fGraph.distance_matrix)
+    fGraph.distance_matrix = AllPointKNearest(fGraph.getSize(), poseDimension, fGraph.getSize()//20, pointSetFile, distFile)
 
     # build up Motion-Graph
     motionGraphFile = 'mg.txt'
