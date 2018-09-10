@@ -28,7 +28,7 @@ MultiVariateNormal.mode = lambda self: self.mean
 
 
 class Model(nn.Module):
-    def __init__(self, num_states, num_actions, add_action_noise=True):
+    def __init__(self, num_states, num_actions):
         super(Model, self).__init__()
 
         hidden_layer_size1 = 128
@@ -40,10 +40,8 @@ class Model(nn.Module):
         self.policy_fc3 = nn.Linear(hidden_layer_size2, num_actions)
 
         '''Policy Distributions'''
-        if add_action_noise:
-            self.log_std = nn.Parameter(1. * torch.ones(num_actions))
-        else:
-            self.log_std = nn.Parameter(torch.zeros(num_actions))
+        self.log_std = nn.Parameter(0.1 * torch.ones(num_actions))
+        # self.log_std = nn.Parameter(torch.zeros(num_actions))
         # self.log_std = nn.Parameter(1.*torch.eye(num_actions))
 
         '''Value'''
@@ -91,7 +89,7 @@ class Model(nn.Module):
         v = F.relu(self.value_fc2(v))
         v = self.value_fc3(v)
 
-        return p, v, p_mean
+        return p, v
 
 
 Episode = namedtuple('Episode', ('s', 'a', 'r', 'value', 'logprob'))
@@ -153,7 +151,7 @@ class PPO(object):
 
         self.total_episodes = []
 
-        self.model = Model(self.num_state, self.num_action, add_action_noise=(not visualize_only)).float()
+        self.model = Model(self.num_state, self.num_action).float()
         self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
         self.w_entropy = 0.0
 
@@ -219,10 +217,9 @@ class PPO(object):
             # if (new_percent == percent) is not True:
             # percent = new_percent
             # print('{}0%'.format(percent))
-            a_dist, v, a_mean = self.model(torch.tensor(states).float())
-            actions_mean = a_mean.detach().numpy().reshape(-1)
+            a_dist, v = self.model(torch.tensor(states).float())
             actions = a_dist.sample().detach().numpy()
-            # print(actions, actions_mean)
+            # print(actions - a_dist.loc.detach().numpy())
             logprobs = a_dist.log_prob(torch.tensor(actions).float()).detach().numpy().reshape(-1)
             values = v.detach().numpy().reshape(-1)
 
@@ -280,7 +277,7 @@ class PPO(object):
                 stack_td = np.vstack(batch.TD).astype(np.float32)
                 stack_gae = np.vstack(batch.GAE).astype(np.float32)
 
-                a_dist, v, a_mean = self.model(torch.tensor(stack_s).float())
+                a_dist, v = self.model(torch.tensor(stack_s).float())
                 '''Critic Loss'''
                 loss_critic = ((v - torch.tensor(stack_td).float()).pow(2)).mean()
 
@@ -322,7 +319,7 @@ class PPO(object):
                 self.print("state warning!!!!!!!! start")
 
         for t in count():
-            action_dist, _, action_mean = self.model(torch.tensor(states).float())
+            action_dist, _ = self.model(torch.tensor(states).float())
             actions = action_dist.loc.detach().numpy()
             for j in range(len(actions)):
                 if np.any(np.isnan(actions[j])):
