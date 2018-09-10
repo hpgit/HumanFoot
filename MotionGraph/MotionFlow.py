@@ -1,6 +1,6 @@
 import PyCommon.modules.Resource.ysMotionLoader as yf
 from MotionGraph.FlowGraph import FlowGraph
-from MotionGraph.FrameDistance import AllPointKNearest, readPts
+from MotionGraph.FrameDistance import AllPointKNearest
 
 if __name__ == '__main__':
     n_motions = 1
@@ -24,7 +24,8 @@ if __name__ == '__main__':
     fGraph.setLocalCoordinate(True)
     fGraph.setThreshold(1e-10)
     fGraph.setVariance(2.)
-    fGraph.setMinJump(10)
+    # fGraph.setMinJump(10)
+    fGraph.setMinJump(60)
     fGraph.setPelvisWeight(0.)
 
     # calculate distances between two frames

@@ -1,4 +1,3 @@
-from scipy.spatial import kdtree
 import numpy as np
 from annoy import AnnoyIndex
 

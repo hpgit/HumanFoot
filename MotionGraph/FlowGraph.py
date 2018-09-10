@@ -113,7 +113,7 @@ class FlowGraph:
         j = 0
         for k in range(n_motions):
             for i in range(motion_list[k].getSize()):
-                motion_list[j].getPositionVelocity(i, v)
+                motion_list[k].getPositionVelocity(i, v)
                 self.velocity_frames.setVector(j, v)
                 j += 1
 
@@ -134,6 +134,7 @@ class FlowGraph:
                     buffer1[j] = self.distance(i, j-1)
                 else:
                     buffer1[j] = 0.
+                l += 1
                 j += 1
 
             while l < motion_list[k].getSize():
@@ -151,6 +152,7 @@ class FlowGraph:
                     buffer2[j] = self.distance(i, j-1)
                 else:
                     buffer2[j] = 0.
+                l += 1
                 j += 1
 
             while l < motion_list[k].getSize():
@@ -172,6 +174,7 @@ class FlowGraph:
                         buffer3[j] = self.distance(i, j-1)
                     else:
                         buffer3[j] = 0.
+                    l += 1
                     j += 1
 
                 while l < motion_list[k].getSize():
@@ -194,8 +197,8 @@ class FlowGraph:
                         and buffer2[j] >= buffer3[j] \
                         and buffer2[j] >= buffer1[j-1] \
                         and buffer2[j] >= buffer3[j-1] \
-                        and buffer2[j] >= buffer1[j-1] \
-                        and buffer2[j] >= buffer3[j-1]:
+                        and buffer2[j] >= buffer1[j+1] \
+                        and buffer2[j] >= buffer3[j+1]:
                     prune3 += 1
                     self.setValue(i-1, j, buffer2[j])
 
@@ -315,6 +318,7 @@ class FlowGraph:
                 elif e.next is None or (e.next is not None and e.next.id > y):
                     self.addEntity(x, y, v, e)
                     return
+                e = e.next
 
     def distance(self, f1, f2):
         if f1 == f2:
@@ -562,12 +566,13 @@ class FlowGraph:
             for i in range(self.getSize()):
                 num_of_data += self.flow_graph[i].num
 
-            file.write('%d\n'.format(num_of_data))
+            file.write('{}\n'.format(num_of_data))
 
             for i in range(self.getSize()):
                 e = self.flow_graph[i].entity
                 while e is not None:
-                    file.write('%d %d %lf\n'.format(i, e.id, e.value))
+                    if e.id - i != 1:
+                        file.write('{0} {1} {2:0.6f}\n'.format(i, e.id, e.value))
                     e = e.next
 
     def vectorize(self, filename):
@@ -584,10 +589,8 @@ class FlowGraph:
                 dim += 1
 
                 for j in range(PM_HUMAN_NUM_LINKS):
-                    # if self.motion_frames.getMask() & MaskBit(j):
-                    index = self.motion_frames.getPosture(0).skeleton.getElementIndex(human_part_name[j])
-                    if index is not None:
-                        a = p.getGlobalPosition(index)
+                    if self.motion_frames.getMask() & MaskBit(j):
+                        a = p.getGlobalPosition(j)
                         file.write('{} {} {} '.format(a[0], a[1], a[2]))
                         dim += 3
 
