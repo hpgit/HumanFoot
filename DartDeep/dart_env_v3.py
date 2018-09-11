@@ -10,6 +10,7 @@ from gym.utils import seeding
 
 import PyCommon.modules.Resource.ysMotionLoader as yf
 from DartDeep.pd_controller import PDController
+from PyCommon.modules.Motion.ysMotion import dart_q_slerp
 
 from multiprocessing import Pool
 
@@ -106,6 +107,11 @@ class HpDartEnv(gym.Env):
         self.visualize = False
         self.visualize_select_motion = 0
 
+        self.blend_start_time = 0.
+        self.blend_time = 0.25
+        self.blend_time_count = 0.
+        self.blending = False
+
     def state(self):
         pelvis = self.skel.body(0)
         p_pelvis = pelvis.world_transform()[:3, 3]
@@ -169,8 +175,24 @@ class HpDartEnv(gym.Env):
         current_phase = self.get_phase_from_time(self.world.time() + self.time_offset)
 
         next_frame_time = self.world.time() + self.time_offset + self.world.time_step() * self.step_per_frame
-        self.ref_skel.set_positions(self.ref_motion.get_q_by_time(next_frame_time))
-        self.ref_skel.set_velocities(self.ref_motion.get_dq_dart_by_time(next_frame_time))
+
+        next_q = self.ref_motion.get_q_by_time(next_frame_time)
+
+        print(self.blending, self.blend_time_count)
+        if self.blending:
+            self.blend_time_count += self.step_per_frame * self.world.time_step()
+            if self.blend_time_count >= self.blend_time:
+                self.blending = False
+                self.blend_time_count = 0.
+
+        if self.blending:
+            next_q_slerp = dart_q_slerp(self.blend_time_count/self.blend_time, self.ref_motion.get_q_by_time(self.blend_start_time + self.blend_time_count), next_q)
+            self.ref_skel.set_positions(next_q_slerp)
+            self.ref_skel.set_velocities(self.ref_motion.get_dq_dart_by_time(next_frame_time))
+        else:
+            self.ref_skel.set_positions(next_q)
+            self.ref_skel.set_velocities(self.ref_motion.get_dq_dart_by_time(next_frame_time))
+
         for i in range(self.step_per_frame):
             self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
             # self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
@@ -179,16 +201,21 @@ class HpDartEnv(gym.Env):
         if not self.evaluation:
             next_phase = self.get_phase_from_time(next_frame_time)
 
+            if not self.blending:
+                self.blend_start_time = next_frame_time
+
             if current_phase <= 0.1 <= next_phase:
                 rand_num = randrange(2) if not self.visualize else self.visualize_select_motion
                 if rand_num == 1 or rand_num == 2:
                     t = self.get_time_from_phase(next_phase - 0.1 + 0.1)
                     self.continue_from_now_by_time(t)
+                    self.blending = True
                     if self.visualize:
                         print('0 to 1')
                 else:  # 0 only
                     t = self.get_time_from_phase(next_phase - 0.1 + 0.9)
                     self.continue_from_now_by_time(t)
+                    self.blending = True
                     if self.visualize:
                         print('0 to 0')
             elif current_phase <= 0.2 <= next_phase:
@@ -196,11 +223,13 @@ class HpDartEnv(gym.Env):
                 if rand_num == 2:
                     t = self.get_time_from_phase(next_phase - 0.2 + 0.2)
                     self.continue_from_now_by_time(t)
+                    self.blending = True
                     if self.visualize:
                         print('1 to 2')
                 else:  # 0 or 1
                     t = self.get_time_from_phase(next_phase - 0.2 + 0.8)
                     self.continue_from_now_by_time(t)
+                    self.blending = True
                     if self.visualize:
                         print('1 to 1')
             elif current_phase <= 0.8 <= next_phase:
@@ -208,11 +237,13 @@ class HpDartEnv(gym.Env):
                 if rand_num == 2:
                     t = self.get_time_from_phase(next_phase - 0.8 + 0.2)
                     self.continue_from_now_by_time(t)
+                    self.blending = True
                     if self.visualize:
                         print('2 to 2')
                 else:  # 0 or 1
                     t = self.get_time_from_phase(next_phase - 0.8 + 0.8)
                     self.continue_from_now_by_time(t)
+                    self.blending = True
                     if self.visualize:
                         print('2 to 1')
             elif (current_phase <= 0.8 and 0.2 <= next_phase) and next_phase < current_phase:
@@ -220,11 +251,13 @@ class HpDartEnv(gym.Env):
                 if rand_num == 2:
                     t = self.get_time_from_phase(next_phase - 0.2 + 0.2)
                     self.continue_from_now_by_time(t)
+                    self.blending = True
                     if self.visualize:
                         print('2 to 2')
                 else:  # 0 or 1
                     t = self.get_time_from_phase(next_phase - 0.2 + 0.8)
                     self.continue_from_now_by_time(t)
+                    self.blending = True
                     if self.visualize:
                         print('2 to 1')
             elif current_phase <= 0.9 <= next_phase:
@@ -232,16 +265,19 @@ class HpDartEnv(gym.Env):
                 if rand_num == 1 or rand_num == 2:
                     t = self.get_time_from_phase(next_phase - 0.9 + 0.1)
                     self.continue_from_now_by_time(t)
+                    self.blending = True
                     if self.visualize:
                         print('1 to 1')
                 else:  # 0 only
                     t = self.get_time_from_phase(next_phase - 0.9 + 0.9)
                     self.continue_from_now_by_time(t)
+                    self.blending = True
                     if self.visualize:
                         print('1 to 0')
             elif current_phase <= 1.0 <= next_phase:
                 t = self.get_time_from_phase(next_phase - 1.0 + 0.0)
                 self.continue_from_now_by_time(t)
+                self.blending = True
                 if self.visualize:
                     print('0 to 0, cycle')
 

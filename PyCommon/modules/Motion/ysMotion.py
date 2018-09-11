@@ -1203,6 +1203,31 @@ class JointPosture(Posture):
             self.updateGlobalT()
 
 
+def dart_q_slerp(t, _from, _to):
+    """
+
+    :param t:
+    :type t: float
+    :param _from:
+    :type _from: np.ndarray
+    :param _to:
+    :type _to: np.ndarray
+    :return:
+    """
+    res = np.zeros_like(_from)
+
+    joint_num = np.shape(_from)[0]//3
+
+    for i in range(joint_num):
+        index = range(3*i, 3*(i+1))
+        if i == 1:
+            res[index] = (1.-t) * _from[index] + t * _to[index]
+        else:
+            res[index] = mm.logSO3(mm.slerp(mm.exp(_from[index]), mm.exp(_to[index]), t))
+
+    return res
+
+
 class JointDisplacement(JointPosture):
     def __init__(self, jointSkeleton):
         JointPosture.__init__(self, jointSkeleton)

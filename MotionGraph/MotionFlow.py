@@ -2,7 +2,7 @@ import PyCommon.modules.Resource.ysMotionLoader as yf
 from MotionGraph.FlowGraph import FlowGraph
 from MotionGraph.FrameDistance import AllPointKNearest
 
-if __name__ == '__main__':
+def build_graph():
     n_motions = 1
     motion_files = ['wd2_jump0.bvh']
     # motions = yf.readBvhFile("data/woody_walk_normal.bvh")[40:]
@@ -37,10 +37,15 @@ if __name__ == '__main__':
     fGraph.distance_matrix = AllPointKNearest(fGraph.getSize(), poseDimension, fGraph.getSize()//20, pointSetFile, distFile)
 
     # build up Motion-Graph
-    motionGraphFile = 'mg.txt'
     fGraph.build(n_motions, motions)
 
     # seed = fGraph.stronglyConnectedComponents()
     # fGraph.preventDeadLock(seed)
-    fGraph.save(motionGraphFile)
 
+    return fGraph
+
+
+if __name__ == '__main__':
+    fGraph = build_graph()
+    motionGraphFile = 'mg.txt'
+    fGraph.save(motionGraphFile)
