@@ -62,9 +62,9 @@ class FlowGraph:
         self.scc_size = 0
 
         self.transition_at_contact_change = True
-        self.transition_at_left_heel_strike = True
+        self.transition_at_left_heel_strike = False
         self.transition_at_left_toe_off = False
-        self.transition_at_right_heel_strike = False
+        self.transition_at_right_heel_strike = True
         self.transition_at_right_toe_off = False
 
         self.acc_neck_dist = list()  # type: list[float]
@@ -324,8 +324,6 @@ class FlowGraph:
         if f1 == f2:
             # same frames
             return 1
-        #TODO:
-        # check distance_matrix set value
         d = self.distance_matrix[f1, f2]
         if d == 0:
             # not included in the knn
@@ -571,8 +569,8 @@ class FlowGraph:
             for i in range(self.getSize()):
                 e = self.flow_graph[i].entity
                 while e is not None:
-                    if e.id - i != 1:
-                        file.write('{0} {1} {2:0.6f}\n'.format(i, e.id, e.value))
+                    # if e.id - i != 1:
+                    file.write('{0} {1} {2:0.6f}\n'.format(i, e.id, e.value))
                     e = e.next
 
     def vectorize(self, filename):

@@ -17,14 +17,17 @@ from PyCommon.modules.Math import mmMath as mm
 
 
 def align(motionToAlign, alignRefPosture_or_d, alignPosition=True, alignOrientation=True, pos_y_preserve=True, ori_xz_preserve=True, alignFrame=0):
-    if alignRefPosture_or_d.__class__ == ym.JointPosture: d = alignRefPosture_or_d - motionToAlign[alignFrame]
-    elif alignRefPosture_or_d.__class__ == ym.JointDisplacement: d = alignRefPosture_or_d
+    if alignRefPosture_or_d.__class__ == ym.JointPosture:
+        d = alignRefPosture_or_d - motionToAlign[alignFrame]
+    elif alignRefPosture_or_d.__class__ == ym.JointDisplacement:
+        d = alignRefPosture_or_d
         
     if alignPosition:
         p_offset = d.rootPos.copy()
         if pos_y_preserve:
             p_offset[1] = 0.
-            d.rootPos[0] = 0.; d.rootPos[2] = 0.
+            d.rootPos[0] = 0.
+            d.rootPos[2] = 0.
         else:
             d.disableTranslation()
         motionToAlign.translateByOffset(p_offset, False)
@@ -275,8 +278,6 @@ def getBlendedNextMotion2(nextMotionA, nextMotionB, prevEndPosture, t=None, atta
 #    del blendedNextMotion[0]
     return blendedNextMotion
 
-
-
     
 def blendSegmentSmooth(motionSegment0, motionSegment1, attachPosition=True, attachOrientation=True):
     motionSegment1 = motionSegment1.copy()
@@ -289,7 +290,7 @@ def blendSegmentSmooth(motionSegment0, motionSegment1, attachPosition=True, atta
         motionSegment1.rotateTrajectory(R_offset)
     
     newMotion = ym.JointMotion( [None]*(int( (len(motionSegment0)+len(motionSegment1))/2.) ) )
-#    newMotion = ym.JointMotion( [None]*(int( t*len(motionSegment0) + (1-t)*len(motionSegment1)) ) )
+    # newMotion = ym.JointMotion( [None]*(int( t*len(motionSegment0) + (1-t)*len(motionSegment1)) ) )
     df0 = float(len(newMotion)) / len(motionSegment0)
     df1 = float(len(newMotion)) / len(motionSegment1)
     for frame in range(len(newMotion)):
@@ -302,7 +303,8 @@ def blendSegmentSmooth(motionSegment0, motionSegment1, attachPosition=True, atta
         posture1_at_normalizedFrame = motionSegment1.getPostureAt(normalizedFrame2*(len(motionSegment1)-1))
         newMotion[frame] = posture0_at_normalizedFrame.blendPosture(posture1_at_normalizedFrame, normalizedFrame2)
     return newMotion
-    
+
+
 def blendSegmentFixed(motionSegment0, motionSegment1, t, attachPosition=True, attachOrientation=True):
     motionSegment1 = motionSegment1.copy()
     if attachPosition:
@@ -331,7 +333,8 @@ def blendSegmentFixed(motionSegment0, motionSegment1, t, attachPosition=True, at
 #        newMotion[frame] = posture0_at_normalizedFrame.blendPosture(posture1_at_normalizedFrame, normalizedFrame)
         newMotion[frame] = posture0_at_normalizedFrame.blendPosture(posture1_at_normalizedFrame, t)
     return newMotion
-    
+
+
 def timescale(motion, newLength, scalingFunc=yfg.identity):
     if newLength == len(motion):
         return motion

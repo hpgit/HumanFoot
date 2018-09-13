@@ -3,9 +3,10 @@ from MotionGraph.FlowGraph import FlowGraph
 from MotionGraph.FrameDistance import AllPointKNearest
 
 def build_graph():
-    n_motions = 1
-    motion_files = ['wd2_jump0.bvh']
-    # motions = yf.readBvhFile("data/woody_walk_normal.bvh")[40:]
+    # motion_files = ['wd2_jump0.bvh']
+    # motion_files = ['woody_walk_normal.bvh', 'wd2_jump0.bvh']
+    motion_files = ['woody_walk_normal.bvh']
+    n_motions = len(motion_files)
 
     motions = []
 
@@ -13,7 +14,6 @@ def build_graph():
         # motions.append(PmLinearMotion(human))
         # motions[i].openAMC(motion_files[i], 1, 1)
         motions.append(yf.readBvhFileAsBvh(motion_files[i]).toPmLinearMotion(1., False))
-    skeleton = motions[0][0].skeleton
 
     # for i in range(skeleton.getElementNum()):
     #     print(skeleton.getElement(i))
@@ -24,8 +24,8 @@ def build_graph():
     fGraph.setLocalCoordinate(True)
     fGraph.setThreshold(1e-10)
     fGraph.setVariance(2.)
-    # fGraph.setMinJump(10)
-    fGraph.setMinJump(60)
+    fGraph.setMinJump(10)
+    # fGraph.setMinJump(60)
     fGraph.setPelvisWeight(0.)
 
     # calculate distances between two frames

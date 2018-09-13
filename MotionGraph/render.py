@@ -9,6 +9,8 @@ import pydart2 as pydart
 
 
 def main():
+    fGraph = build_graph()
+
     def get_info(x):
         temp = x.split()
         return tuple([int(temp[0]), int(temp[1]), float(temp[2])])
@@ -23,8 +25,6 @@ def main():
 
     pydart.init()
     world = [pydart.World(1./1200., "../DartDeep/data/woody_with_ground_v2.xml") for _ in range(2)]
-
-    motion = yf.readBvhFile('wd2_jump0.bvh')
 
     # viewer settings
     rd_contact_positions = [None]
@@ -50,11 +50,11 @@ def main():
 
     def postCallback(frame):
         for i in range(2):
-            world[i].skeletons[1].set_positions(motion.get_q(motion_info[frame][i]))
+            world[i].skeletons[1].set_positions(fGraph.motion_frames.get_q(motion_info[frame][i]))
         print(frame, motion_info[frame])
 
     viewer.setPreFrameCallback_Always(postCallback)
-    viewer.setMaxFrame(total_num)
+    viewer.setMaxFrame(total_num-1)
     viewer.startTimer(1./30.)
     viewer.show()
 
