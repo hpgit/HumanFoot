@@ -2,7 +2,7 @@
 import numpy as np
 
 import pydart2 as pydart
-from DartDeep.dart_env_v4 import HpDartEnv
+from DartDeep.dart_env_v4 import HpDartMultiEnv
 
 from collections import namedtuple
 from collections import deque
@@ -129,10 +129,10 @@ class PPO(object):
     def __init__(self, env_name, num_slaves=1, eval_print=True, eval_log=True, visualize_only=False):
         np.random.seed(seed=int(time.time()))
         self.env_name = env_name
-        self.env = HpDartEnv(env_name)
+        self.env = HpDartMultiEnv(env_name, num_slaves)
         self.num_slaves = num_slaves
-        self.num_state = self.env.observation_space.shape[0]
-        self.num_action = self.env.action_space.shape[0]
+        self.num_state = self.env.envs[0].observation_space.shape[0]
+        self.num_action = self.env.envs[0].action_space.shape[0]
         self.num_epochs = 10
         self.num_evaluation = 0
         self.num_training = 0
@@ -220,6 +220,7 @@ class PPO(object):
             values = v.detach().numpy().reshape(-1)
 
             self.env.Steps(actions)
+            print(local_step, self.env.IsTerminalStates())
             for j in range(self.num_slaves):
                 if terminated[j]:
                     continue
@@ -303,8 +304,8 @@ class PPO(object):
 
     def Evaluate(self):
         self.num_evaluation += 1
-        self.env.Resets(True)
-        self.env.Reset(False, 0)
+        self.env.Resets(False)
+        # self.env.Reset(False, 0)
         self.env.evaluation = True
 
         total_reward = 0
@@ -337,7 +338,7 @@ class PPO(object):
         self.print('noise : {:.3f}'.format(self.model.log_std.exp().mean()))
         if total_step is not 0:
             self.print('Epi reward : {:.2f}, Step reward : {:.2f} Total step : {}'
-                  .format(total_reward / self.num_slaves, total_reward / total_step, total_step))
+                  .format(total_reward / self.num_slaves, total_reward / total_step, total_step / self.num_slaves))
         else:
             self.print('bad..')
         self.env.evaluation = False
@@ -374,7 +375,7 @@ if __name__ == "__main__":
     tic = time.time()
     ppo = None  # type: PPO
     if len(sys.argv) < 2:
-        ppo = PPO('walk', 1)
+        ppo = PPO('walk', 2)
     else:
         ppo = PPO(sys.argv[1], 1)
 

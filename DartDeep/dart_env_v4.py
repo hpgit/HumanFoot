@@ -12,7 +12,7 @@ import PyCommon.modules.Resource.ysMotionLoader as yf
 from DartDeep.pd_controller import PDController
 from PyCommon.modules.Motion.ysMotion import dart_q_slerp
 
-from multiprocessing import Pool
+from multiprocessing import Pool, Process
 
 
 def exp_reward_term(w, exp_w, v0, v1):
@@ -21,7 +21,7 @@ def exp_reward_term(w, exp_w, v0, v1):
 
 
 class HpDartEnv(gym.Env):
-    def __init__(self, env_name='walk', env_slaves=1):
+    def __init__(self, env_name='walk'):
         self.world = pydart.World(1./1200., "../data/woody_with_ground_v2.xml")
         self.world.control_skel = self.world.skeletons[1]
         self.skel = self.world.skeletons[1]
@@ -391,28 +391,61 @@ class HpDartEnv(gym.Env):
         self.np_random, seed = gym.utils.seeding.np_random(seed)
         return [seed]
 
-    def GetState(self, param):
-        return self.state()
+
+def env_step(env, idx, action):
+    print(env.envs[idx].world)
+    env.envs[idx].step(action)
+    print(env.envs[idx].world)
+
+
+class HpDartMultiEnv:
+    def __init__(self, env_name='walk', slaves=1):
+        self.slaves = slaves
+        self.envs = [HpDartEnv(env_name) for i in range(slaves)]
+
+    def env_step(self, idx, action):
+        print(self.envs[idx].world)
+        self.envs[idx].step(action)
+        print(self.envs[idx].world)
+
+    def GetState(self, slave_idx):
+        return self.envs[slave_idx].state()
 
     def GetStates(self):
-        return [self.state()]
+        return [self.envs[i].state() for i in range(self.slaves)]
 
     def Resets(self, rsi):
-        self.rsi = rsi
-        self.reset()
+        for env in self.envs:
+            env.rsi = rsi
+            env.reset()
 
     def Reset(self, rsi, idx):
-        self.rsi = rsi
-        self.reset()
+        self.envs[idx].rsi = rsi
+        self.envs[idx].reset()
 
     def Steps(self, actions):
-        return self.step(actions[0])
+        # for i in range(self.slaves):
+        #     env_step(self.envs[i], actions[i])
+
+        # with Pool() as p:
+        #     p.map_async(env_step, [(self.envs[i], actions[i]) for i in range(self.slaves)])
+
+        proc = []
+        for i in range(self.slaves):
+            p = Process(target=self.env_step, args=(i, actions[i]))
+            proc.append(p)
+            p.start()
+
+        for i in range(self.slaves):
+            proc[i].join()
+        print([self.envs[i].world for i in range(self.slaves)])
 
     def IsTerminalState(self, j):
-        return self.is_done()
-
-    def GetReward(self, j):
-        return self.reward()
+        return self.envs[j].is_done()
 
     def IsTerminalStates(self):
-        return [self.is_done()]
+        return [self.envs[i].is_done() for i in range(self.slaves)]
+
+    def GetReward(self, j):
+        return self.envs[j].reward()
+
