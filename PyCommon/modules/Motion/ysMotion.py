@@ -1285,8 +1285,7 @@ def dart_q_slerp(t, _from, _to):
         if i == 1:
             res[index] = (1.-t) * _from[index] + t * _to[index]
         else:
-            # res[index] = mm.logSO3(mm.slerp(mm.exp(_from[index]), mm.exp(_to[index]), t))
-            res[index] = mm.logSO3(mm.slerp(mm.exp(_to[index]), mm.exp(_from[index]), t))
+            res[index] = mm.logSO3(mm.slerp(mm.exp(_from[index]), mm.exp(_to[index]), t))
 
     return res
 
