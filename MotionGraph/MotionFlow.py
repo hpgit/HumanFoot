@@ -2,6 +2,7 @@ import PyCommon.modules.Resource.ysMotionLoader as yf
 from MotionGraph.FlowGraph import FlowGraph
 from MotionGraph.FrameDistance import AllPointKNearest
 
+
 def build_graph():
     # motion_files = ['wd2_jump0.bvh']
     # motion_files = ['woody_walk_normal.bvh', 'wd2_jump0.bvh']

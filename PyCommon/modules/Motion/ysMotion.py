@@ -1248,6 +1248,14 @@ class JointPosture(Posture):
             q[3*i+3:3*i+6] = mm.logSO3(self.getLocalR(self.skeleton.jointElementIndexes[i]))
         return q
 
+    def set_q(self, q):
+        self.setLocalR(self.skeleton.jointElementIndexes[0], mm.exp(q[:3]))
+        self.rootPos[0] = q[3]
+        self.rootPos[1] = q[4]
+        self.rootPos[2] = q[5]
+        for i in range(1, self.skeleton.getJointNum()):
+            self.setLocalR(self.skeleton.jointElementIndexes[i], mm.exp(q[3*i+3:3*i+6]))
+
     def getJointFrame(self, jointIndex):
         return self.getGlobalT(self.skeleton.jointElementIndexes[jointIndex])
 
