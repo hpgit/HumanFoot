@@ -127,6 +127,14 @@ class HpDartEnv(gym.Env):
 
         return np.asarray(state).flatten()
 
+    def get_q_dq_time(self):
+        return self.skel.positions(), self.skel.velocities(), self.world.time()
+
+    def set_q_dq_time(self, _q, _dq, _t):
+        self.skel.set_positions(_q)
+        self.skel.set_velocities(_dq)
+        self.world.set_time(_t)
+
     def reward(self):
         # current_frame = min(len(self.ref_motion)-1, int((self.world.time() + self.time_offset) * self.ref_motion.fps))
         current_time = self.world.time() + self.time_offset
@@ -392,10 +400,9 @@ class HpDartEnv(gym.Env):
         return [seed]
 
 
-def env_step(env, idx, action):
-    print(env.envs[idx].world)
-    env.envs[idx].step(action)
-    print(env.envs[idx].world)
+def env_step(data):
+    data[0].step(data[1])
+    return data[0].get_q_dq_time()
 
 
 class HpDartMultiEnv:
@@ -407,6 +414,7 @@ class HpDartMultiEnv:
         print(self.envs[idx].world)
         self.envs[idx].step(action)
         print(self.envs[idx].world)
+        return self.envs[idx].get_q_dq()
 
     def GetState(self, slave_idx):
         return self.envs[slave_idx].state()
@@ -427,18 +435,22 @@ class HpDartMultiEnv:
         # for i in range(self.slaves):
         #     env_step(self.envs[i], actions[i])
 
-        # with Pool() as p:
-        #     p.map_async(env_step, [(self.envs[i], actions[i]) for i in range(self.slaves)])
+        # print([self.envs[i].world for i in range(self.slaves)])
+        with Pool() as p:
+            result = p.map_async(env_step, [(self.envs[i], actions[i]) for i in range(self.slaves)]).get()
+            for i in range(self.slaves):
+                self.envs[i].set_q_dq_time(*result[i])
+                self.envs[i].world.collision_result.update()
 
-        proc = []
-        for i in range(self.slaves):
-            p = Process(target=self.env_step, args=(i, actions[i]))
-            proc.append(p)
-            p.start()
-
-        for i in range(self.slaves):
-            proc[i].join()
-        print([self.envs[i].world for i in range(self.slaves)])
+        # proc = []
+        # for i in range(self.slaves):
+        #     p = Process(target=self.env_step, args=(i, actions[i]))
+        #     proc.append(p)
+        #     p.start()
+        #
+        # for i in range(self.slaves):
+        #     proc[i].join()
+        # print([self.envs[i].world for i in range(self.slaves)])
 
     def IsTerminalState(self, j):
         return self.envs[j].is_done()

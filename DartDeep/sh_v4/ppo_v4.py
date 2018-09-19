@@ -220,7 +220,6 @@ class PPO(object):
             values = v.detach().numpy().reshape(-1)
 
             self.env.Steps(actions)
-            print(local_step, self.env.IsTerminalStates())
             for j in range(self.num_slaves):
                 if terminated[j]:
                     continue
@@ -375,7 +374,7 @@ if __name__ == "__main__":
     tic = time.time()
     ppo = None  # type: PPO
     if len(sys.argv) < 2:
-        ppo = PPO('walk', 2)
+        ppo = PPO('walk', 16)
     else:
         ppo = PPO(sys.argv[1], 1)
 
