@@ -85,16 +85,6 @@ def blend_posture(posture_from, posture_to, t):
     return posture_new
 
 
-def distance_btw_posture_by_joint_pos(posture0, posture1):
-    """
-
-    :type posture0: ym.JointPosture
-    :type posture1: ym.JointPosture
-    :return:
-    """
-    posture0.getJointPo
-    pass
-
 
 def blend_motion(prev_motion, next_motion, prev_blend_start, prev_blend_end, next_blend_start, next_blend_end):
     """
@@ -218,6 +208,8 @@ if __name__ == '__main__':
             # Sukiko to SameSame
             motion0.goToFrame(116)
             motion1.goToFrame(121)
+        motion0.goToFrame(116)
+        motion1.goToFrame(121)
 
         viewer.setPreFrameCallback_Always(pre_callback)
 
@@ -226,5 +218,32 @@ if __name__ == '__main__':
 
         Fl.run()
 
+    def test_motion():
+        # bvhFilePath = '../samples/walk_left_90degree.bvh'
+        # bvhFilePath = '../samples/wd2_cross_walk_0d_01.bvh'
+        # bvhFilePath = '../samples/wd2_cross_walk_0d_fast_21.bvh'
+
+        bvhFilePath = '../samples/wd2_WalkAzuma01.bvh'
+        # bvhFilePath = '../samples/wd2_WalkBackward00.bvh'
+        # bvhFilePath = '../samples/wd2_WalkForwardNormal00.bvh'
+        # bvhFilePath = '../samples/wd2_WalkForwardSlow01.bvh'
+        # bvhFilePath = '../samples/wd2_WalkForwardVFast00.bvh'
+        # bvhFilePath = '../samples/wd2_WalkHandWav00.bvh'
+        # bvhFilePath = '../samples/wd2_WalkSameSame01.bvh'
+        # bvhFilePath = '../samples/wd2_WalkSoldier00.bvh'
+        motion0 = yf.readBvhFile(bvhFilePath)
+
+        viewer = ysv.SimpleViewer(rect=(0, 0, 1280, 900))
+        viewer.record(False)
+        viewer.doc.addRenderer('motion0', yr.JointMotionRenderer(motion0, (0,0,255), yr.LINK_LINE))
+        viewer.doc.addObject('motion0', motion0)
+
+        viewer.startTimer(1/30.)
+        viewer.show()
+
+        Fl.run()
+        pass
+
     # test_blend_posture()
-    test_blend_motion()
+    # test_blend_motion()
+    test_motion()
