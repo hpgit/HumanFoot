@@ -37,6 +37,7 @@ class MotionGraph(object):
         self.is_built = False
         self.transition = []  # type: list[MotionTransition]
         self.motions = []  # type: list[ym.JointMotion]
+        self.distance = None  # type: np.ndarray
 
     def add_transition(self, _transition):
         self.transition.append(_transition)
@@ -64,8 +65,28 @@ class MotionGraph(object):
         """
         pass
 
-    def find_nn(self):
-        pass
+    def find_nn(self, near_neigh=20):
+        dim = joint_poses_btw_posture_in_plane_by_joint_pos(self.motions[0][0], self.motions[0][0]).shape[0]
+
+        size = sum(map(len, self.motions))
+
+        self.distance = np.zeros((size, size))
+        data = []
+        for i in range(len(self.motions)):
+            for j in range(len(self.motions[i])):
+                data.append(joint_poses_btw_posture_in_plane_by_joint_pos(self.motions[i][j], self.motions[0][0]))
+
+        t = AnnoyIndex(dim, metric='euclidean')
+        for i in range(size):
+            t.add_item(i, data[i])
+
+        t.build(20)
+
+        for i in range(size):
+            res, dist = t.get_nns_by_vector(data[i], near_neigh, include_distances=True)
+
+            for j in range(near_neigh):
+                self.distance[i, res[j]] = dist[j]
 
     def prune_contact(self):
         pass
