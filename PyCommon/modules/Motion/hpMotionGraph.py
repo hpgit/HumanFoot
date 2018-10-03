@@ -25,11 +25,39 @@ BLEND_FRAME = 10
 
 
 class MotionTransition(object):
-    def __init__(self, _to, _to_idx, _from, _from_idx):
+    def __init__(self, _to, _to_idx, _from, _from_idx, dist):
         self.motion_to = _to
         self.motion_to_idx = _to_idx
         self.motion_from = _from
         self.motion_from_idx = _from_idx
+        self.dist = dist
+
+
+class MotionTransitionPool(object):
+    def __init__(self):
+        self.motion_to_idx_begin = -1
+        self.motion_to_idx_end = -1
+        self.motion_from_idx_begin = -1
+        self.motion_from_idx_end = -1
+        self.transition = []
+
+    def add_transition(self, transition):
+        """
+
+        :type transition: MotionTransition
+        :return:
+        """
+        self.transition.append(transition)
+
+        if self.motion_to_idx_begin < transition.motion_to_idx:
+            self.motion_to_idx_begin = transition.motion_to_idx
+        elif self.motion_to_idx_end < transition.motion_to_idx:
+            self.motion_to_idx_end = transition.motion_to_idx
+
+        if self.motion_from_idx_begin < transition.motion_from_idx:
+            self.motion_from_idx_begin = transition.motion_from_idx
+        elif self.motion_from_idx_end < transition.motion_from_idx:
+            self.motion_from_idx_end = transition.motion_from_idx
 
 
 class MotionGraph(object):
@@ -90,7 +118,7 @@ class MotionGraph(object):
                 if abs(i-res[j]) > 10:
                     self.distance[i, res[j]] = dist[j]
                     # TODO:
-                    self.add_transition(MotionTransition(0, i, 0, res[j]))
+                    self.add_transition(MotionTransition(0, i, 0, res[j], dist[j]))
                     print(i, res[j], dist[j])
 
     def calc_whole_dist(self):
@@ -114,7 +142,9 @@ class MotionGraph(object):
         pass
 
     def prune_local_maxima(self):
-
+        for i in range(len(self.transition)):
+            transition = self.transition[i]
+            transition.motion_from
         pass
 
     def prune_dead_end(self):
