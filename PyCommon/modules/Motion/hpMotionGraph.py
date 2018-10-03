@@ -25,11 +25,11 @@ BLEND_FRAME = 10
 
 
 class MotionTransition(object):
-    def __init__(self):
-        self.motion_to = 0
-        self.motion_to_idx = 0
-        self.motion_from = 0
-        self.motion_from_idx = 0
+    def __init__(self, _to, _to_idx, _from, _from_idx):
+        self.motion_to = _to
+        self.motion_to_idx = _to_idx
+        self.motion_from = _from
+        self.motion_from_idx = _from_idx
 
 
 class MotionGraph(object):
@@ -45,14 +45,15 @@ class MotionGraph(object):
     def generate_motion(self, start_motion_idx, start_motion_time_offset, motion_time):
         pass
 
-    def add_motion(self):
-        pass
+    def add_motion(self, motion):
+        self.motions.append(motion)
 
     def build(self):
         self.init()
         self.find_nn()
+        # self.calc_whole_dist()
         self.prune_contact()
-        self.prune_likelihood()
+        # self.prune_likelihood()
         self.prune_local_maxima()
         self.prune_dead_end()
 
@@ -86,7 +87,25 @@ class MotionGraph(object):
             res, dist = t.get_nns_by_vector(data[i], near_neigh, include_distances=True)
 
             for j in range(near_neigh):
-                self.distance[i, res[j]] = dist[j]
+                if abs(i-res[j]) > 10:
+                    self.distance[i, res[j]] = dist[j]
+                    # TODO:
+                    self.add_transition(MotionTransition(0, i, 0, res[j]))
+                    print(i, res[j], dist[j])
+
+    def calc_whole_dist(self):
+        size = sum(map(len, self.motions))
+        self.distance = np.zeros((size, size))
+        data = []
+        for i in range(len(self.motions)):
+            for j in range(len(self.motions[i])):
+                data.append(joint_poses_btw_posture_in_plane_by_joint_pos(self.motions[i][j], self.motions[0][0]))
+
+        for i in range(len(data)):
+            for j in range(i, len(data)):
+                self.distance[i, j] = np.linalg.norm(data[i] - data[j])
+                self.distance[j, i] = self.distance[i, j]
+                print(i, j, self.distance[i, j])
 
     def prune_contact(self):
         pass
@@ -95,8 +114,10 @@ class MotionGraph(object):
         pass
 
     def prune_local_maxima(self):
+
         pass
 
     def prune_dead_end(self):
         pass
+
 
