@@ -25,7 +25,7 @@ BLEND_FRAME = 10
 
 
 class MotionTransition(object):
-    def __init__(self, _to, _to_idx, _from, _from_idx, dist):
+    def __init__(self, _from, _from_idx, _to, _to_idx, dist):
         self.motion_to = _to
         self.motion_to_idx = _to_idx
         self.motion_from = _from
@@ -35,11 +35,24 @@ class MotionTransition(object):
 
 class MotionTransitionPool(object):
     def __init__(self):
-        self.motion_to_idx_begin = -1
+        self.motion_to_idx_begin = np.inf
         self.motion_to_idx_end = -1
-        self.motion_from_idx_begin = -1
+        self.motion_from_idx_begin = np.inf
         self.motion_from_idx_end = -1
         self.transition = []
+        self.min_idx = -1
+        self.min_dist = np.inf
+
+    def check_transition_enter(self, transition):
+        """
+
+        :type transition: MotionTransition
+        :return:
+        """
+        if self.motion_to_idx_begin - 7 < transition.motion_to_idx < self.motion_to_idx_end + 7:
+            if self.motion_from_idx_begin - 7 < transition.motion_from_idx < self.motion_from_idx_end + 7:
+                return True
+        return False
 
     def add_transition(self, transition):
         """
@@ -48,22 +61,37 @@ class MotionTransitionPool(object):
         :return:
         """
         self.transition.append(transition)
+        # print(transition.motion_from_idx, transition.motion_to_idx)
 
-        if self.motion_to_idx_begin < transition.motion_to_idx:
+        if self.motion_from_idx_begin > transition.motion_from_idx:
+            self.motion_from_idx_begin = transition.motion_from_idx
+
+        if self.motion_from_idx_end < transition.motion_from_idx:
+            self.motion_from_idx_end = transition.motion_from_idx
+
+        if self.motion_to_idx_begin > transition.motion_to_idx:
             self.motion_to_idx_begin = transition.motion_to_idx
-        elif self.motion_to_idx_end < transition.motion_to_idx:
+
+        if self.motion_to_idx_end < transition.motion_to_idx:
             self.motion_to_idx_end = transition.motion_to_idx
 
-        if self.motion_from_idx_begin < transition.motion_from_idx:
-            self.motion_from_idx_begin = transition.motion_from_idx
-        elif self.motion_from_idx_end < transition.motion_from_idx:
-            self.motion_from_idx_end = transition.motion_from_idx
+        if self.min_dist > transition.dist:
+            self.min_dist = transition.dist
+            self.min_idx = len(self.transition) - 1
+
+    def get_best_transition(self):
+        """
+
+        :rtype: MotionTransition
+        """
+        return self.transition[self.min_idx]
 
 
 class MotionGraph(object):
     def __init__(self):
         self.is_built = False
         self.transition = []  # type: list[MotionTransition]
+        self.transition_processed = []  # type: list[MotionTransition]
         self.motions = []  # type: list[ym.JointMotion]
         self.distance = None  # type: np.ndarray
 
@@ -81,8 +109,8 @@ class MotionGraph(object):
         self.find_nn()
         # self.calc_whole_dist()
         self.prune_contact()
-        # self.prune_likelihood()
         self.prune_local_maxima()
+        self.prune_likelihood()
         self.prune_dead_end()
 
         self.is_built = True
@@ -119,7 +147,7 @@ class MotionGraph(object):
                     self.distance[i, res[j]] = dist[j]
                     # TODO:
                     self.add_transition(MotionTransition(0, i, 0, res[j], dist[j]))
-                    print(i, res[j], dist[j])
+                    # print(i, res[j], dist[j])
 
     def calc_whole_dist(self):
         size = sum(map(len, self.motions))
@@ -139,13 +167,39 @@ class MotionGraph(object):
         pass
 
     def prune_likelihood(self):
-        pass
+        processed_index = []
+        for i in range(len(self.transition_processed)):
+            if self.transition_processed[i].dist > 0.3:
+                processed_index.append(i)
+
+        prune_num = len(processed_index)
+        processed_index.reverse()
+        for j in processed_index:
+            self.transition_processed.pop(j)
+        print('prune by likelihood: ', prune_num)
 
     def prune_local_maxima(self):
-        for i in range(len(self.transition)):
-            transition = self.transition[i]
-            transition.motion_from
-        pass
+        prune_num = 0
+        while self.transition:
+            pool = MotionTransitionPool()
+            pool.add_transition(self.transition.pop(0))
+            processed_index = []
+            for i in range(len(self.transition)):
+                if pool.check_transition_enter(self.transition[i]):
+                    pool.add_transition(self.transition[i])
+                    processed_index.append(i)
+            # print(pool.motion_from_idx_begin, pool.motion_from_idx_end, pool.motion_to_idx_begin, pool.motion_to_idx_end)
+            transition = pool.get_best_transition()
+            # print(transition.dist, transition.motion_from_idx, transition.motion_to_idx)
+            # print(transition.motion_from_idx, transition.motion_to_idx)
+
+            prune_num += len(processed_index) - 1
+
+            processed_index.reverse()
+            for j in processed_index:
+                self.transition.pop(j)
+            self.transition_processed.append(pool.get_best_transition())
+        print('prune by local maxima: ', prune_num)
 
     def prune_dead_end(self):
         pass

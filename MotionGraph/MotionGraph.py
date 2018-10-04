@@ -56,16 +56,22 @@ def main():
 def main2():
     pydart.init()
     world = [pydart.World(1./1200., "../DartDeep/data/woody_with_ground_v2.xml") for _ in range(2)]
+
+    motion_files = ['wd2_jump0.bvh']
     motion_files = ['woody_walk_normal.bvh']
     motion = yf.readBvhFileAsBvh(motion_files[0]).toPmLinearMotion(1., False)
-    total_num = len(motion)
+    # 70, 112, 156 right heel strike
+    mg = hmg.MotionGraph()
+    mg.add_motion(motion)
+    mg.build()
+    total_num = len(mg.transition_processed)
 
     # viewer settings
     rd_contact_positions = [None]
     rd_contact_forces = [None]
     viewer = hsv.hpSimpleViewer(rect=(0, 0, 1200, 800), viewForceWnd=False)
     viewer.doc.addRenderer('motionModel[0]', yr.DartRenderer(world[0], (255, 240, 255)))
-    # viewer.doc.addRenderer('motionModel[1]', yr.DartRenderer(world[1]))
+    viewer.doc.addRenderer('motionModel[1]', yr.DartRenderer(world[1]))
 
     motion_state = [0]
 
@@ -83,7 +89,10 @@ def main2():
     viewer.objectInfoWnd.addBtn('2', callback_2)
 
     def postCallback(frame):
-        world[0].skeletons[1].set_positions(motion.get_q(frame))
+        transition = mg.transition_processed[frame]
+        world[0].skeletons[1].set_positions(motion.get_q(transition.motion_from_idx))
+        world[1].skeletons[1].set_positions(motion.get_q(transition.motion_to_idx))
+        print(frame, transition.motion_from_idx, transition.motion_to_idx, transition.dist)
 
     viewer.setPreFrameCallback_Always(postCallback)
     viewer.setMaxFrame(total_num-1)
@@ -95,11 +104,6 @@ def main2():
 
 if __name__ == '__main__':
     # main()
-    # main2()
+    main2()
 
-    motion_files = ['woody_walk_normal.bvh']
-    # 70, 112, 156 right heel strike
-    mg = hmg.MotionGraph()
-    mg.add_motion(yf.readBvhFileAsBvh(motion_files[0]).toPmLinearMotion(1., False))
-    mg.build()
 
