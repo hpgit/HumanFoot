@@ -9,11 +9,11 @@ import pydart2 as pydart
 
 
 def main():
-    MOTION_ONLY = False
+    MOTION_ONLY = True
 
     pydart.init()
 
-    env_name = 'walk'
+    env_name = 'walk_sukiko'
 
     ppo = PPO(env_name, 1, visualize_only=True)
     if not MOTION_ONLY:

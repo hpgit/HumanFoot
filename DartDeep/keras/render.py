@@ -12,7 +12,7 @@ def main():
 
     pydart.init()
 
-    env_name = 'walk_spin'
+    env_name = 'walk_u_turn'
 
     ppo = PPO(env_name, 1)
     if not MOTION_ONLY:

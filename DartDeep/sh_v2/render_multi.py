@@ -1,6 +1,6 @@
 from fltk import Fl
 import torch
-from DartDeep.keras.ppo import PPO
+from DartDeep.sh_v2.ppo_v2 import PPO
 from PyCommon.modules.GUI import hpSimpleViewer as hsv
 from PyCommon.modules.Renderer import ysRenderer as yr
 
@@ -8,16 +8,16 @@ import pydart2 as pydart
 
 
 def main():
-    MOTION_ONLY = False
+    MOTION_ONLY = True
 
     pydart.init()
 
     env_name = 'multi'
 
-    ppo = PPO(env_name, 1)
+    ppo = PPO(env_name, 1, visualize_only=True)
     if not MOTION_ONLY:
         ppo.LoadModel('model/' + env_name + '.pt')
-    ppo.env.specify_motion_num(1)
+    ppo.env.specify_motion_num(0)
 
     ppo.env.Resets(False)
 

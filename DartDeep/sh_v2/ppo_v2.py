@@ -38,7 +38,8 @@ class Model(nn.Module):
         self.policy_fc2 = nn.Linear(hidden_layer_size1, hidden_layer_size2)
         self.policy_fc3 = nn.Linear(hidden_layer_size2, num_actions)
         '''Policy Distributions'''
-        self.log_std = nn.Parameter(torch.zeros(num_actions))
+        # self.log_std = nn.Parameter(torch.zeros(num_actions))
+        self.log_std = nn.Parameter(0.1 * torch.ones(num_actions))
 
         '''Value'''
         self.value_fc1 = nn.Linear(num_states		  ,hidden_layer_size1)
@@ -301,37 +302,42 @@ class PPO(object):
         self.num_training += 1
 
     def Evaluate(self):
+        is_multi = 'multi' in self.env_name
         self.num_evaluation += 1
-        self.env.Resets(True)
-        self.env.Reset(False, 0)
-
         total_reward = 0
         total_step = 0
-        states = self.env.GetStates()
-        for j in range(len(states)):
-            if np.any(np.isnan(states[j])):
-                self.print("state warning!!!!!!!! start")
-
-        for t in count():
-            action_dist, _ = self.model(torch.tensor(states).float())
-            actions = action_dist.loc.detach().numpy()
-            for j in range(len(actions)):
-                if np.any(np.isnan(actions[j])):
-                    self.print("action warning!!!!!!!!" + str(t))
-
-            self.env.Steps(actions)
-
+        for motion_idx in range(1 if not is_multi else len(self.env.ref_motions)):
+            if is_multi:
+                self.env.specify_motion_num(motion_idx)
+            self.env.Resets(True)
+            self.env.Reset(False, 0)
+            states = self.env.GetStates()
             for j in range(len(states)):
                 if np.any(np.isnan(states[j])):
-                    self.print("state warning!!!!!!!!"+str(t))
+                    self.print("state warning!!!!!!!! start")
 
-            for j in range(self.num_slaves):
-                if self.env.IsTerminalState(j) is False:
-                    total_step += 1
-                    total_reward += self.env.GetReward(j)
-            states = self.env.GetStates()
-            if all(self.env.IsTerminalStates()):
-                break
+            for t in count():
+                action_dist, _ = self.model(torch.tensor(states).float())
+                actions = action_dist.loc.detach().numpy()
+                for j in range(len(actions)):
+                    if np.any(np.isnan(actions[j])):
+                        self.print("action warning!!!!!!!!" + str(t))
+
+                self.env.Steps(actions)
+
+                for j in range(len(states)):
+                    if np.any(np.isnan(states[j])):
+                        self.print("state warning!!!!!!!!"+str(t))
+
+                for j in range(self.num_slaves):
+                    if self.env.IsTerminalState(j) is False:
+                        total_step += 1
+                        total_reward += self.env.GetReward(j)
+                states = self.env.GetStates()
+                if all(self.env.IsTerminalStates()):
+                    break
+            if is_multi:
+                self.env.specify_motion_num()
         self.print('noise : {:.3f}'.format(self.model.log_std.exp().mean()))
         if total_step is not 0:
             self.print('Epi reward : {:.2f}, Step reward : {:.2f} Total step : {}'
@@ -371,7 +377,7 @@ if __name__ == "__main__":
     tic = time.time()
     ppo = None  # type: PPO
     if len(sys.argv) < 2:
-        ppo = PPO('walk', 1)
+        ppo = PPO('walk_sukiko', 1)
     else:
         ppo = PPO(sys.argv[1], 1)
 

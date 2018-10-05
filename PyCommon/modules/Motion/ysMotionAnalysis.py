@@ -28,8 +28,10 @@ pass
 # states generation 
 #===============================================================================
 def getElementContactStates(motion, element_name_or_index, hRef, vRef):
-    if isinstance(element_name_or_index, int): index = element_name_or_index
-    else: index = motion[0].skeleton.getElementIndex(element_name_or_index)
+    if isinstance(element_name_or_index, int):
+        index = element_name_or_index
+    else:
+        index = motion[0].skeleton.getElementIndex(element_name_or_index)
     
     contactStates = [None]*len(motion)
     for i in range(len(motion)):

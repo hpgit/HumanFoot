@@ -23,9 +23,6 @@ import PyCommon.modules.Motion.ysMotionAnalysis as yma
 import PyCommon.modules.Motion.ysBipedAnalysis as yba
 import PyCommon.modules.Motion.ysMotionExtend as ymt
 import PyCommon.modules.Simulator.ysPhysConfig as ypc
-import PyCommon.modules.Renderer.csVpRenderer as cvr
-import PyCommon.modules.Simulator.csVpWorld as cvw
-import PyCommon.modules.Simulator.csVpModel as cvm
 import PyCommon.modules.ArticulatedBody.ysControl as yct
 
 def normalizeSkeleton(motion, config):
@@ -125,7 +122,7 @@ def preprocess(SEGMENT_FOOT=False):
     paths.append(dir+'wd2_WalkSoldier00.bvh')
     paths.append(dir+'wd2_WalkSukiko00.bvh')
 #     paths.append(dir+'wd2_WalkBackward00.bvh')
-#    paths.append(dir+'wd2_WalkTongTong00.bvh')
+    paths.append(dir+'wd2_WalkTongTong00.bvh')
     tasks.append({'config':config, 'paths':paths})
 ##
 #    dir = '../Data/woody2/Motion/Balancing/'

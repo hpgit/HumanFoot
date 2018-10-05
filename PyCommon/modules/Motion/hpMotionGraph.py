@@ -32,6 +32,19 @@ class MotionTransition(object):
         self.motion_from_idx = _from_idx
         self.dist = dist
 
+    def __str__(self):
+        return str(self.motion_from_idx)+', ' + str(self.motion_to_idx)
+
+    def __lt__(self, other):
+        if self.motion_from_idx < other.motion_from_idx:
+            return True
+        elif self.motion_from_idx == other.motion_from_idx and self.motion_to_idx < other.motion_to_idx:
+            return True
+        return False
+
+    def __eq__(self, other):
+        return self.motion_from_idx == other.motion_from_idx and self.motion_to_idx == other.motion_to_idx
+
 
 class MotionTransitionPool(object):
     def __init__(self):
@@ -43,14 +56,17 @@ class MotionTransitionPool(object):
         self.min_idx = -1
         self.min_dist = np.inf
 
+    def __str__(self):
+        return str(self.motion_from_idx_begin)+', ' + str(self.motion_from_idx_end) + ', ' + str(self.motion_to_idx_begin)+', ' + str(self.motion_to_idx_end)
+
     def check_transition_enter(self, transition):
         """
 
         :type transition: MotionTransition
         :return:
         """
-        if self.motion_to_idx_begin - 7 < transition.motion_to_idx < self.motion_to_idx_end + 7:
-            if self.motion_from_idx_begin - 7 < transition.motion_from_idx < self.motion_from_idx_end + 7:
+        if self.motion_to_idx_begin - 3 < transition.motion_to_idx < self.motion_to_idx_end + 3:
+            if self.motion_from_idx_begin - 3 < transition.motion_from_idx < self.motion_from_idx_end + 3:
                 return True
         return False
 
@@ -122,7 +138,7 @@ class MotionGraph(object):
         """
         pass
 
-    def find_nn(self, near_neigh=20):
+    def find_nn(self, near_neigh=50):
         dim = joint_poses_btw_posture_in_plane_by_joint_pos(self.motions[0][0], self.motions[0][0]).shape[0]
 
         size = sum(map(len, self.motions))
@@ -149,6 +165,11 @@ class MotionGraph(object):
                     self.add_transition(MotionTransition(0, i, 0, res[j], dist[j]))
                     # print(i, res[j], dist[j])
 
+        self.transition.sort()
+        for i in range(len(self.transition)):
+            t = self.transition[i]
+            print('check: ', t.motion_from_idx, t.motion_to_idx)
+
     def calc_whole_dist(self):
         size = sum(map(len, self.motions))
         self.distance = np.zeros((size, size))
@@ -169,7 +190,7 @@ class MotionGraph(object):
     def prune_likelihood(self):
         processed_index = []
         for i in range(len(self.transition_processed)):
-            if self.transition_processed[i].dist > 0.3:
+            if self.transition_processed[i].dist > 0.5:
                 processed_index.append(i)
 
         prune_num = len(processed_index)
@@ -186,6 +207,8 @@ class MotionGraph(object):
             processed_index = []
             for i in range(len(self.transition)):
                 if pool.check_transition_enter(self.transition[i]):
+                    print(str(pool))
+                    print(self.transition[i])
                     pool.add_transition(self.transition[i])
                     processed_index.append(i)
             # print(pool.motion_from_idx_begin, pool.motion_from_idx_end, pool.motion_to_idx_begin, pool.motion_to_idx_end)

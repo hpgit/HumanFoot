@@ -22,10 +22,12 @@ class HpDartMultiEnv(gym.Env):
         self.world.control_skel = self.world.skeletons[1]
         self.skel = self.world.skeletons[1]
         self.pdc = PDController(self.skel, self.world.time_step(), 400., 40.)
+        self.Kp, self.Kd = 400., 40.
 
         self.ref_motions = list()  # type: list[ym.Motion]
         self.ref_motions.append(yf.readBvhFile("../data/woody_walk_normal.bvh")[40:])
-        self.ref_motions.append(yf.readBvhFile("../data/wd2_jump0.bvh")[164:280])
+        # self.ref_motions.append(yf.readBvhFile("../data/wd2_jump0.bvh")[164:280])
+        self.ref_motions.append(yf.readBvhFile('../data/wd2_WalkSukiko00.bvh'))
         self.motion_num = len(self.ref_motions)
         self.reward_weights_by_fps = [self.ref_motions[0].fps / self.ref_motions[i].fps for i in range(self.motion_num)]
 
@@ -55,7 +57,7 @@ class HpDartMultiEnv(gym.Env):
                       self.skel.bodynode_index('LeftForeArm'), self.skel.bodynode_index('RightForeArm')]
         self.body_e = list(map(self.skel.body, self.idx_e))
         self.ref_body_e = list(map(self.ref_skel.body, self.idx_e))
-        self.total_time = len(self.ref_motion) / self.ref_motion.fps
+        self.motion_time = len(self.ref_motion) / self.ref_motion.fps
 
         self.time_offset = 0.
 
@@ -71,17 +73,17 @@ class HpDartMultiEnv(gym.Env):
         self.viewer = None
 
     def state(self):
-        p_pelvis = self.skel.body(0).world_transform()[:3, 3]
-        R_pelvis = self.skel.body(0).world_transform()[:3, :3]
+        pelvis = self.skel.body(0)
+        p_pelvis = pelvis.world_transform()[:3, 3]
+        R_pelvis = pelvis.world_transform()[:3, :3]
 
-        phase = (self.world.time() + self.time_offset)/self.total_time
+        phase = min(1., (self.world.time() + self.time_offset)/self.motion_time)
         state = [self.specified_motion_num, phase]
 
-        p = np.array([self.skel.body(i).to_world() - p_pelvis for i in range(self.body_num)]).flatten()
-        # R = [mm.logSO3(np.dot(R_pelvis.T, self.skel.body(i).world_transform()[:3, :3]))/pi for i in range(self.body_num)]
-        R = np.array([mm.rot2quat(np.dot(R_pelvis.T, self.skel.body(i).world_transform()[:3, :3])) for i in range(self.body_num)]).flatten()
-        v = np.array([self.skel.body(i).world_linear_velocity() for i in range(self.body_num)]).flatten()
-        w = np.array([self.skel.body(i).world_angular_velocity()/20. for i in range(self.body_num)]).flatten()
+        p = np.array([np.dot(R_pelvis.T, body.to_world() - p_pelvis) for body in self.skel.bodynodes]).flatten()
+        R = np.array([mm.rot2quat(np.dot(R_pelvis.T, body.world_transform()[:3, :3])) for body in self.skel.bodynodes]).flatten()
+        v = np.array([np.dot(R_pelvis.T, body.world_linear_velocity()) for body in self.skel.bodynodes]).flatten()
+        w = np.array([np.dot(R_pelvis.T, body.world_angular_velocity())/20. for body in self.skel.bodynodes]).flatten()
 
         state.extend(p)
         state.extend(R)
@@ -114,7 +116,7 @@ class HpDartMultiEnv(gym.Env):
             return True
         elif True in np.isnan(np.asarray(self.skel.q)) or True in np.isnan(np.asarray(self.skel.dq)):
             return True
-        elif self.world.time() + self.time_offset > self.total_time:
+        elif self.world.time() + self.time_offset > self.motion_time:
             return True
         return False
 
@@ -133,11 +135,12 @@ class HpDartMultiEnv(gym.Env):
         """
         action = np.hstack((np.zeros(6), _action/10.))
 
-        current_frame = min(len(self.ref_motion)-1, int((self.world.time() + self.time_offset) * self.ref_motion.fps))
-        self.ref_skel.set_positions(self.ref_motion[current_frame].get_q())
-        self.ref_skel.set_velocities(self.ref_motion.get_dq(current_frame))
+        next_frame_time = self.world.time() + self.time_offset + self.world.time_step() * self.step_per_frame
+        self.ref_skel.set_positions(self.ref_motion.get_q_by_time(next_frame_time))
+        self.ref_skel.set_velocities(self.ref_motion.get_dq_dart_by_time(next_frame_time))
         for i in range(self.step_per_frame):
-            self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
+            self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
+            # self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
             self.world.step()
         return tuple([self.state(), self.reward(), self.is_done(), dict()])
 
@@ -155,17 +158,16 @@ class HpDartMultiEnv(gym.Env):
 
         self.ref_motion = self.ref_motions[self.specified_motion_num]
         self.step_per_frame = round((1./self.world.time_step()) / self.ref_motion.fps)
+        self.motion_time = len(self.ref_motion)
 
-        rand_frame = randrange(0, len(self.ref_motion))
-        if not self.rsi:
-            rand_frame = 0
-
+        rand_frame = randrange(0, len(self.ref_motion)) if self.rsi else 0
         self.time_offset = rand_frame / self.ref_motion.fps
-        self.skel.set_positions(self.ref_motion[rand_frame].get_q())
-        dq = self.ref_motion.get_dq(rand_frame)
-        dq[3:6] = np.asarray(self.ref_motion.getDOFVelocitiesLocal(rand_frame)[0][:3])
+
+        self.skel.set_positions(self.ref_motion.get_q_by_time(self.time_offset))
+        dq = self.ref_motion.get_dq_dart_by_time(self.time_offset)
         self.skel.set_velocities(dq)
-        # self.skel.set_velocities(self.ref_motion.get_dq(rand_frame))
+
+        self.ref_skel.set_positions(self.ref_motion.get_q_by_time(self.time_offset))
 
         return self.state()
 
@@ -178,34 +180,6 @@ class HpDartMultiEnv(gym.Env):
             mode (str): The mode to render with.
             close (bool): Close all open renderings.
         """
-        if self.viewer is None:
-            from gym.envs.classic_control import rendering
-            self.viewer = rendering.Viewer(500,500)
-            self.viewer.set_bounds(-2.2, 2.2, -2.2, 2.2)
-            # rod = rendering.make_capsule(1, .2)
-            # rod.set_color(.8, .3, .3)
-            # rod.add_attr(self.pole_transform)
-            # self.viewer.add_geom(rod)
-            self.body_transform = list()
-            self.ref_body_transform = list()
-            for i in range(self.body_num):
-                axle = rendering.make_circle(.05)
-                axle.set_color(0, 0, 0)
-                self.body_transform.append(rendering.Transform())
-                axle.add_attr(self.body_transform[i])
-                self.viewer.add_geom(axle)
-
-            for i in range(self.body_num):
-                axle = rendering.make_circle(.05)
-                axle.set_color(1, 0, 0)
-                self.ref_body_transform.append(rendering.Transform())
-                axle.add_attr(self.ref_body_transform[i])
-                self.viewer.add_geom(axle)
-
-        for i in range(self.body_num):
-            self.body_transform[i].set_translation(self.skel.body(i).world_transform()[:3, 3][0]-1., self.skel.body(i).world_transform()[:3, 3][1])
-            self.ref_body_transform[i].set_translation(self.ref_skel.body(i).world_transform()[:3, 3][0]-1., self.ref_skel.body(i).world_transform()[:3, 3][1])
-
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
     def close(self):
@@ -250,7 +224,7 @@ class HpDartMultiEnv(gym.Env):
     def IsTerminalStates(self):
         return [self.is_done()]
 
-    def specify_motion_num(self, num):
+    def specify_motion_num(self, num=-1):
         if 0 <= num < self.motion_num:
             self.is_motion_specified = True
             self.specified_motion_num = num

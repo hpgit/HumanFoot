@@ -52,11 +52,15 @@ class HpDartEnv(gym.Env):
             self.ref_motion = yf.readBvhFile("../data/wd2_u-turn.bvh")[25:214]
             self.ref_motion.translateByOffset([0., 0.03, 0.])
 
+        elif env_name == 'walk_sukiko':
+            self.ref_motion = yf.readBvhFile('../data/wd2_WalkSukiko00.bvh')
+
         elif env_name == 'jump_whole':
             self.ref_motion = yf.readBvhFile("../data/wd2_jump0.bvh")[315:966]
         elif env_name == 'walk_u_turn_whole':
             self.ref_motion = yf.readBvhFile("../data/wd2_u-turn.bvh")
             self.ref_motion.translateByOffset([0., 0.03, 0.])
+
 
         self.ref_world = pydart.World(1./1200., "../data/woody_with_ground.xml")
         self.ref_skel = self.ref_world.skeletons[1]
@@ -134,10 +138,13 @@ class HpDartEnv(gym.Env):
 
     def is_done(self):
         if self.skel.com()[1] < 0.4:
+            # print('fallen')
             return True
         elif True in np.isnan(np.asarray(self.skel.q)) or True in np.isnan(np.asarray(self.skel.dq)):
+            # print('nan')
             return True
         elif self.world.time() + self.time_offset > self.motion_time:
+            # print('timeout')
             return True
         return False
 
@@ -160,13 +167,13 @@ class HpDartEnv(gym.Env):
         self.ref_skel.set_positions(self.ref_motion.get_q_by_time(next_frame_time))
         self.ref_skel.set_velocities(self.ref_motion.get_dq_dart_by_time(next_frame_time))
         for i in range(self.step_per_frame):
-            # self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
-            self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
+            self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
+            # self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
             self.world.step()
         return tuple([self.state(), self.reward(), self.is_done(), dict()])
 
     def continue_from_now_by_phase(self, phase):
-        self.phase_frame = round(phase * self.motion_len)
+        self.phase_frame = round(phase * (self.motion_len-1))
         skel_pelvis_offset = self.skel.joint(0).position_in_world_frame() - self.ref_motion[self.phase_frame].getJointPositionGlobal(0)
         skel_pelvis_offset[1] = 0.
         self.ref_motion.translateByOffset(skel_pelvis_offset)
@@ -180,7 +187,7 @@ class HpDartEnv(gym.Env):
             observation (object): The initial observation of the space. Initial reward is assumed to be 0.
         """
         self.world.reset()
-        self.continue_from_now_by_phase(random())
+        self.continue_from_now_by_phase(random() if self.rsi else 0.)
         self.skel.set_positions(self.ref_motion.get_q(self.phase_frame))
         dq = self.ref_motion.get_dq_dart(self.phase_frame)
         self.skel.set_velocities(dq)

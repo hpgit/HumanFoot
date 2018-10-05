@@ -223,12 +223,13 @@ if __name__ == '__main__':
         # bvhFilePath = '../samples/wd2_cross_walk_0d_01.bvh'
         # bvhFilePath = '../samples/wd2_cross_walk_0d_fast_21.bvh'
 
-        bvhFilePath = '../samples/wd2_WalkAzuma01.bvh'
+        # bvhFilePath = '../samples/wd2_WalkAzuma01.bvh'
         # bvhFilePath = '../samples/wd2_WalkBackward00.bvh'
         # bvhFilePath = '../samples/wd2_WalkForwardNormal00.bvh'
         # bvhFilePath = '../samples/wd2_WalkForwardSlow01.bvh'
         # bvhFilePath = '../samples/wd2_WalkForwardVFast00.bvh'
         # bvhFilePath = '../samples/wd2_WalkHandWav00.bvh'
+        bvhFilePath = '../samples/wd2_WalkSukiko00.bvh'
         # bvhFilePath = '../samples/wd2_WalkSameSame01.bvh'
         # bvhFilePath = '../samples/wd2_WalkSoldier00.bvh'
         motion0 = yf.readBvhFile(bvhFilePath)
