@@ -81,13 +81,21 @@ class BvhSkelToDartSkel(object):
             self.body_name.append(joint.name)
             # print(joint.children)
             print(joint.name)
-            avg_offset = sum([child.offset for child in joint.children]) / len(joint.children)
+            avg_offset = mm.seq2Vec3(sum([child.offset for child in joint.children]) / len(joint.children))
             length = mm.length(avg_offset)
-            length_vector = mm.seq2Vec3(avg_offset)/length
+            length_vector = avg_offset/length
             print(length, length_vector)
             mass = self.mass_map[joint.name]
             width = math.sqrt(mass/1000./length)
             height = width
+
+            boneT = mm.getSE3ByTransV(.5 * avg_offset)
+
+            defaultBoneV = mm.unitZ()
+            boneR = mm.getSO3FromVectors(defaultBoneV, avg_offset)
+
+            boneT = boneT * boneR
+
             self.body_mass.append(mass)
             self.body_geom_size.append([length, width, height])
 
@@ -99,6 +107,8 @@ class BvhSkelToDartSkel(object):
         """
         for i in range(len(self.body_name)):
             et_body = et.SubElement(et_skeleton, 'body', {'name': self.body_name[i]})
+            # TODO:
+            et.SubElement(et_body, 'transformation').text = str(self.body_mass[i])
 
             et_inertia = et.SubElement(et_body, 'inertia')
             et.SubElement(et_inertia, 'mass').text = str(self.body_mass[i])
