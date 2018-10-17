@@ -108,7 +108,7 @@ class ModelViewer(object):
         # print([stdev(self.all_angles[i]) for i in range(len(self.all_angles))])
         self.motion[0].rootPos = mm.seq2Vec3(points[0][:3])/100.
         joint_idx = joint_list.index('Hips')
-        self.motion[0].setJointOrientationLocal(0, np.dot(root_orientation, orientations[0]))
+        self.motion[0].setJointOrientationLocal(0, np.dot(root_orientation, orientations[joint_idx]))
         for j in range(1, self.motion[0].skeleton.getJointNum()):
             joint_name = self.motion[0].skeleton.getJointName(j)
             if joint_name in joint_list:
