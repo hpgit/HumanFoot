@@ -8,10 +8,11 @@ from fltk import *
 from PyCommon.modules.GUI.hpSimpleViewer import hpSimpleViewer as SimpleViewer
 from PyCommon.modules.Renderer import ysRenderer as yr
 from PyCommon.modules.Math import mmMath as mm
+from PyCommon.modules.Motion import ysMotion as ym
+from PyCommon.modules.Resource import ysMotionLoader as yf
 
 import pydart2 as pydart
 import numpy as np
-from statistics import stdev, mean
 
 
 MOTION_SCALE = 0.01
@@ -28,7 +29,7 @@ joint_list = ["Head", "Hips", "LHipJoint", "LeftArm", "LeftFoot", "LeftForeArm",
 class ModelViewer(object):
     def __init__(self, folder):
         pydart.init()
-        self.world = pydart.World(1./1200., "../DartDeep/data/woody_with_ground.xml")
+        self.world = pydart.World(1./1200., "cmu_with_ground.xml")
         self.model = self.world.skeletons[1]
 
         self.controller = RNNController(folder)
@@ -47,6 +48,10 @@ class ModelViewer(object):
 
         self.rd_target_position = [None]
 
+        self.motion = yf.readBvhFile('cmu_tpose.bvh', 0.01)
+
+
+        viewer.doc.addRenderer('motion', yr.JointMotionRenderer(self.motion, (255, 255, 0)))
         viewer.doc.addRenderer('contact', yr.PointsRenderer(self.rd_target_position, (0, 255, 0), save_state=False))
         viewer.doc.addRenderer('MotionModel', yr.DartRenderer(self.world, (150,150,255), yr.POLYGON_FILL, save_state=False))
 
@@ -55,6 +60,7 @@ class ModelViewer(object):
             self.step_model()
             glColor3d(1, 0, 0)
             self.draw_motion(self.lines)
+            self.motion.frame = 0
 
         viewer.setExtraDrawCallback(extraDrawCallback)
 
@@ -100,6 +106,14 @@ class ModelViewer(object):
 
         # print([mm.rad2Deg(angles[i]) for i in range(len(angles))])
         # print([stdev(self.all_angles[i]) for i in range(len(self.all_angles))])
+        self.motion[0].rootPos = mm.seq2Vec3(points[0][:3])/100.
+        joint_idx = joint_list.index('Hips')
+        self.motion[0].setJointOrientationLocal(0, np.dot(root_orientation, orientations[0]))
+        for j in range(1, self.motion[0].skeleton.getJointNum()):
+            joint_name = self.motion[0].skeleton.getJointName(j)
+            if joint_name in joint_list:
+                joint_idx = joint_list.index(joint_name)
+                self.motion[0].setJointOrientationLocal(j, orientations[joint_idx])
 
         for j in range(len(self.model.joints)):
             if j == 0:

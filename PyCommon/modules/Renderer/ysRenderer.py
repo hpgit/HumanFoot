@@ -529,6 +529,11 @@ class DartRenderer(Renderer):
             glTranslatef(0., 0., -data[1]/2.)
             self.rc.drawCylinder(data[0], data[1])
             # self.rc.drawCapsule(data[0], data[1])
+        elif geomType == 'SphereShape':
+            shape = shapeNode.shape  # type: pydart.SphereShape
+            data = shape.radius()
+            glScalef(data, data, data)
+            self.rc.drawSphere(1.)
         elif geomType == 'EllipsoidShape':
             shape = shapeNode.shape  # type: pydart.EllipsoidShape
             data = shape.size()  # type: numpy.ndarray
@@ -573,6 +578,8 @@ class DartRenderer(Renderer):
                             data = [shape.radius(), shape.height()]
                         elif geomType[0] == 'E':
                             data = shape.size()
+                        elif geomType[0] == 'S':
+                            data = shape.radius()
                         state.append((body_name, geomType, geomT, data, color))
         return state
 
@@ -607,6 +614,9 @@ class DartRenderer(Renderer):
                 # self.rc.drawCapsule(data[0], data[1])
             elif geomType[0] == 'E':
                 glScalef(data[0]/2., data[1]/2., data[2]/2.)
+                self.rc.drawSphere(1.)
+            elif geomType[0] == 'S':
+                glScalef(data, data, data)
                 self.rc.drawSphere(1.)
 
             glPopMatrix()
