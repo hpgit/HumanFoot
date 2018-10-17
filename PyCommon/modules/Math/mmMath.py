@@ -163,6 +163,25 @@ def getSO3ByEuler(eulerAngles):
     return SO3
 
 
+def eulerZYX(angles):
+    # c1 = math.cos(angles[0])
+    # c2 = math.cos(angles[1])
+    # c3 = math.cos(angles[2])
+    #
+    # s1 = math.sin(angles[0])
+    # s2 = math.sin(angles[1])
+    # s3 = math.sin(angles[2])
+    #
+    # return np.array(
+    #     [[c1*c2, c1*s2*s3 - c3*s1, s1*s3 + c1*c3*s2],
+    #      [c2*s1, c1*c3 + s1*s2*s3, c3*s1*s2 - c1*s3],
+    #      [-s2,     c2*s3,                c2*c3]]
+    #     )
+
+    return np.dot(np.dot(rotZ(angles[0]), rotY(angles[1])), rotX(angles[2]))
+
+
+
     
     
 #def SO3ToSE3(SO3):

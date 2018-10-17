@@ -30,11 +30,14 @@ class Model(nn.Module):
         super(Model, self).__init__()
 
         hidden_layer_size1 = 128
-        hidden_layer_size2 = 32
+        hidden_layer_size2 = 64
+        # hidden_layer_size1 = 64
+        # hidden_layer_size2 = 32
 
         '''Policy Mean'''
         self.policy_fc1_specifier = nn.Linear(1        , hidden_layer_size1//2)
         self.policy_fc1_others = nn.Linear(num_states-1, hidden_layer_size1//2)
+        # self.policy_fc1 = nn.Linear(num_states, hidden_layer_size1)
         self.policy_fc2 = nn.Linear(hidden_layer_size1, hidden_layer_size2)
         self.policy_fc3 = nn.Linear(hidden_layer_size2, num_actions)
         '''Policy Distributions'''
@@ -43,6 +46,7 @@ class Model(nn.Module):
         '''Value'''
         self.value_fc1_specifier = nn.Linear(1        , hidden_layer_size1//2)
         self.value_fc1_others = nn.Linear(num_states-1, hidden_layer_size1//2)
+        # self.value_fc1 = nn.Linear(num_states, hidden_layer_size1)
         self.value_fc2 = nn.Linear(hidden_layer_size1 ,hidden_layer_size2)
         self.value_fc3 = nn.Linear(hidden_layer_size2 ,1)
 
@@ -52,47 +56,51 @@ class Model(nn.Module):
         '''Policy'''
         if self.policy_fc1_specifier.bias is not None:
             self.policy_fc1_specifier.bias.data.zero_()
-
         if self.policy_fc1_others.bias is not None:
             self.policy_fc1_others.bias.data.zero_()
-
+        # if self.policy_fc1.bias is not None:
+        #     self.policy_fc1.bias.data.zero_()
         if self.policy_fc2.bias is not None:
             self.policy_fc2.bias.data.zero_()
-
         if self.policy_fc3.bias is not None:
             self.policy_fc3.bias.data.zero_()
+
         torch.nn.init.xavier_uniform_(self.policy_fc1_specifier.weight)
         torch.nn.init.xavier_uniform_(self.policy_fc1_others.weight)
+        # torch.nn.init.xavier_uniform_(self.policy_fc1.weight)
         torch.nn.init.xavier_uniform_(self.policy_fc2.weight)
         torch.nn.init.xavier_uniform_(self.policy_fc3.weight)
         '''Value'''
         if self.value_fc1_specifier.bias is not None:
             self.value_fc1_specifier.bias.data.zero_()
-
         if self.value_fc1_others.bias is not None:
             self.value_fc1_others.bias.data.zero_()
-
+        # if self.value_fc1.bias is not None:
+        #     self.value_fc1.bias.data.zero_()
         if self.value_fc2.bias is not None:
             self.value_fc2.bias.data.zero_()
-
         if self.value_fc3.bias is not None:
             self.value_fc3.bias.data.zero_()
         torch.nn.init.xavier_uniform_(self.value_fc1_specifier.weight)
         torch.nn.init.xavier_uniform_(self.value_fc1_others.weight)
+        # torch.nn.init.xavier_uniform_(self.value_fc1.weight)
         torch.nn.init.xavier_uniform_(self.value_fc2.weight)
         torch.nn.init.xavier_uniform_(self.value_fc3.weight)
 
     def forward(self, _x):
         x_specifier = torch.tensor(list(_x[i][:1] for i in range(len(_x)))).float()
         x_others = torch.tensor(list(_x[i][1:] for i in range(len(_x)))).float()
+        # x = torch.tensor(_x).float()
         '''Policy'''
         p_mean = torch.cat((F.relu(self.policy_fc1_specifier(x_specifier)), F.relu(self.policy_fc1_others(x_others))), dim=1)
+        # p_mean = F.relu(self.policy_fc1(x))
         p_mean = F.relu(self.policy_fc2(p_mean))
         p_mean = self.policy_fc3(p_mean)
 
         p = MultiVariateNormal(p_mean, self.log_std.exp())
         '''Value'''
         v = torch.cat((F.relu(self.value_fc1_specifier(x_specifier)), F.relu(self.value_fc1_others(x_others))), dim=1)
+        # v = F.relu(self.value_fc1(x))
         v = F.relu(self.value_fc2(v))
         v = self.value_fc3(v)
 
@@ -313,9 +321,10 @@ class PPO_MULTI(object):
         self.num_evaluation += 1
         total_reward = 0
         total_step = 0
-        for motion_idx in range(1 if not is_multi else len(self.env.ref_motions)):
-            if is_multi:
-                self.env.specify_motion_num(motion_idx)
+        rewards = [0.] * len(self.env.ref_motions)
+        steps = [0] * len(self.env.ref_motions)
+        for motion_idx in range(len(self.env.ref_motions)):
+            self.env.specify_motion_num(motion_idx)
             self.env.Resets(True)
             self.env.Reset(False, 0)
             states = self.env.GetStates()
@@ -338,17 +347,24 @@ class PPO_MULTI(object):
 
                 for j in range(self.num_slaves):
                     if self.env.IsTerminalState(j) is False:
-                        total_step += 1
-                        total_reward += self.env.GetReward(j)
+                        # total_step += 1
+                        # total_reward += self.env.GetReward(j)
+                        steps[motion_idx] += 1
+                        rewards[motion_idx] += self.env.GetReward(j)
                 states = self.env.GetStates()
                 if all(self.env.IsTerminalStates()):
                     break
-            if is_multi:
-                self.env.specify_motion_num()
+            self.env.specify_motion_num()
+        total_step = sum(steps)
+        total_reward = sum(rewards)
         self.print('noise : {:.3f}'.format(self.model.log_std.exp().mean()))
         if total_step is not 0:
-            self.print('Epi reward : {:.2f}, Step reward : {:.2f} Total step : {}'
-                  .format(total_reward / self.num_slaves, total_reward / total_step, total_step))
+            # self.print('Epi reward : {:.2f}, Step reward : {:.2f} Total step : {}'
+            #      .format(total_reward / self.num_slaves, total_reward / total_step, total_step))
+            for motion_idx in range(len(self.env.ref_motions)):
+                self.print('Motion {} Epi reward : {:.2f}, Step reward : {:.2f} Total step : {}'
+                  .format(motion_idx, rewards[motion_idx] / self.num_slaves, rewards[motion_idx] / steps[motion_idx], steps[motion_idx]))
+                
         else:
             self.print('bad..')
         return total_reward / self.num_slaves, total_step / self.num_slaves

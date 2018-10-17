@@ -105,6 +105,10 @@ class GlWindow(Fl_Gl_Window):
         
         self.parent = parent
 
+        self.mouse_pick_on = False
+        self.pickPoint = (0., 0., 0.)
+        self.pickPoint_prev = (0., 0., 0.)
+
         self.camera = Camera()
         self.mouseX = 0
         self.mouseY = 0
@@ -459,7 +463,20 @@ class GlWindow(Fl_Gl_Window):
         mat[15] = -d
         
         glMultMatrixf(mat)
-             
+
+    def checkMousePick(self):
+        pickX = self.mouseX
+        pickY = self.mouseY
+        model = glGetDoublev(GL_MODELVIEW_MATRIX)
+        proj = glGetDoublev(GL_PROJECTION_MATRIX)
+        view = glGetIntegerv(GL_VIEWPORT)
+        depth = glReadPixels(pickX, view[3] - pickY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT)[0]
+        if depth >= 1:
+            return
+        self.pickPoint = gluUnProject(pickX, view[3] - pickY, depth, model, proj, view)
+        if self.pickPoint is not None:
+            self.pickPoint_prev = self.pickPoint
+
     def draw(self):
         if self.valid():
         # if self.initGLFlag:
@@ -595,6 +612,7 @@ class GlWindow(Fl_Gl_Window):
         self.camera.rotateX = 0
         self.camera.rotateY = 0
         self.camera.rotateZ = 0
+
     def viewFromRight(self):
         self.viewMode = VIEW_RIGHT
         if self.projectionOrtho == False:
@@ -605,6 +623,7 @@ class GlWindow(Fl_Gl_Window):
         self.camera.rotateX = 0
         self.camera.rotateY = mmMath.deg2Rad(90.0)
         self.camera.rotateZ = 0
+
     def viewFromTop(self):
         self.viewMode = VIEW_TOP
         if self.projectionOrtho == False:
@@ -615,6 +634,7 @@ class GlWindow(Fl_Gl_Window):
         self.camera.rotateX = mmMath.deg2Rad(-90.0)
         self.camera.rotateY = 0
         self.camera.rotateZ = 0
+
     def viewPerspective(self):
         self.viewMode = VIEW_PERSPECTIVE
         if self.projectionOrtho == True:
@@ -623,11 +643,16 @@ class GlWindow(Fl_Gl_Window):
         self.camera.rotateX = self.prevRotX
         self.camera.rotateY = self.prevRotY
 
+    def set_mouse_pick(self, pick=True):
+        self.mouse_pick_on = pick
+
     def handle(self, e):
         returnVal = 0
         if e == FL_RELEASE:
             self.mouseX = Fl.event_x()
             self.mouseY = Fl.event_y()
+            if self.mouse_pick_on:
+                self.checkMousePick()
             returnVal = 1
         elif e == FL_PUSH:
             self.mouseX = Fl.event_x()

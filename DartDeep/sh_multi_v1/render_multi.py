@@ -35,7 +35,7 @@ def main():
 
     def simulateCallback(frame):
         state = ppo.env.GetState(0)
-        action_dist, _ = ppo.model(torch.tensor(state.reshape(1, -1)).float())
+        action_dist, _ = ppo.model(state.reshape(1, -1))
         action = action_dist.loc.detach().numpy()
         res = ppo.env.Steps(action)
 

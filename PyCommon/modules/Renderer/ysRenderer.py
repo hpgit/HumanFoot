@@ -457,12 +457,12 @@ class DartRenderer(Renderer):
     """
     :type world: pydart.World
     """
-    def __init__(self, target, color=(255, 255, 255), polygonStyle=POLYGON_FILL, lineWidth=1.):
+    def __init__(self, target, color=(255, 255, 255), polygonStyle=POLYGON_FILL, lineWidth=1., save_state=True):
         Renderer.__init__(self, target, color)
         self.world = target
         self.rc.setPolygonStyle(polygonStyle)
         self._lineWidth = lineWidth
-        self.savable = True
+        self.savable = save_state
 
     def render(self, renderType=RENDER_OBJECT):
         glLineWidth(self._lineWidth)
@@ -537,7 +537,7 @@ class DartRenderer(Renderer):
         glPopMatrix()
 
     def renderFrame(self, frame, renderType=RENDER_OBJECT):
-        if frame == -1:
+        if frame == -1 or not self.savable:
             self.renderState(self.getState(), renderType)
         elif frame == self.get_max_saved_frame() + 1:
             self.saveState()
@@ -616,12 +616,12 @@ class DartModelRenderer(Renderer):
     """
     :type model: cdm.DartModel
     """
-    def __init__(self, target, color=(255,255,255), polygonStyle=POLYGON_FILL, lineWidth=1.):
+    def __init__(self, target, color=(255,255,255), polygonStyle=POLYGON_FILL, lineWidth=1., save_state=True):
         Renderer.__init__(self, target, color)
         self.model = target
         self.rc.setPolygonStyle(polygonStyle)
         self._lineWidth = lineWidth
-        self.savable = True
+        self.savable = save_state
 
     def render(self, renderType=RENDER_OBJECT):
         glLineWidth(self._lineWidth)
@@ -687,7 +687,7 @@ class DartModelRenderer(Renderer):
         glPopMatrix()
 
     def renderFrame(self, frame, renderType=RENDER_OBJECT):
-        if frame == -1:
+        if frame == -1 or not self.savable:
             self.renderState(self.getState(), renderType)
         elif frame == self.get_max_saved_frame() + 1:
             self.saveState()
@@ -1243,11 +1243,13 @@ class MeshRenderer(Renderer):
 # # debugging renderers
 #===============================================================================
 class PointsRenderer(Renderer):
-    def __init__(self, points, color = (255,0,0), pointStyle = POINT_CROSS):
+    def __init__(self, points, color=(255,0,0), pointStyle=POINT_CROSS, save_state=True):
         Renderer.__init__(self, points, color)
         self.points = points
         self.pointStyle = pointStyle
         self.rc.setLineWidth(2.)
+        self.savable = save_state
+
     def render(self, renderType=RENDER_OBJECT):
         if renderType == RENDER_OBJECT:
             self.rc.beginDraw()
@@ -1275,7 +1277,7 @@ class PointsRenderer(Renderer):
                         self.rc.drawCube(point)
 
     def renderFrame(self, frame, renderType=RENDER_OBJECT):
-        if frame == -1:
+        if frame == -1 or not self.savable:
             self.renderState(self.getState(), renderType)
         elif frame == self.get_max_saved_frame() + 1:
             self.saveState()
@@ -1704,6 +1706,7 @@ class SpheresRenderer(Renderer):
         self.rc.setNormalStyle(NORMAL_SMOOTH)
         self.rc.setPolygonStyle(polygonStyle)
         self.rc.setLineWidth(2.)
+
     def render(self, renderType=RENDER_OBJECT):
         self.rc.beginDraw()
         glColor3ubv(self.totalColor)

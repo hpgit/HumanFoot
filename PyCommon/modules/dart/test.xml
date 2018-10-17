@@ -1,0 +1,358 @@
+<?xml version="1.0" ?>
+<skel version="1.0">
+    <world name="world 1">
+        <physics>
+            <time_step>0.001</time_step>
+            <gravity>0 -9.81 0</gravity>
+            <collision_detector>fcl_mesh</collision_detector>
+        </physics>
+        <skeleton name="grount skeleton">
+            <mobile>false</mobile>
+            <body name="ground">
+                <transformation>0 -0.025 0 0 0 0</transformation>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>1000.0 0.05 1000.0</size>
+                    </box>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>1000.0 0.05 1000.0</size>
+                    </box>
+                </collision_shape>
+            </body>
+            <joint name="joint 1" type="free">
+                <parent>world</parent>
+                <child>ground</child>
+            </joint>
+        </skeleton>
+        <skeleton name="skel">
+            <body name="Hips">
+                <inertia>
+                    <mass>6.0</mass>
+                    <offset>0.0 0.0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.04302126388194563 0.3734513577246417 0.3734513577246417</size>
+                    </box>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.04302126388194563 0.3734513577246417 0.3734513577246417</size>
+                    </box>
+                </collision_shape>
+            </body>
+            <body name="LeftUpLeg">
+                <inertia>
+                    <mass>5.0</mass>
+                    <offset>0.0 0.0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.4294678596314281 0.10789955865230785 0.10789955865230785</size>
+                    </box>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.4294678596314281 0.10789955865230785 0.10789955865230785</size>
+                    </box>
+                </collision_shape>
+            </body>
+            <body name="LeftLeg">
+                <inertia>
+                    <mass>5.0</mass>
+                    <offset>0.0 0.0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.44948248725524337 0.10546991948257942 0.10546991948257942</size>
+                    </box>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.44948248725524337 0.10546991948257942 0.10546991948257942</size>
+                    </box>
+                </collision_shape>
+            </body>
+            <body name="LeftFoot">
+                <inertia>
+                    <mass>2.0</mass>
+                    <offset>0.0 0.0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.14207048715028747 0.11864872154940409 0.11864872154940409</size>
+                    </box>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.14207048715028747 0.11864872154940409 0.11864872154940409</size>
+                    </box>
+                </collision_shape>
+            </body>
+            <body name="RightUpLeg">
+                <inertia>
+                    <mass>5.0</mass>
+                    <offset>0.0 0.0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.44603197572846726 0.10587709213954011 0.10587709213954011</size>
+                    </box>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.44603197572846726 0.10587709213954011 0.10587709213954011</size>
+                    </box>
+                </collision_shape>
+            </body>
+            <body name="RightLeg">
+                <inertia>
+                    <mass>5.0</mass>
+                    <offset>0.0 0.0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.45054503489196285 0.10534547802110175 0.10534547802110175</size>
+                    </box>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.45054503489196285 0.10534547802110175 0.10534547802110175</size>
+                    </box>
+                </collision_shape>
+            </body>
+            <body name="RightFoot">
+                <inertia>
+                    <mass>2.0</mass>
+                    <offset>0.0 0.0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.1447039245238359 0.11756413232763653 0.11756413232763653</size>
+                    </box>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.1447039245238359 0.11756413232763653 0.11756413232763653</size>
+                    </box>
+                </collision_shape>
+            </body>
+            <body name="Spine">
+                <inertia>
+                    <mass>8.0</mass>
+                    <offset>0.0 0.0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.12300484444216009 0.2550256630915565 0.2550256630915565</size>
+                    </box>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.12300484444216009 0.2550256630915565 0.2550256630915565</size>
+                    </box>
+                </collision_shape>
+            </body>
+            <body name="Spine1">
+                <inertia>
+                    <mass>3.0</mass>
+                    <offset>0.0 0.0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.035110564831116006 0.2923086850746223 0.2923086850746223</size>
+                    </box>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.035110564831116006 0.2923086850746223 0.2923086850746223</size>
+                    </box>
+                </collision_shape>
+            </body>
+            <body name="Neck1">
+                <inertia>
+                    <mass>5.0</mass>
+                    <offset>0.0 0.0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.10612689306410511 0.21705624075200008 0.21705624075200008</size>
+                    </box>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.10612689306410511 0.21705624075200008 0.21705624075200008</size>
+                    </box>
+                </collision_shape>
+            </body>
+            <body name="LeftShoulder">
+                <inertia>
+                    <mass>1.0</mass>
+                    <offset>0.0 0.0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.2150377689418303 0.06819344445603928 0.06819344445603928</size>
+                    </box>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.2150377689418303 0.06819344445603928 0.06819344445603928</size>
+                    </box>
+                </collision_shape>
+            </body>
+            <body name="LeftArm">
+                <inertia>
+                    <mass>2.0</mass>
+                    <offset>0.0 0.0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.29898 0.08178881746865274 0.08178881746865274</size>
+                    </box>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.29898 0.08178881746865274 0.08178881746865274</size>
+                    </box>
+                </collision_shape>
+            </body>
+            <body name="LeftForeArm">
+                <inertia>
+                    <mass>2.0</mass>
+                    <offset>0.0 0.0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.20901360000000002 0.09782001499990224 0.09782001499990224</size>
+                    </box>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.20901360000000002 0.09782001499990224 0.09782001499990224</size>
+                    </box>
+                </collision_shape>
+            </body>
+            <body name="LeftHand">
+                <inertia>
+                    <mass>0.5</mass>
+                    <offset>0.0 0.0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.0429156 0.10793875582733774 0.10793875582733774</size>
+                    </box>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.0429156 0.10793875582733774 0.10793875582733774</size>
+                    </box>
+                </collision_shape>
+            </body>
+            <body name="RightShoulder">
+                <inertia>
+                    <mass>1.0</mass>
+                    <offset>0.0 0.0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.20689140268749695 0.06952304383112179 0.06952304383112179</size>
+                    </box>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.20689140268749695 0.06952304383112179 0.06952304383112179</size>
+                    </box>
+                </collision_shape>
+            </body>
+            <body name="RightArm">
+                <inertia>
+                    <mass>2.0</mass>
+                    <offset>0.0 0.0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.314514 0.07974344740874097 0.07974344740874097</size>
+                    </box>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.314514 0.07974344740874097 0.07974344740874097</size>
+                    </box>
+                </collision_shape>
+            </body>
+            <body name="RightForeArm">
+                <inertia>
+                    <mass>2.0</mass>
+                    <offset>0.0 0.0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.20665019999999998 0.09837779469006624 0.09837779469006624</size>
+                    </box>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.20665019999999998 0.09837779469006624 0.09837779469006624</size>
+                    </box>
+                </collision_shape>
+            </body>
+            <body name="RightHand">
+                <inertia>
+                    <mass>0.5</mass>
+                    <offset>0.0 0.0 0.0</offset>
+                </inertia>
+                <visualization_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.037351800000000004 0.11569890119169594 0.11569890119169594</size>
+                    </box>
+                </visualization_shape>
+                <collision_shape>
+                    <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
+                    <box>
+                        <size>0.037351800000000004 0.11569890119169594 0.11569890119169594</size>
+                    </box>
+                </collision_shape>
+            </body>
+        </skeleton>
+    </world>
+</skel>

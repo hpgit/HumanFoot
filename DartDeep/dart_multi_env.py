@@ -28,6 +28,10 @@ class HpDartMultiEnv(gym.Env):
         self.ref_motions.append(yf.readBvhFile("../data/woody_walk_normal.bvh")[40:])
         # self.ref_motions.append(yf.readBvhFile("../data/wd2_jump0.bvh")[164:280])
         self.ref_motions.append(yf.readBvhFile('../data/wd2_WalkSukiko00.bvh'))
+        self.ref_motions.append(yf.readBvhFile("../data/walk_left_90degree.bvh"))
+        self.ref_motions.append(yf.readBvhFile("../data/wd2_u-turn.bvh")[25:214])
+        self.ref_motions[-1].translateByOffset([0., 0.03, 0.])
+        self.ref_motions.append(yf.readBvhFile("../data/wd2_WalkForwardVFast00.bvh"))
         self.motion_num = len(self.ref_motions)
         self.reward_weights_by_fps = [self.ref_motions[0].fps / self.ref_motions[i].fps for i in range(self.motion_num)]
 
@@ -67,8 +71,8 @@ class HpDartMultiEnv(gym.Env):
         state_high = np.array([np.finfo(np.float32).max] * state_num)
         action_high = np.array([pi*10./2.] * action_num)
 
-        self.action_space = gym.spaces.Box(-action_high, action_high)
-        self.observation_space = gym.spaces.Box(-state_high, state_high)
+        self.action_space = gym.spaces.Box(-action_high, action_high, dtype=np.float32)
+        self.observation_space = gym.spaces.Box(-state_high, state_high, dtype=np.float32)
 
         self.viewer = None
 
@@ -78,7 +82,7 @@ class HpDartMultiEnv(gym.Env):
         R_pelvis = pelvis.world_transform()[:3, :3]
 
         phase = min(1., (self.world.time() + self.time_offset)/self.motion_time)
-        state = [self.specified_motion_num, phase]
+        state = [0. if len(self.ref_motions) == 1 else self.specified_motion_num/(len(self.ref_motions)-1), phase]
 
         p = np.array([np.dot(R_pelvis.T, body.to_world() - p_pelvis) for body in self.skel.bodynodes]).flatten()
         R = np.array([mm.rot2quat(np.dot(R_pelvis.T, body.world_transform()[:3, :3])) for body in self.skel.bodynodes]).flatten()
@@ -97,9 +101,10 @@ class HpDartMultiEnv(gym.Env):
         return np.asarray(state).flatten()
 
     def reward(self):
-        current_frame = min(len(self.ref_motion)-1, int((self.world.time() + self.time_offset) * self.ref_motion.fps))
-        self.ref_skel.set_positions(self.ref_motion[current_frame].get_q())
-        self.ref_skel.set_velocities(self.ref_motion.get_dq(current_frame))
+        # current_frame = min(len(self.ref_motion)-1, int((self.world.time() + self.time_offset) * self.ref_motion.fps))
+        current_time = self.world.time() + self.time_offset
+        self.ref_skel.set_positions(self.ref_motion.get_q_by_time(current_time))
+        self.ref_skel.set_velocities(self.ref_motion.get_dq_dart_by_time(current_time))
 
         p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
         p_e = np.asarray([body.world_transform()[:3, 3] for body in self.body_e]).flatten()
@@ -139,8 +144,8 @@ class HpDartMultiEnv(gym.Env):
         self.ref_skel.set_positions(self.ref_motion.get_q_by_time(next_frame_time))
         self.ref_skel.set_velocities(self.ref_motion.get_dq_dart_by_time(next_frame_time))
         for i in range(self.step_per_frame):
-            self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
-            # self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
+            # self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
+            self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
             self.world.step()
         return tuple([self.state(), self.reward(), self.is_done(), dict()])
 
@@ -158,7 +163,7 @@ class HpDartMultiEnv(gym.Env):
 
         self.ref_motion = self.ref_motions[self.specified_motion_num]
         self.step_per_frame = round((1./self.world.time_step()) / self.ref_motion.fps)
-        self.motion_time = len(self.ref_motion)
+        self.motion_time = len(self.ref_motion) / self.ref_motion.fps
 
         rand_frame = randrange(0, len(self.ref_motion)) if self.rsi else 0
         self.time_offset = rand_frame / self.ref_motion.fps
