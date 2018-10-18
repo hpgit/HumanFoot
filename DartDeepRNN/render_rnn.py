@@ -111,9 +111,16 @@ class ModelViewer(object):
         self.motion[0].setJointOrientationLocal(0, np.dot(root_orientation, orientations[joint_idx]))
         for j in range(1, self.motion[0].skeleton.getJointNum()):
             joint_name = self.motion[0].skeleton.getJointName(j)
+
+
             if joint_name in joint_list:
+                if joint_name == 'LHipJoint':
+                    print('haha')
                 joint_idx = joint_list.index(joint_name)
                 self.motion[0].setJointOrientationLocal(j, orientations[joint_idx])
+
+        # joint_idx = joint_list.index('LHipJoint')
+        # print(orientations[joint_idx])
 
         for j in range(len(self.model.joints)):
             if j == 0:

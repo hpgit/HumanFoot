@@ -205,6 +205,10 @@ class BvhSkelToDartSkel(object):
 if __name__ == '__main__':
     import PyCommon.modules.Motion.ysHierarchyEdit as yme
     motion = yf.readBvhFile('test.bvh', 0.01)
+    print(mm.logSO3(motion[0].getLocalR(motion[0].skeleton.getElementIndex('LHipJoint'))))
+    print(mm.logSO3(motion[0].getLocalR(motion[0].skeleton.getElementIndex('RHipJoint'))))
+    print(mm.logSO3(motion[0].getLocalR(motion[0].skeleton.getElementIndex('LeftUpLeg'))))
+    print(mm.logSO3(motion[0].getLocalR(motion[0].skeleton.getElementIndex('RightUpLeg'))))
     yme.removeJoint(motion, 'LHipJoint', False)
     yme.removeJoint(motion, 'RHipJoint', False)
     yme.removeJoint(motion, 'LowerBack', False)
