@@ -1389,7 +1389,11 @@ class FramesRenderer(Renderer):
         Renderer.__init__(self, Ts, color)
         self.Ts = Ts
         self.axisLength = axisLength
+
     def render(self, renderType=RENDER_OBJECT):
+        if renderType == RENDER_SHADOW:
+            return
+
         for T in self.Ts:
             if T is not None:
                 glPushMatrix()

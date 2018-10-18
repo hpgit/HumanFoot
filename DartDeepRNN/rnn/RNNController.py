@@ -15,13 +15,17 @@ class RNNController(object):
         self.sess = tf.Session()
         saver = tf.train.Saver()
         self.sess.run(tf.global_variables_initializer())
-        saver.restore(self.sess, "%s/train/ckpt"%(folder))
-#         saver.restore(self.sess, "%s/train/ckpt"%(folder))
-#         saver.save(self.sess, "%s/train2/ckpt"%(folder))
+        saver.restore(self.sess, "../%s/train/ckpt"%(folder))
+        # saver.restore(self.sess, "%s/train/ckpt"%(folder))
+        # saver.save(self.sess, "%s/train2/ckpt"%(folder))
         
         self.state = None
         self.current_y = [[0]*self.config.y_normal.size()]
-        
+
+    # def reset(self):
+    #     self.state = None
+    #     self.current_y = [[0]*self.config.y_normal.size()]
+
     def step(self, target):
         target = self.config.x_normal.normalize_l(target)
         m = self.model
@@ -38,6 +42,7 @@ class RNNController(object):
 
         angles = copy(output[63:])
         output = output[:63]
+        contacts = copy(output[:2])
         output = output[2:]
         # move root
         self.pose = self.pose.transform(output)
@@ -47,12 +52,14 @@ class RNNController(object):
         output = output[4:]
         for i in range(len(output)//3):
             points.append(output[i*3:(i+1)*3])
-        
+
+        point_offset = mm.seq2Vec3([0., -0.05, 0.])
+
         for i in range(len(points)):
-            points[i] = self.pose.global_point_3d(points[i])
+            points[i] = mm.seq2Vec3(self.pose.global_point_3d(points[i]))/100. + point_offset
 
         orientations = list()
         for i in range(len(angles)//3):
             orientations.append(mm.exp(angles[i*3:(i+1)*3]))
 
-        return points, angles, orientations, root_orientation
+        return contacts, points, angles, orientations, root_orientation

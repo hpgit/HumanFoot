@@ -10,12 +10,13 @@ from PyCommon.modules.Renderer import ysRenderer as yr
 from PyCommon.modules.Math import mmMath as mm
 from PyCommon.modules.Motion import ysMotion as ym
 from PyCommon.modules.Resource import ysMotionLoader as yf
+from PyCommon.modules.dart.dart_ik import DartIk
 
 import pydart2 as pydart
 import numpy as np
 
 
-MOTION_SCALE = 0.01
+MOTION_SCALE = .01
 
 joint_point_list = [None, "Head_End", "LeftHand", "LeftFoot", "LeftToeBase", "RightHand", "RightFoot", "RightToeBase", "LeftArm",
 "RightArm", "LeftForeArm", "LeftLeg", "RightForeArm", "RightLeg", "Spine", "LeftHandIndex1", "RightHandIndex1", "Neck1", "LeftUpLeg", "RightUpLeg"]
@@ -29,8 +30,9 @@ joint_list = ["Head", "Hips", "LHipJoint", "LeftArm", "LeftFoot", "LeftForeArm",
 class ModelViewer(object):
     def __init__(self, folder):
         pydart.init()
-        self.world = pydart.World(1./1200., "cmu_with_ground.xml")
+        self.world = pydart.World(1./1200., "data/cmu_with_ground.xml")
         self.model = self.world.skeletons[1]
+        self.ik = DartIk(self.model)
 
         self.controller = RNNController(folder)
 
@@ -44,23 +46,26 @@ class ModelViewer(object):
         self.lines = None
         viewer.motionViewWnd.glWindow.set_mouse_pick(True)
 
+        def callback_btn(ptr):
+            self.controller.reset()
+        viewer.objectInfoWnd.addBtn('reset', callback_btn)
+
         self.rc = yr.RenderContext()
 
         self.rd_target_position = [None]
+        self.rd_frames = [None]
 
-        self.motion = yf.readBvhFile('cmu_tpose.bvh', 0.01)
-
-
-        viewer.doc.addRenderer('motion', yr.JointMotionRenderer(self.motion, (255, 255, 0)))
         viewer.doc.addRenderer('contact', yr.PointsRenderer(self.rd_target_position, (0, 255, 0), save_state=False))
         viewer.doc.addRenderer('MotionModel', yr.DartRenderer(self.world, (150,150,255), yr.POLYGON_FILL, save_state=False))
+        viewer.doc.addRenderer('rd_frames', yr.FramesRenderer(self.rd_frames))
 
         def extraDrawCallback():
             self.rd_target_position[0] = self.viewer.motionViewWnd.glWindow.pickPoint
             self.step_model()
-            glColor3d(1, 0, 0)
-            self.draw_motion(self.lines)
-            self.motion.frame = 0
+            del self.rd_frames[:]
+            self.rd_frames.append(self.model.body(0).world_transform())
+            # for i in range(3):
+            #     print(self.model.body(0).world_transform()[:3, i])
 
         viewer.setExtraDrawCallback(extraDrawCallback)
 
@@ -77,14 +82,14 @@ class ModelViewer(object):
         target = self.controller.pose.relativePose(target)
         target = target.p
         t_len = v_len(target)
-        if (t_len > 80):
+        if t_len > 80:
             ratio = 80/t_len
             target[0] *= ratio
             target[1] *= ratio
         return target
 
     def step_model(self):
-        points, angles, orientations, root_orientation = self.controller.step(self.get_target())
+        contacts, points, angles, orientations, root_orientation = self.controller.step(self.get_target())
 
         # pairs = [[0,11,3,4],
         #          [0,8,10,2],
@@ -104,39 +109,42 @@ class ModelViewer(object):
         for i in range(len(angles)):
             self.all_angles[i].append(angles[i])
 
-        # print([mm.rad2Deg(angles[i]) for i in range(len(angles))])
-        # print([stdev(self.all_angles[i]) for i in range(len(self.all_angles))])
-        self.motion[0].rootPos = mm.seq2Vec3(points[0][:3])/100.
-        joint_idx = joint_list.index('Hips')
-        self.motion[0].setJointOrientationLocal(0, np.dot(root_orientation, orientations[joint_idx]))
-        for j in range(1, self.motion[0].skeleton.getJointNum()):
-            joint_name = self.motion[0].skeleton.getJointName(j)
-
-
-            if joint_name in joint_list:
-                if joint_name == 'LHipJoint':
-                    print('haha')
-                joint_idx = joint_list.index(joint_name)
-                self.motion[0].setJointOrientationLocal(j, orientations[joint_idx])
-
-        # joint_idx = joint_list.index('LHipJoint')
-        # print(orientations[joint_idx])
-
         for j in range(len(self.model.joints)):
             if j == 0:
                 joint = self.model.joints[j]  # type: pydart.FreeJoint
-                joint_idx = joint_list.index(joint.name[2:])
+                joint_idx = joint_list.index(joint.name)
                 hip_angles = mm.logSO3(np.dot(root_orientation, orientations[joint_idx]))
                 # hip_angles = mm.logSO3(root_orientation)
-                joint.set_position(np.array([hip_angles[0], hip_angles[1], hip_angles[2], points[0][0]/100., points[0][1]/100., points[0][2]/100.]))
+                joint.set_position(np.array([hip_angles[0], hip_angles[1], hip_angles[2], points[0][0], points[0][1], points[0][2]]))
                 continue
             joint = self.model.joints[j]  # type: pydart.BallJoint
-            joint_idx = joint_list.index(joint.name[2:])
+            joint_idx = joint_list.index(joint.name)
             joint.set_position(angles[joint_idx*3:joint_idx*3+3])
+
+        self.ik.clean_constraints()
+        self.ik.add_joint_pos_const('LeftForeArm', np.asarray(points[10]))
+        self.ik.add_joint_pos_const('LeftHand', np.asarray(points[2]))
+        self.ik.add_joint_pos_const('LeftLeg', np.asarray(points[11]))
+        self.ik.add_joint_pos_const('LeftFoot', np.asarray(points[3]))
+        if contacts[0] > 0.8 and False:
+            body_transform = self.model.body('LeftFoot').transform()[:3, :3]
+            angle = math.acos(body_transform[1, 1])
+            body_ori = np.dot(body_transform, mm.rotX(-angle))
+            self.ik.add_orientation_const('LeftFoot', body_ori)
+
+        self.ik.add_joint_pos_const('RightForeArm', np.asarray(points[12]))
+        self.ik.add_joint_pos_const('RightHand', np.asarray(points[5]))
+        self.ik.add_joint_pos_const('RightLeg', np.asarray(points[13]))
+        self.ik.add_joint_pos_const('RightFoot', np.asarray(points[6]))
+        self.ik.solve()
+
+        foot_joint_ori = mm.exp(self.model.joint('LeftFoot').position())
+        self.model.joint('LeftFoot').set_position(mm.logSO3(np.dot(foot_joint_ori, np.dot(mm.rotX(-.6), mm.rotZ(.4)))))
+        foot_joint_ori = mm.exp(self.model.joint('RightFoot').position())
+        self.model.joint('RightFoot').set_position(mm.logSO3(np.dot(foot_joint_ori, np.dot(mm.rotX(-.6), mm.rotZ(-.4)))))
 
     def draw_motion(self, lines):
         glPushMatrix()
-        glScaled(MOTION_SCALE, MOTION_SCALE, MOTION_SCALE)
         for pair in lines:
             boneThickness = 3
             self.draw_line(pair[0], pair[1], boneThickness)

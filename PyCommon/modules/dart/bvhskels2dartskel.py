@@ -140,7 +140,7 @@ class BvhSkelToDartSkel(object):
         skel = self.skeleton
         for i in range(len(self.joint_name)):
             joint = skel.getJoint(i)  # type: ym.Joint
-            etJoint = et.SubElement(et_skeleton, "joint", {"type": "free" if i == 0 else "ball", "name": 'j_'+self.joint_name[i]})
+            etJoint = et.SubElement(et_skeleton, "joint", {"type": "free" if i == 0 else "ball", "name": self.joint_name[i]})
             # parent_joint_idx = self.joint_name.index(joint.parent.name)
             # parent_body_transf = self.body_transf[parent_joint_idx]
             # et.SubElement(etJoint, 'transformation').text = SE32veulerXYZstr(np.dot(mm.invertSE3(parent_body_transf), self.joint_transf[i]))
@@ -205,10 +205,6 @@ class BvhSkelToDartSkel(object):
 if __name__ == '__main__':
     import PyCommon.modules.Motion.ysHierarchyEdit as yme
     motion = yf.readBvhFile('test.bvh', 0.01)
-    print(mm.logSO3(motion[0].getLocalR(motion[0].skeleton.getElementIndex('LHipJoint'))))
-    print(mm.logSO3(motion[0].getLocalR(motion[0].skeleton.getElementIndex('RHipJoint'))))
-    print(mm.logSO3(motion[0].getLocalR(motion[0].skeleton.getElementIndex('LeftUpLeg'))))
-    print(mm.logSO3(motion[0].getLocalR(motion[0].skeleton.getElementIndex('RightUpLeg'))))
     yme.removeJoint(motion, 'LHipJoint', False)
     yme.removeJoint(motion, 'RHipJoint', False)
     yme.removeJoint(motion, 'LowerBack', False)
