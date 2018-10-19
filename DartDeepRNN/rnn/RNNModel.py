@@ -456,6 +456,8 @@ class RNNConfig(object):
     def load_normal_data(self, folder):
         xMean, xStd = loadNormalData("../%s/data/xNormal.dat"%(folder))
         yMean, yStd = loadNormalData("../%s/data/yNormal.dat"%(folder))
+        # xMean, xStd = loadNormalData("%s/data/xNormal.dat"%(folder))
+        # yMean, yStd = loadNormalData("%s/data/yNormal.dat"%(folder))
         self.x_normal = Normalize(xMean, xStd)
         self.y_normal = Normalize(yMean, yStd)
 

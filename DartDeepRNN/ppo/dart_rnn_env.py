@@ -46,7 +46,7 @@ class HpDartEnv(gym.Env):
                                "RHipJoint", "RightArm", "RightFoot","RightForeArm","RightHand",
                                "RightLeg","RightShoulder","RightToeBase","RightUpLeg",
                                "Spine","Spine1"]
-        self.rnn_target_update_prob = 1./100.
+        self.rnn_target_update_prob = 1./150.
         self.ik = DartIk(self.ref_skel)
 
         self.rsi = True
@@ -166,14 +166,12 @@ class HpDartEnv(gym.Env):
             observation (object): The initial observation of the space. Initial reward is assumed to be 0.
         """
         self.world.reset()
-        self.sample_target()
+        if self.first:
+            self.sample_target()
         self.get_rnn_ref_pose_step()
         self.skel.set_positions(self.ref_skel.positions())
-        if not self.first:
-            dq = 30. * self.ref_skel.position_differences(self.ref_skel.positions(), self.ref_prev_q)
-            self.skel.set_velocities(dq)
-        else:
-            self.first = False
+        self.skel.set_velocities(self.ref_skel.velocities())
+        self.first = False
 
         return self.state()
 
@@ -187,12 +185,14 @@ class HpDartEnv(gym.Env):
         unit_root_x_in_world_plane = mm.seq2Vec3(mm.normalize(root_x_in_world_plane))
         unit_root_z_in_world_plane = mm.cross(unit_root_x_in_world_plane, mm.unitY())
         self.goal_in_world_frame = body_transform[:3, 3] + radius * (sin(angle) * unit_root_x_in_world_plane + cos(angle) * unit_root_z_in_world_plane)
+        self.goal_in_world_frame[1] = 0.
 
         self.goal = radius * np.array([sin(angle), cos(angle)])
 
     def update_goal_in_local_frame(self):
         body_transform = self.skel.body(0).world_transform()
         goal_vector_in_world_frame = self.goal_in_world_frame - body_transform[:3, 3]
+        goal_vector_in_world_frame[1] = 0.
         radius = mm.length(goal_vector_in_world_frame)
         unit_goal_vector_in_world_frame = mm.normalize(goal_vector_in_world_frame)
         root_x_in_world_plane = body_transform[:3, 0]
@@ -251,6 +251,10 @@ class HpDartEnv(gym.Env):
         self.ref_skel.joint('LeftFoot').set_position(mm.logSO3(np.dot(foot_joint_ori, np.dot(mm.rotX(-.6), mm.rotZ(.4)))))
         foot_joint_ori = mm.exp(self.ref_skel.joint('RightFoot').position())
         self.ref_skel.joint('RightFoot').set_position(mm.logSO3(np.dot(foot_joint_ori, np.dot(mm.rotX(-.6), mm.rotZ(-.4)))))
+
+        if not self.first:
+            dq = 30. * self.ref_skel.position_differences(self.ref_skel.positions(), self.ref_prev_q)
+            self.ref_skel.set_velocities(dq)
 
     def render(self, mode='human', close=False):
         """Renders the environment.

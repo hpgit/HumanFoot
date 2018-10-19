@@ -17,6 +17,7 @@ class RNNController(object):
         self.sess.run(tf.global_variables_initializer())
         saver.restore(self.sess, "../%s/train/ckpt"%(folder))
         # saver.restore(self.sess, "%s/train/ckpt"%(folder))
+        # saver.restore(self.sess, "%s/train/ckpt"%(folder))
         # saver.save(self.sess, "%s/train2/ckpt"%(folder))
         
         self.state = None
