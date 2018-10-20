@@ -311,6 +311,8 @@ class PPO(object):
 
                 # if episode is terminated
                 if is_done[j] or (nan_occur is True):
+                    if not is_done[j] and nan_occur:
+                        self.print('!!!!!!!!!!!!!!!!!!!!!!!!exception')
                     # push episodes
                     self.total_episodes.append(episodes[j])
 
@@ -328,9 +330,6 @@ class PPO(object):
 
                 if all_terminated is True:
                     break
-
-            # update states
-            states = self.env.GetStates()
 
     # print('Done!')
     def OptimizeModel(self):
