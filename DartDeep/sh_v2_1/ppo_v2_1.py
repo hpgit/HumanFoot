@@ -2,7 +2,7 @@
 import numpy as np
 
 import pydart2 as pydart
-from DartDeepRNN.ppo.dart_rnn_env import HpDartEnv
+from DartDeep.dart_env_v2_1 import HpDartEnv
 
 from collections import namedtuple
 from collections import deque
@@ -10,13 +10,13 @@ from itertools import count
 import random
 import time
 import os
+from multiprocessing import Process, Pipe
 
 import torch
 from torch import nn, optim
 import torch.nn.functional as F
 import torchvision.transforms as T
 
-from multiprocessing import Process, Queue, Pipe, Connection
 
 MultiVariateNormal = torch.distributions.Normal
 temp = MultiVariateNormal.log_prob
@@ -31,8 +31,8 @@ class Model(nn.Module):
     def __init__(self, num_states, num_actions):
         super(Model, self).__init__()
 
-        hidden_layer_size1 = 128
-        hidden_layer_size2 = 64
+        hidden_layer_size1 = 256
+        hidden_layer_size2 = 128
 
         '''Policy Mean'''
         self.policy_fc1 = nn.Linear(num_states		  , hidden_layer_size1)
@@ -40,7 +40,6 @@ class Model(nn.Module):
         self.policy_fc3 = nn.Linear(hidden_layer_size2, num_actions)
         '''Policy Distributions'''
         self.log_std = nn.Parameter(torch.zeros(num_actions))
-        # self.log_std = nn.Parameter(0.1 * torch.ones(num_actions))
 
         '''Value'''
         self.value_fc1 = nn.Linear(num_states		  ,hidden_layer_size1)
@@ -133,6 +132,7 @@ def worker(env_name, proc_num, result_sender, action_receiver, reset_receiver):
     :type action_receiver: Connection
     :return:
     """
+
     env = HpDartEnv(env_name)
     new_start = reset_receiver.recv()
     if new_start:
@@ -140,13 +140,19 @@ def worker(env_name, proc_num, result_sender, action_receiver, reset_receiver):
         new_start = False
     local_step = 0
     while True:
+        # print(proc_num, local_step)
+        # print(proc_num, 'state_send')
         result_sender.send(env.state())
+        # print(proc_num, 'action_recv')
         action = action_receiver.recv()
         env.step(action)
         local_step += 1
         reward, is_done = env.reward(), env.is_done()
+        # print(proc_num, is_done, local_step, env.world.time())
+        # print(proc_num, 'reward_send')
         result_sender.send((reward, is_done))
         if is_done:
+            # print(proc_num, 'reset_recv')
             new_start = reset_receiver.recv()
         if new_start:
             env.reset()
@@ -268,10 +274,6 @@ class PPO(object):
 
     def GenerateTransitions(self):
         del self.total_episodes[:]
-        states = [None] * self.num_slaves
-        actions = [None] * self.num_slaves
-        rewards = [None] * self.num_slaves
-        states_next = [None] * self.num_slaves
         episodes = [None] * self.num_slaves
         for j in range(self.num_slaves):
             episodes[j] = EpisodeBuffer()
@@ -287,10 +289,12 @@ class PPO(object):
             # update states
             states = self.envs_get_states(terminated)
 
+            # print(local_step)
+
             # new_percent = local_step*10//self.buffer_size
             # if (new_percent == percent) is not True:
-            # percent = new_percent
-            # print('{}0%'.format(percent))
+            #     percent = new_percent
+            #     print('{}0%'.format(percent))
             a_dist, v = self.model(torch.tensor(states).float())
             actions = a_dist.sample().detach().numpy()
             logprobs = a_dist.log_prob(torch.tensor(actions).float()).detach().numpy().reshape(-1)
@@ -298,6 +302,7 @@ class PPO(object):
 
             self.envs_send_actions(actions, terminated)
             rewards, is_done = self.envs_get_status(terminated)
+
             for j in range(self.num_slaves):
                 if terminated[j]:
                     continue
@@ -310,16 +315,19 @@ class PPO(object):
                     local_step += 1
 
                 # if episode is terminated
-                if is_done[j] or (nan_occur is True):
+                if is_done[j] or nan_occur:
+                    if not is_done[j] and nan_occur:
+                        print('!!!!!!!!!!!!!!!!!!!!!!!!exception')
                     # push episodes
                     self.total_episodes.append(episodes[j])
 
                     # if data limit is exceeded, stop simulations
                     if local_step < self.buffer_size:
                         episodes[j] = EpisodeBuffer()
-                        self.env.Reset(True, j)
+                        self.envs_reset(j)
                     else:
                         terminated[j] = True
+
             if local_step >= self.buffer_size:
                 all_terminated = True
                 for j in range(self.num_slaves):
@@ -328,9 +336,6 @@ class PPO(object):
 
                 if all_terminated is True:
                     break
-
-            # update states
-            states = self.env.GetStates()
 
     # print('Done!')
     def OptimizeModel(self):
@@ -382,7 +387,6 @@ class PPO(object):
         self.num_evaluation += 1
         total_reward = 0
         total_step = 0
-        self.env.Resets(True)
         self.env.Reset(False, 0)
         states = self.env.GetStates()
         for j in range(len(states)):
@@ -402,21 +406,19 @@ class PPO(object):
                 if np.any(np.isnan(states[j])):
                     self.print("state warning!!!!!!!!"+str(t))
 
-            for j in range(self.num_slaves):
-                if self.env.IsTerminalState(j) is False:
-                    total_step += 1
-                    total_reward += self.env.GetReward(j)
+            if self.env.IsTerminalState(0) is False:
+                total_step += 1
+                total_reward += self.env.GetReward(0)
             states = self.env.GetStates()
             if all(self.env.IsTerminalStates()):
                 break
-
         self.print('noise : {:.3f}'.format(self.model.log_std.exp().mean()))
         if total_step is not 0:
             self.print('Epi reward : {:.2f}, Step reward : {:.2f} Total step : {}'
-                  .format(total_reward / self.num_slaves, total_reward / total_step, total_step))
+                  .format(total_reward, total_reward / total_step, total_step))
         else:
             self.print('bad..')
-        return total_reward / self.num_slaves, total_step / self.num_slaves
+        return total_reward, total_step
 
     def print(self, s):
         if self.eval_print:
@@ -449,7 +451,7 @@ if __name__ == "__main__":
     tic = time.time()
     ppo = None  # type: PPO
     if len(sys.argv) < 2:
-        ppo = PPO('walk_sukiko', 1)
+        ppo = PPO('walk', 2)
     else:
         ppo = PPO(sys.argv[1], 1)
 
