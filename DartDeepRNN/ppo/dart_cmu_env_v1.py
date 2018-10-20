@@ -107,12 +107,13 @@ class HpDartEnv(gym.Env):
 
     def reward(self):
         p_e = np.asarray([body.world_transform()[:3, 3] for body in self.body_e]).flatten()
-
-        return exp_reward_term(self.w_p, self.exp_p, self.skel.position_differences(self.prev_ref_q, self.skel.q)) \
-              + exp_reward_term(self.w_v, self.exp_v, self.skel.velocity_differences(self.prev_ref_dq, self.skel.dq)) \
-              + exp_reward_term(self.w_e, self.exp_e, p_e - self.prev_ref_p_e_hat) \
-              + exp_reward_term(self.w_c, self.exp_c, self.skel.com() - self.prev_ref_com) \
-              + exp_reward_term(self.w_g, self.exp_g, self.prev_goal)
+        reward = 0
+        reward += exp_reward_term(self.w_p, self.exp_p, self.skel.position_differences(self.prev_ref_q, self.skel.q))
+        reward += exp_reward_term(self.w_v, self.exp_v, self.skel.velocity_differences(self.prev_ref_dq, self.skel.dq))
+        reward += exp_reward_term(self.w_e, self.exp_e, p_e - self.prev_ref_p_e_hat)
+        reward += exp_reward_term(self.w_c, self.exp_c, self.skel.com() - self.prev_ref_com)
+        # reward += exp_reward_term(self.w_g, self.exp_g, self.prev_goal)
+        return reward
 
     def is_done(self):
         if self.skel.com()[1] < 0.4:

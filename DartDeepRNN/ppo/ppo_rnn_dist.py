@@ -130,7 +130,7 @@ class ReplayBuffer(object):
         self.buffer.clear()
 
 
-def worker(rnn_len, proc_num, result_sender, action_receiver, reset_receiver, motion_receiver):
+def worker(rnn_len, proc_num, state_sender, result_sender, action_receiver, reset_receiver, motion_receiver):
     """
 
     :type env_name: str
@@ -157,7 +157,7 @@ def worker(rnn_len, proc_num, result_sender, action_receiver, reset_receiver, mo
             env.update_target(goals, qs)
             state = env.reset()
 
-        result_sender.send(state)
+        state_sender.send(state)
         action = action_receiver.recv()
         state, reward, is_done, _ = env.step(action)
         result_sender.send((reward, is_done))
@@ -202,6 +202,7 @@ class PPO(object):
         self.eval_print = eval_print
         self.eval_log = eval_log
 
+        self.state_receiver = []  # type: list[Connection]
         self.result_receiver = []  # type: list[Connection]
         self.action_sender = []  # type: list[Connection]
         self.reset_sender = []  # type: list[Connection]
@@ -232,11 +233,13 @@ class PPO(object):
 
     def init_envs(self):
         for slave_idx in range(self.num_slaves):
+            s_s, s_r = Pipe()
             r_s, r_r = Pipe()
             a_s, a_r = Pipe()
             reset_s, reset_r = Pipe()
             motion_s, motion_r = Pipe()
-            p = Process(target=worker, args=(self.rnn_len, slave_idx, r_s, a_r, reset_r, motion_r))
+            p = Process(target=worker, args=(self.rnn_len, slave_idx, s_s, r_s, a_r, reset_r, motion_r))
+            self.state_receiver.append(s_r)
             self.result_receiver.append(r_r)
             self.action_sender.append(a_s)
             self.reset_sender.append(reset_s)
@@ -246,11 +249,11 @@ class PPO(object):
 
     def envs_get_states(self, terminated):
         states = []
-        for recv_idx in range(len(self.result_receiver)):
+        for recv_idx in range(len(self.state_receiver)):
             if terminated[recv_idx]:
                 states.append([0.] * self.num_state)
             else:
-                states.append(self.result_receiver[recv_idx].recv())
+                states.append(self.state_receiver[recv_idx].recv())
         return states
 
     def envs_send_actions(self, actions, terminated):
