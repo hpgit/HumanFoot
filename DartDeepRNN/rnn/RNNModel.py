@@ -474,7 +474,8 @@ class RNNModel(object):
             self.prev_y = tf.placeholder(tf.float32, [batchSize, config.Y_DIMENSION], name="prev_y")
             self.y = tf.placeholder(tf.float32, [batchSize, stepSize, config.Y_DIMENSION], name="y")
             
-            with tf.variable_scope("generator"):
+            # with tf.variable_scope("generator"):
+            with tf.variable_scope("generator", reuse=tf.AUTO_REUSE):
                 self.generated, self.final_state, self.initial_state, self.final_y = self.generator(self.x, self.prev_y)
                         
             if (stepSize <= 1): return
