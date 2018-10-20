@@ -16,8 +16,8 @@ from DartDeepRNN.util.Pose2d import Pose2d
 from DartDeepRNN.util.Util import v_len
 
 
-def exp_reward_term(w, exp_w, v0, v1):
-    norm = np.linalg.norm(v0 - v1)
+def exp_reward_term(w, exp_w, v):
+    norm = np.linalg.norm(v)
     return w * exp(-exp_w * norm * norm)
 
 
@@ -34,7 +34,7 @@ class HpDartEnv(gym.Env):
 
         self.ref_world = pydart.World(1./1200., self.skel_file_name)
         self.ref_skel = self.ref_world.skeletons[1]
-        self.ref_prev_q = self.ref_skel.positions()
+
         self.step_per_frame = 40
 
         self.rnn = RNNController(env_name)
@@ -70,7 +70,8 @@ class HpDartEnv(gym.Env):
         self.time_offset = 0.
         self.step_num = 0
 
-        state_num = 2 + (3*3 + 4) * self.body_num
+        # state_num = 2 + (3*3 + 4) * self.body_num
+        state_num = 2 + 2*3*self.body_num + 3*(self.skel.num_dofs() - 3)
         action_num = self.skel.num_dofs() - 6
 
         state_high = np.array([np.finfo(np.float32).max] * state_num)
@@ -83,9 +84,15 @@ class HpDartEnv(gym.Env):
 
         self.phase_frame = 0
         self.goal = np.zeros(2)
+        self.goal_prev = self.goal.copy()
         self.goal_in_world_frame = np.zeros(3)
 
         self.first = True
+
+        self.prev_ref_q = self.ref_skel.positions()
+        self.prev_ref_dq = np.zeros(self.ref_skel.num_dofs())
+        self.prev_ref_p_e= np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
+        self.prev_ref_com = self.ref_skel.com()
 
     def state(self):
         pelvis = self.skel.body(0)
@@ -94,34 +101,47 @@ class HpDartEnv(gym.Env):
 
         state = [self.goal[0]/5., self.goal[1]/5.]
 
-        p = np.array([np.dot(R_pelvis.T, body.to_world() - p_pelvis) for body in self.skel.bodynodes]).flatten()
-        R = np.array([mm.rot2quat(np.dot(R_pelvis.T, body.world_transform()[:3, :3])) for body in self.skel.bodynodes]).flatten()
-        v = np.array([np.dot(R_pelvis.T, body.world_linear_velocity()) for body in self.skel.bodynodes]).flatten()
-        w = np.array([np.dot(R_pelvis.T, body.world_angular_velocity())/20. for body in self.skel.bodynodes]).flatten()
+        # p = np.array([np.dot(R_pelvis.T, body.to_world() - p_pelvis) for body in self.skel.bodynodes]).flatten()
+        # R = np.array([mm.rot2quat(np.dot(R_pelvis.T, body.world_transform()[:3, :3])) for body in self.skel.bodynodes]).flatten()
+        # v = np.array([np.dot(R_pelvis.T, body.world_linear_velocity()) for body in self.skel.bodynodes]).flatten()
+        # w = np.array([np.dot(R_pelvis.T, body.world_angular_velocity())/20. for body in self.skel.bodynodes]).flatten()
+        #
+        # state.extend(p)
+        # state.extend(R)
+        # state.extend(v)
+        # state.extend(w)
+
+        p = 0.8 * np.array([np.dot(R_pelvis.T, body.to_world() - p_pelvis) for body in self.skel.bodynodes]).flatten()
+        v = 0.2 * np.array([np.dot(R_pelvis.T, body.world_linear_velocity()) for body in self.skel.bodynodes]).flatten()
+        _R = 2. * self.skel.positions()
+        _w = .2 * self.skel.velocities()
+        R = np.append(_R[:3], _R[6:]).flatten()
+        w = np.append(_w[:3], _w[6:]).flatten()
+
+        _ref_R = 2. * self.ref_skel.positions()
+        ref_R = np.append(_ref_R[:3], _ref_R[6:]).flatten()
 
         state.extend(p)
         state.extend(R)
         state.extend(v)
         state.extend(w)
+        state.extend(ref_R)
 
         return np.asarray(state).flatten()
 
     def reward(self):
-        p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
         p_e = np.asarray([body.world_transform()[:3, 3] for body in self.body_e]).flatten()
 
-        return exp_reward_term(self.w_p, self.exp_p, self.skel.q, self.ref_skel.q) \
-              + exp_reward_term(self.w_v, self.exp_v, self.skel.dq, self.ref_skel.dq) \
-              + exp_reward_term(self.w_e, self.exp_e, p_e, p_e_hat) \
-              + exp_reward_term(self.w_c, self.exp_c, self.skel.com(), self.ref_skel.com()) #\
-              # + exp_reward_term(self.w_g, self.exp_g, self.skel.body(0).to_world(), self.goal_in_world_frame)
+        return exp_reward_term(self.w_p, self.exp_p, self.skel.position_differences(self.prev_ref_q, self.skel.q)) \
+              + exp_reward_term(self.w_v, self.exp_v, self.skel.velocity_differences(self.prev_ref_dq, self.skel.dq)) \
+              + exp_reward_term(self.w_e, self.exp_e, p_e - self.prev_ref_p_e) \
+              + exp_reward_term(self.w_c, self.exp_c, self.skel.com() - self.prev_ref_com) \
+              + exp_reward_term(self.w_g, self.exp_g, self.prev_goal)
 
     def is_done(self):
-        if self.skel.com()[1] < 0.4:
-            # print('fallen')
+        if self.skel.com()[1] < 0.4 or self.skel.com()[1] > 3.0:
             return True
         elif True in np.isnan(np.asarray(self.skel.q)) or True in np.isnan(np.asarray(self.skel.dq)):
-            # print('nan')
             return True
         elif self.world.time() > 10.:
             return True
@@ -141,20 +161,18 @@ class HpDartEnv(gym.Env):
             info (dict): Contains auxiliary diagnostic information (helpful for debugging, and sometimes learning).
         """
         action = np.hstack((np.zeros(6), _action/10.))
-        self.get_rnn_ref_pose_step()
         for i in range(self.step_per_frame):
             # self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
             self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
             self.world.step()
 
-        return_val = tuple([self.state(), self.reward(), self.is_done(), dict()])
-
         if random() < self.rnn_target_update_prob:
             self.sample_target()
-        else:
-            self.update_goal_in_local_frame()
 
-        return return_val
+        self.update_goal_in_local_frame(False)
+        self.get_rnn_ref_pose_step(False)
+
+        return tuple([self.state(), self.reward(), self.is_done(), dict()])
 
     def reset(self):
         """
@@ -164,11 +182,14 @@ class HpDartEnv(gym.Env):
             observation (object): The initial observation of the space. Initial reward is assumed to be 0.
         """
         self.world.reset()
+
         if self.first:
             self.sample_target()
-        self.get_rnn_ref_pose_step()
+        self.get_rnn_ref_pose_step(True)
+
         self.skel.set_positions(self.ref_skel.positions())
         self.skel.set_velocities(self.ref_skel.velocities())
+
         self.first = False
 
         return self.state()
@@ -177,17 +198,12 @@ class HpDartEnv(gym.Env):
         angle = 2. * pi * random()
         radius = 5. * random()
 
-        body_transform = self.skel.body(0).world_transform()
-        root_x_in_world_plane = body_transform[:3, 0]
-        root_x_in_world_plane[1] = 0.
-        unit_root_x_in_world_plane = mm.seq2Vec3(mm.normalize(root_x_in_world_plane))
-        unit_root_z_in_world_plane = mm.cross(unit_root_x_in_world_plane, mm.unitY())
-        self.goal_in_world_frame = body_transform[:3, 3] + radius * (sin(angle) * unit_root_x_in_world_plane + cos(angle) * unit_root_z_in_world_plane)
+        self.goal_in_world_frame = self.skel.body(0).to_world() + radius * (cos(angle) * mm.unitX() - sin(angle) * mm.unitZ())
         self.goal_in_world_frame[1] = 0.
 
-        self.goal = radius * np.array([sin(angle), cos(angle)])
-
-    def update_goal_in_local_frame(self):
+    def update_goal_in_local_frame(self, reset=False):
+        if not reset:
+            self.prev_goal = self.goal.copy()
         body_transform = self.skel.body(0).world_transform()
         goal_vector_in_world_frame = self.goal_in_world_frame - body_transform[:3, 3]
         goal_vector_in_world_frame[1] = 0.
@@ -200,9 +216,16 @@ class HpDartEnv(gym.Env):
         # angle = atan2(np.dot(unit_root_x_in_world_plane, unit_goal_vector_in_world_frame), np.dot(unit_root_z_in_world_plane, unit_goal_vector_in_world_frame))
 
         self.goal = radius * np.array([np.dot(unit_root_x_in_world_plane, unit_goal_vector_in_world_frame), np.dot(unit_root_z_in_world_plane, unit_goal_vector_in_world_frame)])
+        if reset:
+            self.prev_goal = self.goal.copy()
 
-    def get_rnn_ref_pose_step(self):
-        self.ref_prev_q = self.ref_skel.q
+    def get_rnn_ref_pose_step(self, reset=False):
+        if not reset:
+            self.prev_ref_q = self.ref_skel.positions()
+            self.prev_ref_dq = self.ref_skel.velocities()
+            self.prev_ref_p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
+            self.prev_ref_com = self.ref_skel.com()
+
         p = self.goal_in_world_frame
 
         target = Pose2d([p[0]/self.RNN_MOTION_SCALE, -p[2]/self.RNN_MOTION_SCALE])
@@ -251,8 +274,14 @@ class HpDartEnv(gym.Env):
         self.ref_skel.joint('RightFoot').set_position(mm.logSO3(np.dot(foot_joint_ori, np.dot(mm.rotX(-.6), mm.rotZ(-.4)))))
 
         if not self.first:
-            dq = 30. * self.ref_skel.position_differences(self.ref_skel.positions(), self.ref_prev_q)
+            dq = 30. * self.ref_skel.position_differences(self.ref_skel.positions(), self.prev_ref_q)
             self.ref_skel.set_velocities(dq)
+
+        if reset:
+            self.prev_ref_q = self.ref_skel.positions()
+            self.prev_ref_dq = self.ref_skel.velocities()
+            self.prev_ref_p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
+            self.prev_ref_com = self.ref_skel.com()
 
     def render(self, mode='human', close=False):
         """Renders the environment.

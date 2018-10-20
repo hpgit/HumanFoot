@@ -16,7 +16,7 @@ from torch import nn, optim
 import torch.nn.functional as F
 import torchvision.transforms as T
 
-from multiprocessing import Process, Queue, Pipe, Connection
+from multiprocessing import Process, Pipe
 
 MultiVariateNormal = torch.distributions.Normal
 temp = MultiVariateNormal.log_prob
@@ -31,8 +31,8 @@ class Model(nn.Module):
     def __init__(self, num_states, num_actions):
         super(Model, self).__init__()
 
-        hidden_layer_size1 = 128
-        hidden_layer_size2 = 64
+        hidden_layer_size1 = 512
+        hidden_layer_size2 = 256
 
         '''Policy Mean'''
         self.policy_fc1 = nn.Linear(num_states		  , hidden_layer_size1)
@@ -401,10 +401,9 @@ class PPO(object):
                 if np.any(np.isnan(states[j])):
                     self.print("state warning!!!!!!!!"+str(t))
 
-            for j in range(self.num_slaves):
-                if self.env.IsTerminalState(j) is False:
-                    total_step += 1
-                    total_reward += self.env.GetReward(j)
+            if self.env.IsTerminalState(0) is False:
+                total_step += 1
+                total_reward += self.env.GetReward(0)
             states = self.env.GetStates()
             if all(self.env.IsTerminalStates()):
                 break
@@ -412,10 +411,10 @@ class PPO(object):
         self.print('noise : {:.3f}'.format(self.model.log_std.exp().mean()))
         if total_step is not 0:
             self.print('Epi reward : {:.2f}, Step reward : {:.2f} Total step : {}'
-                  .format(total_reward / self.num_slaves, total_reward / total_step, total_step))
+                  .format(total_reward, total_reward / total_step, total_step))
         else:
             self.print('bad..')
-        return total_reward / self.num_slaves, total_step / self.num_slaves
+        return total_reward, total_step
 
     def print(self, s):
         if self.eval_print:
@@ -448,7 +447,7 @@ if __name__ == "__main__":
     tic = time.time()
     ppo = None  # type: PPO
     if len(sys.argv) < 2:
-        ppo = PPO('walk_sukiko', 1)
+        ppo = PPO('walk', 1)
     else:
         ppo = PPO(sys.argv[1], 1)
 

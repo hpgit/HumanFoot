@@ -101,6 +101,11 @@ class HpDartEnv(gym.Env):
 
         self.phase_frame = 0
 
+        self.prev_ref_q = np.zeros(self.ref_skel.num_dofs())
+        self.prev_ref_dq = np.zeros(self.ref_skel.num_dofs())
+        self.prev_ref_p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
+        self.prev_ref_com = self.ref_skel.com()
+
     def state(self):
         pelvis = self.skel.body(0)
         p_pelvis = pelvis.world_transform()[:3, 3]
@@ -115,7 +120,8 @@ class HpDartEnv(gym.Env):
         R = np.append(_R[:3], _R[6:]).flatten()
         w = np.append(_w[:3], _w[6:]).flatten()
 
-        _ref_R = 2. * self.ref_skel.positions()
+        # _ref_R = 2. * self.ref_skel.positions()
+        _ref_R = 2. * self.prev_ref_q
         ref_R = np.append(_ref_R[:3], _ref_R[6:]).flatten()
 
         state.extend(p)
@@ -127,13 +133,12 @@ class HpDartEnv(gym.Env):
         return np.asarray(state).flatten()
 
     def reward(self):
-        p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
         p_e = np.asarray([body.world_transform()[:3, 3] for body in self.body_e]).flatten()
 
-        return exp_reward_term(self.w_p, self.exp_p, self.skel.position_differences(self.ref_skel.q, self.skel.q)) \
-              + exp_reward_term(self.w_v, self.exp_v, self.skel.velocity_differences(self.ref_skel.dq, self.skel.dq)) \
-              + exp_reward_term(self.w_e, self.exp_e, p_e - p_e_hat) \
-              + exp_reward_term(self.w_c, self.exp_c, self.skel.com() - self.ref_skel.com())
+        return exp_reward_term(self.w_p, self.exp_p, self.skel.position_differences(self.prev_ref_q, self.skel.q)) \
+              + exp_reward_term(self.w_v, self.exp_v, self.skel.velocity_differences(self.prev_ref_dq, self.skel.dq)) \
+              + exp_reward_term(self.w_e, self.exp_e, p_e - self.prev_ref_p_e_hat) \
+              + exp_reward_term(self.w_c, self.exp_c, self.skel.com() - self.prev_ref_com)
 
     def is_done(self):
         if self.skel.com()[1] < 0.4:
@@ -163,19 +168,30 @@ class HpDartEnv(gym.Env):
         action = np.hstack((np.zeros(6), _action/10.))
 
         for i in range(self.step_per_frame):
-            self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
-            # self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
+            # self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
+            self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
             self.world.step()
 
-        reward = self.reward()
-        self.update_ref_skel()
+        self.update_ref_skel(False)
 
-        return tuple([self.state(), reward, self.is_done(), dict()])
+        return tuple([self.state(), self.reward(), self.is_done(), dict()])
 
-    def update_ref_skel(self):
+    def update_ref_skel(self, reset=False):
+        if not reset:
+            self.prev_ref_q = self.ref_skel.positions()
+            self.prev_ref_dq = self.ref_skel.velocities()
+            self.prev_ref_p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
+            self.prev_ref_com = self.ref_skel.com()
+
         next_frame_time = self.world.time() + self.time_offset + self.world.time_step() * self.step_per_frame
         self.ref_skel.set_positions(self.ref_motion.get_q_by_time(next_frame_time))
         self.ref_skel.set_velocities(self.ref_motion.get_dq_dart_by_time(next_frame_time))
+
+        if reset:
+            self.prev_ref_q = self.ref_skel.positions()
+            self.prev_ref_dq = self.ref_skel.velocities()
+            self.prev_ref_p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
+            self.prev_ref_com = self.ref_skel.com()
 
     def continue_from_now_by_phase(self, phase):
         self.phase_frame = round(phase * (self.motion_len-1))
@@ -192,12 +208,13 @@ class HpDartEnv(gym.Env):
             observation (object): The initial observation of the space. Initial reward is assumed to be 0.
         """
         self.world.reset()
-        self.continue_from_now_by_phase(random() if self.rsi else 0.)
-        self.skel.set_positions(self.ref_motion.get_q(self.phase_frame))
-        dq = self.ref_motion.get_dq_dart(self.phase_frame)
-        self.skel.set_velocities(dq)
 
-        self.update_ref_skel()
+        self.continue_from_now_by_phase(random() if self.rsi else 0.)
+
+        self.skel.set_positions(self.ref_motion.get_q(self.phase_frame))
+        self.skel.set_velocities(self.ref_motion.get_dq_dart(self.phase_frame))
+
+        self.update_ref_skel(True)
 
         return self.state()
 

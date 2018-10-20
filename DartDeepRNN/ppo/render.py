@@ -16,8 +16,8 @@ def main():
     env_name = 'walk'
 
     ppo = PPO(env_name, 1, visualize_only=True)
-    if not MOTION_ONLY:
-        ppo.LoadModel('model/' + env_name + '.pt')
+    # if not MOTION_ONLY:
+    #     ppo.LoadModel('model/' + env_name + '.pt')
     ppo.env.Resets(False)
     # ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(ppo.env.phase_frame))
 
@@ -46,6 +46,7 @@ def main():
         # print(frame, res[0][0])
         # if res[0][0] > 0.46:
         #     ppo.env.continue_from_now_by_phase(0.2)
+        # print(ppo.env.goal)
         if res[2]:
             print(frame, 'Done')
             ppo.env.reset()
