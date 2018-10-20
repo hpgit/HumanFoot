@@ -443,12 +443,14 @@ class JointMotion(Motion):
         :param frame1:
         :return:
         """
-        dof_vel = self.getDOFVelocitiesLocal(frame0)
-        temp = dof_vel[0][0:3].copy()
-        dof_vel[0][0:3] = dof_vel[0][3:6]
-        dof_vel[0][3:6] = temp
+        # dof_vel = self.getDOFVelocitiesLocal(frame0)
+        # temp = dof_vel[0][0:3].copy()
+        # dof_vel[0][0:3] = dof_vel[0][3:6]
+        # dof_vel[0][3:6] = temp
+        # return np.concatenate(dof_vel)
+        return np.concatenate([np.concatenate( (self.getJointAngVelocityLocal(0, frame0), np.dot(self[frame0].getLocalR(0).T, self.getJointVelocityGlobal(0, frame0))) )] \
+               + self.getInternalJointAngVelocitiesLocal(frame0))
 
-        return np.concatenate(dof_vel)
 
     def get_dq_dart_by_time(self, t):
         """

@@ -235,9 +235,7 @@ if __name__ == '__main__':
 
     # torso : 10
     massMap['Hips'] += 2.
-    massMap['Spine'] += 8.
-
-    # head : 3
+    massMap['Spine'] += 5.
     massMap['Spine1'] += 3.
 
     # right upper arm : 2
@@ -253,12 +251,12 @@ if __name__ == '__main__':
     massMap['LeftShoulder'] += 1.
 
     # right lower arm : 1
-    #massMap['RightForeArm'] = 1.
-    massMap['RightForeArm'] = 2.
+    massMap['RightForeArm'] = 1.
+    # massMap['RightForeArm'] = 2.
 
     # left lower arm : 1
-    #massMap['LeftForeArm'] = 1.
-    massMap['LeftForeArm'] = 2.
+    massMap['LeftForeArm'] = 1.
+    # massMap['LeftForeArm'] = 2.
 
     # right thigh : 7
     massMap['Hips'] += 2.
@@ -292,8 +290,8 @@ if __name__ == '__main__':
     # left hand : .5
     massMap['LeftHand'] += .5
 
-    # head
-    massMap['Neck1'] += 5.
+    # head : 3
+    massMap['Neck1'] += 3.
 
     shape_map = {}
     shape_map = shape_map.fromkeys(massMap.keys(), None)
@@ -301,8 +299,8 @@ if __name__ == '__main__':
     shape_map['Spine'] = ('sphere', 0.12)
     shape_map['Spine1'] = ('sphere', 0.05)
     shape_map['Neck1'] = ('sphere', 0.1)
-    shape_map['LeftFoot'] = ('box', [0.1, 0.1, 0.2])
-    shape_map['RightFoot'] = ('box', [0.1, 0.1, 0.2])
+    shape_map['LeftFoot'] = ('box', [0.1, 0.09, 0.225])
+    shape_map['RightFoot'] = ('box', [0.1, 0.09, 0.225])
     shape_map['LeftHand'] = ('sphere', 0.05)
     shape_map['RightHand'] = ('sphere', 0.05)
 

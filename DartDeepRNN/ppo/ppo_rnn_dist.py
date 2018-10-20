@@ -1,8 +1,14 @@
 # from rl.core import Agent
 import numpy as np
+from PyCommon.modules.Math import mmMath as mm
+from math import pi, cos, acos, sin
 
 import pydart2 as pydart
-from DartDeepRNN.ppo.dart_rnn_env import HpDartEnv
+from DartDeepRNN.ppo.dart_cmu_env_v1 import HpDartEnv
+from PyCommon.modules.dart.dart_ik import DartIk
+from DartDeepRNN.rnn.RNNController import RNNController
+from DartDeepRNN.util.Pose2d import Pose2d
+from DartDeepRNN.util.Util import v_len
 
 from collections import namedtuple
 from collections import deque
@@ -11,12 +17,12 @@ import random
 import time
 import os
 
+from multiprocessing import Process, Pipe
+
 import torch
 from torch import nn, optim
 import torch.nn.functional as F
 import torchvision.transforms as T
-
-from multiprocessing import Process, Pipe
 
 MultiVariateNormal = torch.distributions.Normal
 temp = MultiVariateNormal.log_prob
@@ -124,7 +130,7 @@ class ReplayBuffer(object):
         self.buffer.clear()
 
 
-def worker(env_name, proc_num, result_sender, action_receiver, reset_receiver):
+def worker(rnn_len, proc_num, result_sender, action_receiver, reset_receiver, motion_receiver):
     """
 
     :type env_name: str
@@ -133,31 +139,36 @@ def worker(env_name, proc_num, result_sender, action_receiver, reset_receiver):
     :type action_receiver: Connection
     :return:
     """
-    env = HpDartEnv(env_name)
-    new_start = reset_receiver.recv()
-    if new_start:
-        env.reset()
-        new_start = False
-    local_step = 0
+
+    # reset variable
+    # 0 : go on (no reset)
+    # 1 : soft reset ( w/o motion change )
+    # 2 : hard reset ( with motion change )
+
+    env = HpDartEnv(rnn_len)
+
+    state = None
     while True:
-        result_sender.send(env.state())
+        reset_flag = reset_receiver.recv()
+        if reset_flag == 1:
+            state = env.reset()
+        elif reset_flag == 2:
+            goals, qs = motion_receiver.recv()
+            env.update_target(goals, qs)
+            state = env.reset()
+
+        result_sender.send(state)
         action = action_receiver.recv()
-        env.step(action)
-        local_step += 1
-        reward, is_done = env.reward(), env.is_done()
+        state, reward, is_done, _ = env.step(action)
         result_sender.send((reward, is_done))
-        if is_done:
-            new_start = reset_receiver.recv()
-        if new_start:
-            env.reset()
-            new_start = False
 
 
 class PPO(object):
     def __init__(self, env_name, num_slaves=1, eval_print=True, eval_log=True, visualize_only=False):
         np.random.seed(seed=int(time.time()))
         self.env_name = env_name
-        self.env = HpDartEnv(env_name)
+        self.rnn_len = 150
+        self.env = HpDartEnv(self.rnn_len)
         self.num_slaves = num_slaves
         self.num_state = self.env.observation_space.shape[0]
         self.num_action = self.env.action_space.shape[0]
@@ -194,7 +205,28 @@ class PPO(object):
         self.result_receiver = []  # type: list[Connection]
         self.action_sender = []  # type: list[Connection]
         self.reset_sender = []  # type: list[Connection]
+        self.motion_sender = []  # type: list[Connection]
         self.envs = []  # type: list[Process]
+
+        self.ik_world = pydart.World(1./1200., '../data/cmu_with_ground.xml')
+        self.ik_skel = self.ik_world.skeletons[1]
+        self.rnn = RNNController(env_name)
+        self.RNN_MOTION_SCALE = 0.01
+        self.rnn_joint_list = ["Head", "Hips", "LHipJoint", "LeftArm", "LeftFoot", "LeftForeArm", "LeftHand",
+                               "LeftLeg", "LeftShoulder", "LeftToeBase", "LeftUpLeg", "LowerBack", "Neck", "Neck1",
+                               "RHipJoint", "RightArm", "RightFoot","RightForeArm","RightHand",
+                               "RightLeg","RightShoulder","RightToeBase","RightUpLeg",
+                               "Spine","Spine1"]
+        self.rnn_target_update_prob = 2./self.rnn_len
+        self.ik = DartIk(self.ik_skel)
+        self.goal_in_world_frame = np.zeros(3)
+
+        self.qs = list()
+        for i in range(self.rnn_len):
+            if random.random() < 2./self.rnn_len:
+                self.sample_target()
+            self.get_rnn_ref_pose_step()
+            self.qs.append((self.goal_in_world_frame, self.ik_skel.positions()))
 
         self.init_envs()
 
@@ -203,10 +235,12 @@ class PPO(object):
             r_s, r_r = Pipe()
             a_s, a_r = Pipe()
             reset_s, reset_r = Pipe()
-            p = Process(target=worker, args=(self.env_name, slave_idx, r_s, a_r, reset_r))
+            motion_s, motion_r = Pipe()
+            p = Process(target=worker, args=(self.rnn_len, slave_idx, r_s, a_r, reset_r, motion_r))
             self.result_receiver.append(r_r)
             self.action_sender.append(a_s)
             self.reset_sender.append(reset_s)
+            self.motion_sender.append(motion_s)
             self.envs.append(p)
             p.start()
 
@@ -224,21 +258,91 @@ class PPO(object):
             if not terminated[i]:
                 self.action_sender[i].send(actions[i])
 
-    def envs_get_status(self, ternimated):
+    def envs_get_status(self, terminated):
         status = []
         for recv_idx in range(len(self.result_receiver)):
-            if ternimated[recv_idx]:
+            if terminated[recv_idx]:
                 status.append((0., True))
             else:
                 status.append(self.result_receiver[recv_idx].recv())
         return zip(*status)
 
-    def envs_resets(self):
+    def envs_resets(self, reset_flag):
         for i in range(len(self.reset_sender)):
-            self.reset_sender[i].send(True)
+            self.reset_sender[i].send(reset_flag)
 
-    def envs_reset(self, i):
-        self.reset_sender[i].send(True)
+    def envs_reset(self, i, reset_flag):
+        self.reset_sender[i].send(reset_flag)
+
+    def envs_send_rnn_motion(self):
+        for motion_sender in self.motion_sender:
+            motion_sender.send(zip(*self.qs))
+        goals, qs = zip(*self.qs)
+        self.env.update_target(goals, qs)
+
+    def sample_target(self):
+        angle = 2. * pi * random.random()
+        radius = 4. * random.random() + 1.
+
+        self.goal_in_world_frame = self.ik_skel.body(0).to_world() + radius * (cos(angle) * mm.unitX() - sin(angle) * mm.unitZ())
+        self.goal_in_world_frame[1] = 0.
+
+    def get_rnn_ref_pose_step(self):
+        p = self.goal_in_world_frame
+
+        target = Pose2d([p[0]/self.RNN_MOTION_SCALE, -p[2]/self.RNN_MOTION_SCALE])
+        target = self.rnn.pose.relativePose(target)
+        target = target.p
+        t_len = v_len(target)
+        if t_len > 80:
+            ratio = 80/t_len
+            target[0] *= ratio
+            target[1] *= ratio
+
+        contacts, points, angles, orientations, root_orientation = self.rnn.step(target)
+
+        for j in range(len(self.ik_skel.joints)):
+            if j == 0:
+                joint = self.ik_skel.joints[j]  # type: pydart.FreeJoint
+                joint_idx = self.rnn_joint_list.index(joint.name)
+                hip_angles = mm.logSO3(np.dot(root_orientation, orientations[joint_idx]))
+                # hip_angles = mm.logSO3(root_orientation)
+                joint.set_position(np.array([hip_angles[0], hip_angles[1], hip_angles[2], points[0][0], points[0][1], points[0][2]]))
+                continue
+            joint = self.ik_skel.joints[j]  # type: pydart.BallJoint
+            joint_idx = self.rnn_joint_list.index(joint.name)
+            joint.set_position(angles[joint_idx*3:joint_idx*3+3])
+
+        self.ik.clean_constraints()
+        self.ik.add_joint_pos_const('LeftForeArm', np.asarray(points[10]))
+        self.ik.add_joint_pos_const('LeftHand', np.asarray(points[2]))
+        self.ik.add_joint_pos_const('LeftLeg', np.asarray(points[11]))
+        self.ik.add_joint_pos_const('LeftFoot', np.asarray(points[3]))
+        if contacts[0] > 0.8 and False:
+            body_transform = self.ik_skel.body('LeftFoot').transform()[:3, :3]
+            angle = acos(body_transform[1, 1])
+            body_ori = np.dot(body_transform, mm.rotX(-angle))
+            self.ik.add_orientation_const('LeftFoot', body_ori)
+
+        self.ik.add_joint_pos_const('RightForeArm', np.asarray(points[12]))
+        self.ik.add_joint_pos_const('RightHand', np.asarray(points[5]))
+        self.ik.add_joint_pos_const('RightLeg', np.asarray(points[13]))
+        self.ik.add_joint_pos_const('RightFoot', np.asarray(points[6]))
+        self.ik.solve()
+
+        foot_joint_ori = mm.exp(self.ik_skel.joint('LeftFoot').position())
+        self.ik_skel.joint('LeftFoot').set_position(mm.logSO3(np.dot(foot_joint_ori, np.dot(mm.rotX(-.7), mm.rotZ(.4)))))
+        foot_joint_ori = mm.exp(self.ik_skel.joint('RightFoot').position())
+        self.ik_skel.joint('RightFoot').set_position(mm.logSO3(np.dot(foot_joint_ori, np.dot(mm.rotX(-.7), mm.rotZ(-.4)))))
+
+    def generate_rnn_motion(self):
+        del self.qs[:(self.rnn_len)//5]
+        for i in range(self.rnn_len//5):
+            # goal, 'next' pose
+            if random.random() < 2./self.rnn_len:
+                self.sample_target()
+            self.get_rnn_ref_pose_step()
+            self.qs.append((self.goal_in_world_frame.copy(), self.ik_skel.positions()))
 
     def SaveModel(self):
         torch.save(self.model.state_dict(), self.save_directory + str(self.num_evaluation) + '.pt')
@@ -276,7 +380,8 @@ class PPO(object):
         for j in range(self.num_slaves):
             episodes[j] = EpisodeBuffer()
 
-        self.envs_resets()
+        self.envs_resets(2)
+        self.envs_send_rnn_motion()
 
         local_step = 0
         terminated = [False] * self.num_slaves
@@ -319,17 +424,16 @@ class PPO(object):
                     # if data limit is exceeded, stop simulations
                     if local_step < self.buffer_size:
                         episodes[j] = EpisodeBuffer()
-                        self.env.Reset(True, j)
+                        self.envs_reset(j, 1)
                     else:
                         terminated[j] = True
-            if local_step >= self.buffer_size:
-                all_terminated = True
-                for j in range(self.num_slaves):
-                    if terminated[j] is False:
-                        all_terminated = False
+                else:
+                    self.envs_reset(j, 0)
 
-                if all_terminated is True:
+            if local_step >= self.buffer_size:
+                if all(terminated):
                     break
+        self.generate_rnn_motion()
 
     # print('Done!')
     def OptimizeModel(self):
@@ -449,7 +553,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         ppo = PPO('walk', 2)
     else:
-        ppo = PPO(sys.argv[1], sys.argv[2])
+        ppo = PPO(sys.argv[1], int(sys.argv[2]))
 
     if len(sys.argv) > 3:
         print("load {}".format(sys.argv[3]))

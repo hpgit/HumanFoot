@@ -112,7 +112,7 @@
                     <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
                     <geometry>
                         <box>
-                            <size>0.1 0.1 0.2</size>
+                            <size>0.1 0.09 0.225</size>
                         </box>
                     </geometry>
                 </visualization_shape>
@@ -120,7 +120,7 @@
                     <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
                     <geometry>
                         <box>
-                            <size>0.1 0.1 0.2</size>
+                            <size>0.1 0.09 0.225</size>
                         </box>
                     </geometry>
                 </collision_shape>
@@ -181,7 +181,7 @@
                     <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
                     <geometry>
                         <box>
-                            <size>0.1 0.1 0.2</size>
+                            <size>0.1 0.09 0.225</size>
                         </box>
                     </geometry>
                 </visualization_shape>
@@ -189,7 +189,7 @@
                     <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
                     <geometry>
                         <box>
-                            <size>0.1 0.1 0.2</size>
+                            <size>0.1 0.09 0.225</size>
                         </box>
                     </geometry>
                 </collision_shape>
@@ -197,7 +197,7 @@
             <body name="Spine">
                 <transformation>0.0033978000000000003 0.1836009 -0.0128853 -1.5916586630770606 0.027670733961606724 0.028254039826856293 </transformation>
                 <inertia>
-                    <mass>8.0</mass>
+                    <mass>5.0</mass>
                     <offset>0.0 0.0 0.0</offset>
                 </inertia>
                 <visualization_shape name="Spine_visualization_shape">
@@ -243,7 +243,7 @@
             <body name="Neck1">
                 <transformation>0.0049713000000000005 0.40268160000000003 -0.007565700000000001 -1.64106356318576 0.05887111310718683 0.06315752830572842 </transformation>
                 <inertia>
-                    <mass>5.0</mass>
+                    <mass>3.0</mass>
                     <offset>0.0 0.0 0.0</offset>
                 </inertia>
                 <visualization_shape name="Neck1_visualization_shape">
@@ -312,14 +312,14 @@
             <body name="LeftForeArm">
                 <transformation>0.6103308000000001 0.3171198 -0.0328404 -0.0 1.5707963267948966 -0.0 </transformation>
                 <inertia>
-                    <mass>2.0</mass>
+                    <mass>1.0</mass>
                     <offset>0.0 0.0 0.0</offset>
                 </inertia>
                 <visualization_shape name="LeftForeArm_visualization_shape">
                     <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
                     <geometry>
                         <box>
-                            <size>0.09782001499990224 0.09782001499990224 0.18811224000000001</size>
+                            <size>0.06916919594220067 0.06916919594220067 0.18811224000000001</size>
                         </box>
                     </geometry>
                 </visualization_shape>
@@ -327,7 +327,7 @@
                     <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
                     <geometry>
                         <box>
-                            <size>0.09782001499990224 0.09782001499990224 0.18811224000000001</size>
+                            <size>0.06916919594220067 0.06916919594220067 0.18811224000000001</size>
                         </box>
                     </geometry>
                 </collision_shape>
@@ -404,14 +404,14 @@
             <body name="RightForeArm">
                 <transformation>-0.6009357 0.32750940000000006 -0.0384468 -0.0 -1.5707963267948966 -0.0 </transformation>
                 <inertia>
-                    <mass>2.0</mass>
+                    <mass>1.0</mass>
                     <offset>0.0 0.0 0.0</offset>
                 </inertia>
                 <visualization_shape name="RightForeArm_visualization_shape">
                     <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
                     <geometry>
                         <box>
-                            <size>0.09837779469006624 0.09837779469006624 0.18598517999999997</size>
+                            <size>0.06956360574352377 0.06956360574352377 0.18598517999999997</size>
                         </box>
                     </geometry>
                 </visualization_shape>
@@ -419,7 +419,7 @@
                     <transformation>0.0 0.0 0.0 -0.0 0.0 -0.0 </transformation>
                     <geometry>
                         <box>
-                            <size>0.09837779469006624 0.09837779469006624 0.18598517999999997</size>
+                            <size>0.06956360574352377 0.06956360574352377 0.18598517999999997</size>
                         </box>
                     </geometry>
                 </collision_shape>
