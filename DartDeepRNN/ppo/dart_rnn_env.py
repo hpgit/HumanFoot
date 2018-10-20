@@ -15,8 +15,6 @@ from DartDeepRNN.rnn.RNNController import RNNController
 from DartDeepRNN.util.Pose2d import Pose2d
 from DartDeepRNN.util.Util import v_len
 
-from multiprocessing import Pool
-
 
 def exp_reward_term(w, exp_w, v0, v1):
     norm = np.linalg.norm(v0 - v1)
@@ -24,7 +22,7 @@ def exp_reward_term(w, exp_w, v0, v1):
 
 
 class HpDartEnv(gym.Env):
-    def __init__(self, env_name='walk', env_slaves=1):
+    def __init__(self, env_name='walk'):
         self.skel_file_name = '../data/cmu_with_ground.xml'
         self.world = pydart.World(1./1200., self.skel_file_name)
         self.world.control_skel = self.world.skeletons[1]
@@ -115,8 +113,8 @@ class HpDartEnv(gym.Env):
         return exp_reward_term(self.w_p, self.exp_p, self.skel.q, self.ref_skel.q) \
               + exp_reward_term(self.w_v, self.exp_v, self.skel.dq, self.ref_skel.dq) \
               + exp_reward_term(self.w_e, self.exp_e, p_e, p_e_hat) \
-              + exp_reward_term(self.w_c, self.exp_c, self.skel.com(), self.ref_skel.com()) \
-              + exp_reward_term(self.w_g, self.exp_g, self.skel.body(0).to_world(), self.goal_in_world_frame)
+              + exp_reward_term(self.w_c, self.exp_c, self.skel.com(), self.ref_skel.com()) #\
+              # + exp_reward_term(self.w_g, self.exp_g, self.skel.body(0).to_world(), self.goal_in_world_frame)
 
     def is_done(self):
         if self.skel.com()[1] < 0.4:

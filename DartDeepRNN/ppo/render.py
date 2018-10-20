@@ -16,9 +16,9 @@ def main():
     env_name = 'walk'
 
     ppo = PPO(env_name, 1, visualize_only=True)
-    # if not MOTION_ONLY:
-    #     ppo.LoadModel('model/' + env_name + '.pt')
-    # ppo.env.Resets(False)
+    if not MOTION_ONLY:
+        ppo.LoadModel('model/' + env_name + '.pt')
+    ppo.env.Resets(False)
     # ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(ppo.env.phase_frame))
 
     # viewer settings
@@ -27,15 +27,12 @@ def main():
     rd_target_position = [None]
 
     dart_world = ppo.env.world
-    viewer = hsv.hpSimpleViewer(rect=(0, 0, 1200, 800), viewForceWnd=False)
+    viewer = hsv.hpSimpleViewer(rect=[0, 0, 1280+300, 720+1+55], viewForceWnd=False)
     viewer.doc.addRenderer('MotionModel', yr.DartRenderer(ppo.env.ref_world, (150,150,255), yr.POLYGON_FILL))
     viewer.doc.addRenderer('target', yr.PointsRenderer(rd_target_position, (0, 255, 0)))
     if not MOTION_ONLY:
         viewer.doc.addRenderer('controlModel', yr.DartRenderer(dart_world, (255,240,255), yr.POLYGON_FILL))
         viewer.doc.addRenderer('contact', yr.VectorsRenderer(rd_contact_forces, rd_contact_positions, (255,0,0)))
-
-    def postCallback(frame):
-        ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(frame))
 
     def simulateCallback(frame):
         del rd_target_position[:]
@@ -61,12 +58,8 @@ def main():
             rd_contact_forces.append(contact.f/1000.)
             rd_contact_positions.append(contact.p)
 
-    if MOTION_ONLY:
-        viewer.setPostFrameCallback_Always(postCallback)
-        viewer.setMaxFrame(len(ppo.env.ref_motion)-1)
-    else:
-        viewer.setSimulateCallback(simulateCallback)
-        viewer.setMaxFrame(3000)
+    viewer.setSimulateCallback(simulateCallback)
+    viewer.setMaxFrame(3000)
     viewer.startTimer(1./30.)
     viewer.show()
 

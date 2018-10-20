@@ -61,8 +61,7 @@ class HpDartEnv(gym.Env):
             self.ref_motion = yf.readBvhFile("../data/wd2_u-turn.bvh")
             self.ref_motion.translateByOffset([0., 0.03, 0.])
 
-
-        self.ref_world = pydart.World(1./1200., "../data/woody_with_ground.xml")
+        self.ref_world = pydart.World(1./1200., "../data/woody_with_ground_v2.xml")
         self.ref_skel = self.ref_world.skeletons[1]
         # self.step_per_frame = round((1./self.world.time_step()) / self.ref_motion.fps)
         self.step_per_frame = 40
