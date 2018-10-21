@@ -466,13 +466,13 @@ if __name__ == "__main__":
     tic = time.time()
     ppo = None  # type: PPO
     if len(sys.argv) < 2:
-        ppo = PPO('walk', 2)
+        ppo = PPO('walk', 4)
     else:
-        ppo = PPO(sys.argv[1], 1)
+        ppo = PPO(sys.argv[1], int(sys.argv[2]))
 
-    if len(sys.argv) > 2:
-        print("load {}".format(sys.argv[2]))
-        ppo.LoadModel(sys.argv[2])
+    if len(sys.argv) > 3:
+        print("load {}".format(sys.argv[3]))
+        ppo.LoadModel(sys.argv[3])
 
     # parser = argparse.ArgumentParser()
     # parser.add_argument('-m','--model',help='actor model directory')
