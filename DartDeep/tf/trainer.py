@@ -1,5 +1,5 @@
 import tensorflow as tf
-from DartDeep.dart_env import HpDartEnv
+from DartDeep.dart_env_v2_1 import HpDartEnv
 from DartDeep.tf.ppo_tf import *
 from DartDeep.tf.worker import Worker
 import pydart2

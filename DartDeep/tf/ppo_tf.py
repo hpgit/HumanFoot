@@ -112,6 +112,7 @@ class MlpPPO(BasePPO):
                                                        activation_fn=tf.nn.softplus,
                                                        trainable=trainable,
                                                        scope='sigma')
+            # sigma = tf.ones_like([self.num_action], dtype=tf.float32)
             norm_dist = tf.contrib.distributions.Normal(loc=mu, scale=sigma)
 
             param = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope)

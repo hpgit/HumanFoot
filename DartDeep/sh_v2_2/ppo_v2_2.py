@@ -1,14 +1,8 @@
 # from rl.core import Agent
 import numpy as np
-from PyCommon.modules.Math import mmMath as mm
-from math import pi, cos, acos, sin
 
 import pydart2 as pydart
-from DartDeepRNN.ppo.dart_cmu_env_v1 import HpDartEnv
-from PyCommon.modules.dart.dart_ik import DartIk
-from DartDeepRNN.rnn.RNNController import RNNController
-from DartDeepRNN.util.Pose2d import Pose2d
-from DartDeepRNN.util.Util import v_len
+from DartDeep.dart_env_v2_2 import HpDartEnv
 
 from collections import namedtuple
 from collections import deque
@@ -16,13 +10,13 @@ from itertools import count
 import random
 import time
 import os
-
 from multiprocessing import Process, Pipe
 
 import torch
 from torch import nn, optim
 import torch.nn.functional as F
 import torchvision.transforms as T
+
 
 MultiVariateNormal = torch.distributions.Normal
 temp = MultiVariateNormal.log_prob
@@ -37,21 +31,23 @@ class Model(nn.Module):
     def __init__(self, num_states, num_actions):
         super(Model, self).__init__()
 
-        hidden_layer_size1 = 512
-        hidden_layer_size2 = 256
+        hidden_layer_size1 = 256
+        hidden_layer_size2 = 128
+        hidden_layer_size3 = 64
 
         '''Policy Mean'''
         self.policy_fc1 = nn.Linear(num_states		  , hidden_layer_size1)
         self.policy_fc2 = nn.Linear(hidden_layer_size1, hidden_layer_size2)
-        self.policy_fc3 = nn.Linear(hidden_layer_size2, num_actions)
+        self.policy_fc3 = nn.Linear(hidden_layer_size2, hidden_layer_size3)
+        self.policy_fc4 = nn.Linear(hidden_layer_size3, num_actions)
         '''Policy Distributions'''
         self.log_std = nn.Parameter(torch.zeros(num_actions))
-        # self.log_std = nn.Parameter(0.1 * torch.ones(num_actions))
 
         '''Value'''
         self.value_fc1 = nn.Linear(num_states		  ,hidden_layer_size1)
         self.value_fc2 = nn.Linear(hidden_layer_size1 ,hidden_layer_size2)
-        self.value_fc3 = nn.Linear(hidden_layer_size2 ,1)
+        self.value_fc3 = nn.Linear(hidden_layer_size2 ,hidden_layer_size3)
+        self.value_fc4 = nn.Linear(hidden_layer_size3 ,1)
 
         self.initParameters()
 
@@ -65,9 +61,13 @@ class Model(nn.Module):
 
         if self.policy_fc3.bias is not None:
             self.policy_fc3.bias.data.zero_()
+
+        if self.policy_fc4.bias is not None:
+            self.policy_fc4.bias.data.zero_()
         torch.nn.init.xavier_uniform_(self.policy_fc1.weight)
         torch.nn.init.xavier_uniform_(self.policy_fc2.weight)
         torch.nn.init.xavier_uniform_(self.policy_fc3.weight)
+        torch.nn.init.xavier_uniform_(self.policy_fc4.weight)
         '''Value'''
         if self.value_fc1.bias is not None:
             self.value_fc1.bias.data.zero_()
@@ -77,21 +77,27 @@ class Model(nn.Module):
 
         if self.value_fc3.bias is not None:
             self.value_fc3.bias.data.zero_()
+
+        if self.value_fc4.bias is not None:
+            self.value_fc4.bias.data.zero_()
         torch.nn.init.xavier_uniform_(self.value_fc1.weight)
         torch.nn.init.xavier_uniform_(self.value_fc2.weight)
         torch.nn.init.xavier_uniform_(self.value_fc3.weight)
+        torch.nn.init.xavier_uniform_(self.value_fc4.weight)
 
     def forward(self, x):
         '''Policy'''
         p_mean = F.relu(self.policy_fc1(x))
         p_mean = F.relu(self.policy_fc2(p_mean))
-        p_mean = self.policy_fc3(p_mean)
+        p_mean = F.relu(self.policy_fc3(p_mean))
+        p_mean = self.policy_fc4(p_mean)
 
         p = MultiVariateNormal(p_mean, self.log_std.exp())
         '''Value'''
         v = F.relu(self.value_fc1(x))
         v = F.relu(self.value_fc2(v))
-        v = self.value_fc3(v)
+        v = F.relu(self.value_fc3(v))
+        v = self.value_fc4(v)
 
         return p,v
 
@@ -130,7 +136,7 @@ class ReplayBuffer(object):
         self.buffer.clear()
 
 
-def worker(rnn_len, proc_num, state_sender, result_sender, action_receiver, reset_receiver, motion_receiver):
+def worker(env_name, proc_num, result_sender, action_receiver, reset_receiver):
     """
 
     :type env_name: str
@@ -140,35 +146,37 @@ def worker(rnn_len, proc_num, state_sender, result_sender, action_receiver, rese
     :return:
     """
 
-    # reset variable
-    # 0 : go on (no reset)
-    # 1 : soft reset ( w/o motion change )
-    # 2 : hard reset ( with motion change )
-
-    env = HpDartEnv(rnn_len)
-
-    state = None
+    env = HpDartEnv(env_name)
+    new_start = reset_receiver.recv()
+    if new_start:
+        env.reset()
+        new_start = False
+    local_step = 0
     while True:
-        reset_flag = reset_receiver.recv()
-        if reset_flag == 1:
-            state = env.reset()
-        elif reset_flag == 2:
-            goals, qs = motion_receiver.recv()
-            env.update_target(goals, qs)
-            state = env.reset()
-
-        state_sender.send(state)
+        # print(proc_num, local_step)
+        # print(proc_num, 'state_send')
+        result_sender.send(env.state())
+        # print(proc_num, 'action_recv')
         action = action_receiver.recv()
-        state, reward, is_done, _ = env.step(action)
+        env.step(action)
+        local_step += 1
+        reward, is_done = env.reward(), env.is_done()
+        # print(proc_num, is_done, local_step, env.world.time())
+        # print(proc_num, 'reward_send')
         result_sender.send((reward, is_done))
+        if is_done:
+            # print(proc_num, 'reset_recv')
+            new_start = reset_receiver.recv()
+        if new_start:
+            env.reset()
+            new_start = False
 
 
 class PPO(object):
     def __init__(self, env_name, num_slaves=1, eval_print=True, eval_log=True, visualize_only=False):
         np.random.seed(seed=int(time.time()))
         self.env_name = env_name
-        self.rnn_len = 150
-        self.env = HpDartEnv(self.rnn_len)
+        self.env = HpDartEnv(env_name)
         self.num_slaves = num_slaves
         self.num_state = self.env.observation_space.shape[0]
         self.num_action = self.env.action_space.shape[0]
@@ -202,68 +210,34 @@ class PPO(object):
         self.eval_print = eval_print
         self.eval_log = eval_log
 
-        self.state_sender = []  # type: list[Connection]
         self.result_sender = []  # type: list[Connection]
-        self.state_receiver = []  # type: list[Connection]
         self.result_receiver = []  # type: list[Connection]
         self.action_sender = []  # type: list[Connection]
         self.reset_sender = []  # type: list[Connection]
-        self.motion_sender = []  # type: list[Connection]
         self.envs = []  # type: list[Process]
-
-        self.ik_world = pydart.World(1./1200., '../data/cmu_with_ground.xml')
-        self.ik_skel = self.ik_world.skeletons[1]
-        self.rnn = RNNController(env_name)
-        self.RNN_MOTION_SCALE = 0.01
-        self.rnn_joint_list = ["Head", "Hips", "LHipJoint", "LeftArm", "LeftFoot", "LeftForeArm", "LeftHand",
-                               "LeftLeg", "LeftShoulder", "LeftToeBase", "LeftUpLeg", "LowerBack", "Neck", "Neck1",
-                               "RHipJoint", "RightArm", "RightFoot","RightForeArm","RightHand",
-                               "RightLeg","RightShoulder","RightToeBase","RightUpLeg",
-                               "Spine","Spine1"]
-        self.rnn_target_update_prob = 2./self.rnn_len
-        self.ik = DartIk(self.ik_skel)
-        self.goal_in_world_frame = np.zeros(3)
-
-        # self.replace_motion_num = self.rnn_len//5
-        self.replace_motion_num = 1
-        self.sample_target()
-        self.qs = list()
-        for i in range(self.rnn_len):
-            root_body_pos = self.ik_skel.body(0).to_world()
-            root_body_pos[1] = 0.
-            self.to_goal_len = mm.length(self.goal_in_world_frame - root_body_pos)
-            if random.random() < 2./self.rnn_len or self.to_goal_len < 0.1 :
-                self.sample_target()
-            self.get_rnn_ref_pose_step()
-            self.qs.append((self.goal_in_world_frame, self.ik_skel.positions()))
 
         self.init_envs()
 
     def init_envs(self):
         for slave_idx in range(self.num_slaves):
-            s_s, s_r = Pipe()
             r_s, r_r = Pipe()
             a_s, a_r = Pipe()
             reset_s, reset_r = Pipe()
-            motion_s, motion_r = Pipe()
-            p = Process(target=worker, args=(self.rnn_len, slave_idx, s_s, r_s, a_r, reset_r, motion_r))
-            self.state_sender.append(s_s)
+            p = Process(target=worker, args=(self.env_name, slave_idx, r_s, a_r, reset_r))
             self.result_sender.append(r_s)
-            self.state_receiver.append(s_r)
             self.result_receiver.append(r_r)
             self.action_sender.append(a_s)
             self.reset_sender.append(reset_s)
-            self.motion_sender.append(motion_s)
             self.envs.append(p)
             p.start()
 
     def envs_get_states(self, terminated):
         states = []
-        for recv_idx in range(len(self.state_receiver)):
+        for recv_idx in range(len(self.result_receiver)):
             if terminated[recv_idx]:
                 states.append([0.] * self.num_state)
             else:
-                states.append(self.state_receiver[recv_idx].recv())
+                states.append(self.result_receiver[recv_idx].recv())
         return states
 
     def envs_send_actions(self, actions, terminated):
@@ -271,94 +245,21 @@ class PPO(object):
             if not terminated[i]:
                 self.action_sender[i].send(actions[i])
 
-    def envs_get_status(self, terminated):
+    def envs_get_status(self, ternimated):
         status = []
         for recv_idx in range(len(self.result_receiver)):
-            if terminated[recv_idx]:
+            if ternimated[recv_idx]:
                 status.append((0., True))
             else:
                 status.append(self.result_receiver[recv_idx].recv())
         return zip(*status)
 
-    def envs_resets(self, reset_flag):
+    def envs_resets(self):
         for i in range(len(self.reset_sender)):
-            self.reset_sender[i].send(reset_flag)
+            self.reset_sender[i].send(True)
 
-    def envs_reset(self, i, reset_flag):
-        self.reset_sender[i].send(reset_flag)
-
-    def envs_send_rnn_motion(self):
-        for motion_sender in self.motion_sender:
-            motion_sender.send(zip(*self.qs))
-        goals, qs = zip(*self.qs)
-        self.env.update_target(goals, qs)
-
-    def sample_target(self):
-        angle = 2. * pi * random.random()
-        radius = 4. * random.random() + 1.
-
-        self.goal_in_world_frame = self.ik_skel.body(0).to_world() + radius * (cos(angle) * mm.unitX() - sin(angle) * mm.unitZ())
-        self.goal_in_world_frame[1] = 0.
-
-    def get_rnn_ref_pose_step(self):
-        p = self.goal_in_world_frame
-
-        target = Pose2d([p[0]/self.RNN_MOTION_SCALE, -p[2]/self.RNN_MOTION_SCALE])
-        target = self.rnn.pose.relativePose(target)
-        target = target.p
-        t_len = v_len(target)
-        if t_len > 80:
-            ratio = 80/t_len
-            target[0] *= ratio
-            target[1] *= ratio
-
-        contacts, points, angles, orientations, root_orientation = self.rnn.step(target)
-
-        for j in range(len(self.ik_skel.joints)):
-            if j == 0:
-                joint = self.ik_skel.joints[j]  # type: pydart.FreeJoint
-                joint_idx = self.rnn_joint_list.index(joint.name)
-                hip_angles = mm.logSO3(np.dot(root_orientation, orientations[joint_idx]))
-                # hip_angles = mm.logSO3(root_orientation)
-                joint.set_position(np.array([hip_angles[0], hip_angles[1], hip_angles[2], points[0][0], points[0][1], points[0][2]]))
-                continue
-            joint = self.ik_skel.joints[j]  # type: pydart.BallJoint
-            joint_idx = self.rnn_joint_list.index(joint.name)
-            joint.set_position(angles[joint_idx*3:joint_idx*3+3])
-
-        self.ik.clean_constraints()
-        self.ik.add_joint_pos_const('LeftForeArm', np.asarray(points[10]))
-        self.ik.add_joint_pos_const('LeftHand', np.asarray(points[2]))
-        self.ik.add_joint_pos_const('LeftLeg', np.asarray(points[11]))
-        self.ik.add_joint_pos_const('LeftFoot', np.asarray(points[3]))
-        if contacts[0] > 0.8 and False:
-            body_transform = self.ik_skel.body('LeftFoot').transform()[:3, :3]
-            angle = acos(body_transform[1, 1])
-            body_ori = np.dot(body_transform, mm.rotX(-angle))
-            self.ik.add_orientation_const('LeftFoot', body_ori)
-
-        self.ik.add_joint_pos_const('RightForeArm', np.asarray(points[12]))
-        self.ik.add_joint_pos_const('RightHand', np.asarray(points[5]))
-        self.ik.add_joint_pos_const('RightLeg', np.asarray(points[13]))
-        self.ik.add_joint_pos_const('RightFoot', np.asarray(points[6]))
-
-        self.ik.add_joint_pos_const('Neck1', np.asarray(points[17]))
-
-        self.ik.solve()
-
-        foot_joint_ori = mm.exp(self.ik_skel.joint('LeftFoot').position())
-        self.ik_skel.joint('LeftFoot').set_position(mm.logSO3(np.dot(foot_joint_ori, np.dot(mm.rotX(-.7), mm.rotZ(.4)))))
-        foot_joint_ori = mm.exp(self.ik_skel.joint('RightFoot').position())
-        self.ik_skel.joint('RightFoot').set_position(mm.logSO3(np.dot(foot_joint_ori, np.dot(mm.rotX(-.7), mm.rotZ(-.4)))))
-
-    def generate_rnn_motion(self):
-        del self.qs[:self.replace_motion_num]
-        for i in range(self.replace_motion_num):
-            # goal, 'next' pose
-            if random.random() < 2./self.rnn_len:
-                self.sample_target()
-            self.get_rnn_ref_pose_step()
-            self.qs.append((self.goal_in_world_frame.copy(), self.ik_skel.positions()))
+    def envs_reset(self, i):
+        self.reset_sender[i].send(True)
 
     def SaveModel(self):
         torch.save(self.model.state_dict(), self.save_directory + str(self.num_evaluation) + '.pt')
@@ -388,16 +289,11 @@ class PPO(object):
 
     def GenerateTransitions(self):
         del self.total_episodes[:]
-        states = [None] * self.num_slaves
-        actions = [None] * self.num_slaves
-        rewards = [None] * self.num_slaves
-        states_next = [None] * self.num_slaves
         episodes = [None] * self.num_slaves
         for j in range(self.num_slaves):
             episodes[j] = EpisodeBuffer()
 
-        self.envs_resets(2)
-        self.envs_send_rnn_motion()
+        self.envs_resets()
 
         local_step = 0
         terminated = [False] * self.num_slaves
@@ -408,10 +304,12 @@ class PPO(object):
             # update states
             states = self.envs_get_states(terminated)
 
+            # print(local_step)
+
             # new_percent = local_step*10//self.buffer_size
             # if (new_percent == percent) is not True:
-            # percent = new_percent
-            # print('{}0%'.format(percent))
+            #     percent = new_percent
+            #     print('{}0%'.format(percent))
             a_dist, v = self.model(torch.tensor(states).float())
             actions = a_dist.sample().detach().numpy()
             logprobs = a_dist.log_prob(torch.tensor(actions).float()).detach().numpy().reshape(-1)
@@ -419,35 +317,40 @@ class PPO(object):
 
             self.envs_send_actions(actions, terminated)
             rewards, is_done = self.envs_get_status(terminated)
+
             for j in range(self.num_slaves):
                 if terminated[j]:
                     continue
 
-                nan_occur = np.any(np.isnan(states[j])) or np.any(np.isnan(actions[j]))
-                if not nan_occur:
+                nan_occur = False
+                if np.any(np.isnan(states[j])) or np.any(np.isnan(actions[j])):
+                    nan_occur = True
+                else:
                     episodes[j].push(states[j], actions[j], rewards[j], values[j], logprobs[j])
                     local_step += 1
 
                 # if episode is terminated
                 if is_done[j] or nan_occur:
                     if not is_done[j] and nan_occur:
-                        self.print('!!!!!!!!!!!!!!!!!!!!!!!!exception')
+                        print('!!!!!!!!!!!!!!!!!!!!!!!!exception')
                     # push episodes
                     self.total_episodes.append(episodes[j])
 
                     # if data limit is exceeded, stop simulations
                     if local_step < self.buffer_size:
                         episodes[j] = EpisodeBuffer()
-                        self.envs_reset(j, 1)
+                        self.envs_reset(j)
                     else:
                         terminated[j] = True
-                else:
-                    self.envs_reset(j, 0)
 
             if local_step >= self.buffer_size:
-                if all(terminated):
+                all_terminated = True
+                for j in range(self.num_slaves):
+                    if terminated[j] is False:
+                        all_terminated = False
+
+                if all_terminated is True:
                     break
-        self.generate_rnn_motion()
 
     # print('Done!')
     def OptimizeModel(self):
@@ -499,7 +402,6 @@ class PPO(object):
         self.num_evaluation += 1
         total_reward = 0
         total_step = 0
-        self.env.Resets(True)
         self.env.Reset(False, 0)
         states = self.env.GetStates()
         for j in range(len(states)):
@@ -525,7 +427,6 @@ class PPO(object):
             states = self.env.GetStates()
             if all(self.env.IsTerminalStates()):
                 break
-
         self.print('noise : {:.3f}'.format(self.model.log_std.exp().mean()))
         if total_step is not 0:
             self.print('Epi reward : {:.2f}, Step reward : {:.2f} Total step : {}'
@@ -567,11 +468,11 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         ppo = PPO('walk', 2)
     else:
-        ppo = PPO(sys.argv[1], int(sys.argv[2]))
+        ppo = PPO(sys.argv[1], 1)
 
-    if len(sys.argv) > 3:
-        print("load {}".format(sys.argv[3]))
-        ppo.LoadModel(sys.argv[3])
+    if len(sys.argv) > 2:
+        print("load {}".format(sys.argv[2]))
+        ppo.LoadModel(sys.argv[2])
 
     # parser = argparse.ArgumentParser()
     # parser.add_argument('-m','--model',help='actor model directory')

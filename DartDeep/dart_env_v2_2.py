@@ -20,30 +20,59 @@ def exp_reward_term(w, exp_w, v):
 
 
 class HpDartEnv(gym.Env):
-    def __init__(self, rnn_len):
-        skel_file = '../data/cmu_with_ground.xml'
-        self.world = pydart.World(1./1200., skel_file)
+    def __init__(self, env_name='walk', env_slaves=1):
+        self.world = pydart.World(1./1200., "../data/woody_with_ground_v2.xml")
         self.world.control_skel = self.world.skeletons[1]
         self.skel = self.world.skeletons[1]
         self.Kp, self.Kd = 400., 40.
         self.pdc = PDController(self.skel, self.world.time_step(), 400., 40.)
 
-        self.ref_motion = yf.readBvhFile("../data/cmu_tpose.bvh")[:rnn_len]
-        self.ref_motion_len = rnn_len
+        self.env_name = env_name
 
-        self.ref_world = pydart.World(1./1200., skel_file)
+        self.ref_motion = None  # type: ym.Motion
+
+        if env_name == 'walk':
+            self.ref_motion = yf.readBvhFile("../data/woody_walk_normal.bvh")[40:]
+        elif env_name == 'spiral_walk':
+            self.ref_motion = yf.readBvhFile("../data/wd2_spiral_walk_normal05.bvh")
+        elif env_name == 'walk_spin':
+            self.ref_motion = yf.readBvhFile("../data/wd2_2foot_walk_turn2.bvh")
+        elif env_name == 'jump':
+            self.ref_motion = yf.readBvhFile("../data/wd2_jump0.bvh")[164:280]
+        elif env_name == 'walk_fast':
+            self.ref_motion = yf.readBvhFile("../data/wd2_WalkForwardVFast00.bvh")
+
+        elif env_name == 'walk_left_90':
+            self.ref_motion = yf.readBvhFile("../data/walk_left_90degree.bvh")
+        elif env_name == 'walk_left_45':
+            self.ref_motion = yf.readBvhFile("../data/walk_left_45degree.bvh")
+        elif env_name == 'walk_pick':
+            self.ref_motion = yf.readBvhFile("../data/wd2_pick_walk_1.bvh")
+        elif env_name == 'walk_u_turn':
+            self.ref_motion = yf.readBvhFile("../data/wd2_u-turn.bvh")[25:214]
+            self.ref_motion.translateByOffset([0., 0.03, 0.])
+
+        elif env_name == 'walk_sukiko':
+            self.ref_motion = yf.readBvhFile('../data/wd2_WalkSukiko00.bvh')
+
+        elif env_name == 'jump_whole':
+            self.ref_motion = yf.readBvhFile("../data/wd2_jump0.bvh")[315:966]
+        elif env_name == 'walk_u_turn_whole':
+            self.ref_motion = yf.readBvhFile("../data/wd2_u-turn.bvh")
+            self.ref_motion.translateByOffset([0., 0.03, 0.])
+
+        self.ref_world = pydart.World(1./1200., "../data/woody_with_ground_v2.xml")
         self.ref_skel = self.ref_world.skeletons[1]
+        # self.step_per_frame = round((1./self.world.time_step()) / self.ref_motion.fps)
         self.step_per_frame = 40
 
         self.rsi = True
 
-        self.w_g = 0.3
-        self.w_p = 0.65 * .7
-        self.w_v = 0.1 * .7
-        self.w_e = 0.15 * .7
-        self.w_c = 0.1 * .7
+        self.w_p = 0.65
+        self.w_v = 0.1
+        self.w_e = 0.15
+        self.w_c = 0.1
 
-        self.exp_g = 2.5
         self.exp_p = 2.
         self.exp_v = 0.1
         self.exp_e = 40.
@@ -51,13 +80,16 @@ class HpDartEnv(gym.Env):
 
         self.body_num = self.skel.num_bodynodes()
         self.idx_e = [self.skel.bodynode_index('LeftFoot'), self.skel.bodynode_index('RightFoot'),
-                      self.skel.bodynode_index('LeftHand'), self.skel.bodynode_index('RightHand')]
+                      self.skel.bodynode_index('LeftForeArm'), self.skel.bodynode_index('RightForeArm')]
         self.body_e = list(map(self.skel.body, self.idx_e))
         self.ref_body_e = list(map(self.ref_skel.body, self.idx_e))
         self.motion_len = len(self.ref_motion)
         self.motion_time = len(self.ref_motion) / self.ref_motion.fps
 
+        self.time_offset = 0.
+
         state_num = 2 + (3*3 + 4) * self.body_num + ( 3 + 4 ) * self.body_num
+        # state_num = 2*3*self.body_num + 3*(self.skel.num_dofs() - 3)
         action_num = self.skel.num_dofs() - 6
 
         state_high = np.array([np.finfo(np.float32).max] * state_num)
@@ -70,17 +102,13 @@ class HpDartEnv(gym.Env):
 
         self.phase_frame = 0
 
-        self.goals_in_world_frame = list()
-        self.goal = np.zeros(2)
-
         self.prev_ref_q = np.zeros(self.ref_skel.num_dofs())
         self.prev_ref_dq = np.zeros(self.ref_skel.num_dofs())
         self.prev_ref_p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
         self.prev_ref_com = self.ref_skel.com()
-        self.prev_goal = np.zeros(2)
 
     def state(self):
-        state = [self.goal[0], self.goal[1]]
+        state = list()
 
         pelvis = self.skel.body(0)
         p_pelvis = pelvis.world_transform()[:3, 3]
@@ -125,13 +153,11 @@ class HpDartEnv(gym.Env):
 
     def reward(self):
         p_e = np.asarray([body.world_transform()[:3, 3] for body in self.body_e]).flatten()
-        reward = 0
-        reward += exp_reward_term(self.w_p, self.exp_p, self.skel.position_differences(self.prev_ref_q, self.skel.q))
-        reward += exp_reward_term(self.w_v, self.exp_v, self.skel.velocity_differences(self.prev_ref_dq, self.skel.dq))
-        reward += exp_reward_term(self.w_e, self.exp_e, p_e - self.prev_ref_p_e_hat)
-        reward += exp_reward_term(self.w_c, self.exp_c, self.skel.com() - self.prev_ref_com)
-        # reward += exp_reward_term(self.w_g, self.exp_g, self.prev_goal)
-        return reward
+
+        return exp_reward_term(self.w_p, self.exp_p, self.skel.position_differences(self.prev_ref_q, self.skel.q)) \
+              + exp_reward_term(self.w_v, self.exp_v, self.skel.velocity_differences(self.prev_ref_dq, self.skel.dq)) \
+              + exp_reward_term(self.w_e, self.exp_e, p_e - self.prev_ref_p_e_hat) \
+              + exp_reward_term(self.w_c, self.exp_c, self.skel.com() - self.prev_ref_com)
 
     def is_done(self):
         if self.skel.com()[1] < 0.4:
@@ -140,8 +166,7 @@ class HpDartEnv(gym.Env):
         elif True in np.isnan(np.asarray(self.skel.q)) or True in np.isnan(np.asarray(self.skel.dq)):
             # print('nan')
             return True
-        # elif self.world.time() + self.time_offset > self.motion_time:
-        elif self.phase_frame == self.ref_motion_len-1:
+        elif self.world.time() + self.time_offset > self.motion_time:
             # print('timeout')
             return True
         return False
@@ -162,48 +187,37 @@ class HpDartEnv(gym.Env):
         action = np.hstack((np.zeros(6), _action/10.))
 
         for i in range(self.step_per_frame):
-            self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
-            # self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
+            # self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
+            self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
             self.world.step()
 
-        self.phase_frame += 1
-        self.update_ref_skel()
-        self.update_goal_in_local_frame()
-
-        # now
-        # state:
-        # simul[phase_frame-1] : 'current' char pose
-        # goal[phase_frame] : 'current' goal
-        # motion[phase_frame] : 'next' motion pose
-
-        # reward:
-        # similarity btw current char pose and (previous goal, and current motion pose)
+        self.update_ref_skel(False)
 
         return tuple([self.state(), self.reward(), self.is_done(), dict()])
 
-    def update_goal_in_local_frame(self):
-        self.prev_goal = self.goal.copy()
-        body_transform = self.skel.body(0).world_transform()
-        goal_vector_in_world_frame = self.goals_in_world_frame[self.phase_frame] - body_transform[:3, 3]
-        goal_vector_in_world_frame[1] = 0.
-        radius = mm.length(goal_vector_in_world_frame)
-        unit_goal_vector_in_world_frame = mm.normalize(goal_vector_in_world_frame)
-        root_x_in_world_plane = body_transform[:3, 0]
-        root_x_in_world_plane[1] = 0.
-        unit_root_x_in_world_plane = mm.seq2Vec3(mm.normalize(root_x_in_world_plane))
-        unit_root_z_in_world_plane = mm.cross(unit_root_x_in_world_plane, mm.unitY())
-        # angle = atan2(np.dot(unit_root_x_in_world_plane, unit_goal_vector_in_world_frame), np.dot(unit_root_z_in_world_plane, unit_goal_vector_in_world_frame))
+    def update_ref_skel(self, reset=False):
+        if not reset:
+            self.prev_ref_q = self.ref_skel.positions()
+            self.prev_ref_dq = self.ref_skel.velocities()
+            self.prev_ref_p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
+            self.prev_ref_com = self.ref_skel.com()
 
-        self.goal = radius * np.array([np.dot(unit_root_x_in_world_plane, unit_goal_vector_in_world_frame), np.dot(unit_root_z_in_world_plane, unit_goal_vector_in_world_frame)])
+        next_frame_time = self.world.time() + self.time_offset + self.world.time_step() * self.step_per_frame
+        self.ref_skel.set_positions(self.ref_motion.get_q_by_time(next_frame_time))
+        self.ref_skel.set_velocities(self.ref_motion.get_dq_dart_by_time(next_frame_time))
 
-    def update_ref_skel(self):
-        self.prev_ref_q = self.ref_skel.positions()
-        self.prev_ref_dq = self.ref_skel.velocities()
-        self.prev_ref_p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
-        self.prev_ref_com = self.ref_skel.com()
+        if reset:
+            self.prev_ref_q = self.ref_skel.positions()
+            self.prev_ref_dq = self.ref_skel.velocities()
+            self.prev_ref_p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
+            self.prev_ref_com = self.ref_skel.com()
 
-        self.ref_skel.set_positions(self.ref_motion.get_q(self.phase_frame))
-        self.ref_skel.set_velocities(self.ref_motion.get_dq_dart(self.phase_frame))
+    def continue_from_now_by_phase(self, phase):
+        self.phase_frame = round(phase * (self.motion_len-1))
+        skel_pelvis_offset = self.skel.joint(0).position_in_world_frame() - self.ref_motion[self.phase_frame].getJointPositionGlobal(0)
+        skel_pelvis_offset[1] = 0.
+        self.ref_motion.translateByOffset(skel_pelvis_offset)
+        self.time_offset = - self.world.time() + (self.phase_frame / self.ref_motion.fps)
 
     def reset(self):
         """
@@ -214,25 +228,14 @@ class HpDartEnv(gym.Env):
         """
         self.world.reset()
 
-        self.phase_frame = randrange(0, self.ref_motion_len - 2) if self.rsi else 0
+        self.continue_from_now_by_phase(random() if self.rsi else 0.)
 
         self.skel.set_positions(self.ref_motion.get_q(self.phase_frame))
         self.skel.set_velocities(self.ref_motion.get_dq_dart(self.phase_frame))
 
-        self.ref_skel.set_positions(self.ref_motion.get_q(self.phase_frame))
-        self.ref_skel.set_velocities(self.ref_motion.get_dq_dart(self.phase_frame))
-
-        self.phase_frame += 1
-        self.update_ref_skel()
-        self.update_goal_in_local_frame()
+        self.update_ref_skel(True)
 
         return self.state()
-
-    def update_target(self, goals_world, qs):
-        self.goals_in_world_frame = goals_world
-        for i in range(self.ref_motion_len):
-            self.ref_motion[i].set_q(qs[i])
-        self.ref_motion.updateGlobalT()
 
     def render(self, mode='human', close=False):
         """Renders the environment.
@@ -243,7 +246,35 @@ class HpDartEnv(gym.Env):
             mode (str): The mode to render with.
             close (bool): Close all open renderings.
         """
-        pass
+        if self.viewer is None:
+            from gym.envs.classic_control import rendering
+            self.viewer = rendering.Viewer(500,500)
+            self.viewer.set_bounds(-2.2, 2.2, -2.2, 2.2)
+            # rod = rendering.make_capsule(1, .2)
+            # rod.set_color(.8, .3, .3)
+            # rod.add_attr(self.pole_transform)
+            # self.viewer.add_geom(rod)
+            self.body_transform = list()
+            self.ref_body_transform = list()
+            for i in range(self.body_num):
+                axle = rendering.make_circle(.05)
+                axle.set_color(0, 0, 0)
+                self.body_transform.append(rendering.Transform())
+                axle.add_attr(self.body_transform[i])
+                self.viewer.add_geom(axle)
+
+            for i in range(self.body_num):
+                axle = rendering.make_circle(.05)
+                axle.set_color(1, 0, 0)
+                self.ref_body_transform.append(rendering.Transform())
+                axle.add_attr(self.ref_body_transform[i])
+                self.viewer.add_geom(axle)
+
+        for i in range(self.body_num):
+            self.body_transform[i].set_translation(self.skel.body(i).world_transform()[:3, 3][0]-1., self.skel.body(i).world_transform()[:3, 3][1])
+            self.ref_body_transform[i].set_translation(self.ref_skel.body(i).world_transform()[:3, 3][0]-1., self.ref_skel.body(i).world_transform()[:3, 3][1])
+
+        return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
     def close(self):
         """Override in your subclass to perform any necessary cleanup.
