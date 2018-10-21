@@ -231,8 +231,8 @@ class PPO(object):
         for i in range(self.rnn_len):
             root_body_pos = self.ik_skel.body(0).to_world()
             root_body_pos[1] = 0.
-            self.to_goal_len = mm.length(self.goal_in_world_frame - root_body_pos)
-            if random.random() < 2./self.rnn_len or self.to_goal_len < 0.1 :
+            to_goal_len = mm.length(self.goal_in_world_frame - root_body_pos)
+            if random.random() < 2./self.rnn_len or to_goal_len < 0.1:
                 self.sample_target()
             self.get_rnn_ref_pose_step()
             self.qs.append((self.goal_in_world_frame, self.ik_skel.positions()))
@@ -355,7 +355,10 @@ class PPO(object):
         del self.qs[:self.replace_motion_num]
         for i in range(self.replace_motion_num):
             # goal, 'next' pose
-            if random.random() < 2./self.rnn_len:
+            root_body_pos = self.ik_skel.body(0).to_world()
+            root_body_pos[1] = 0.
+            to_goal_len = mm.length(self.goal_in_world_frame - root_body_pos)
+            if random.random() < 2./self.rnn_len or to_goal_len < 0.1:
                 self.sample_target()
             self.get_rnn_ref_pose_step()
             self.qs.append((self.goal_in_world_frame.copy(), self.ik_skel.positions()))
