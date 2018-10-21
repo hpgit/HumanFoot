@@ -88,7 +88,7 @@ class HpDartEnv(gym.Env):
 
         self.time_offset = 0.
 
-        state_num = 2 + (3*3 + 4) * self.body_num + ( 3 + 4 ) * self.body_num
+        state_num = (3*3 + 4) * self.body_num + ( 3 + 4 ) * self.body_num
         # state_num = 2*3*self.body_num + 3*(self.skel.num_dofs() - 3)
         action_num = self.skel.num_dofs() - 6
 
