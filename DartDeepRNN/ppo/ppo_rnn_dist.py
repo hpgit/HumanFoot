@@ -202,6 +202,8 @@ class PPO(object):
         self.eval_print = eval_print
         self.eval_log = eval_log
 
+        self.state_sender = []  # type: list[Connection]
+        self.result_sender = []  # type: list[Connection]
         self.state_receiver = []  # type: list[Connection]
         self.result_receiver = []  # type: list[Connection]
         self.action_sender = []  # type: list[Connection]
@@ -239,6 +241,8 @@ class PPO(object):
             reset_s, reset_r = Pipe()
             motion_s, motion_r = Pipe()
             p = Process(target=worker, args=(self.rnn_len, slave_idx, s_s, r_s, a_r, reset_r, motion_r))
+            self.state_sender.append(s_s)
+            self.result_sender.append(r_s)
             self.state_receiver.append(s_r)
             self.result_receiver.append(r_r)
             self.action_sender.append(a_s)

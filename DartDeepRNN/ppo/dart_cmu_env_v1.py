@@ -144,8 +144,8 @@ class HpDartEnv(gym.Env):
         action = np.hstack((np.zeros(6), _action/10.))
 
         for i in range(self.step_per_frame):
-            # self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
-            self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
+            self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
+            # self.skel.set_forces(self.pdc.compute_flat(self.ref_skel.q + action))
             self.world.step()
 
         self.phase_frame += 1
