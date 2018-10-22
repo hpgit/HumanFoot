@@ -2,20 +2,23 @@
 import numpy as np
 
 import pydart2 as pydart
-from DartDeep.dart_env_v2_2 import HpDartEnv
 
-from collections import namedtuple
-from collections import deque
 from itertools import count
-import random
 import time
 import os
 from multiprocessing import Process, Pipe
+
+from DartDeep.dart_env_v2_2 import HpDartEnv
+
+# from PyCommon.modules.NeuralNet.TorchBase import *
+# from torch import optim
 
 import torch
 from torch import nn, optim
 import torch.nn.functional as F
 import torchvision.transforms as T
+from collections import namedtuple, deque
+import random
 
 
 MultiVariateNormal = torch.distributions.Normal
@@ -28,12 +31,12 @@ MultiVariateNormal.mode = lambda self: self.mean
 
 
 class Model(nn.Module):
-    def __init__(self, num_states, num_actions):
+    def __init__(self, num_states, num_actions, hidden_layer):
         super(Model, self).__init__()
 
-        hidden_layer_size1 = 256
-        hidden_layer_size2 = 128
-        hidden_layer_size3 = 64
+        hidden_layer_size1 = hidden_layer[0]
+        hidden_layer_size2 = hidden_layer[1]
+        hidden_layer_size3 = hidden_layer[2]
 
         '''Policy Mean'''
         self.policy_fc1 = nn.Linear(num_states		  , hidden_layer_size1)
@@ -194,7 +197,7 @@ class PPO(object):
 
         self.total_episodes = []
 
-        self.model = Model(self.num_state, self.num_action).float()
+        self.model = Model(self.num_state, self.num_action, (128, 128, 64)).float()
         self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
         self.w_entropy = 0.0
 
@@ -445,6 +448,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 plt.ion()
 
+
 def Plot(y,title,num_fig=1,ylim=True):
     global glob_count_for_plt
 
@@ -498,7 +502,7 @@ if __name__ == "__main__":
             if max_avg_steps < step:
                 max_avg_steps = step
 
-        # Plot(np.asarray(rewards),'reward',1,False)
+        Plot(np.asarray(rewards), 'reward', 1, False)
         print("Elapsed time : {:.2f}s".format(time.time() - tic))
         ppo.log_file.write("Elapsed time : {:.2f}s".format(time.time() - tic) + "\n")
         ppo.log_file.flush()

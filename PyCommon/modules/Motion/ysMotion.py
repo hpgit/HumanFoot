@@ -904,10 +904,9 @@ class JointPosture(Posture):
     def __init__(self, skeleton):
         Posture.__init__(self, skeleton)
         self.skeleton = skeleton  # type: JointSkeleton
-        self.rootPos = mm.O_Vec3()
+        self.local_ts = [None]*skeleton.getElementNum()
         self.localRs = [None]*skeleton.getElementNum()
         self.globalTs = [None]*skeleton.getElementNum()
-
 
     # m1 + d : m1.__add__(d)
     # m2 = m1 + d
@@ -958,7 +957,15 @@ class JointPosture(Posture):
             return m1
         else:
             raise TypeError
-    
+
+    @property
+    def rootPos(self):
+        return self.local_ts[0]
+
+    @rootPos.setter
+    def rootPos(self, _x):
+        self.local_ts[0] = _x
+
 #    def initialize(self):
 #        self.rootPos = mm.O_Vec3()
 #        self.initLocalRs()
@@ -972,9 +979,18 @@ class JointPosture(Posture):
                 self.localRs[i] = mm.I_SO3()
         else:
             self.localRs = initialRs
-            
+
+    def initLocal_ts(self, initial_ts=None):
+        if initial_ts is None:
+            for i in range(self.skeleton.getElementNum()):
+                self.localRs[i] = mm.O_Vec3()
+        else:
+            self.localRs = initial_ts
+
+        self.rootPos = self.local_ts[0]
+
     def getTPose(self, initialRs=None):
-        tpose = JointPosture(self.skeleton) # share skeleton of self
+        tpose = JointPosture(self.skeleton)  # share skeleton of self
         tpose.rootPos = self.rootPos.copy()
         tpose.initLocalRs(initialRs)
         tpose.updateGlobalT()
@@ -997,6 +1013,9 @@ class JointPosture(Posture):
 
     def mulLocalR(self, index, R):
         self.localRs[index] = np.dot(self.localRs[index], R)
+
+    def setLocal_t(self, index, local_t):
+        self.local_ts[index] = local_t
 
     def getLocalRFromParent(self, index):
         # Gp * Rl = Gi
@@ -1090,11 +1109,13 @@ class JointPosture(Posture):
 
     def updateGlobalT(self, fromIndex=None):
         if fromIndex is None:
-            self._updateGlobalT(self.skeleton.root, mm.p2T(self.rootPos))
+            # self._updateGlobalT(self.skeleton.root, mm.p2T(self.rootPos))
+            self._updateGlobalT(self.skeleton.root, mm.I_SE3())
         else:
             parent = self.skeleton.getParentIndex(fromIndex)
             if parent is None:
-                self._updateGlobalT(self.skeleton.root, mm.p2T(self.rootPos))
+                # self._updateGlobalT(self.skeleton.root, mm.p2T(self.rootPos))
+                self._updateGlobalT(self.skeleton.root, mm.I_SE3())
             else:
                 joint = self.skeleton.getElement(fromIndex)
                 self._updateGlobalT(joint, self.globalTs[parent])
@@ -1102,13 +1123,14 @@ class JointPosture(Posture):
     def _updateGlobalT(self, joint, parentT):
         index = self.skeleton.getElementIndex(joint.name)
         T = np.dot(parentT, mm.p2T(joint.offset))
+        T = np.dot(T, mm.p2T(self.local_ts[index]))
         T = np.dot(T, mm.R2T(self.localRs[index]))
         self.globalTs[index] = T
         for childJoint in joint.children:
             # if '_Effector' not in childJoint.name:
             #     self._updateGlobalT(childJoint, T)
             self._updateGlobalT(childJoint, T)
-    
+
     # do not use!
     # have to replace to IK version
     def setPosition(self, index, position):
@@ -1129,6 +1151,7 @@ class JointPosture(Posture):
         for i in range(len(self.localRs)):
             # p.localRs[i] = mm.slerp(self.localRs[i], otherPosture.localRs[i], t)
             p.localRs[i] = cm.slerp(self.localRs[i], otherPosture.localRs[i], t)
+            p.local_ts[i] = mm.linearInterpol(self.local_ts[i], otherPosture.local_ts[i], t)
         if update:
             p.updateGlobalT()
         # p.updateGlobalT()

@@ -33,10 +33,14 @@ def main():
     viewer = hsv.hpSimpleViewer(rect=[0, 0, 1280+300, 720+1+55], viewForceWnd=False)
     viewer.doc.addRenderer('MotionModel', yr.DartRenderer(ppo.env.ref_world, (150,150,255), yr.POLYGON_FILL))
     viewer.doc.addRenderer('target', yr.PointsRenderer(rd_target_position, (0, 255, 0)))
+    viewer.doc.addRenderer('motion', yr.JointMotionRenderer(ppo.env.ref_motion))
     if not MOTION_ONLY:
         viewer.doc.addRenderer('controlModel', yr.DartRenderer(dart_world, (255,240,255), yr.POLYGON_FILL))
         viewer.doc.addRenderer('contact', yr.VectorsRenderer(rd_contact_forces, rd_contact_positions, (255,0,0)))
         viewer.doc.addRenderer('CM_plane', yr.PointsRenderer(rd_com, (0, 0, 255)))
+
+    def preCallback(frame):
+        ppo.env.ref_motion.frame = frame
 
     def simulateCallback(frame):
         del rd_target_position[:]
@@ -49,7 +53,9 @@ def main():
         state = ppo.env.GetState(0)
         action_dist, _ = ppo.model(torch.tensor(state.reshape(1, -1)).float())
         action = action_dist.loc.detach().numpy()
-        res = ppo.env.Steps(action)
+        # res = ppo.env.Steps(action)
+        res = [False, False, False]
+
         # res = ppo.env.Steps(np.zeros_like(action))
         # print(frame, ppo.env.ref_skel.current_frame, ppo.env.world.time()*ppo.env.ref_motion.fps)
         # print(frame, res[0][0])
@@ -70,6 +76,7 @@ def main():
             rd_contact_forces.append(contact.f/1000.)
             rd_contact_positions.append(contact.p)
 
+    viewer.setPreFrameCallback_Always(preCallback)
     viewer.setSimulateCallback(simulateCallback)
     viewer.setMaxFrame(3000)
     viewer.startTimer(1./30.)

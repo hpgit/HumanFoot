@@ -207,7 +207,7 @@ class Bvh:
         else:
             f = filepath_or_fileobject
     
-        tokens= f.read().split()
+        tokens = f.read().split()
         tokens.reverse()
     
         self.totalChannelCount = 0
@@ -338,7 +338,7 @@ class Bvh:
 
         for i in range(self.frameNum):
             for j in range(self.totalChannelCount):
-                file.write('%s '%self.motionList[i][j])
+                file.write('%s ' % self.motionList[i][j])
             file.write('\n')
 
     #===========================================================================
@@ -430,26 +430,32 @@ class Bvh:
             
         return joint
         
-    def addJointSO3FromBvhJoint(self, jointPosture, bvhJoint, channelValues, scale = 1.0):
+    def addJointSO3FromBvhJoint(self, jointPosture, bvhJoint, channelValues, scale=1.0):
         localR = mm.I_SO3()
+        local_t = mm.O_Vec3()
+
         for channel in bvhJoint.channels:
             if channel.channelType == 'XPOSITION':
-                jointPosture.rootPos[0] = channelValues[channel.channelIndex]*scale
+                # jointPosture.rootPos[0] = channelValues[channel.channelIndex]*scale
+                local_t[0] = channelValues[channel.channelIndex]*scale
             elif channel.channelType == 'YPOSITION':
-                jointPosture.rootPos[1] = channelValues[channel.channelIndex]*scale
+                # jointPosture.rootPos[1] = channelValues[channel.channelIndex]*scale
+                local_t[1] = channelValues[channel.channelIndex]*scale
             elif channel.channelType == 'ZPOSITION':
-                jointPosture.rootPos[2] = channelValues[channel.channelIndex]*scale
+                # jointPosture.rootPos[2] = channelValues[channel.channelIndex]*scale
+                local_t[2] = channelValues[channel.channelIndex]*scale
             elif channel.channelType == 'XROTATION':
                 localR = numpy.dot(localR, mm.exp(mm.s2v((1,0,0)), mm.deg2Rad(channelValues[channel.channelIndex])))
             elif channel.channelType == 'YROTATION':
                 localR = numpy.dot(localR, mm.exp(mm.s2v((0,1,0)), mm.deg2Rad(channelValues[channel.channelIndex])))
             elif channel.channelType == 'ZROTATION':
                 localR = numpy.dot(localR, mm.exp(mm.s2v((0,0,1)), mm.deg2Rad(channelValues[channel.channelIndex])))
-    #    jointPosture.setLocalR(bvhJoint.name, localR)
+        # jointPosture.setLocalR(bvhJoint.name, localR)
         jointPosture.setLocalR(jointPosture.skeleton.getElementIndex(bvhJoint.name), localR)
-            
+        jointPosture.setLocal_t(jointPosture.skeleton.getElementIndex(bvhJoint.name), local_t)
+
         for i in range(len(bvhJoint.children)):
-            self.addJointSO3FromBvhJoint(jointPosture, bvhJoint.children[i], channelValues)
+            self.addJointSO3FromBvhJoint(jointPosture, bvhJoint.children[i], channelValues, scale)
 
     #===========================================================================
     # JointMotion -> Bvh
@@ -483,12 +489,13 @@ class Bvh:
         bvhJoint.offset = joint.offset  # offset
 
         # channels
-        if joint.parent==None:
+        if joint.parent is None:
             channelTypes = Bvh.channelTypes6dof
-        elif len(joint.children)==0:
+        elif len(joint.children) == 0:
             channelTypes = []
         else:
             channelTypes = Bvh.channelTypes3dof
+
         for channelType in channelTypes:
             bvhJoint.channels.append(Bvh.Channel(channelType, self.totalChannelCount))
             self.totalChannelCount += 1

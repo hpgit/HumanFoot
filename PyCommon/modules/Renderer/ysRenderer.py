@@ -800,16 +800,17 @@ class JointMotionRenderer(Renderer):
     def renderJointPosture(self, posture):
         joint = posture.skeleton.root
         glPushMatrix()
-        glTranslatef(posture.rootPos[0], posture.rootPos[1], posture.rootPos[2])
+        # glTranslatef(posture.rootPos[0], posture.rootPos[1], posture.rootPos[2])
         self._renderJoint(joint, posture)
         glPopMatrix()
 
     def _renderJoint(self, joint, posture):
         glPushMatrix()
-        glTranslatef(joint.offset[0], joint.offset[1],joint.offset[2])
+        glTranslatef(joint.offset[0], joint.offset[1], joint.offset[2])
 #        glMultMatrixf(mm.R2T(posture.localRMap[joint.name]).transpose())
+        glMultMatrixf(mm.p2T(posture.local_ts[posture.skeleton.getElementIndex(joint.name)]).transpose())
         glMultMatrixf(mm.R2T(posture.localRs[posture.skeleton.getElementIndex(joint.name)]).transpose())
-                
+
 #        if joint.name in self.partColors:
 #            color = self.partColors[joint.name]
 #        else:

@@ -25,7 +25,7 @@ class HpDartEnv(gym.Env):
         self.world = pydart.World(1./1200., skel_file)
         self.world.control_skel = self.world.skeletons[1]
         self.skel = self.world.skeletons[1]
-        self.Kp, self.Kd = 400., 40.
+        self.Kp, self.Kd = 800., 40.
         self.pdc = PDController(self.skel, self.world.time_step(), 400., 40.)
 
         self.ref_motion = yf.readBvhFile("../data/cmu_tpose.bvh")[:rnn_len]
@@ -37,11 +37,16 @@ class HpDartEnv(gym.Env):
 
         self.rsi = True
 
-        self.w_g = 0.3
-        self.w_p = 0.65 * .7
-        self.w_v = 0.1 * .7
-        self.w_e = 0.15 * .7
-        self.w_c = 0.1 * .7
+        # self.w_g = 0.3
+        # self.w_p = 0.65 * .7
+        # self.w_v = 0.1 * .7
+        # self.w_e = 0.15 * .7
+        # self.w_c = 0.1 * .7
+
+        self.w_p = 0.65
+        self.w_v = 0.1
+        self.w_e = 0.15
+        self.w_c = 0.1
 
         self.exp_g = 2.5
         self.exp_p = 2.
@@ -57,7 +62,7 @@ class HpDartEnv(gym.Env):
         self.motion_len = len(self.ref_motion)
         self.motion_time = len(self.ref_motion) / self.ref_motion.fps
 
-        state_num = 2 + (3*3 + 4) * self.body_num + ( 3 + 4 ) * self.body_num
+        state_num = 2 + (3*3 + 4) * self.body_num + (3 + 4) * self.body_num
         action_num = self.skel.num_dofs() - 6
 
         state_high = np.array([np.finfo(np.float32).max] * state_num)
@@ -125,9 +130,13 @@ class HpDartEnv(gym.Env):
 
     def reward(self):
         p_e = np.asarray([body.world_transform()[:3, 3] for body in self.body_e]).flatten()
-        reward = 0
-        reward += exp_reward_term(self.w_p, self.exp_p, self.skel.position_differences(self.prev_ref_q, self.skel.q))
-        reward += exp_reward_term(self.w_v, self.exp_v, self.skel.velocity_differences(self.prev_ref_dq, self.skel.dq))
+
+        q_diff = np.asarray(self.skel.position_differences(self.prev_ref_q, self.skel.q))
+        dq_diff = np.asarray(self.skel.velocity_differences(self.prev_ref_dq, self.skel.dq))
+
+        reward = 0.
+        reward += exp_reward_term(self.w_p, self.exp_p, np.concatenate((q_diff[:3], q_diff[6:])))
+        reward += exp_reward_term(self.w_v, self.exp_v, np.concatenate((dq_diff[:3], dq_diff[6:])))
         reward += exp_reward_term(self.w_e, self.exp_e, p_e - self.prev_ref_p_e_hat)
         reward += exp_reward_term(self.w_c, self.exp_c, self.skel.com() - self.prev_ref_com)
         # reward += exp_reward_term(self.w_g, self.exp_g, self.prev_goal)
@@ -281,8 +290,12 @@ class HpDartEnv(gym.Env):
     def IsTerminalState(self, j):
         return self.is_done()
 
+    def IsTerminalStates(self):
+        return [self.is_done()]
+
     def GetReward(self, j):
         return self.reward()
 
-    def IsTerminalStates(self):
-        return [self.is_done()]
+    def GetRewards(self):
+        return [self.reward()]
+
