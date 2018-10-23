@@ -207,8 +207,8 @@ class PPO(object):
         self.total_episodes = []
 
         self.model = Model(self.num_state, self.num_action, (256, 256, 128)).float()
-        # self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
-        self.optimizer = optim.Adam(self.model.parameters(), lr=5E-3)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
+        # self.optimizer = optim.Adam(self.model.parameters(), lr=5E-3)
         self.w_entropy = 0.0
 
         self.saved = False
@@ -435,7 +435,7 @@ class PPO(object):
 
         self.envs_resets(2)
         self.envs_send_rnn_motion()
-        # self.env.Resets(True)
+        # self.env.Resets(False)
 
         local_step = 0
         terminated = [False] * self.num_slaves
@@ -545,12 +545,13 @@ class PPO(object):
         total_step = 0
         self.env.Resets(True)
         self.env.Reset(False, 0)
-        states = self.env.GetStates()
-        for j in range(len(states)):
-            if np.any(np.isnan(states[j])):
-                self.print("state warning!!!!!!!! start")
 
         for t in count():
+            states = self.env.GetStates()
+            for j in range(len(states)):
+                if np.any(np.isnan(states[j])):
+                    self.print("state warning!!!!!!!! start")
+
             action_dist, _ = self.model(torch.tensor(states).float())
             actions = action_dist.loc.detach().numpy()
             for j in range(len(actions)):
@@ -563,11 +564,11 @@ class PPO(object):
                 if np.any(np.isnan(states[j])):
                     self.print("state warning!!!!!!!!"+str(t))
 
-            if self.env.IsTerminalState(0) is False:
+            if not self.env.IsTerminalState(0):
                 total_step += 1
-                total_reward += self.env.GetReward(0)
-            states = self.env.GetStates()
-            if all(self.env.IsTerminalStates()):
+                reward = self.env.GetReward(0)
+                total_reward += reward
+            else:
                 break
 
         self.print('noise : {:.3f}'.format(self.model.log_std.exp().mean()))
@@ -610,7 +611,7 @@ if __name__ == "__main__":
     tic = time.time()
     ppo = None  # type: PPO
     if len(sys.argv) < 2:
-        ppo = PPO('walk', 1)
+        ppo = PPO('walk', 4)
     else:
         ppo = PPO(sys.argv[1], int(sys.argv[2]))
 
@@ -631,6 +632,7 @@ if __name__ == "__main__":
     max_avg_steps = 0
 
     for i in range(50000):
+    # for i in range(1):
         ppo.Train()
         print('# {}'.format(i+1))
         ppo.log_file.write('# {}'.format(i+1) + "\n")
@@ -642,7 +644,7 @@ if __name__ == "__main__":
             if max_avg_steps < step:
                 max_avg_steps = step
 
-        Plot(np.asarray(rewards), 'reward', 1, False)
+        # Plot(np.asarray(rewards), 'reward', 1, False)
         print("Elapsed time : {:.2f}s".format(time.time() - tic))
         ppo.log_file.write("Elapsed time : {:.2f}s".format(time.time() - tic) + "\n")
         ppo.log_file.flush()

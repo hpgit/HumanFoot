@@ -134,12 +134,12 @@ class HpDartEnv(gym.Env):
         q_diff = np.asarray(self.skel.position_differences(self.prev_ref_q, self.skel.q))
         dq_diff = np.asarray(self.skel.velocity_differences(self.prev_ref_dq, self.skel.dq))
 
-        reward = 0.
-        reward += exp_reward_term(self.w_p, self.exp_p, np.concatenate((q_diff[:3], q_diff[6:])))
-        reward += exp_reward_term(self.w_v, self.exp_v, np.concatenate((dq_diff[:3], dq_diff[6:])))
-        reward += exp_reward_term(self.w_e, self.exp_e, p_e - self.prev_ref_p_e_hat)
-        reward += exp_reward_term(self.w_c, self.exp_c, self.skel.com() - self.prev_ref_com)
-        # reward += exp_reward_term(self.w_g, self.exp_g, self.prev_goal)
+        q_reward = exp_reward_term(self.w_p, self.exp_p, np.concatenate((q_diff[:3], q_diff[6:])))
+        dq_reward = exp_reward_term(self.w_v, self.exp_v, np.concatenate((dq_diff[:3], dq_diff[6:])))
+        ee_reward = exp_reward_term(self.w_e, self.exp_e, p_e - self.prev_ref_p_e_hat)
+        com_reward = exp_reward_term(self.w_c, self.exp_c, self.skel.com() - self.prev_ref_com)
+        # goal_reward = exp_reward_term(self.w_g, self.exp_g, self.prev_goal)
+        reward = q_reward + dq_reward + ee_reward + com_reward
         return reward
 
     def is_done(self):

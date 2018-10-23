@@ -451,7 +451,6 @@ class JointMotion(Motion):
         return np.concatenate([np.concatenate( (self.getJointAngVelocityLocal(0, frame0), np.dot(self[frame0].getLocalR(0).T, self.getJointVelocityGlobal(0, frame0))) )] \
                + self.getInternalJointAngVelocitiesLocal(frame0))
 
-
     def get_dq_dart_by_time(self, t):
         """
         get generalized velocity in joint coordinate in continuous time
@@ -665,6 +664,7 @@ class JointMotion(Motion):
 #        orientations1 = self.getOrientationsLocal(frame1)
 #        return map(lambda R0,R1: (self.fps/(frame1-frame0)) * mm.logSO3(np.dot(R0.transpose(), R1)), orientations0, orientations1)
         return self._getDerivatives(frame0, frame1, self.getInternalJointOrientationsLocal, lambda R1, R0: mm.logSO3(np.dot(R0.transpose(), R1)))
+
     def getInternalJointAngAccelerationsLocal(self, frame0, frame1=None):
         return self._getDerivatives(frame0, frame1, self.getInternalJointAngVelocitiesLocal, op.sub)
 
