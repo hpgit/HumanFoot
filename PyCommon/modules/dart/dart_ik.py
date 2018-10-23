@@ -37,7 +37,8 @@ class IkOriConstraint(IkConstraint):
         return self.weight * 0.5 * mm.length(self.des - self.cur) ** 2
 
     def g(self):
-        return np.dot(self.cur - self.des, self.body.angular_jacobian())
+        raise NotImplementedError
+        # return np.dot(self.cur - self.des, self.body.angular_jacobian())
 
     def update(self):
         self.cur = mm.seq2Vec3(mm.logSO3(self.body.world_transform()[:3, :3]))

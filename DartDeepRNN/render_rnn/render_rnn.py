@@ -30,7 +30,7 @@ joint_list = ["Head", "Hips", "LHipJoint", "LeftArm", "LeftFoot", "LeftForeArm",
 class ModelViewer(object):
     def __init__(self, folder):
         pydart.init()
-        self.world = pydart.World(1./1200., "data/cmu_with_ground.xml")
+        self.world = pydart.World(1./1200., "../data/cmu_with_ground.xml")
         self.model = self.world.skeletons[1]
         self.ik = DartIk(self.model)
 
@@ -38,10 +38,11 @@ class ModelViewer(object):
 
         self.all_angles = [[] for i in range(93)]
 
-        viewer = SimpleViewer(viewForceWnd=False)
+        viewer = SimpleViewer(rect=[0, 0, 1280+300, 720+1+55], viewForceWnd=False)
         self.viewer = viewer
+        # viewer.record(True)
         viewer.record(False)
-        viewer.setMaxFrame(100)
+        viewer.setMaxFrame(10000)
         self.isFirst = True
         self.lines = None
         viewer.motionViewWnd.glWindow.set_mouse_pick(True)
@@ -72,7 +73,7 @@ class ModelViewer(object):
         viewer.startTimer(1. / 30.)
 
         viewer.show()
-        viewer.play()
+        # viewer.play()
         Fl.run()
 
     def get_target(self):
@@ -142,6 +143,50 @@ class ModelViewer(object):
         self.model.joint('LeftFoot').set_position(mm.logSO3(np.dot(foot_joint_ori, np.dot(mm.rotX(-.6), mm.rotZ(.4)))))
         foot_joint_ori = mm.exp(self.model.joint('RightFoot').position())
         self.model.joint('RightFoot').set_position(mm.logSO3(np.dot(foot_joint_ori, np.dot(mm.rotX(-.6), mm.rotZ(-.4)))))
+
+        left_foot = self.model.body('LeftFoot')
+
+        if (left_foot.to_world([0.05, -0.045, 0.1125])[1] < 0. or left_foot.to_world([-0.05, -0.045, 0.1125])[1] < 0.)  \
+            and (left_foot.to_world([0.05, -0.045, -0.1125])[1] < 0. or left_foot.to_world([-0.05, -0.045, -0.1125])[1] < 0.):
+
+            left_toe_pos1 = left_foot.to_world([0.05, -0.045, +0.1125])
+            left_toe_pos1[1] = 0.
+            left_toe_pos2 = left_foot.to_world([-0.05, -0.045, +0.1125])
+            left_toe_pos2[1] = 0.
+
+            left_heel_pos1 = left_foot.to_world([0.05, -0.045, -0.1125])
+            left_heel_pos1[1] = 0.
+            left_heel_pos2 = left_foot.to_world([-0.05, -0.045, -0.1125])
+            left_heel_pos2[1] = 0.
+
+            self.ik.clean_constraints()
+            self.ik.add_position_const('LeftFoot', left_toe_pos1, np.array([0.05, -0.045, +0.1125]))
+            self.ik.add_position_const('LeftFoot', left_toe_pos2, np.array([-0.05, -0.045, +0.1125]))
+            self.ik.add_position_const('LeftFoot', left_heel_pos1, np.array([0.05, -0.045, -0.1125]))
+            self.ik.add_position_const('LeftFoot', left_heel_pos2, np.array([-0.05, -0.045, -0.1125]))
+            self.ik.solve()
+
+        right_foot = self.model.body('RightFoot')
+
+        if (right_foot.to_world([0.05, -0.045, 0.1125])[1] < 0. or right_foot.to_world([-0.05, -0.045, 0.1125])[1] < 0.) \
+                and (right_foot.to_world([0.05, -0.045, -0.1125])[1] < 0. or right_foot.to_world([-0.05, -0.045, -0.1125])[1] < 0.):
+
+            right_toe_pos1 = right_foot.to_world([0.05, -0.045, +0.1125])
+            right_toe_pos1[1] = 0.
+            right_toe_pos2 = right_foot.to_world([-0.05, -0.045, +0.1125])
+            right_toe_pos2[1] = 0.
+
+            right_heel_pos1 = right_foot.to_world([0.05, -0.045, -0.1125])
+            right_heel_pos1[1] = 0.
+            right_heel_pos2 = right_foot.to_world([-0.05, -0.045, -0.1125])
+            right_heel_pos2[1] = 0.
+
+            self.ik.clean_constraints()
+            self.ik.add_position_const('RightFoot', right_toe_pos1, np.array([0.05, -0.045, +0.1125]))
+            self.ik.add_position_const('RightFoot', right_toe_pos2, np.array([-0.05, -0.045, +0.1125]))
+            self.ik.add_position_const('RightFoot', right_heel_pos1, np.array([0.05, -0.045, -0.1125]))
+            self.ik.add_position_const('RightFoot', right_heel_pos2, np.array([-0.05, -0.045, -0.1125]))
+            self.ik.solve()
 
     def draw_motion(self, lines):
         glPushMatrix()

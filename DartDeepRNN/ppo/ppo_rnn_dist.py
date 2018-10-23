@@ -251,13 +251,16 @@ class PPO(object):
         # self.sample_target()
         self.goal_in_world_frame = np.array((5., 0., 0.))
 
-        for i in range(6):
+        # for i in range(6):
+        # for i in range(1):
+        for i in range(20):
             # for warming
             self.get_rnn_ref_pose_step()
-        for i in range(30):
-            self.qs.append((np.zeros(3), self.ik_skel.positions()))
 
-        for i in range(self.rnn_len-30):
+        # for i in range(10):
+        #     self.qs.append((np.zeros(3), self.ik_skel.positions()))
+
+        for i in range(self.rnn_len-0):
             root_body_pos = self.ik_skel.body(0).to_world()
             root_body_pos[1] = 0.
             to_goal_len = mm.length(self.goal_in_world_frame - root_body_pos)
@@ -379,9 +382,53 @@ class PPO(object):
         self.ik.solve()
 
         foot_joint_ori = mm.exp(self.ik_skel.joint('LeftFoot').position())
-        self.ik_skel.joint('LeftFoot').set_position(mm.logSO3(np.dot(foot_joint_ori, np.dot(mm.rotX(-.7), mm.rotZ(.4)))))
+        self.ik_skel.joint('LeftFoot').set_position(mm.logSO3(np.dot(foot_joint_ori, np.dot(mm.rotX(-.6), mm.rotZ(.4)))))
         foot_joint_ori = mm.exp(self.ik_skel.joint('RightFoot').position())
-        self.ik_skel.joint('RightFoot').set_position(mm.logSO3(np.dot(foot_joint_ori, np.dot(mm.rotX(-.7), mm.rotZ(-.4)))))
+        self.ik_skel.joint('RightFoot').set_position(mm.logSO3(np.dot(foot_joint_ori, np.dot(mm.rotX(-.6), mm.rotZ(-.4)))))
+
+        left_foot = self.ik_skel.body('LeftFoot')
+
+        if (left_foot.to_world([0.05, -0.045, 0.1125])[1] < 0. or left_foot.to_world([-0.05, -0.045, 0.1125])[1] < 0.) \
+                and (left_foot.to_world([0.05, -0.045, -0.1125])[1] < 0. or left_foot.to_world([-0.05, -0.045, -0.1125])[1] < 0.):
+
+            left_toe_pos1 = left_foot.to_world([0.05, -0.045, +0.1125])
+            left_toe_pos1[1] = 0.
+            left_toe_pos2 = left_foot.to_world([-0.05, -0.045, +0.1125])
+            left_toe_pos2[1] = 0.
+
+            left_heel_pos1 = left_foot.to_world([0.05, -0.045, -0.1125])
+            left_heel_pos1[1] = 0.
+            left_heel_pos2 = left_foot.to_world([-0.05, -0.045, -0.1125])
+            left_heel_pos2[1] = 0.
+
+            self.ik.clean_constraints()
+            self.ik.add_position_const('LeftFoot', left_toe_pos1, np.array([0.05, -0.045, +0.1125]))
+            self.ik.add_position_const('LeftFoot', left_toe_pos2, np.array([-0.05, -0.045, +0.1125]))
+            self.ik.add_position_const('LeftFoot', left_heel_pos1, np.array([0.05, -0.045, -0.1125]))
+            self.ik.add_position_const('LeftFoot', left_heel_pos2, np.array([-0.05, -0.045, -0.1125]))
+            self.ik.solve()
+
+        right_foot = self.ik_skel.body('RightFoot')
+
+        if (right_foot.to_world([0.05, -0.045, 0.1125])[1] < 0. or right_foot.to_world([-0.05, -0.045, 0.1125])[1] < 0.) \
+                and (right_foot.to_world([0.05, -0.045, -0.1125])[1] < 0. or right_foot.to_world([-0.05, -0.045, -0.1125])[1] < 0.):
+
+            right_toe_pos1 = right_foot.to_world([0.05, -0.045, +0.1125])
+            right_toe_pos1[1] = 0.
+            right_toe_pos2 = right_foot.to_world([-0.05, -0.045, +0.1125])
+            right_toe_pos2[1] = 0.
+
+            right_heel_pos1 = right_foot.to_world([0.05, -0.045, -0.1125])
+            right_heel_pos1[1] = 0.
+            right_heel_pos2 = right_foot.to_world([-0.05, -0.045, -0.1125])
+            right_heel_pos2[1] = 0.
+
+            self.ik.clean_constraints()
+            self.ik.add_position_const('RightFoot', right_toe_pos1, np.array([0.05, -0.045, +0.1125]))
+            self.ik.add_position_const('RightFoot', right_toe_pos2, np.array([-0.05, -0.045, +0.1125]))
+            self.ik.add_position_const('RightFoot', right_heel_pos1, np.array([0.05, -0.045, -0.1125]))
+            self.ik.add_position_const('RightFoot', right_heel_pos2, np.array([-0.05, -0.045, -0.1125]))
+            self.ik.solve()
 
     def generate_rnn_motion(self):
         return

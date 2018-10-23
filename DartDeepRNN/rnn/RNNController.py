@@ -54,7 +54,7 @@ class RNNController(object):
         for i in range(len(output)//3):
             points.append(output[i*3:(i+1)*3])
 
-        point_offset = mm.seq2Vec3([0., -0.07, 0.])
+        point_offset = mm.seq2Vec3([0., -0.05, 0.])
 
         for i in range(len(points)):
             points[i] = mm.seq2Vec3(self.pose.global_point_3d(points[i]))/100. + point_offset

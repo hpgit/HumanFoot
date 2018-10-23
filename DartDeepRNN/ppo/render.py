@@ -16,8 +16,8 @@ def main():
     env_name = 'walk'
 
     ppo = PPO(env_name, 0, visualize_only=True)
-    # if not MOTION_ONLY:
-    #     ppo.LoadModel('model/' + env_name + '.pt')
+    if not MOTION_ONLY:
+        ppo.LoadModel('model/' + env_name + '.pt')
     ppo.envs_send_rnn_motion()
     ppo.env.Resets(False)
     # ppo.replace_motion_num = ppo.rnn_len
@@ -53,7 +53,8 @@ def main():
         state = ppo.env.GetState(0)
         action_dist, _ = ppo.model(torch.tensor(state.reshape(1, -1)).float())
         action = action_dist.loc.detach().numpy()
-        res = ppo.env.Steps(action)
+        res = ppo.env.Steps(np.zeros_like(action))
+        # res = ppo.env.Steps(action)
         # res = [False, False, False]
         print(res[1])
 
