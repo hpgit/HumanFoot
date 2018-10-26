@@ -46,7 +46,7 @@ for dart setup,
     
     brew install boost
     brew install boost-python3
-    brew install bullet eigen assimp flann libccd dartsim/dart/fcl open-scene-graph nlopt ipopt tinyxml tinyxml2 ros/deps/urdfdom doxygen
+    brew install bullet eigen assimp flann libccd fcl open-scene-graph nlopt ipopt tinyxml tinyxml2 ros/deps/urdfdom doxygen
     
     git clone https://github.com/dartsim/dart
     cd dart;git checkout tags/v6.1.2;mkdir build

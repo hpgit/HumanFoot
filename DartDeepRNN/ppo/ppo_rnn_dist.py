@@ -17,6 +17,8 @@ import os
 
 from multiprocessing import Process, Pipe
 
+import tensorflow as tf
+
 # from PyCommon.modules.NeuralNet.TorchBase import *
 # import torch
 # from torch import optim
@@ -110,7 +112,7 @@ class Model(nn.Module):
         v = F.relu(self.value_fc3(v))
         v = self.value_fc4(v)
 
-        return p,v
+        return p, v
 
 
 Episode = namedtuple('Episode', ('s', 'a', 'r', 'value', 'logprob'))
@@ -187,7 +189,7 @@ class PPO(object):
     def __init__(self, env_name, num_slaves=1, eval_print=True, eval_log=True, visualize_only=False):
         np.random.seed(seed=int(time.time()))
         self.env_name = env_name
-        self.rnn_len = 150
+        self.rnn_len = 500
         self.env = HpDartEnv(self.rnn_len)
         self.num_slaves = num_slaves
         self.num_state = self.env.observation_space.shape[0]
@@ -207,8 +209,8 @@ class PPO(object):
         self.total_episodes = []
 
         self.model = Model(self.num_state, self.num_action, (256, 256, 128)).float()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
-        # self.optimizer = optim.Adam(self.model.parameters(), lr=5E-3)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=1E-4)
+        # self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
         self.w_entropy = 0.0
 
         self.saved = False
@@ -234,7 +236,7 @@ class PPO(object):
 
         self.ik_world = pydart.World(1./1200., '../data/cmu_with_ground.xml')
         self.ik_skel = self.ik_world.skeletons[1]
-        self.rnn = RNNController(env_name)
+        self.rnn = None  # type: RNNController
         self.RNN_MOTION_SCALE = 0.01
         self.rnn_joint_list = ["Head", "Hips", "LHipJoint", "LeftArm", "LeftFoot", "LeftForeArm", "LeftHand",
                                "LeftLeg", "LeftShoulder", "LeftToeBase", "LeftUpLeg", "LowerBack", "Neck", "Neck1",
@@ -243,34 +245,16 @@ class PPO(object):
                                "Spine","Spine1"]
         self.rnn_target_update_prob = 2./self.rnn_len
         self.ik = DartIk(self.ik_skel)
-        self.goal_in_world_frame = np.zeros(3)
 
         self.qs = list()
-        # self.replace_motion_num = self.rnn_len//5
-        self.replace_motion_num = 1
-        # self.sample_target()
+        self.replace_motion_num = self.rnn_len//2
         self.goal_in_world_frame = np.array((5., 0., 0.))
 
-        # for i in range(6):
-        # for i in range(1):
-        for i in range(20):
-            # for warming
-            self.get_rnn_ref_pose_step()
-
-        # for i in range(10):
-        #     self.qs.append((np.zeros(3), self.ik_skel.positions()))
-
-        for i in range(self.rnn_len-0):
-            root_body_pos = self.ik_skel.body(0).to_world()
-            root_body_pos[1] = 0.
-            to_goal_len = mm.length(self.goal_in_world_frame - root_body_pos)
-            # if random.random() < 2./self.rnn_len or to_goal_len < 0.1:
-            if to_goal_len < 0.1:
-                self.sample_target()
-            self.get_rnn_ref_pose_step()
-            self.qs.append((self.goal_in_world_frame, self.ik_skel.positions()))
-
         self.init_envs()
+
+        # for evaluation
+        self.last_reward = 0.
+        self.last_steps = 0
 
     def init_envs(self):
         for slave_idx in range(self.num_slaves):
@@ -430,16 +414,38 @@ class PPO(object):
             self.ik.add_position_const('RightFoot', right_heel_pos2, np.array([-0.05, -0.045, -0.1125]))
             self.ik.solve()
 
+    def generate_rnn_motion_old(self):
+        if self.last_steps > .95 * self.rnn_len:
+            del self.qs[:self.replace_motion_num]
+            for i in range(self.replace_motion_num):
+                # goal, 'next' pose
+                root_body_pos = self.ik_skel.body(0).to_world()
+                root_body_pos[1] = 0.
+                to_goal_len = mm.length(self.goal_in_world_frame - root_body_pos)
+                # if random.random() < 2./self.rnn_len or to_goal_len < 0.1:
+                if to_goal_len < 0.1:
+                    self.sample_target()
+                self.get_rnn_ref_pose_step()
+                self.qs.append((self.goal_in_world_frame.copy(), self.ik_skel.positions()))
+
     def generate_rnn_motion(self):
-        return
-        del self.qs[:self.replace_motion_num]
-        for i in range(self.replace_motion_num):
+        del self.rnn
+        del self.qs[:]
+        tf.reset_default_graph()
+        self.rnn = RNNController(self.env_name)
+        self.goal_in_world_frame = np.array((5., 0., 0.))
+
+        for i in range(20):
+            # for warming
+            self.get_rnn_ref_pose_step()
+
+        for i in range(self.rnn_len):
             # goal, 'next' pose
             root_body_pos = self.ik_skel.body(0).to_world()
             root_body_pos[1] = 0.
             to_goal_len = mm.length(self.goal_in_world_frame - root_body_pos)
             # if random.random() < 2./self.rnn_len or to_goal_len < 0.1:
-            if to_goal_len < 0.1:
+            if to_goal_len < 0.15:
                 self.sample_target()
             self.get_rnn_ref_pose_step()
             self.qs.append((self.goal_in_world_frame.copy(), self.ik_skel.positions()))
@@ -538,7 +544,7 @@ class PPO(object):
             if local_step >= self.buffer_size:
                 if all(terminated):
                     break
-        self.generate_rnn_motion()
+
 
     # print('Done!')
     def OptimizeModel(self):
@@ -582,9 +588,12 @@ class PPO(object):
 
     # print('Done!')
     def Train(self):
+        self.generate_rnn_motion()
         self.GenerateTransitions()
         self.OptimizeModel()
         self.num_training += 1
+        self.last_reward, self.last_steps = self.Evaluate()
+        return self.last_reward, self.last_steps
 
     def Evaluate(self):
         self.num_evaluation += 1
@@ -677,19 +686,22 @@ if __name__ == "__main__":
     # print('num states: {}, num actions: {}'.format(ppo.env.GetNumState(),ppo.env.GetNumAction()))
 
     max_avg_steps = 0
+    max_avg_reward = 0.
 
     for i in range(50000):
     # for i in range(1):
-        ppo.Train()
         print('# {}'.format(i+1))
         ppo.log_file.write('# {}'.format(i+1) + "\n")
-        reward, step = ppo.Evaluate()
+        reward, step = ppo.Train()
+        # reward, step = ppo.Evaluate()
         rewards.append(reward)
         steps.append(step)
-        if i % 10 == 0 or max_avg_steps < step:
+        if i % 10 == 0 or max_avg_steps < step or max_avg_reward*1.05 < reward:
             ppo.SaveModel()
             if max_avg_steps < step:
                 max_avg_steps = step
+            if max_avg_reward * 1.05 < reward:
+                max_avg_reward = reward
 
         # Plot(np.asarray(rewards), 'reward', 1, False)
         print("Elapsed time : {:.2f}s".format(time.time() - tic))

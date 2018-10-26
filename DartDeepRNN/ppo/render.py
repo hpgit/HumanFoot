@@ -18,6 +18,8 @@ def main():
     ppo = PPO(env_name, 0, visualize_only=True)
     if not MOTION_ONLY:
         ppo.LoadModel('model/' + env_name + '.pt')
+        # ppo.LoadModel('walk_model_10240127/'+'181'+'.pt')
+    ppo.generate_rnn_motion()
     ppo.envs_send_rnn_motion()
     ppo.env.Resets(False)
     # ppo.replace_motion_num = ppo.rnn_len
@@ -39,10 +41,10 @@ def main():
         viewer.doc.addRenderer('contact', yr.VectorsRenderer(rd_contact_forces, rd_contact_positions, (255,0,0)))
         viewer.doc.addRenderer('CM_plane', yr.PointsRenderer(rd_com, (0, 0, 255)))
 
-    def preCallback(frame):
-        ppo.env.ref_motion.frame = frame
+    last_frame = [0]
 
     def simulateCallback(frame):
+        ppo.env.ref_motion.frame = frame - last_frame[0]
         del rd_target_position[:]
         del rd_com[:]
         rd_target_position.append(ppo.env.goals_in_world_frame[ppo.env.phase_frame])
@@ -53,10 +55,11 @@ def main():
         state = ppo.env.GetState(0)
         action_dist, _ = ppo.model(torch.tensor(state.reshape(1, -1)).float())
         action = action_dist.loc.detach().numpy()
-        res = ppo.env.Steps(np.zeros_like(action))
+        # res = ppo.env.Steps(np.zeros_like(action))
+        res = ppo.env.Steps(action)
         # res = ppo.env.Steps(action)
         # res = [False, False, False]
-        print(res[1])
+        # print(res[1])
 
         # res = ppo.env.Steps(np.zeros_like(action))
         # print(frame, ppo.env.ref_skel.current_frame, ppo.env.world.time()*ppo.env.ref_motion.fps)
@@ -66,6 +69,7 @@ def main():
         # print(ppo.env.goal)
         if res[2]:
             print(frame, 'Done')
+            last_frame[0] = frame
             ppo.generate_rnn_motion()
             ppo.envs_send_rnn_motion()
             ppo.env.reset()
@@ -78,7 +82,7 @@ def main():
             rd_contact_forces.append(contact.f/1000.)
             rd_contact_positions.append(contact.p)
 
-    viewer.setPreFrameCallback_Always(preCallback)
+    # viewer.setPreFrameCallback_Always(preCallback)
     viewer.setSimulateCallback(simulateCallback)
     viewer.setMaxFrame(3000)
     viewer.startTimer(1./30.)
