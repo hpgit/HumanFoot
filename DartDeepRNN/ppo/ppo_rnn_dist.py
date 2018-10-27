@@ -202,8 +202,10 @@ class PPO(object):
         self.lb = 0.95
         self.clip_ratio = 0.2
 
-        self.buffer_size = 2048
-        self.batch_size = 128
+        # self.buffer_size = 2048
+        # self.batch_size = 128
+        self.buffer_size = 16384
+        self.batch_size = 1024
         self.replay_buffer = ReplayBuffer(10000)
 
         self.total_episodes = []
