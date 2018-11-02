@@ -37,8 +37,8 @@ class Model(nn.Module):
         # hidden_layer_size2 = 32
 
         '''Policy Mean'''
-        self.policy_fc1_specifier = nn.Linear(1        , hidden_layer_size1//2)
-        self.policy_fc1_others = nn.Linear(num_states-1, hidden_layer_size1//2)
+        self.policy_fc1_specifier = nn.Linear(3        , hidden_layer_size1//2)
+        self.policy_fc1_others = nn.Linear(num_states-3, hidden_layer_size1//2)
         # self.policy_fc1 = nn.Linear(num_states, hidden_layer_size1)
         self.policy_fc2 = nn.Linear(hidden_layer_size1, hidden_layer_size2)
         self.policy_fc3 = nn.Linear(hidden_layer_size2, num_actions)
@@ -46,8 +46,8 @@ class Model(nn.Module):
         self.log_std = nn.Parameter(torch.zeros(num_actions))
 
         '''Value'''
-        self.value_fc1_specifier = nn.Linear(1        , hidden_layer_size1//2)
-        self.value_fc1_others = nn.Linear(num_states-1, hidden_layer_size1//2)
+        self.value_fc1_specifier = nn.Linear(3        , hidden_layer_size1//2)
+        self.value_fc1_others = nn.Linear(num_states-3, hidden_layer_size1//2)
         # self.value_fc1 = nn.Linear(num_states, hidden_layer_size1)
         self.value_fc2 = nn.Linear(hidden_layer_size1 ,hidden_layer_size2)
         self.value_fc3 = nn.Linear(hidden_layer_size2 ,1)
@@ -90,8 +90,8 @@ class Model(nn.Module):
         torch.nn.init.xavier_uniform_(self.value_fc3.weight)
 
     def forward(self, _x):
-        x_specifier = torch.tensor(list(_x[i][:1] for i in range(len(_x)))).float()
-        x_others = torch.tensor(list(_x[i][1:] for i in range(len(_x)))).float()
+        x_specifier = torch.tensor(list(_x[i][:3] for i in range(len(_x)))).float()
+        x_others = torch.tensor(list(_x[i][3:] for i in range(len(_x)))).float()
         # x = torch.tensor(_x).float()
         '''Policy'''
         p_mean = torch.cat((F.relu(self.policy_fc1_specifier(x_specifier)), F.relu(self.policy_fc1_others(x_others))), dim=1)
@@ -196,8 +196,8 @@ class PPO_MULTI(object):
         self.lb = 0.95
         self.clip_ratio = 0.2
 
-        self.buffer_size = 2048
-        self.batch_size = 128
+        self.buffer_size = 4096
+        self.batch_size = 256
         self.replay_buffer = ReplayBuffer(10000)
 
         self.total_episodes = []
@@ -205,6 +205,9 @@ class PPO_MULTI(object):
         self.model = Model(self.num_state, self.num_action).float()
         self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
         self.w_entropy = 0.0
+
+        self.sum_return = 0.
+        self.num_episode = 0
 
         self.saved = False
         self.save_directory = self.env_name + '_' + 'model_'+time.strftime("%m%d%H%M") + '/'
@@ -292,6 +295,7 @@ class PPO_MULTI(object):
 
     def ComputeTDandGAE(self):
         self.replay_buffer.clear()
+        self.sum_return = 0.
         for epi in self.total_episodes:
             data = epi.get_data()
             size = len(data)
@@ -302,6 +306,7 @@ class PPO_MULTI(object):
             ad_t = 0
 
             for i in reversed(range(len(data))):
+                self.sum_return += rewards[i]
                 delta = rewards[i] + values[i + 1] * self.gamma - values[i]
                 ad_t = delta + self.gamma * self.lb * ad_t
                 advantages[i] = ad_t
@@ -309,6 +314,7 @@ class PPO_MULTI(object):
             TD = values[:size] + advantages
             for i in range(size):
                 self.replay_buffer.push(states[i], actions[i], logprobs[i], TD[i], advantages[i])
+        self.num_episode = len(self.total_episodes)
 
     def GenerateTransitions(self):
         del self.total_episodes[:]
@@ -422,54 +428,9 @@ class PPO_MULTI(object):
 
     def Evaluate(self):
         self.num_evaluation += 1
-        total_reward = 0
-        total_step = 0
-        rewards = [0.] * len(self.env.ref_motions)
-        steps = [0] * len(self.env.ref_motions)
-        for motion_idx in range(self.motion_num):
-            self.env.specify_motion_num(motion_idx)
-            self.env.Reset(False, 0)
-            states = self.env.GetStates()
-            for j in range(len(states)):
-                if np.any(np.isnan(states[j])):
-                    self.print("state warning!!!!!!!! start")
-
-            for t in count():
-                action_dist, _ = self.model(states)
-                actions = action_dist.loc.detach().numpy()
-                for j in range(len(actions)):
-                    if np.any(np.isnan(actions[j])):
-                        self.print("action warning!!!!!!!!" + str(t))
-
-                self.env.Steps(actions)
-
-                for j in range(len(states)):
-                    if np.any(np.isnan(states[j])):
-                        self.print("state warning!!!!!!!!"+str(t))
-
-                for j in range(self.num_slaves):
-                    if self.env.IsTerminalState(j) is False:
-                        # total_step += 1
-                        # total_reward += self.env.GetReward(j)
-                        steps[motion_idx] += 1
-                        rewards[motion_idx] += self.env.GetReward(j)
-                states = self.env.GetStates()
-                if all(self.env.IsTerminalStates()):
-                    break
-            self.env.specify_motion_num()
-        total_step = sum(steps)
-        total_reward = sum(rewards)
         self.print('noise : {:.3f}'.format(self.model.log_std.exp().mean()))
-        if total_step is not 0:
-            # self.print('Epi reward : {:.2f}, Step reward : {:.2f} Total step : {}'
-            #      .format(total_reward / self.num_slaves, total_reward / total_step, total_step))
-            for motion_idx in range(len(self.env.ref_motions)):
-                self.print('Motion {} Epi reward : {:.2f}, Step reward : {:.2f} Total step : {}'
-                  .format(motion_idx, rewards[motion_idx] / self.num_slaves, rewards[motion_idx] / steps[motion_idx], steps[motion_idx]))
-                
-        else:
-            self.print('bad..')
-        return total_reward / self.num_slaves, total_step / self.num_slaves
+        self.print('Avg return : {:.2f}'.format(self.sum_return / self.num_episode))
+        return self.sum_return/self.num_episode, 0
 
     def print(self, s):
         if self.eval_print:
@@ -502,7 +463,7 @@ if __name__ == "__main__":
     tic = time.time()
     ppo = None  # type: PPO_MULTI
     if len(sys.argv) < 2:
-        ppo = PPO_MULTI('multi', 1)
+        ppo = PPO_MULTI('multi', 4)
     else:
         ppo = PPO_MULTI(sys.argv[1], 1)
 

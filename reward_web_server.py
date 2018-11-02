@@ -87,7 +87,6 @@ class myHandler(BaseHTTPRequestHandler):
 <body><br><br>\
 <a href="'+str(self.path).split('/')[-1][:-5].encode()+b'/param.pt">pt_file</a><br><br>\
 <img src="'+str(self.path).split('/')[-1][:-5].encode()+b'/reward.png"/><br><br>\
-<img src="'+str(self.path).split('/')[-1][:-5].encode()+b'/step.png"/>\
 <img src="'+str(self.path).split('/')[-1][:-5].encode()+b'/noise.png"/>\
 </body>\
 </html>'
@@ -95,7 +94,7 @@ class myHandler(BaseHTTPRequestHandler):
 
         elif self.path.endswith('reward.png'):
             values = self.generate_reward_png(self.path[1:-11]+'/log.txt')
-            output = plot(np.asarray(values), 'reward', 1, False)
+            output = plot(np.asarray(values), 'avg return', 1, False)
             self.wfile.write(output.getvalue())
             output.close()
 

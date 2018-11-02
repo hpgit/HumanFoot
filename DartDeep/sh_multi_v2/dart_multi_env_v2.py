@@ -46,11 +46,18 @@ class HpDartMultiEnv(gym.Env):
         self.specified_motion_num = 0
         self.is_motion_specified = False
 
+        # self.w_g = 0.3
+        # self.w_p = 0.65 * .7
+        # self.w_v = 0.1 * .7
+        # self.w_e = 0.15 * .7
+        # self.w_c = 0.1 * .7
+
         self.w_p = 0.65
         self.w_v = 0.1
         self.w_e = 0.15
         self.w_c = 0.1
 
+        self.exp_g = 2.5
         self.exp_p = 2.
         self.exp_v = 0.1
         self.exp_e = 40.
@@ -61,11 +68,9 @@ class HpDartMultiEnv(gym.Env):
                       self.skel.bodynode_index('LeftForeArm'), self.skel.bodynode_index('RightForeArm')]
         self.body_e = list(map(self.skel.body, self.idx_e))
         self.ref_body_e = list(map(self.ref_skel.body, self.idx_e))
-        self.motion_time = len(self.ref_motion) / self.ref_motion.fps
+        self.motion_len = len(self.ref_motion)
 
-        self.time_offset = 0.
-
-        state_num = 2 + (3*3 + 4) * self.body_num
+        state_num = 3 + (3*3 + 4) * self.body_num
         # action_num = self.skel.num_dofs() - 6
         action_num = self.skel.num_dofs()
 
@@ -77,13 +82,24 @@ class HpDartMultiEnv(gym.Env):
 
         self.viewer = None
 
+        self.phase_frame = 0
+
+        self.goals_in_world_frame = list()
+        self.goal = np.zeros(2)
+
+        self.prev_ref_q = np.zeros(self.ref_skel.num_dofs())
+        self.prev_ref_dq = np.zeros(self.ref_skel.num_dofs())
+        self.prev_ref_p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
+        self.prev_ref_com = self.ref_skel.com()
+        self.prev_goal = np.zeros(2)
+
     def state(self):
         pelvis = self.skel.body(0)
         p_pelvis = pelvis.world_transform()[:3, 3]
         R_pelvis = pelvis.world_transform()[:3, :3]
 
-        phase = min(1., (self.world.time() + self.time_offset)/self.motion_time)
-        state = [0. if len(self.ref_motions) == 1 else self.specified_motion_num/(len(self.ref_motions)-1), phase]
+        state = [0. if len(self.ref_motions) == 1 else self.specified_motion_num/(len(self.ref_motions)-1)]
+        state.extend([self.goal[0], self.goal[1]])
 
         p = np.array([np.dot(R_pelvis.T, body.to_world() - p_pelvis) for body in self.skel.bodynodes]).flatten()
         R = np.array([mm.rot2quat(np.dot(R_pelvis.T, body.world_transform()[:3, :3])) for body in self.skel.bodynodes]).flatten()
@@ -102,27 +118,17 @@ class HpDartMultiEnv(gym.Env):
         return np.asarray(state).flatten()
 
     def reward(self):
-        # current_frame = min(len(self.ref_motion)-1, int((self.world.time() + self.time_offset) * self.ref_motion.fps))
-        current_time = self.world.time() + self.time_offset
-        self.ref_skel.set_positions(self.ref_motion.get_q_by_time(current_time))
-        self.ref_skel.set_velocities(self.ref_motion.get_dq_dart_by_time(current_time))
-
-        p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
         p_e = np.asarray([body.world_transform()[:3, 3] for body in self.body_e]).flatten()
 
-        q_diff = np.asarray(self.skel.position_differences(self.ref_skel.q, self.skel.q))
-        dq_diff = np.asarray(self.skel.velocity_differences(self.ref_skel.dq, self.skel.dq))
+        q_diff = np.asarray(self.skel.position_differences(self.prev_ref_q, self.skel.q))
+        dq_diff = np.asarray(self.skel.velocity_differences(self.prev_ref_dq, self.skel.dq))
 
-        q_reward = exp_reward_term(self.w_p, self.exp_p, q_diff)
-        dq_reward = exp_reward_term(self.w_v, self.exp_v, dq_diff)
-        ee_reward = exp_reward_term(self.w_e, self.exp_e, p_e - p_e_hat)
-        com_reward = exp_reward_term(self.w_c, self.exp_c, self.skel.com() - self.ref_skel.com())
-
+        q_reward = exp_reward_term(self.w_p, self.exp_p, np.concatenate((q_diff[:3], q_diff[6:])))
+        dq_reward = exp_reward_term(self.w_v, self.exp_v, np.concatenate((dq_diff[:3], dq_diff[6:])))
+        ee_reward = exp_reward_term(self.w_e, self.exp_e, p_e - self.prev_ref_p_e_hat)
+        com_reward = exp_reward_term(self.w_c, self.exp_c, self.skel.com() - self.prev_ref_com)
+        # goal_reward = exp_reward_term(self.w_g, self.exp_g, self.prev_goal)
         reward = q_reward + dq_reward + ee_reward + com_reward
-        print('q_reward: ', q_reward)
-        print('dq_reward: ', dq_reward)
-        print('ee_reward: ', ee_reward)
-        print('com_reward: ', com_reward)
 
         return reward * self.reward_weights_by_fps[self.specified_motion_num]
 
@@ -131,7 +137,7 @@ class HpDartMultiEnv(gym.Env):
             return True
         elif True in np.isnan(np.asarray(self.skel.q)) or True in np.isnan(np.asarray(self.skel.dq)):
             return True
-        elif self.world.time() + self.time_offset > self.motion_time:
+        elif self.phase_frame == self.motion_len - 1:
             return True
         return False
 
@@ -149,16 +155,55 @@ class HpDartMultiEnv(gym.Env):
             info (dict): Contains auxiliary diagnostic information (helpful for debugging, and sometimes learning).
         """
         # action = np.hstack((np.zeros(6), _action/10.))
-        action = _action/10.
+        action = np.asarray(self.skel.q) + _action/10.
 
-        next_frame_time = self.world.time() + self.time_offset + self.world.time_step() * self.step_per_frame
-        self.ref_skel.set_positions(self.ref_motion.get_q_by_time(next_frame_time))
-        self.ref_skel.set_velocities(self.ref_motion.get_dq_dart_by_time(next_frame_time))
         for i in range(self.step_per_frame):
             self.skel.set_forces(self.skel.get_spd(action, self.world.time_step(), self.Kp, self.Kd))
             # self.skel.set_forces(self.pdc.compute_flat(action))
             self.world.step()
+
+        self.phase_frame += 1
+        self.update_ref_skel()
+        self.update_goal_in_local_frame()
+
+        # now
+        # state:
+        # simul[phase_frame-1] : 'current' char pose
+        # goal[phase_frame] : 'current' goal
+        # motion[phase_frame] : 'next' motion pose
+
+        # reward:
+        # similarity btw current char pose and (previous goal, and current motion pose)
+
         return tuple([self.state(), self.reward(), self.is_done(), dict()])
+
+    def get_goal_in_world_frame(self, frame):
+        q = self.ref_motion.get_q(frame+30 if frame + 30 < self.motion_len-1 else self.motion_len-1)
+        return np.array([q[3], 0., q[5]])
+
+    def update_goal_in_local_frame(self):
+        self.prev_goal = self.goal.copy()
+        body_transform = self.skel.body(0).world_transform()
+        goal_vector_in_world_frame = self.get_goal_in_world_frame(self.phase_frame) - body_transform[:3, 3]
+        goal_vector_in_world_frame[1] = 0.
+        radius = mm.length(goal_vector_in_world_frame)
+        unit_goal_vector_in_world_frame = mm.normalize(goal_vector_in_world_frame)
+        root_x_in_world_plane = body_transform[:3, 0]
+        root_x_in_world_plane[1] = 0.
+        unit_root_x_in_world_plane = mm.seq2Vec3(mm.normalize(root_x_in_world_plane))
+        unit_root_z_in_world_plane = mm.cross(unit_root_x_in_world_plane, mm.unitY())
+        # angle = atan2(np.dot(unit_root_x_in_world_plane, unit_goal_vector_in_world_frame), np.dot(unit_root_z_in_world_plane, unit_goal_vector_in_world_frame))
+
+        self.goal = radius * np.array([np.dot(unit_root_x_in_world_plane, unit_goal_vector_in_world_frame), np.dot(unit_root_z_in_world_plane, unit_goal_vector_in_world_frame)])
+
+    def update_ref_skel(self):
+        self.prev_ref_q = self.ref_skel.positions()
+        self.prev_ref_dq = self.ref_skel.velocities()
+        self.prev_ref_p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
+        self.prev_ref_com = self.ref_skel.com()
+
+        self.ref_skel.set_positions(self.ref_motion.get_q(self.phase_frame))
+        self.ref_skel.set_velocities(self.ref_motion.get_dq_dart(self.phase_frame))
 
     def reset(self):
         """
@@ -174,17 +219,17 @@ class HpDartMultiEnv(gym.Env):
 
         self.ref_motion = self.ref_motions[self.specified_motion_num]
         self.step_per_frame = round((1./self.world.time_step()) / self.ref_motion.fps)
-        self.motion_time = len(self.ref_motion) / self.ref_motion.fps
 
-        rand_frame = randrange(0, len(self.ref_motion) - 2) if self.rsi else 0
-        self.time_offset = rand_frame / self.ref_motion.fps
+        self.phase_frame = randrange(0, self.motion_len - 2) if self.rsi else 0
+        self.skel.set_positions(self.ref_motion.get_q(self.phase_frame))
+        self.skel.set_velocities(self.ref_motion.get_dq_dart(self.phase_frame))
 
-        self.skel.set_positions(self.ref_motion.get_q_by_time(self.time_offset))
-        dq = self.ref_motion.get_dq_dart_by_time(self.time_offset)
-        self.skel.set_velocities(dq)
+        self.ref_skel.set_positions(self.ref_motion.get_q(self.phase_frame))
+        self.ref_skel.set_velocities(self.ref_motion.get_dq_dart(self.phase_frame))
 
-        self.ref_skel.set_positions(self.ref_motion.get_q_by_time(self.time_offset))
-        self.ref_skel.set_velocities(dq)
+        self.phase_frame += 1
+        self.update_ref_skel()
+        self.update_goal_in_local_frame()
 
         return self.state()
 

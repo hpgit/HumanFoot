@@ -14,7 +14,7 @@ def main():
 
     env_name = 'multi'
 
-    ppo = PPO_MULTI(env_name, 1, visualize_only=True)
+    ppo = PPO_MULTI(env_name, 0, visualize_only=True)
     # if not MOTION_ONLY:
     #     ppo.LoadModel('model/' + env_name + '.pt')
     ppo.env.specify_motion_num(0)
@@ -39,6 +39,8 @@ def main():
         action_dist, _ = ppo.model(state.reshape(1, -1))
         action = action_dist.loc.detach().numpy()
         res = ppo.env.Steps(action)
+        if res[2]:
+            print(frame, 'Done')
 
         # contact rendering
         contacts = ppo.env.world.collision_result.contacts
