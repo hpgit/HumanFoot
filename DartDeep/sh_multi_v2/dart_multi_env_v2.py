@@ -5,6 +5,7 @@ from math import exp, pi
 from PyCommon.modules.Math import mmMath as mm
 from random import randrange
 import gym
+import gym.spaces
 from gym.utils import seeding
 
 import PyCommon.modules.Resource.ysMotionLoader as yf
