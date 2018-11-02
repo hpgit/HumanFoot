@@ -17,6 +17,7 @@ def plot(y,title,num_fig=1,ylim=True):
 
     plt.figure(num_fig)
     plt.clf()
+    plt.grid()
     plt.title(title)
     plt.plot(y)
     plt.ylim([0, max(y)*1.1])
