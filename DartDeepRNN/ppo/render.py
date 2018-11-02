@@ -17,11 +17,12 @@ def main():
 
     ppo = PPO(env_name, 0, visualize_only=True)
     if not MOTION_ONLY:
-        ppo.LoadModel('model/' + env_name + '.pt')
+        ppo.LoadModel('model/param.pt')
         # ppo.LoadModel('walk_model_10240127/'+'181'+'.pt')
     ppo.generate_rnn_motion()
     ppo.envs_send_rnn_motion()
     ppo.env.Resets(False)
+
     # ppo.replace_motion_num = ppo.rnn_len
     # ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(ppo.env.phase_frame))
 
@@ -42,6 +43,7 @@ def main():
         viewer.doc.addRenderer('CM_plane', yr.PointsRenderer(rd_com, (0, 0, 255)))
 
     last_frame = [0]
+    q = ppo.env.ref_skel.q
 
     def simulateCallback(frame):
         ppo.env.ref_motion.frame = frame - last_frame[0]
@@ -57,7 +59,6 @@ def main():
         action = action_dist.loc.detach().numpy()
         # res = ppo.env.Steps(np.zeros_like(action))
         res = ppo.env.Steps(action)
-        # res = ppo.env.Steps(action)
         # res = [False, False, False]
         # print(res[1])
 
@@ -84,6 +85,7 @@ def main():
 
     # viewer.setPreFrameCallback_Always(preCallback)
     viewer.setSimulateCallback(simulateCallback)
+
     viewer.setMaxFrame(3000)
     viewer.startTimer(1./30.)
     viewer.show()

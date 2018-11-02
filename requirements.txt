@@ -12,3 +12,4 @@ colorama
 cma
 six
 gym
+matplotlib
