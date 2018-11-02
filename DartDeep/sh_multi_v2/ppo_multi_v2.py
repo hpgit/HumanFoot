@@ -31,8 +31,8 @@ class Model(nn.Module):
     def __init__(self, num_states, num_actions):
         super(Model, self).__init__()
 
-        hidden_layer_size1 = 128
-        hidden_layer_size2 = 64
+        hidden_layer_size1 = 256
+        hidden_layer_size2 = 256
         # hidden_layer_size1 = 64
         # hidden_layer_size2 = 32
 
@@ -196,8 +196,8 @@ class PPO_MULTI(object):
         self.lb = 0.95
         self.clip_ratio = 0.2
 
-        self.buffer_size = 4096
-        self.batch_size = 256
+        self.buffer_size = 8192
+        self.batch_size = 512
         self.replay_buffer = ReplayBuffer(10000)
 
         self.total_episodes = []
@@ -465,11 +465,11 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         ppo = PPO_MULTI('multi', 4)
     else:
-        ppo = PPO_MULTI(sys.argv[1], 1)
+        ppo = PPO_MULTI(sys.argv[1], int(sys.argv[2]))
 
-    if len(sys.argv) > 2:
-        print("load {}".format(sys.argv[2]))
-        ppo.LoadModel(sys.argv[2])
+    if len(sys.argv) > 3:
+        print("load {}".format(sys.argv[3]))
+        ppo.LoadModel(sys.argv[3])
 
     # parser = argparse.ArgumentParser()
     # parser.add_argument('-m','--model',help='actor model directory')
