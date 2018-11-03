@@ -32,7 +32,8 @@ class HpDartMultiEnv(gym.Env):
         # self.ref_motions.append(yf.readBvhFile("../data/walk_left_90degree.bvh"))
         # self.ref_motions.append(yf.readBvhFile("../data/wd2_u-turn.bvh")[25:214])
         # self.ref_motions[-1].translateByOffset([0., 0.03, 0.])
-        # self.ref_motions.append(yf.readBvhFile("../data/wd2_WalkForwardVFast00.bvh"))
+        self.ref_motions.append(yf.readBvhFile("../data/wd2_WalkForwardVFast00.bvh"))
+        self.ref_motions.append(yf.readBvhFile("../data/wd2_WalkForwardSlow01.bvh"))
         self.motion_num = len(self.ref_motions)
         self.reward_weights_by_fps = [self.ref_motions[0].fps / self.ref_motions[i].fps for i in range(self.motion_num)]
 
@@ -165,7 +166,7 @@ class HpDartMultiEnv(gym.Env):
 
         self.phase_frame += 1
         self.update_ref_skel()
-        self.update_goal_in_local_frame()
+        self.update_goal_in_local_frame(self.get_goal_in_world_frame(self.phase_frame))
 
         # now
         # state:
@@ -178,14 +179,23 @@ class HpDartMultiEnv(gym.Env):
 
         return tuple([self.state(), self.reward(), self.is_done(), dict()])
 
+    def step_after_training(self, _action):
+        action = np.asarray(self.skel.q) + _action/10.
+
+        for i in range(self.step_per_frame):
+            self.skel.set_forces(self.skel.get_spd(action, self.world.time_step(), self.Kp, self.Kd))
+            self.world.step()
+
+        return tuple([self.state(), self.reward(), self.is_done(), dict()])
+
     def get_goal_in_world_frame(self, frame):
         q = self.ref_motion.get_q(frame+30 if frame + 30 < self.motion_len-1 else self.motion_len-1)
         return np.array([q[3], 0., q[5]])
 
-    def update_goal_in_local_frame(self):
+    def update_goal_in_local_frame(self, goal_in_world_frame):
         self.prev_goal = self.goal.copy()
         body_transform = self.skel.body(0).world_transform()
-        goal_vector_in_world_frame = self.get_goal_in_world_frame(self.phase_frame) - body_transform[:3, 3]
+        goal_vector_in_world_frame = goal_in_world_frame - body_transform[:3, 3]
         goal_vector_in_world_frame[1] = 0.
         radius = mm.length(goal_vector_in_world_frame)
         unit_goal_vector_in_world_frame = mm.normalize(goal_vector_in_world_frame)
@@ -230,7 +240,7 @@ class HpDartMultiEnv(gym.Env):
 
         self.phase_frame += 1
         self.update_ref_skel()
-        self.update_goal_in_local_frame()
+        self.update_goal_in_local_frame(self.get_goal_in_world_frame(self.phase_frame))
 
         return self.state()
 
