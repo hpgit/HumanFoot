@@ -198,7 +198,7 @@ class PPO_MULTI(object):
 
         self.buffer_size = 8192
         self.batch_size = 512
-        self.replay_buffer = ReplayBuffer(10000)
+        self.replay_buffer = ReplayBuffer(20000)
 
         self.total_episodes = []
 
