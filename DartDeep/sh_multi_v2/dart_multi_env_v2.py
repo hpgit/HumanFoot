@@ -230,6 +230,7 @@ class HpDartMultiEnv(gym.Env):
 
         self.ref_motion = self.ref_motions[self.specified_motion_num]
         self.step_per_frame = round((1./self.world.time_step()) / self.ref_motion.fps)
+        self.motion_len = len(self.ref_motion)
 
         self.phase_frame = randrange(0, self.motion_len - 2) if self.rsi else 0
         self.skel.set_positions(self.ref_motion.get_q(self.phase_frame))
