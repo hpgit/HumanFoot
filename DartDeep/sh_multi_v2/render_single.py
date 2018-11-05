@@ -9,7 +9,7 @@ import pydart2 as pydart
 
 
 def main():
-    MOTION_ONLY = True
+    MOTION_ONLY = False
 
     pydart.init()
 
@@ -18,9 +18,9 @@ def main():
     ppo = PPO_MULTI(env_name, 0, visualize_only=True)
     if not MOTION_ONLY:
         ppo.LoadModel('model/param.pt')
-    ppo.env.specify_motion_num(5)
+    ppo.env.specify_motion_num(0)
 
-    ppo.env.Resets(False)
+    ppo.env.Resets(True)
 
     # viewer settings
     rd_contact_positions = [None]
@@ -33,7 +33,7 @@ def main():
     viewer.doc.addRenderer('controlModel', yr.DartRenderer(dart_world, (255,240,255), yr.POLYGON_FILL))
     viewer.doc.addRenderer('contact', yr.VectorsRenderer(rd_contact_forces, rd_contact_positions, (255,0,0)))
 
-    viewer.setMaxFrame(len(ppo.env.ref_motion)-3)
+    viewer.setMaxFrame(3000)
     cameraTargets = [None] * (viewer.getMaxFrame()+1)
 
     def preCallback(frame):

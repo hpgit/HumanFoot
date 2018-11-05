@@ -12,6 +12,7 @@ import copy
 
 import PyCommon.modules.Resource.ysMotionLoader as yf
 from DartDeep.pd_controller import PDController
+from PyCommon.modules.dart.dart_ik import DartIk
 
 
 def exp_reward_term(w, exp_w, v):
@@ -26,6 +27,8 @@ class HpDartMultiEnv(gym.Env):
         self.skel = self.world.skeletons[1]
         self.pdc = PDController(self.skel, self.world.time_step(), 400., 40.)
         self.Kp, self.Kd = 400., 40.
+
+        self.ik = DartIk(self.skel)
 
         self.ref_motions = list()  # type: list[ym.Motion]
         self.ref_motions.append(yf.readBvhFile("../data/woody_walk_normal.bvh")[40:])
@@ -269,7 +272,17 @@ class HpDartMultiEnv(gym.Env):
         q = self.ref_motion.get_q(self.phase_frame)
         dq = self.ref_motion.get_dq_dart(self.phase_frame)
         q_noise = np.random.normal(q, 0.05*np.ones_like(q))
-        self.skel.set_positions(q_noise if self.rsi else q)
+        # self.skel.set_positions(q_noise if self.rsi else q)
+        self.skel.set_positions(q)
+
+        # self.ik.clean_constraints()
+        # self.world.check_collision()
+        # for collision in self.world.collision_result:
+        #     if collision.bodynode1.name == 'RightFoot' or collision.bodynode2.name == 'RightFoot':
+        #         self.ik.add_position_const('RightFoot',)
+        #         pass
+        # self.ik.solve()
+
         self.skel.set_velocities(dq)
 
         self.ref_skel.set_positions(q)
