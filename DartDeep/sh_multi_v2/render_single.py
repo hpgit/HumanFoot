@@ -18,7 +18,7 @@ def main():
     ppo = PPO_MULTI(env_name, 0, visualize_only=True)
     if not MOTION_ONLY:
         ppo.LoadModel('model/param.pt')
-    ppo.env.specify_motion_num(1)
+    ppo.env.specify_motion_num(5)
 
     ppo.env.Resets(False)
 
@@ -37,7 +37,12 @@ def main():
     cameraTargets = [None] * (viewer.getMaxFrame()+1)
 
     def preCallback(frame):
-        ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(frame))
+        # ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(frame))
+        q = ppo.env.ref_motion.get_q(frame)
+        q_noise = np.random.normal(q, 0.05*np.ones_like(q))
+        q_noise[3:6] = q[3:6]
+        # ppo.env.ref_skel.set_positions(q_noise)
+        ppo.env.ref_skel.set_positions(q)
 
     def simulateCallback(frame):
         state = ppo.env.GetState(0)

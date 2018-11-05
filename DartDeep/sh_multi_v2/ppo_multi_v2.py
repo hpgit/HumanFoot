@@ -28,29 +28,32 @@ MultiVariateNormal.mode = lambda self: self.mean
 
 
 class Model(nn.Module):
-    def __init__(self, num_states, num_actions):
+    def __init__(self, num_states, num_actions, num_goal_states):
         super(Model, self).__init__()
 
+        self.num_states = num_states
+        self.num_goal_states = num_goal_states
+        self.num_actions = num_actions
         hidden_layer_size1 = 256
-        hidden_layer_size2 = 256
-        # hidden_layer_size1 = 64
-        # hidden_layer_size2 = 32
+        hidden_layer_size2 = 128
+        hidden_layer_size3 = 128
 
         '''Policy Mean'''
-        self.policy_fc1_specifier = nn.Linear(3        , hidden_layer_size1//2)
-        self.policy_fc1_others = nn.Linear(num_states-3, hidden_layer_size1//2)
-        # self.policy_fc1 = nn.Linear(num_states, hidden_layer_size1)
+        self.policy_fc1_specifier = nn.Linear(num_goal_states, hidden_layer_size1//2)
+        self.policy_fc1_others = nn.Linear(num_states - num_goal_states, hidden_layer_size1//2)
         self.policy_fc2 = nn.Linear(hidden_layer_size1, hidden_layer_size2)
-        self.policy_fc3 = nn.Linear(hidden_layer_size2, num_actions)
+        self.policy_fc3 = nn.Linear(hidden_layer_size2, hidden_layer_size3)
+        self.policy_fc4 = nn.Linear(hidden_layer_size3, num_actions)
+
         '''Policy Distributions'''
         self.log_std = nn.Parameter(torch.zeros(num_actions))
 
         '''Value'''
-        self.value_fc1_specifier = nn.Linear(3        , hidden_layer_size1//2)
-        self.value_fc1_others = nn.Linear(num_states-3, hidden_layer_size1//2)
-        # self.value_fc1 = nn.Linear(num_states, hidden_layer_size1)
-        self.value_fc2 = nn.Linear(hidden_layer_size1 ,hidden_layer_size2)
-        self.value_fc3 = nn.Linear(hidden_layer_size2 ,1)
+        self.value_fc1_specifier = nn.Linear(num_goal_states, hidden_layer_size1//2)
+        self.value_fc1_others = nn.Linear(num_states - num_goal_states, hidden_layer_size1//2)
+        self.value_fc2 = nn.Linear(hidden_layer_size1, hidden_layer_size2)
+        self.value_fc3 = nn.Linear(hidden_layer_size2, hidden_layer_size3)
+        self.value_fc4 = nn.Linear(hidden_layer_size3, 1)
 
         self.initParameters()
 
@@ -60,51 +63,53 @@ class Model(nn.Module):
             self.policy_fc1_specifier.bias.data.zero_()
         if self.policy_fc1_others.bias is not None:
             self.policy_fc1_others.bias.data.zero_()
-        # if self.policy_fc1.bias is not None:
-        #     self.policy_fc1.bias.data.zero_()
         if self.policy_fc2.bias is not None:
             self.policy_fc2.bias.data.zero_()
         if self.policy_fc3.bias is not None:
             self.policy_fc3.bias.data.zero_()
+        if self.policy_fc4.bias is not None:
+            self.policy_fc4.bias.data.zero_()
 
         torch.nn.init.xavier_uniform_(self.policy_fc1_specifier.weight)
         torch.nn.init.xavier_uniform_(self.policy_fc1_others.weight)
-        # torch.nn.init.xavier_uniform_(self.policy_fc1.weight)
         torch.nn.init.xavier_uniform_(self.policy_fc2.weight)
         torch.nn.init.xavier_uniform_(self.policy_fc3.weight)
+        torch.nn.init.xavier_uniform_(self.policy_fc4.weight)
+
         '''Value'''
         if self.value_fc1_specifier.bias is not None:
             self.value_fc1_specifier.bias.data.zero_()
         if self.value_fc1_others.bias is not None:
             self.value_fc1_others.bias.data.zero_()
-        # if self.value_fc1.bias is not None:
-        #     self.value_fc1.bias.data.zero_()
         if self.value_fc2.bias is not None:
             self.value_fc2.bias.data.zero_()
         if self.value_fc3.bias is not None:
             self.value_fc3.bias.data.zero_()
+        if self.value_fc4.bias is not None:
+            self.value_fc4.bias.data.zero_()
         torch.nn.init.xavier_uniform_(self.value_fc1_specifier.weight)
         torch.nn.init.xavier_uniform_(self.value_fc1_others.weight)
-        # torch.nn.init.xavier_uniform_(self.value_fc1.weight)
         torch.nn.init.xavier_uniform_(self.value_fc2.weight)
         torch.nn.init.xavier_uniform_(self.value_fc3.weight)
+        torch.nn.init.xavier_uniform_(self.value_fc4.weight)
 
     def forward(self, _x):
-        x_specifier = torch.tensor(list(_x[i][:3] for i in range(len(_x)))).float()
-        x_others = torch.tensor(list(_x[i][3:] for i in range(len(_x)))).float()
-        # x = torch.tensor(_x).float()
+        x_specifier = torch.tensor(list(_x[i][:self.num_goal_states] for i in range(len(_x)))).float()
+        x_others = torch.tensor(list(_x[i][self.num_goal_states:] for i in range(len(_x)))).float()
+
         '''Policy'''
         p_mean = torch.cat((F.relu(self.policy_fc1_specifier(x_specifier)), F.relu(self.policy_fc1_others(x_others))), dim=1)
-        # p_mean = F.relu(self.policy_fc1(x))
         p_mean = F.relu(self.policy_fc2(p_mean))
-        p_mean = self.policy_fc3(p_mean)
+        p_mean = F.relu(self.policy_fc3(p_mean))
+        p_mean = self.policy_fc4(p_mean)
 
         p = MultiVariateNormal(p_mean, self.log_std.exp())
+
         '''Value'''
         v = torch.cat((F.relu(self.value_fc1_specifier(x_specifier)), F.relu(self.value_fc1_others(x_others))), dim=1)
-        # v = F.relu(self.value_fc1(x))
         v = F.relu(self.value_fc2(v))
-        v = self.value_fc3(v)
+        v = F.relu(self.value_fc3(v))
+        v = self.value_fc4(v)
 
         return p,v
 
@@ -202,7 +207,7 @@ class PPO_MULTI(object):
 
         self.total_episodes = []
 
-        self.model = Model(self.num_state, self.num_action).float()
+        self.model = Model(self.num_state, self.num_action, self.env.goal_window*3).float()
         self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
         self.w_entropy = 0.0
 
@@ -463,7 +468,7 @@ if __name__ == "__main__":
     tic = time.time()
     ppo = None  # type: PPO_MULTI
     if len(sys.argv) < 2:
-        ppo = PPO_MULTI('multi', 4)
+        ppo = PPO_MULTI('multi', 1)
     else:
         ppo = PPO_MULTI(sys.argv[1], int(sys.argv[2]))
 
