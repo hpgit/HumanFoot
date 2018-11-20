@@ -104,6 +104,20 @@ class HpDartMultiEnv(gym.Env):
         self.prev_ref_p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
         self.prev_ref_com = self.ref_skel.com()
 
+        # setting for reward
+        self.reward_joint = list()
+        self.reward_joint.append('j_RightUpLeg')
+        self.reward_joint.append('j_RightLeg')
+        self.reward_joint.append('j_LeftUpLeg')
+        self.reward_joint.append('j_LeftLeg')
+        self.reward_joint.append('j_Spine')
+        self.reward_joint.append('j_Spine1')
+        self.reward_joint.append('j_RightArm')
+        self.reward_joint.append('j_RightForeArm')
+        self.reward_joint.append('j_LeftArm')
+        self.reward_joint.append('j_LeftForeArm')
+
+
     def state(self):
         pelvis = self.skel.body(0)
         p_pelvis = pelvis.world_transform()[:3, 3]
@@ -158,8 +172,15 @@ class HpDartMultiEnv(gym.Env):
         q_diff = np.asarray(self.skel.position_differences(self.prev_ref_q, self.skel.q))
         dq_diff = np.asarray(self.skel.velocity_differences(self.prev_ref_dq, self.skel.dq))
 
-        q_reward = exp_reward_term(self.w_p, self.exp_p, np.concatenate((q_diff[:3], q_diff[6:])))
-        dq_reward = exp_reward_term(self.w_v, self.exp_v, np.concatenate((dq_diff[:3], dq_diff[6:])))
+        def get_joint_dof_range(joint):
+            return range(joint.dofs[0].index_in_skeleton(), joint.dofs[0].index_in_skeleton()+joint.num_dofs())
+
+        # q_reward = exp_reward_term(self.w_p, self.exp_p, np.concatenate((q_diff[:3], q_diff[6:])))
+        # dq_reward = exp_reward_term(self.w_v, self.exp_v, np.concatenate((dq_diff[:3], dq_diff[6:])))
+        q_reward = exp_reward_term(self.w_p, self.exp_p,
+                                   np.concatenate(list(q_diff[get_joint_dof_range(self.skel.joint(joint_name))] for joint_name in self.reward_joint)))
+        dq_reward = exp_reward_term(self.w_p, self.exp_p,
+                                   np.concatenate(list(dq_diff[get_joint_dof_range(self.skel.joint(joint_name))] for joint_name in self.reward_joint)))
         ee_reward = exp_reward_term(self.w_e, self.exp_e, p_e - self.prev_ref_p_e_hat)
         com_reward = exp_reward_term(self.w_c, self.exp_c, self.skel.com() - self.prev_ref_com)
         # goal_reward = exp_reward_term(self.w_g, self.exp_g, self.prev_goal)
@@ -223,8 +244,8 @@ class HpDartMultiEnv(gym.Env):
         return tuple([self.state(), self.reward(), self.is_done(), dict()])
 
     def get_goal_in_world_frame(self, frame):
-        q = self.ref_motion.get_q(frame+30 if frame + 30 < self.motion_len-1 else self.motion_len-1)
-        return np.array([q[3], 0., q[5]])
+        q = self.ref_motion.get_q(frame if frame < self.motion_len-1 else self.motion_len-1)
+        return np.array([q[3], q[4], q[5]])
 
     def update_goal_in_local_frame(self, goal_in_world_frame):
         body_transform = self.skel.body(0).world_transform()
@@ -241,6 +262,8 @@ class HpDartMultiEnv(gym.Env):
         self.goal = radius * np.array([np.dot(unit_root_x_in_world_plane, unit_goal_vector_in_world_frame), np.dot(unit_root_z_in_world_plane, unit_goal_vector_in_world_frame)])
 
     def update_goals_in_local_frame(self, goals_in_world_frame):
+        del self.goals_in_world_frame[:]
+        self.goals_in_world_frame.extend(goals_in_world_frame)
         self.goals = list(self.skel.body(0).to_local(goal_in_world_frame) for goal_in_world_frame in goals_in_world_frame)
 
     def update_ref_skel(self):
