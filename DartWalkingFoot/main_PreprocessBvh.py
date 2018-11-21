@@ -103,6 +103,8 @@ def preprocess(SEGMENT_FOOT=False):
     tasks = []
     
     outputDir = './ppmotion/'
+    if SEGMENT_FOOT:
+        outputDir = './ppmotion_segfoot/'
 
     dir = '../Data/woody2/Motion/Physics2/'
     config = None
@@ -323,5 +325,5 @@ def simulation_test():
 
 
 if __name__ == '__main__':
-   preprocess(SEGMENT_FOOT=False)
+   preprocess(SEGMENT_FOOT=True)
     # simulation_test()

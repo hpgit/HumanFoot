@@ -609,9 +609,9 @@ class DartRenderer(Renderer):
                 glTranslatef(-data[0]/2., -data[1]/2., -data[2]/2.)
                 self.rc.drawBox(data[0], data[1], data[2])
             elif geomType[0] == 'C':
-                glTranslatef(0., 0., -data[1]/2.)
-                self.rc.drawCylinder(data[0], data[1])
-                # self.rc.drawCapsule(data[0], data[1])
+                # glTranslatef(0., 0., -data[1]/2.)
+                # self.rc.drawCylinder(data[0], data[1])
+                self.rc.drawCapsule(data[0], data[1])
             elif geomType[0] == 'E':
                 glScalef(data[0]/2., data[1]/2., data[2]/2.)
                 self.rc.drawSphere(1.)

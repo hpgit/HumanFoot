@@ -90,7 +90,7 @@ class HpDartMultiEnv(gym.Env):
         action_num = self.skel.num_dofs()
 
         state_high = np.array([np.finfo(np.float32).max] * state_num)
-        action_high = np.array([pi*10./2.] * action_num)
+        action_high = np.array([pi*2.] * action_num)
 
         self.action_space = gym.spaces.Box(-action_high, action_high, dtype=np.float32)
         self.observation_space = gym.spaces.Box(-state_high, state_high, dtype=np.float32)
@@ -215,7 +215,7 @@ class HpDartMultiEnv(gym.Env):
 
         for i in range(self.step_per_frame):
             self.skel.set_forces(self.skel.get_spd(action, self.world.time_step(), self.Kp, self.Kd))
-            # self.skel.set_forces(self.pdc.compute_flat(action))
+            self.skel.set_forces(self.pdc.compute_flat(action))
             self.world.step()
 
         self.phase_frame += 1
@@ -235,7 +235,7 @@ class HpDartMultiEnv(gym.Env):
         return tuple([self.state(), self.reward(), self.is_done(), dict()])
 
     def step_after_training(self, _action):
-        action = np.asarray(self.skel.q) + _action/10.
+        action = np.asarray(self.skel.q) + _action/2.
 
         for i in range(self.step_per_frame):
             self.skel.set_forces(self.skel.get_spd(action, self.world.time_step(), self.Kp, self.Kd))

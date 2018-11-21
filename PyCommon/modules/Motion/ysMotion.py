@@ -1109,13 +1109,13 @@ class JointPosture(Posture):
 
     def updateGlobalT(self, fromIndex=None):
         if fromIndex is None:
-            # self._updateGlobalT(self.skeleton.root, mm.p2T(self.rootPos))
-            self._updateGlobalT(self.skeleton.root, mm.I_SE3())
+            self._updateGlobalT(self.skeleton.root, mm.p2T(self.rootPos))
+            # self._updateGlobalT(self.skeleton.root, mm.I_SE3())
         else:
             parent = self.skeleton.getParentIndex(fromIndex)
             if parent is None:
-                # self._updateGlobalT(self.skeleton.root, mm.p2T(self.rootPos))
-                self._updateGlobalT(self.skeleton.root, mm.I_SE3())
+                self._updateGlobalT(self.skeleton.root, mm.p2T(self.rootPos))
+                # self._updateGlobalT(self.skeleton.root, mm.I_SE3())
             else:
                 joint = self.skeleton.getElement(fromIndex)
                 self._updateGlobalT(joint, self.globalTs[parent])
@@ -1123,7 +1123,7 @@ class JointPosture(Posture):
     def _updateGlobalT(self, joint, parentT):
         index = self.skeleton.getElementIndex(joint.name)
         T = np.dot(parentT, mm.p2T(joint.offset))
-        T = np.dot(T, mm.p2T(self.local_ts[index]))
+        # T = np.dot(T, mm.p2T(self.local_ts[index]))
         T = np.dot(T, mm.R2T(self.localRs[index]))
         self.globalTs[index] = T
         for childJoint in joint.children:

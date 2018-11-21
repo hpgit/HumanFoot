@@ -18,7 +18,7 @@ def main():
     ppo = PPO_MULTI(env_name, 0, visualize_only=True)
     if not MOTION_ONLY:
         ppo.LoadModel('model/param.pt')
-    ppo.env.specify_motion_num(0)
+    ppo.env.specify_motion_num(5)
 
     ppo.env.Resets(False)
 
