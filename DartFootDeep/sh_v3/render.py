@@ -1,6 +1,6 @@
 from fltk import Fl
 import torch
-from DartFootDeep.sh_v2.ppo_v2 import PPO
+from DartFootDeep.sh_v3.ppo_v3 import PPO
 from PyCommon.modules.GUI import hpSimpleViewer as hsv
 from PyCommon.modules.Renderer import ysRenderer as yr
 import numpy as np
@@ -16,8 +16,8 @@ def main():
     env_name = 'walk'
 
     ppo = PPO(env_name, 0, visualize_only=True)
-    # if not MOTION_ONLY:
-    #     ppo.LoadModel('model/' + env_name + '.pt')
+    if not MOTION_ONLY:
+        ppo.LoadModel('model/' + env_name + '.pt')
 
     ppo.env.Resets(False)
     ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(ppo.env.phase_frame))

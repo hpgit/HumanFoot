@@ -215,7 +215,7 @@ class HpDartMultiEnv(gym.Env):
 
         for i in range(self.step_per_frame):
             self.skel.set_forces(self.skel.get_spd(action, self.world.time_step(), self.Kp, self.Kd))
-            self.skel.set_forces(self.pdc.compute_flat(action))
+            # self.skel.set_forces(self.pdc.compute_flat(action))
             self.world.step()
 
         self.phase_frame += 1

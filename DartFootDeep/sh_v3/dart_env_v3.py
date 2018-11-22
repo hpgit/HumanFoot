@@ -10,6 +10,10 @@ from gym.utils import seeding
 
 import PyCommon.modules.Resource.ysMotionLoader as yf
 
+from itertools import count
+import torch
+from DartFootDeep.sh_v3.TorchNN import Model, Episode, EpisodeBuffer, Transition, ReplayBuffer
+
 
 def exp_reward_term(w, exp_w, v):
     norm = np.linalg.norm(v)
@@ -25,7 +29,7 @@ class HpDartEnv(gym.Env):
         self.world = pydart.World(1./1200., "../data/test.xml")
         self.world.control_skel = self.world.skeletons[1]
         self.skel = self.world.skeletons[1]
-        self.Kp, self.Kd = 400., 40.
+        self.Kp, self.Kd = 800., 40.
 
         self.env_name = env_name
 
@@ -138,6 +142,10 @@ class HpDartEnv(gym.Env):
 
         self.action_space = gym.spaces.Box(-action_high, action_high, dtype=np.float32)
         self.observation_space = gym.spaces.Box(-state_high, state_high, dtype=np.float32)
+
+        # internal Model (read only)
+        self.model = Model(state_num, action_num).float()
+        self.episode = []  # type: list[Episode]
 
     def state(self):
         pelvis = self.skel.body(0)
@@ -260,6 +268,24 @@ class HpDartEnv(gym.Env):
 
         return self.state()
 
+    def run_edisode(self):
+        del self.episode[:]
+        states = [self.reset()]
+        for _ in count():
+            a_dist, v = self.model(torch.tensor(states).float())
+            actions = a_dist.sample().detach().numpy()
+            logprobs = a_dist.log_prob(torch.tensor(actions).float()).detach().numpy().reshape(-1)
+            values = v.detach().numpy().reshape(-1)
+
+            state, reward, is_done, info_dict = self.step(actions[0])
+
+            self.episode.append(Episode(state, actions[0], reward, values[0], logprobs[0]))
+
+            if is_done:
+                break
+            else:
+                states = [state]
+
     def render(self, mode='human', close=False):
         """Renders the environment.
         The set of supported modes varies per environment. (And some
@@ -269,35 +295,7 @@ class HpDartEnv(gym.Env):
             mode (str): The mode to render with.
             close (bool): Close all open renderings.
         """
-        if self.viewer is None:
-            from gym.envs.classic_control import rendering
-            self.viewer = rendering.Viewer(500,500)
-            self.viewer.set_bounds(-2.2, 2.2, -2.2, 2.2)
-            # rod = rendering.make_capsule(1, .2)
-            # rod.set_color(.8, .3, .3)
-            # rod.add_attr(self.pole_transform)
-            # self.viewer.add_geom(rod)
-            self.body_transform = list()
-            self.ref_body_transform = list()
-            for i in range(self.body_num):
-                axle = rendering.make_circle(.05)
-                axle.set_color(0, 0, 0)
-                self.body_transform.append(rendering.Transform())
-                axle.add_attr(self.body_transform[i])
-                self.viewer.add_geom(axle)
-
-            for i in range(self.body_num):
-                axle = rendering.make_circle(.05)
-                axle.set_color(1, 0, 0)
-                self.ref_body_transform.append(rendering.Transform())
-                axle.add_attr(self.ref_body_transform[i])
-                self.viewer.add_geom(axle)
-
-        for i in range(self.body_num):
-            self.body_transform[i].set_translation(self.skel.body(i).world_transform()[:3, 3][0]-1., self.skel.body(i).world_transform()[:3, 3][1])
-            self.ref_body_transform[i].set_translation(self.ref_skel.body(i).world_transform()[:3, 3][0]-1., self.ref_skel.body(i).world_transform()[:3, 3][1])
-
-        return self.viewer.render(return_rgb_array = mode=='rgb_array')
+        return None
 
     def close(self):
         """Override in your subclass to perform any necessary cleanup.
