@@ -1,0 +1,1010 @@
+<?xml version="1.0" ?>
+<skel version="1.0">
+<world name="world 1">
+    <physics>
+        <time_step>0.001</time_step>
+        <gravity>0 -9.81 0</gravity>
+        <collision_detector>fcl_mesh</collision_detector>
+    </physics>
+    <!--<skeleton name="grount skeleton">-->
+        <!--<mobile>false</mobile>-->
+        <!--<body name="ground">-->
+            <!--<transformation>0 -0.025 0 0 0 0</transformation>-->
+            <!--<visualization_shape name=" - visual - 0">-->
+                <!--<transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>-->
+                <!--<geometry>-->
+                    <!--<box>-->
+                        <!--<size>10000.0 0.05 10000.0</size>-->
+                    <!--</box>-->
+                <!--</geometry>-->
+            <!--</visualization_shape>-->
+            <!--<collision_shape name=" - collision - 0">-->
+                <!--<transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>-->
+                <!--<geometry>-->
+                    <!--<box>-->
+                        <!--<size>100.0 0.05 100.0</size>-->
+                    <!--</box>-->
+                <!--</geometry>-->
+            <!--</collision_shape>-->
+        <!--</body>-->
+        <!--<joint name="joint 1" type="free">-->
+            <!--<parent>world</parent>-->
+            <!--<child>ground</child>-->
+        <!--</joint>-->
+    <!--</skeleton>-->
+    <skeleton name="dartModel">
+        <body name="Hips">
+            <transformation>0. 0. 0. 0. 0. 0.</transformation>
+            <inertia>
+                <mass>6.0</mass>
+                <offset>0. 0. 0.</offset>
+            </inertia>
+            <visualization_shape name="Hips - visual shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.25    0.18    0.13333</size>
+                    </box>
+                </geometry>
+            </visualization_shape>
+            <collision_shape name="Hips - collision shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.25    0.18    0.13333</size>
+                    </box>
+                </geometry>
+            </collision_shape>
+        </body>
+        <body name="RightUpLeg">
+            <transformation>-0.08934 -0.23301  0.01692  1.57508 -0.00027  0.     </transformation>
+            <inertia>
+                <mass>4.999999999999999</mass>
+                <offset>0. 0. 0.</offset>
+            </inertia>
+            <visualization_shape name="RightUpLeg - visual shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.11726 0.11726 0.36362</size>
+                    </box>
+                </geometry>
+            </visualization_shape>
+            <collision_shape name="RightUpLeg - collision shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.11726 0.11726 0.36362</size>
+                    </box>
+                </geometry>
+            </collision_shape>
+        </body>
+        <body name="RightLeg">
+            <transformation>-0.08197 -0.66512  0.00404  1.6221   0.05224  0.     </transformation>
+            <inertia>
+                <mass>5.0</mass>
+                <offset>0. 0. 0.</offset>
+            </inertia>
+            <visualization_shape name="RightLeg - visual shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.10977 0.10977 0.41495</size>
+                    </box>
+                </geometry>
+            </visualization_shape>
+            <collision_shape name="RightLeg - collision shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.10977 0.10977 0.41495</size>
+                    </box>
+                </geometry>
+            </collision_shape>
+        </body>
+        <body name="RightFoot">
+            <transformation>-0.08367 -0.92221  0.04402  0.47503 -0.16039 -0.     </transformation>
+            <inertia>
+                <mass>0.602437962811937</mass>
+                <offset> 0.00332 -0.00812 -0.0053 </offset>
+            </inertia>
+            <visualization_shape name="RightFoot - visual shape 0">
+                <transformation>-0.00376 -0.00005  0.02216 -0.0013   0.10086 -0.     </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.07461695517776104</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="RightFoot - visual shape 1">
+                <transformation>0.01197 0.00113 0.01879 0.04745 0.1526  0.     </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.07641786440355422</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="RightFoot - visual shape 2">
+                <transformation> 0.02853  0.00575  0.01349  0.17267  0.17079 -0.     </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.08294413782781758</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="RightFoot - visual shape 3">
+                <transformation>-0.00939 -0.03088 -0.02153 -0.75276 -0.34214 -0.     </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.06478360286368766</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="RightFoot - visual shape 4">
+                <transformation>-0.00352 -0.02634 -0.02921 -1.0657  -0.16223  0.     </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.060257130698366315</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="RightFoot - visual shape 5">
+                <transformation> 0.00332 -0.02482 -0.0312  -1.1506   0.11782  0.     </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.06096295432473725</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="RightFoot - visual shape 6">
+                <transformation> 0.011   -0.01987 -0.03511 -1.26838  0.40801 -0.     </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.07071889280807499</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+        </body>
+        <body name="RightFoot_foot_0_0">
+            <transformation>-0.10626 -0.93952  0.06662  0.31656 -0.1264  -0.     </transformation>
+            <inertia>
+                <mass>0.1706319163757519</mass>
+                <offset>-0.0015  -0.00075  0.00045</offset>
+            </inertia>
+            <visualization_shape name="RightFoot_foot_0_0 - visual shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.06235764107148377</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="RightFoot_foot_0_0 - visual shape 1">
+                <transformation>-0.01767 -0.00884  0.00524 -0.31562 -0.00658 -0.     </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.05927618240069109</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <collision_shape name="RightFoot_foot_0_0 - collision shape 0">
+                <transformation> 0.       0.      -0.03118  0.       0.       0.     </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="RightFoot_foot_0_0 - collision shape 1">
+                <transformation>-0.01747 -0.01804 -0.02294 -0.31562 -0.00658 -0.     </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+        </body>
+        <body name="RightFoot_foot_0_0_0">
+            <transformation>-0.11013 -0.9492   0.12225  0.       0.      -0.     </transformation>
+            <inertia>
+                <mass>0.16929414491664677</mass>
+                <offset>-0.00152  0.       0.     </offset>
+            </inertia>
+            <visualization_shape name="RightFoot_foot_0_0_0 - visual shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.052500000000000005</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="RightFoot_foot_0_0_0 - visual shape 1">
+                <transformation>-0.018  0.     0.     0.     0.     0.   </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.052500000000000005</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <collision_shape name="RightFoot_foot_0_0_0 - collision shape 0">
+                <transformation>0.      0.      0.02625 0.      0.      0.     </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="RightFoot_foot_0_0_0 - collision shape 1">
+                <transformation> 0.       0.      -0.02625  0.       0.       0.     </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="RightFoot_foot_0_0_0 - collision shape 2">
+                <transformation>-0.018    0.       0.02625  0.       0.       0.     </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="RightFoot_foot_0_0_0 - collision shape 3">
+                <transformation>-0.018    0.      -0.02625  0.       0.       0.     </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+        </body>
+        <body name="RightFoot_foot_0_1_0">
+            <transformation>-0.09279 -0.9492   0.131    0.       0.      -0.     </transformation>
+            <inertia>
+                <mass>0.25816351790139486</mass>
+                <offset>0.00465 0.      0.     </offset>
+            </inertia>
+            <visualization_shape name="RightFoot_foot_0_1_0 - visual shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.07</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="RightFoot_foot_0_1_0 - visual shape 1">
+                <transformation>0.018 0.    0.    0.    0.    0.   </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.07</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="RightFoot_foot_0_1_0 - visual shape 2">
+                <transformation>0.036 0.    0.    0.    0.    0.   </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.07</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <collision_shape name="RightFoot_foot_0_1_0 - collision shape 0">
+                <transformation>0.    0.    0.035 0.    0.    0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="RightFoot_foot_0_1_0 - collision shape 1">
+                <transformation> 0.     0.    -0.035  0.     0.     0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="RightFoot_foot_0_1_0 - collision shape 2">
+                <transformation>0.018 0.    0.035 0.    0.    0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="RightFoot_foot_0_1_0 - collision shape 3">
+                <transformation> 0.018  0.    -0.035  0.     0.     0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="RightFoot_foot_0_1_0 - collision shape 4">
+                <transformation>0.036 0.    0.035 0.    0.    0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="RightFoot_foot_0_1_0 - collision shape 5">
+                <transformation> 0.036  0.    -0.035  0.     0.     0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+        </body>
+        <body name="RightFoot_foot_1_0">
+            <transformation>-0.07456 -0.9492  -0.03597  0.       3.14159  0.     </transformation>
+            <inertia>
+                <mass>0.1666401274428941</mass>
+                <offset>0. 0. 0.</offset>
+            </inertia>
+            <visualization_shape name="RightFoot_foot_1_0 - visual shape 0">
+                <transformation>-0.009  0.     0.     0.     0.     0.   </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.036000000000000004</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="RightFoot_foot_1_0 - visual shape 1">
+                <transformation>0.009 0.    0.    0.    0.    0.   </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.036000000000000004</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <collision_shape name="RightFoot_foot_1_0 - collision shape 0">
+                <transformation>-0.009  0.     0.018  0.     0.     0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="RightFoot_foot_1_0 - collision shape 1">
+                <transformation>-0.009  0.    -0.018  0.     0.     0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="RightFoot_foot_1_0 - collision shape 2">
+                <transformation>0.009 0.    0.018 0.    0.    0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="RightFoot_foot_1_0 - collision shape 3">
+                <transformation> 0.009  0.    -0.018  0.     0.     0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+        </body>
+        <body name="Spine">
+            <transformation> 0.       0.24719  0.00064 -1.56582  0.       0.     </transformation>
+            <inertia>
+                <mass>8.0</mass>
+                <offset>0. 0. 0.</offset>
+            </inertia>
+            <visualization_shape name="Spine - visual shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.22    0.15747 0.23092</size>
+                    </box>
+                </geometry>
+            </visualization_shape>
+            <collision_shape name="Spine - collision shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.22    0.15747 0.23092</size>
+                    </box>
+                </geometry>
+            </collision_shape>
+        </body>
+        <body name="Spine1">
+            <transformation>-0.00309  0.49035  0.03037 -1.32235 -0.03558  0.     </transformation>
+            <inertia>
+                <mass>3.0</mass>
+                <offset>0. 0. 0.</offset>
+            </inertia>
+            <visualization_shape name="Spine1 - visual shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.1291 0.1291 0.18  </size>
+                    </box>
+                </geometry>
+            </visualization_shape>
+            <collision_shape name="Spine1 - collision shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.1291 0.1291 0.18  </size>
+                    </box>
+                </geometry>
+            </collision_shape>
+        </body>
+        <body name="RightArm">
+            <transformation>-0.31955  0.32232 -0.00482 -0.00511 -1.61617  0.     </transformation>
+            <inertia>
+                <mass>2.0</mass>
+                <offset>0. 0. 0.</offset>
+            </inertia>
+            <visualization_shape name="RightArm - visual shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.08413 0.08413 0.28257</size>
+                    </box>
+                </geometry>
+            </visualization_shape>
+            <collision_shape name="RightArm - collision shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.08413 0.08413 0.28257</size>
+                    </box>
+                </geometry>
+            </collision_shape>
+        </body>
+        <body name="RightForeArm">
+            <transformation>-0.61182  0.32324 -0.00683 -0.00483 -1.53308 -0.     </transformation>
+            <inertia>
+                <mass>1.0000000000000002</mass>
+                <offset>0. 0. 0.</offset>
+            </inertia>
+            <visualization_shape name="RightForeArm - visual shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.06402 0.06402 0.24399</size>
+                    </box>
+                </geometry>
+            </visualization_shape>
+            <collision_shape name="RightForeArm - collision shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.06402 0.06402 0.24399</size>
+                    </box>
+                </geometry>
+            </collision_shape>
+        </body>
+        <body name="LeftArm">
+            <transformation> 0.31955  0.32232 -0.00482 -0.00511  1.61617  0.     </transformation>
+            <inertia>
+                <mass>2.0</mass>
+                <offset>0. 0. 0.</offset>
+            </inertia>
+            <visualization_shape name="LeftArm - visual shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.08413 0.08413 0.28257</size>
+                    </box>
+                </geometry>
+            </visualization_shape>
+            <collision_shape name="LeftArm - collision shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.08413 0.08413 0.28257</size>
+                    </box>
+                </geometry>
+            </collision_shape>
+        </body>
+        <body name="LeftForeArm">
+            <transformation> 0.61182  0.32324 -0.00683 -0.00483  1.53308  0.     </transformation>
+            <inertia>
+                <mass>1.0000000000000002</mass>
+                <offset>0. 0. 0.</offset>
+            </inertia>
+            <visualization_shape name="LeftForeArm - visual shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.06402 0.06402 0.24399</size>
+                    </box>
+                </geometry>
+            </visualization_shape>
+            <collision_shape name="LeftForeArm - collision shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.06402 0.06402 0.24399</size>
+                    </box>
+                </geometry>
+            </collision_shape>
+        </body>
+        <body name="LeftUpLeg">
+            <transformation> 0.08934 -0.23301  0.01692  1.57508  0.00027  0.     </transformation>
+            <inertia>
+                <mass>4.999999999999999</mass>
+                <offset>0. 0. 0.</offset>
+            </inertia>
+            <visualization_shape name="LeftUpLeg - visual shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.11726 0.11726 0.36362</size>
+                    </box>
+                </geometry>
+            </visualization_shape>
+            <collision_shape name="LeftUpLeg - collision shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.11726 0.11726 0.36362</size>
+                    </box>
+                </geometry>
+            </collision_shape>
+        </body>
+        <body name="LeftLeg">
+            <transformation> 0.08197 -0.66512  0.00404  1.6221  -0.05224  0.     </transformation>
+            <inertia>
+                <mass>5.0</mass>
+                <offset>0. 0. 0.</offset>
+            </inertia>
+            <visualization_shape name="LeftLeg - visual shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.10977 0.10977 0.41495</size>
+                    </box>
+                </geometry>
+            </visualization_shape>
+            <collision_shape name="LeftLeg - collision shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <box>
+                        <size>0.10977 0.10977 0.41495</size>
+                    </box>
+                </geometry>
+            </collision_shape>
+        </body>
+        <body name="LeftFoot">
+            <transformation> 0.08367 -0.92221  0.04402  0.47503  0.16039  0.     </transformation>
+            <inertia>
+                <mass>0.602437962811937</mass>
+                <offset>-0.00332 -0.00812 -0.0053 </offset>
+            </inertia>
+            <visualization_shape name="LeftFoot - visual shape 0">
+                <transformation> 0.00376 -0.00005  0.02216 -0.0013  -0.10086  0.     </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.07461695517776104</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="LeftFoot - visual shape 1">
+                <transformation>-0.01197  0.00113  0.01879  0.04745 -0.1526  -0.     </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.07641786440355422</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="LeftFoot - visual shape 2">
+                <transformation>-0.02853  0.00575  0.01349  0.17267 -0.17079  0.     </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.08294413782781758</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="LeftFoot - visual shape 3">
+                <transformation> 0.00939 -0.03088 -0.02153 -0.75276  0.34214  0.     </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.06478360286368766</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="LeftFoot - visual shape 4">
+                <transformation> 0.00352 -0.02634 -0.02921 -1.0657   0.16223 -0.     </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.060257130698366315</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="LeftFoot - visual shape 5">
+                <transformation>-0.00332 -0.02482 -0.0312  -1.1506  -0.11782 -0.     </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.06096295432473725</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="LeftFoot - visual shape 6">
+                <transformation>-0.011   -0.01987 -0.03511 -1.26838 -0.40801  0.     </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.07071889280807499</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+        </body>
+        <body name="LeftFoot_foot_0_0">
+            <transformation> 0.10626 -0.93952  0.06662  0.31656  0.1264   0.     </transformation>
+            <inertia>
+                <mass>0.1706319163757519</mass>
+                <offset> 0.0015  -0.00075  0.00045</offset>
+            </inertia>
+            <visualization_shape name="LeftFoot_foot_0_0 - visual shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.06235764107148377</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="LeftFoot_foot_0_0 - visual shape 1">
+                <transformation> 0.01767 -0.00884  0.00524 -0.31562  0.00658  0.     </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.05927618240069109</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <collision_shape name="LeftFoot_foot_0_0 - collision shape 0">
+                <transformation> 0.       0.      -0.03118  0.       0.       0.     </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="LeftFoot_foot_0_0 - collision shape 1">
+                <transformation> 0.01747 -0.01804 -0.02294 -0.31562  0.00658  0.     </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+        </body>
+        <body name="LeftFoot_foot_0_0_0">
+            <transformation> 0.11013 -0.9492   0.12225  0.       0.       0.     </transformation>
+            <inertia>
+                <mass>0.16929414491664677</mass>
+                <offset>0.00152 0.      0.     </offset>
+            </inertia>
+            <visualization_shape name="LeftFoot_foot_0_0_0 - visual shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.052500000000000005</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="LeftFoot_foot_0_0_0 - visual shape 1">
+                <transformation>0.018 0.    0.    0.    0.    0.   </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.052500000000000005</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <collision_shape name="LeftFoot_foot_0_0_0 - collision shape 0">
+                <transformation>0.      0.      0.02625 0.      0.      0.     </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="LeftFoot_foot_0_0_0 - collision shape 1">
+                <transformation> 0.       0.      -0.02625  0.       0.       0.     </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="LeftFoot_foot_0_0_0 - collision shape 2">
+                <transformation>0.018   0.      0.02625 0.      0.      0.     </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="LeftFoot_foot_0_0_0 - collision shape 3">
+                <transformation> 0.018    0.      -0.02625  0.       0.       0.     </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+        </body>
+        <body name="LeftFoot_foot_0_1_0">
+            <transformation> 0.09279 -0.9492   0.131    0.       0.       0.     </transformation>
+            <inertia>
+                <mass>0.25816351790139486</mass>
+                <offset>-0.00465  0.       0.     </offset>
+            </inertia>
+            <visualization_shape name="LeftFoot_foot_0_1_0 - visual shape 0">
+                <transformation>0. 0. 0. 0. 0. 0.</transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.07</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="LeftFoot_foot_0_1_0 - visual shape 1">
+                <transformation>-0.018  0.     0.     0.     0.     0.   </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.07</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="LeftFoot_foot_0_1_0 - visual shape 2">
+                <transformation>-0.036  0.     0.     0.     0.     0.   </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.07</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <collision_shape name="LeftFoot_foot_0_1_0 - collision shape 0">
+                <transformation>0.    0.    0.035 0.    0.    0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="LeftFoot_foot_0_1_0 - collision shape 1">
+                <transformation> 0.     0.    -0.035  0.     0.     0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="LeftFoot_foot_0_1_0 - collision shape 2">
+                <transformation>-0.018  0.     0.035  0.     0.     0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="LeftFoot_foot_0_1_0 - collision shape 3">
+                <transformation>-0.018  0.    -0.035  0.     0.     0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="LeftFoot_foot_0_1_0 - collision shape 4">
+                <transformation>-0.036  0.     0.035  0.     0.     0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="LeftFoot_foot_0_1_0 - collision shape 5">
+                <transformation>-0.036  0.    -0.035  0.     0.     0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+        </body>
+        <body name="LeftFoot_foot_1_0">
+            <transformation> 0.07456 -0.9492  -0.03597  0.       3.14159  0.     </transformation>
+            <inertia>
+                <mass>0.1666401274428941</mass>
+                <offset>0. 0. 0.</offset>
+            </inertia>
+            <visualization_shape name="LeftFoot_foot_1_0 - visual shape 0">
+                <transformation>-0.009  0.     0.     0.     0.     0.   </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.036000000000000004</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape name="LeftFoot_foot_1_0 - visual shape 1">
+                <transformation>0.009 0.    0.    0.    0.    0.   </transformation>
+                <geometry>
+                    <capsule>
+                        <radius>0.008</radius>
+                        <height>0.036000000000000004</height>
+                    </capsule>
+                </geometry>
+            </visualization_shape>
+            <collision_shape name="LeftFoot_foot_1_0 - collision shape 0">
+                <transformation>-0.009  0.     0.018  0.     0.     0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="LeftFoot_foot_1_0 - collision shape 1">
+                <transformation>-0.009  0.    -0.018  0.     0.     0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="LeftFoot_foot_1_0 - collision shape 2">
+                <transformation>0.009 0.    0.018 0.    0.    0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+            <collision_shape name="LeftFoot_foot_1_0 - collision shape 3">
+                <transformation> 0.009  0.    -0.018  0.     0.     0.   </transformation>
+                <geometry>
+                    <sphere>
+                        <radius>0.008</radius>
+                    </sphere>
+                </geometry>
+            </collision_shape>
+        </body>
+        <joint name="j_Hips" type="free">
+            <transformation>-0. -0. -0.  0.  0.  0.</transformation>
+            <parent>world</parent>
+            <child>Hips</child>
+        </joint>
+        <joint name="j_RightUpLeg" type="ball">
+            <transformation> 0.       0.      -0.20201 -1.57508  0.00027  0.     </transformation>
+            <parent>Hips</parent>
+            <child>RightUpLeg</child>
+        </joint>
+        <joint name="j_RightLeg" type="ball">
+            <transformation>-0.       0.      -0.23053 -1.6221  -0.05224  0.     </transformation>
+            <parent>RightUpLeg</parent>
+            <child>RightLeg</child>
+        </joint>
+        <joint name="j_RightFoot" type="ball">
+            <transformation>-0.      -0.      -0.05928 -0.47503  0.16039  0.     </transformation>
+            <parent>RightLeg</parent>
+            <child>RightFoot</child>
+        </joint>
+        <joint name="j_RightFoot_foot_0_0" type="ball">
+            <transformation> 0.       0.      -0.03118 -0.31656  0.1264   0.     </transformation>
+            <parent>RightFoot</parent>
+            <child>RightFoot_foot_0_0</child>
+        </joint>
+        <joint name="j_RightFoot_foot_0_0_0" type="ball">
+            <transformation>-0.      -0.      -0.02625  0.       0.       0.     </transformation>
+            <parent>RightFoot_foot_0_0</parent>
+            <child>RightFoot_foot_0_0_0</child>
+        </joint>
+        <joint name="j_RightFoot_foot_0_1_0" type="ball">
+            <transformation>-0.    -0.    -0.035  0.     0.     0.   </transformation>
+            <parent>RightFoot</parent>
+            <child>RightFoot_foot_0_1_0</child>
+        </joint>
+        <joint name="j_RightFoot_foot_1_0" type="ball">
+            <transformation>-0.       0.      -0.018    0.       3.14159  0.     </transformation>
+            <parent>RightFoot</parent>
+            <child>RightFoot_foot_1_0</child>
+        </joint>
+        <joint name="j_Spine" type="ball">
+            <transformation>-0.      -0.      -0.12829  1.56582  0.       0.     </transformation>
+            <parent>Hips</parent>
+            <child>Spine</child>
+        </joint>
+        <joint name="j_Spine1" type="ball">
+            <transformation> 0.      -0.      -0.11854  1.32235  0.03558  0.     </transformation>
+            <parent>Spine</parent>
+            <child>Spine1</child>
+        </joint>
+        <joint name="j_RightArm" type="ball">
+            <transformation> 0.       0.      -0.15698  0.00511  1.61617  0.     </transformation>
+            <parent>Spine1</parent>
+            <child>RightArm</child>
+        </joint>
+        <joint name="j_RightForeArm" type="ball">
+            <transformation>-0.       0.      -0.13555  0.00483  1.53308  0.     </transformation>
+            <parent>RightArm</parent>
+            <child>RightForeArm</child>
+        </joint>
+        <joint name="j_LeftArm" type="ball">
+            <transformation> 0.       0.      -0.15698  0.00511 -1.61617  0.     </transformation>
+            <parent>Spine1</parent>
+            <child>LeftArm</child>
+        </joint>
+        <joint name="j_LeftForeArm" type="ball">
+            <transformation> 0.       0.      -0.13555  0.00483 -1.53308  0.     </transformation>
+            <parent>LeftArm</parent>
+            <child>LeftForeArm</child>
+        </joint>
+        <joint name="j_LeftUpLeg" type="ball">
+            <transformation>-0.       0.      -0.20201 -1.57508 -0.00027  0.     </transformation>
+            <parent>Hips</parent>
+            <child>LeftUpLeg</child>
+        </joint>
+        <joint name="j_LeftLeg" type="ball">
+            <transformation> 0.       0.      -0.23053 -1.6221   0.05224  0.     </transformation>
+            <parent>LeftUpLeg</parent>
+            <child>LeftLeg</child>
+        </joint>
+        <joint name="j_LeftFoot" type="ball">
+            <transformation> 0.      -0.      -0.05928 -0.47503 -0.16039  0.     </transformation>
+            <parent>LeftLeg</parent>
+            <child>LeftFoot</child>
+        </joint>
+        <joint name="j_LeftFoot_foot_0_0" type="ball">
+            <transformation>-0.       0.      -0.03118 -0.31656 -0.1264   0.     </transformation>
+            <parent>LeftFoot</parent>
+            <child>LeftFoot_foot_0_0</child>
+        </joint>
+        <joint name="j_LeftFoot_foot_0_0_0" type="ball">
+            <transformation>-0.      -0.      -0.02625  0.       0.       0.     </transformation>
+            <parent>LeftFoot_foot_0_0</parent>
+            <child>LeftFoot_foot_0_0_0</child>
+        </joint>
+        <joint name="j_LeftFoot_foot_0_1_0" type="ball">
+            <transformation>-0.    -0.    -0.035  0.     0.     0.   </transformation>
+            <parent>LeftFoot</parent>
+            <child>LeftFoot_foot_0_1_0</child>
+        </joint>
+        <joint name="j_LeftFoot_foot_1_0" type="ball">
+            <transformation>-0.       0.      -0.018    0.       3.14159  0.     </transformation>
+            <parent>LeftFoot</parent>
+            <child>LeftFoot_foot_1_0</child>
+        </joint>
+    </skeleton>
+</world>
+</skel>

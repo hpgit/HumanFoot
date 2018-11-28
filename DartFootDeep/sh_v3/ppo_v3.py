@@ -9,6 +9,7 @@ import os
 
 from multiprocessing import Process, Pipe, Manager, Lock
 from threading import Timer
+import copy
 
 import torch
 from torch import optim
@@ -18,12 +19,12 @@ from DartFootDeep.sh_v3.TorchNN import Model, Episode, EpisodeBuffer, Transition
 DEBUG = False
 
 
-def worker(env_num, episode_buffer_size, episodes, terminal, episodes_lock, terminal_lock, run_lock, netparam_receiver):
+def worker(env_num, episode_buffer_size, total_episodes, terminal, episodes_lock, terminal_lock, run_lock, netparam_receiver):
     """
 
     :type env_num: int
     :type episode_buffer_size: int
-    :type episodes: list
+    :type total_episodes: list
     :type terminal: list
     :type episodes_lock: Lock
     :type terminal_lock: Lock
@@ -35,6 +36,12 @@ def worker(env_num, episode_buffer_size, episodes, terminal, episodes_lock, term
 
     net_param_state_dict = netparam_receiver.recv()
     env.model.load_state_dict(net_param_state_dict)
+    if DEBUG:
+        run_lock.acquire()
+        state_dict = env.model.state_dict()
+        print('Env {} state dict:'.format(env_num))
+        print(state_dict)
+        run_lock.release()
 
     episode_done = False
 
@@ -47,15 +54,15 @@ def worker(env_num, episode_buffer_size, episodes, terminal, episodes_lock, term
         env.run_edisode()
         episodes_lock.acquire()
         try:
-            local_step = sum(len(epi) for epi in episodes)
+            local_step = sum(epi.get_size() for epi in total_episodes)
             if DEBUG:
                 print('Env{}, epi {} befor'.format(env_num, local_step))
             episode_done = local_step > episode_buffer_size
 
             if not episode_done:
-                episodes.append(env.episode)
+                total_episodes.append(copy.deepcopy(env.episode))
 
-            local_step = sum(len(epi) for epi in episodes)
+            local_step = sum(epi.get_size() for epi in total_episodes)
             if DEBUG:
                 print('Env{}, epi {} after'.format(env_num, local_step))
             episode_done = local_step > episode_buffer_size
@@ -93,8 +100,6 @@ class PPO(object):
         self.batch_size = 128
         self.replay_buffer = ReplayBuffer(10000)
 
-        self.total_episodes = []
-
         self.model = Model(self.num_state, self.num_action).float()
         self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
         self.w_entropy = 0.0
@@ -122,7 +127,7 @@ class PPO(object):
         self.episodes_lock = Lock()
         self.terminal_lock = Lock()
         self.run_lock = Lock()
-        self.episodes = self.manager.list()
+        self.total_episodes = self.manager.list()
         self.terminal = self.manager.list()
         for _ in range(self.num_slaves):
             self.terminal.append(False)
@@ -132,7 +137,7 @@ class PPO(object):
     def init_envs(self):
         for slave_idx in range(self.num_slaves):
             a_s, a_r = Pipe()
-            p = Process(target=worker, args=(slave_idx, self.buffer_size, self.episodes, self.terminal, self.episodes_lock, self.terminal_lock, self.run_lock, a_r))
+            p = Process(target=worker, args=(slave_idx, self.buffer_size, self.total_episodes, self.terminal, self.episodes_lock, self.terminal_lock, self.run_lock, a_r))
             self.param_sender.append(a_s)
             self.param_receiver.append(a_r)
             self.envs.append(p)
@@ -140,6 +145,8 @@ class PPO(object):
 
     def envs_update_models(self):
         state_dict = self.model.state_dict()
+        if DEBUG:
+            print(state_dict)
         for j in range(self.num_slaves):
             self.param_sender[j].send(state_dict)
 
@@ -151,7 +158,6 @@ class PPO(object):
 
     def GenerateTransitions(self):
         del self.total_episodes[:]
-        del self.episodes[:]
 
         self.terminal_lock.acquire()
         for j in range(self.num_slaves):
@@ -168,15 +174,6 @@ class PPO(object):
                 break
             else:
                 self.terminal_lock.release()
-
-        self.episodes_lock.acquire()
-
-        for epi_list in self.episodes:
-            epi = EpisodeBuffer()
-            epi.extend(epi_list)
-            self.total_episodes.append(epi)
-
-        self.episodes_lock.release()
 
     def ComputeTDandGAE(self):
         self.replay_buffer.clear()

@@ -91,6 +91,7 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getBodyAccelerationGlobal", &VpModel::getBodyAccelerationGlobal_py, getBodyAccelerationGlobal_py_overloads())
 		.def("getBodyAngVelocityGlobal", &VpModel::getBodyAngVelocityGlobal)
 		.def("getBodyAngAccelerationGlobal", &VpModel::getBodyAngAccelerationGlobal)
+		.def("getBodyOrientationGlobal", &VpModel::getBodyOrientationGlobal)
 
 		.def("getBodyFrame", &VpModel::getBodyFrame)
 
@@ -99,7 +100,7 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getBodyAccelerationsGlobal", &VpModel::getBodyAccelerationsGlobal)
 		.def("getBodyAngVelocitiesGlobal", &VpModel::getBodyAngVelocitiesGlobal)
 		.def("getBodyAngAccelerationsGlobal", &VpModel::getBodyAngAccelerationsGlobal)
-		.def("getBodyOrientationGlobal", &VpModel::getBodyOrientationGlobal)
+		.def("getBodyOrientationsGlobal", &VpModel::getBodyOrientationGlobal)
 
 		.def("getBodyTransformGlobal", &VpModel::getBodyTransformGlobal)
 
@@ -143,6 +144,7 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("solveInverseDynamics", &VpControlModel::solveInverseDynamics)
 
 		.def("set_q", &VpControlModel::set_q)
+		.def("set_q", &VpControlModel::set_dq)
 		.def("get_q", &VpControlModel::get_q)
 		.def("get_dq", &VpControlModel::get_dq)
 		.def("get_dq_nested", &VpControlModel::get_dq_nested)
@@ -1127,6 +1129,15 @@ bp::list VpModel::getBodyPositionsGlobal()
 		ls.append(getBodyPositionGlobal_py(i));
 	return ls;
 }
+
+bp::list VpModel::getBodyOrientationsGlobal()
+{
+	bp::list ls;
+	for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i)
+		ls.append(getBodyOrientationGlobal(i));
+	return ls;
+}
+
 
 object VpModel::getBodyAngAccelerationGlobal( int index )
 {

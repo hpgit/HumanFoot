@@ -10,7 +10,8 @@ else ifeq ($(UNAME), Linux)
 endif
 
 all:
-	python $(SETUPFILE) build $(SETUPARG); cp build/$(FOLDER)/*.so ./
+	# python $(SETUPFILE) build $(SETUPARG); cp build/$(FOLDER)/*.so ./
+	python $(SETUPFILE) build $(SETUPARG); find build -name "*.so" -exec cp '{}' ./ \;
 
 clean:
 	rm -rf build

@@ -35,6 +35,34 @@ def getDesiredDOFAccelerations_flat(th_r, th, dth_r, dth, ddth_r, Kt, Dt, joint_
 # th_r[0], th[0] : (Vec3, SO3), th_r[1:], th[1:] : SO3
 # dth_r, dth : Vec3
 # ddth_r : Vec3
+def getDesiredDOFAccelerationsExtended(th_r, th, dth, Kt, Dt):
+    ddth_des = [None]*len(th_r)  # type: list[np.ndarray]
+
+    p_r0 = th_r[0][0]
+    p0 = th[0][0]
+    v0 = dth[0][0:3]
+
+    th_r0 = th_r[0][1]
+    th0 = th[0][1]
+    dth0 = dth[0][3:6]
+
+    a_des0 = Kt[0]*(p_r0 - p0) + Dt[0]*(- v0)
+    ddth_des0 = Kt[0]*(mm.logSO3(np.dot(th0.transpose(), th_r0))) + Dt[0]*(- dth0)
+    ddth_des[0] = np.concatenate((a_des0, ddth_des0))
+
+    for i in range(1, len(th_r)):
+        if th[i].shape[0] == 3:
+            ddth_des[i] = Kt[i+1]*(mm.logSO3(np.dot(th[i].transpose(), th_r[i]))) + Dt[i+1]*(-dth[i])
+        elif th[i].shape[0] > 0:
+            ddth_des[i] = Kt[i+1]*(mm.logSO3(np.dot(th[i].transpose(), th_r[i]))) + Dt[i+1]*(-dth[i])
+        else:
+            ddth_des[i] = np.zeros(0)
+
+    return ddth_des
+
+# th_r[0], th[0] : (Vec3, SO3), th_r[1:], th[1:] : SO3
+# dth_r, dth : Vec3
+# ddth_r : Vec3
 def getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt, weightMap=None):
     ddth_des = [None]*len(th_r)  # type: list[np.ndarray]
     

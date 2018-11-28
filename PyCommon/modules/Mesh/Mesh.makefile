@@ -19,8 +19,9 @@ endif
 SETUPFILE := setup.py
 
 all:
-	#python setup.py build ; cp build/lib.linux-x86_64-2.7/*.so ./
-	python $(SETUPFILE) build $(SETUPARG); cp build/$(FOLDER)/*.so ./
+	# python setup.py build ; cp build/lib.linux-x86_64-2.7/*.so ./
+	# python $(SETUPFILE) build $(SETUPARG); cp build/$(FOLDER)/*.so ./
+	python $(SETUPFILE) build $(SETUPARG); find build -name "*.so" -exec cp '{}' ./ \;
 
 clean:
 	rm -rf build

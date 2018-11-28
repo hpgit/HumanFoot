@@ -9,10 +9,7 @@ import gym.spaces
 from gym.utils import seeding
 
 import PyCommon.modules.Resource.ysMotionLoader as yf
-
-from itertools import count
-import torch
-from DartFootDeep.sh_v3.TorchNN import Model, Episode, EpisodeBuffer, Transition, ReplayBuffer
+import itertools
 
 
 def exp_reward_term(w, exp_w, v):
@@ -24,11 +21,102 @@ def get_joint_dof_range(joint):
     return range(joint.dofs[0].index_in_skeleton(), joint.dofs[0].index_in_skeleton()+joint.num_dofs())
 
 
+def applyPenaltyForce(skel, bodyIDs, positions, forces, localOffset=True):
+    """
+
+    :type skel: pydart.Skeleton
+    :param skel: pydart skeleton
+    :type bodyIDs: list[int]
+    :param bodyIDs: body indicies
+    :type positions: list[np.ndarray]
+    :param positions: positions where force is applied
+    :type forces: list[np.ndarray]
+    :param forces: forces to bodies, expressed in global coordinate
+    :type localOffset: bool
+    :param localOffset: whether positions is expressed in body local frame, default is True
+    :return: None
+    """
+    for bodyIdx in range(len(bodyIDs)):
+        skel.body(bodyIDs[bodyIdx]).add_ext_force(forces[bodyIdx], positions[bodyIdx], False, localOffset)
+
+
+def calc_penalty_force(skel, mus=.5, Ks=15000., Ds=245., locking_vel=.05):
+    """
+
+    :type skel: pydart.Skeleton
+    :param mus:
+    :param Ks:
+    :param Ds:
+    :param locking_vel:
+    :return:
+    """
+    def _calcPenaltyForce(pBody, position, velocity, mu, lockingVel):
+        """
+        :type pBody: pydart.BodyNode
+        :type position: np.ndarray
+        :type velocity: np.ndarray
+        :type mu: float
+        """
+        if position[1] >= 0.:
+            return False, np.zeros(3)
+        else:
+            vNormalRelVel = np.array((0., velocity[1], 0.))
+            vTangentialRelVel = velocity - vNormalRelVel
+            tangentialRelVel = np.linalg.norm(vNormalRelVel)
+
+            # Ds = 0.
+            normalForce = max(0., -Ks*position[1] - Ds*velocity[1])
+            vNormalForce = np.array((0., normalForce, 0.))
+            frictionForce = mu * normalForce
+
+            if tangentialRelVel < lockingVel:
+                frictionForce *= tangentialRelVel / lockingVel
+            vFrictionForce = -frictionForce * (mm.normalize2(vTangentialRelVel))
+            force = vNormalForce + vFrictionForce
+            return True, force
+
+    bodyIDs, positions, positionLocals, velocities, forces = [], [], [], [], []
+    for i in range(skel.num_bodynodes()):
+        body = skel.body(i)
+        for shapeNode in body.shapenodes:
+            if shapeNode.has_collision_aspect():
+                geomType = shapeNode.shape.shape_type_name()
+                geomT = np.dot(body.world_transform(), shapeNode.relative_transform())
+                geom_point = list()
+
+                if geomType == 'SphereShape':
+                    shape = shapeNode.shape  # type: pydart.SphereShape
+                    geom_point.append(geomT[:3, 3] - shape.radius() * mm.unitY())
+
+                elif geomType == 'BoxShape':
+                    shape = shapeNode.shape  # type: pydart.BoxShape
+                    data = shape.size()/2.  # type: np.ndarray
+                    for perm in itertools.product([1, -1], repeat=3):
+                        position_local = np.multiply(np.array((data[0], data[1], data[2])), np.array(perm))
+                        geom_point.append(position_local)
+
+                for posIdx in range(len(geom_point)):
+                    position_global = np.dot(geomT[:3, :3], geom_point[posIdx]) + geomT[:3, 3]
+                    if position_global[1] < 0.:
+                        velocity = body.world_linear_velocity(body.to_local(position_global))
+                        is_penetrated, force = _calcPenaltyForce(body, position_global, velocity, mus, locking_vel)
+                        if is_penetrated:
+                            bodyIDs.append(body.index_in_skeleton())
+                            positions.append(position_global)
+                            positionLocals.append(body.to_local(position_global))
+                            velocities.append(velocity)
+                            forces.append(force)
+
+    return bodyIDs, positions, positionLocals, forces
+
+
 class HpDartEnv(gym.Env):
     def __init__(self, env_name='walk'):
-        self.world = pydart.World(1./1200., "../data/test.xml")
-        self.world.control_skel = self.world.skeletons[1]
-        self.skel = self.world.skeletons[1]
+        self.world = pydart.World(1./1800., "../data/wd2_without_ground.xml")
+        # self.world.control_skel = self.world.skeletons[1]
+        # self.skel = self.world.skeletons[1]
+        self.world.control_skel = self.world.skeletons[0]
+        self.skel = self.world.skeletons[0]
         self.Kp, self.Kd = 400., 40.
 
         self.env_name = env_name
@@ -71,8 +159,9 @@ class HpDartEnv(gym.Env):
         elif env_name == 'walk_u_turn_whole':
             self.ref_motion.translateByOffset([0., 0.03, 0.])
 
-        self.ref_world = pydart.World(1./1200., "../data/test.xml")
-        self.ref_skel = self.ref_world.skeletons[1]
+        self.ref_world = pydart.World(1./1200., "../data/wd2_without_ground.xml")
+        # self.ref_skel = self.ref_world.skeletons[1]
+        self.ref_skel = self.ref_world.skeletons[0]
         # self.step_per_frame = round((1./self.world.time_step()) / self.ref_motion.fps)
         self.step_per_frame = 40
 
@@ -142,10 +231,6 @@ class HpDartEnv(gym.Env):
 
         self.action_space = gym.spaces.Box(-action_high, action_high, dtype=np.float32)
         self.observation_space = gym.spaces.Box(-state_high, state_high, dtype=np.float32)
-
-        # internal Model (read only)
-        self.model = Model(state_num, action_num).float()
-        self.episode = []  # type: list[Episode]
 
     def state(self):
         pelvis = self.skel.body(0)
@@ -218,7 +303,8 @@ class HpDartEnv(gym.Env):
                 Kd_vector[dof_idx] = self.Kp * exp(log(self.Kd) * _action[self.skel.ndofs-6 + joint_idx]/20.)
 
         for i in range(self.step_per_frame):
-            # self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
+            bodyIDs, contactPositions, contactPositionLocals, contactForces = calc_penalty_force(self.skel)
+            applyPenaltyForce(self.skel, bodyIDs, contactPositions, contactForces, localOffset=False)
             self.skel.set_forces(self.skel.get_spd_extended(self.ref_skel.q + action, self.world.time_step(), Kp_vector, Kd_vector))
             self.world.step()
 
@@ -268,24 +354,6 @@ class HpDartEnv(gym.Env):
 
         return self.state()
 
-    def run_edisode(self):
-        self.episode = EpisodeBuffer()
-        states = [self.reset()]
-        for _ in count():
-            a_dist, v = self.model(torch.tensor(states).float())
-            actions = a_dist.sample().detach().numpy()
-            logprobs = a_dist.log_prob(torch.tensor(actions).float()).detach().numpy().reshape(-1)
-            values = v.detach().numpy().reshape(-1)
-
-            state, reward, is_done, info_dict = self.step(actions[0])
-
-            self.episode.push(state, actions[0], reward, values[0], logprobs[0])
-
-            if is_done:
-                break
-            else:
-                states = [state]
-
     def render(self, mode='human', close=False):
         """Renders the environment.
         The set of supported modes varies per environment. (And some
@@ -295,7 +363,35 @@ class HpDartEnv(gym.Env):
             mode (str): The mode to render with.
             close (bool): Close all open renderings.
         """
-        return None
+        if self.viewer is None:
+            from gym.envs.classic_control import rendering
+            self.viewer = rendering.Viewer(500,500)
+            self.viewer.set_bounds(-2.2, 2.2, -2.2, 2.2)
+            # rod = rendering.make_capsule(1, .2)
+            # rod.set_color(.8, .3, .3)
+            # rod.add_attr(self.pole_transform)
+            # self.viewer.add_geom(rod)
+            self.body_transform = list()
+            self.ref_body_transform = list()
+            for i in range(self.body_num):
+                axle = rendering.make_circle(.05)
+                axle.set_color(0, 0, 0)
+                self.body_transform.append(rendering.Transform())
+                axle.add_attr(self.body_transform[i])
+                self.viewer.add_geom(axle)
+
+            for i in range(self.body_num):
+                axle = rendering.make_circle(.05)
+                axle.set_color(1, 0, 0)
+                self.ref_body_transform.append(rendering.Transform())
+                axle.add_attr(self.ref_body_transform[i])
+                self.viewer.add_geom(axle)
+
+        for i in range(self.body_num):
+            self.body_transform[i].set_translation(self.skel.body(i).world_transform()[:3, 3][0]-1., self.skel.body(i).world_transform()[:3, 3][1])
+            self.ref_body_transform[i].set_translation(self.ref_skel.body(i).world_transform()[:3, 3][0]-1., self.ref_skel.body(i).world_transform()[:3, 3][1])
+
+        return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
     def close(self):
         """Override in your subclass to perform any necessary cleanup.

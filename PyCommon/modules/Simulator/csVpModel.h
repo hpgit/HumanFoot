@@ -141,6 +141,7 @@ public:	// expose to python
 	object getBodyOrientationGlobal(int index);
 
 	bp::list getBodyPositionsGlobal();
+	bp::list getBodyOrientationsGlobal();
 	bp::list getBodyVelocitiesGlobal();
 	bp::list getBodyAccelerationsGlobal();
 	bp::list getBodyAngVelocitiesGlobal();
