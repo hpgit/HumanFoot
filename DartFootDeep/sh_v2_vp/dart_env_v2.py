@@ -266,7 +266,8 @@ class HpDartEnv(gym.Env):
 
         self.continue_from_now_by_phase(random() if self.rsi else 0.)
 
-        self.skel.set_positions(self.ref_motion.get_q(self.phase_frame))
+        # self.skel.set_positions(self.ref_motion.get_q(self.phase_frame))
+        self.skel.set_q(self.ref_motion.get_q(self.phase_frame))
         self.skel.set_velocities(self.ref_motion.get_dq_dart(self.phase_frame))
 
         self.update_ref_skel(True)

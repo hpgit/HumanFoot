@@ -144,7 +144,7 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("solveInverseDynamics", &VpControlModel::solveInverseDynamics)
 
 		.def("set_q", &VpControlModel::set_q)
-		.def("set_q", &VpControlModel::set_dq)
+//		.def("set_dq", &VpControlModel::set_dq)
 		.def("get_q", &VpControlModel::get_q)
 		.def("get_dq", &VpControlModel::get_dq)
 		.def("get_dq_nested", &VpControlModel::get_dq_nested)
