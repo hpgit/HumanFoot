@@ -19,8 +19,8 @@ def main():
     # if not MOTION_ONLY:
     #     ppo.LoadModel('model/' + env_name + '.pt')
 
-    ppo.env.Resets(False)
-    ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(ppo.env.phase_frame))
+    ppo.env.Resets(True)
+    ppo.env.ref_skel.set_q(ppo.env.ref_motion.get_q(ppo.env.phase_frame))
 
     # viewer settings
     rd_contact_positions = [None]

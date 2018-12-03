@@ -10,6 +10,8 @@ from gym.utils import seeding
 import copy
 from PyCommon.modules.Simulator import csVpWorld as cvw
 from PyCommon.modules.Simulator import csVpModel as cvm
+from PyCommon.modules.ArticulatedBody import ysControl as yct
+from PyCommon.modules.Util import ysPythonEx as ype
 import PyCommon.modules.Resource.ysMotionLoader as yf
 import DartFootDeep.sh_v2_vp.mtInitialize as mit
 import itertools
@@ -35,6 +37,7 @@ class HpDartEnv(gym.Env):
         self.world.initialize()
         self.skel.initializeHybridDynamics()
         self.Kp, self.Kd = 400., 40.
+        self.Ks, self.Ds = config['Ks'], config['Ds']
 
         self.env_name = env_name
 
@@ -110,37 +113,37 @@ class HpDartEnv(gym.Env):
 
         self.phase_frame = 0
 
-        self.prev_ref_q = np.zeros(self.ref_skel.getTotalDOF())
-        self.prev_ref_dq = np.zeros(self.ref_skel.getTotalDOF())
+        self.prev_ref_q = self.ref_motion.getDOFPositions(self.phase_frame)
+        self.prev_ref_dq = self.ref_motion.getDOFVelocities(self.phase_frame)
         self.prev_ref_p_e_hat = np.asarray([self.ref_skel.getBodyPositionGlobal(body_idx) for body_idx in self.idx_e]).flatten()
         self.prev_ref_com = self.ref_skel.getCOM()
 
         # setting for reward
         self.reward_joint = list()
-        self.reward_joint.append('j_Hips')
-        self.reward_joint.append('j_RightUpLeg')
-        self.reward_joint.append('j_RightLeg')
-        self.reward_joint.append('j_LeftUpLeg')
-        self.reward_joint.append('j_LeftLeg')
-        self.reward_joint.append('j_Spine')
-        self.reward_joint.append('j_Spine1')
-        self.reward_joint.append('j_RightArm')
-        self.reward_joint.append('j_RightForeArm')
-        self.reward_joint.append('j_LeftArm')
-        self.reward_joint.append('j_LeftForeArm')
+        self.reward_joint.append('Hips')
+        self.reward_joint.append('RightUpLeg')
+        self.reward_joint.append('RightLeg')
+        self.reward_joint.append('LeftUpLeg')
+        self.reward_joint.append('LeftLeg')
+        self.reward_joint.append('Spine')
+        self.reward_joint.append('Spine1')
+        self.reward_joint.append('RightArm')
+        self.reward_joint.append('RightForeArm')
+        self.reward_joint.append('LeftArm')
+        self.reward_joint.append('LeftForeArm')
 
         # setting for pd gain
         self.foot_joint = list()
-        self.foot_joint.append('j_RightFoot')
-        self.foot_joint.append('j_RightFoot_foot_0_0')
-        self.foot_joint.append('j_RightFoot_foot_0_0_0')
-        self.foot_joint.append('j_RightFoot_foot_0_1_0')
-        self.foot_joint.append('j_RightFoot_foot_1_0')
-        self.foot_joint.append('j_LeftFoot')
-        self.foot_joint.append('j_LeftFoot_foot_0_0')
-        self.foot_joint.append('j_LeftFoot_foot_0_0_0')
-        self.foot_joint.append('j_LeftFoot_foot_0_1_0')
-        self.foot_joint.append('j_LeftFoot_foot_1_0')
+        self.foot_joint.append('RightFoot')
+        self.foot_joint.append('RightFoot_foot_0_0')
+        self.foot_joint.append('RightFoot_foot_0_0_0')
+        self.foot_joint.append('RightFoot_foot_0_1_0')
+        self.foot_joint.append('RightFoot_foot_1_0')
+        self.foot_joint.append('LeftFoot')
+        self.foot_joint.append('LeftFoot_foot_0_0')
+        self.foot_joint.append('LeftFoot_foot_0_0_0')
+        self.foot_joint.append('LeftFoot_foot_0_1_0')
+        self.foot_joint.append('LeftFoot_foot_1_0')
 
         state_num = 1 + (3*3 + 4) * self.body_num
         action_num = self.skel.getTotalDOF() - 6
@@ -152,17 +155,16 @@ class HpDartEnv(gym.Env):
         self.observation_space = gym.spaces.Box(-state_high, state_high, dtype=np.float32)
 
     def state(self):
-        pelvis = self.skel.body(0)
-        p_pelvis = pelvis.world_transform()[:3, 3]
-        R_pelvis = pelvis.world_transform()[:3, :3]
+        p_pelvis = self.skel.getBodyPositionGlobal(0)
+        R_pelvis = self.skel.getBodyOrientationGlobal(0)
 
-        phase = min(1., (self.world.time() + self.time_offset)/self.motion_time)
+        phase = min(1., (self.world.GetSimulationTime() + self.time_offset)/self.motion_time)
         state = [phase]
 
-        p = np.array([np.dot(R_pelvis.T, body.to_world() - p_pelvis) for body in self.skel.bodynodes]).flatten()
-        R = np.array([mm.rot2quat(np.dot(R_pelvis.T, body.world_transform()[:3, :3])) for body in self.skel.bodynodes]).flatten()
-        v = np.array([np.dot(R_pelvis.T, body.world_linear_velocity()) for body in self.skel.bodynodes]).flatten()
-        w = np.array([np.dot(R_pelvis.T, body.world_angular_velocity())/20. for body in self.skel.bodynodes]).flatten()
+        p = np.array([np.dot(R_pelvis.T, body_pos - p_pelvis) for body_pos in self.skel.getBodyPositionsGlobal()]).flatten()
+        R = np.array([mm.rot2quat(np.dot(R_pelvis.T, body_ori)) for body_ori in self.skel.getBodyOrientationsGlobal()]).flatten()
+        v = np.array([np.dot(R_pelvis.T, body_vel) for body_vel in self.skel.getBodyVelocitiesGlobal()]).flatten()
+        w = np.array([np.dot(R_pelvis.T, body_ang_vel)/20. for body_ang_vel in self.skel.getBodyAngVelocitiesGlobal()]).flatten()
 
         state.extend(p)
         state.extend(R)
@@ -174,28 +176,31 @@ class HpDartEnv(gym.Env):
     def reward(self):
         p_e = np.asarray([self.skel.getBodyPositionGlobal(body_idx) for body_idx in self.idx_e]).flatten()
 
-        q_diff = np.asarray(self.skel.position_differences(self.prev_ref_q, self.skel.q))
-        dq_diff = np.asarray(self.skel.velocity_differences(self.prev_ref_dq, self.skel.dq))
+        q = self.skel.getDOFPositions()
+        dq = self.skel.getDOFVelocities()
+        q_diff = np.asarray([mm.logSO3(np.dot(self.prev_ref_q[i].T, q[i])) for i in range(1, len(q))]).flatten()
+        dq_diff = np.asarray([self.prev_ref_dq[i] - dq[i] for i in range(1, len(dq))]).flatten()
 
         q_reward = exp_reward_term(self.w_p, self.exp_p,
-                                   np.concatenate(list(q_diff[get_joint_dof_range(self.skel.joint(joint_name))] for joint_name in self.reward_joint)))
+                                   np.concatenate(list(q_diff[self.skel.getJointDOFInternalIndexes(self.skel.name2index(joint_name))] for joint_name in self.reward_joint)))
         dq_reward = exp_reward_term(self.w_p, self.exp_p,
-                                    np.concatenate(list(dq_diff[get_joint_dof_range(self.skel.joint(joint_name))] for joint_name in self.reward_joint)))
+                                   np.concatenate(list(dq_diff[self.skel.getJointDOFInternalIndexes(self.skel.name2index(joint_name))] for joint_name in self.reward_joint)))
         ee_reward = exp_reward_term(self.w_e, self.exp_e, p_e - self.prev_ref_p_e_hat)
-        com_reward = exp_reward_term(self.w_c, self.exp_c, self.skel.com() - self.prev_ref_com)
+        com_reward = exp_reward_term(self.w_c, self.exp_c, self.skel.getCOM() - self.prev_ref_com)
 
         reward = q_reward + dq_reward + ee_reward + com_reward
 
         return reward
 
     def is_done(self):
-        if self.skel.com()[1] < 0.4:
+        if self.skel.getCOM()[1] < 0.4:
             # print('fallen')
             return True
-        elif True in np.isnan(np.asarray(self.skel.q)) or True in np.isnan(np.asarray(self.skel.dq)):
+        elif True in np.isnan(np.asarray(self.skel.get_q())) or True in np.isnan(np.asarray(self.skel.get_dq())):
             # print('nan')
             return True
-        elif self.world.time() + self.time_offset > self.motion_time:
+        elif self.phase_frame > self.motion_len-2:
+            # elif self.world.GetSimulationTime() + self.time_offset > self.motion_time:
             # print('timeout')
             return True
         return False
@@ -213,18 +218,28 @@ class HpDartEnv(gym.Env):
             done (boolean): Whether the episode has ended, in which case further step() calls will return undefined results.
             info (dict): Contains auxiliary diagnostic information (helpful for debugging, and sometimes learning).
         """
-        action = np.hstack((np.zeros(6), _action[:self.skel.ndofs-6]/10.))
-        Kp_vector = np.asarray([0.0] * 6 + [self.Kp] * (self.skel.ndofs - 6))
-        Kd_vector = np.asarray([0.0] * 6 + [self.Kd] * (self.skel.ndofs - 6))
-        for joint_idx in range(len(self.foot_joint)):
-            for dof_idx in get_joint_dof_range(self.skel.joint(self.foot_joint[joint_idx])):
-                Kp_vector[dof_idx] = self.Kd * exp(log(self.Kp) * _action[self.skel.ndofs-6 + joint_idx]/10.)
-                Kd_vector[dof_idx] = self.Kp * exp(log(self.Kd) * _action[self.skel.ndofs-6 + joint_idx]/20.)
+        action = np.hstack((np.zeros(6), _action/10.))
+        th_action = ype.makeNestedList(self.skel.getDOFs())
+        ype.nested(action, th_action)
 
+        th_r = self.ref_motion.getDOFPositions(self.phase_frame)
+        th_des = [th_r[0]]
+        for i in range(1, len(th_r)):
+            th_des.append(np.dot(th_r[i], mm.exp(th_action[i])))
+
+        th = self.skel.getDOFPositions()
+        dth_r = self.ref_motion.getDOFVelocities(self.phase_frame)
+        dth = self.skel.getDOFVelocities()
+        ddth_r = self.ref_motion.getDOFAccelerations(self.phase_frame)
+        ddth_des = yct.getDesiredDOFAccelerations(th_des, th, dth_r, dth, ddth_r, self.Kp, self.Kd)
+
+        bodyIDsToCheck = list(range(self.world.getBodyNum()))
+        mus = [.5]*len(bodyIDsToCheck)
         for i in range(self.step_per_frame):
-            bodyIDs, contactPositions, contactPositionLocals, contactForces = calc_penalty_force(self.skel)
-            applyPenaltyForce(self.skel, bodyIDs, contactPositions, contactForces, localOffset=False)
-            self.skel.set_forces(self.skel.get_spd_extended(self.ref_skel.q + action, self.world.time_step(), Kp_vector, Kd_vector))
+            bodyIDs, contactPositions, contactPositionLocals, contactForces = self.world.calcPenaltyForce(bodyIDsToCheck, mus, self.Ks, self.Ds)
+            self.world.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
+            self.skel.setDOFAccelerations(ddth_des)
+            self.skel.solveHybridDynamics()
             self.world.step()
 
         self.update_ref_skel(False)
@@ -233,23 +248,25 @@ class HpDartEnv(gym.Env):
 
     def update_ref_skel(self, reset=False):
         if not reset:
-            self.prev_ref_q = self.ref_skel.positions()
-            self.prev_ref_dq = self.ref_skel.velocities()
-            self.prev_ref_p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
-            self.prev_ref_com = self.ref_skel.com()
+            self.prev_ref_q = self.ref_motion.getDOFPositions(self.phase_frame)
+            self.prev_ref_dq = self.ref_motion.getDOFVelocities(self.phase_frame)
+            self.prev_ref_p_e_hat = np.asarray([self.ref_skel.getBodyPositionGlobal(body_idx) for body_idx in self.idx_e]).flatten()
+            self.prev_ref_com = self.ref_skel.getCOM()
 
-        next_frame_time = self.world.time() + self.time_offset + self.world.time_step() * self.step_per_frame
-        self.ref_skel.set_positions(self.ref_motion.get_q_by_time(next_frame_time))
-        self.ref_skel.set_velocities(self.ref_motion.get_dq_dart_by_time(next_frame_time))
+        self.phase_frame += 1
+
+        # next_frame_time = self.world.GetSimulationTime() + self.time_offset + self.world.GetTimeStep() * self.step_per_frame
+        self.ref_skel.set_q(self.ref_motion.get_q(self.phase_frame))
+        self.ref_skel.setDOFVelocities(self.ref_motion.getDOFVelocities(self.phase_frame))
 
         if reset:
-            self.prev_ref_q = self.ref_skel.positions()
-            self.prev_ref_dq = self.ref_skel.velocities()
-            self.prev_ref_p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
-            self.prev_ref_com = self.ref_skel.com()
+            self.prev_ref_q = self.ref_motion.getDOFPositions(self.phase_frame)
+            self.prev_ref_dq = self.ref_motion.getDOFVelocities(self.phase_frame)
+            self.prev_ref_p_e_hat = np.asarray([self.ref_skel.getBodyPositionGlobal(body_idx) for body_idx in self.idx_e]).flatten()
+            self.prev_ref_com = self.ref_skel.getCOM()
 
     def continue_from_now_by_phase(self, phase):
-        self.phase_frame = round(phase * (self.motion_len-1))
+        self.phase_frame = round(phase * (self.motion_len-3))
         skel_pelvis_offset = self.skel.getJointPositionGlobal(0) - self.ref_motion[self.phase_frame].getJointPositionGlobal(0)
         skel_pelvis_offset[1] = 0.
         self.ref_motion.translateByOffset(skel_pelvis_offset)
@@ -268,7 +285,8 @@ class HpDartEnv(gym.Env):
 
         # self.skel.set_positions(self.ref_motion.get_q(self.phase_frame))
         self.skel.set_q(self.ref_motion.get_q(self.phase_frame))
-        self.skel.set_velocities(self.ref_motion.get_dq_dart(self.phase_frame))
+        self.skel.setDOFVelocities(self.ref_motion.getDOFVelocities(self.phase_frame))
+        # self.skel.set_velocities(self.ref_motion.get_dq_dart(self.phase_frame))
 
         self.update_ref_skel(True)
 

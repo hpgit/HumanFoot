@@ -60,6 +60,7 @@ vpWorld::vpWorld()
 	m_bDetectCollision = true;
 	m_bIsInitialized = false;
 	m_rTime = SCALAR_0;
+	m_sTimeBackup = SCALAR_0;
 	m_iFrameCount = 0;
 	m_rTimeStep = (scalar)0.01;
 	m_sGravity = SCALAR_0;
@@ -483,13 +484,17 @@ void VP::LogInfo(const char *str, ...)
 
 void vpWorld::BackupState(void)
 {
+	m_sTimeBackup = m_rTime;
+
 	for ( int i = 0; i < m_pSystem.size(); i++ ) m_pSystem[i]->BackupState();
 }
 
 void vpWorld::RollbackState(void)
 {
 	int i, j;
-	
+
+	m_rTime = m_sTimeBackup;
+
 	for ( i = 0; i < m_pBody.size(); i++ ) m_pBody[i]->ResetForce();
 	
 	for ( i = 0; i < m_pSystem.size(); i++ )

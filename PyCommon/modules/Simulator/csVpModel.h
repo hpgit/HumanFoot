@@ -63,6 +63,7 @@ public:
 
 
 	void setBodyPositionGlobal(int index, const Vec3& position);
+	void setBodyVelocityGlobal( int index, const Vec3& vel, const Vec3* pPositionLocal=NULL );
 	void setBodyAccelerationGlobal( int index, const Vec3& acc, const Vec3* pPositionLocal=NULL);
 
 	void build_name2index() { for(std::vector<int>::size_type i=0; i<_nodes.size(); ++i) _name2index[_nodes[i]->name] = i; }
@@ -152,6 +153,7 @@ public:	// expose to python
 	void setBodyPositionGlobal_py( int index, const object& pos );
 	void setBodyVelocityGlobal_py( int index, const object& pos );
 	void setBodyAccelerationGlobal_py( int index, const object& acc );
+
 	void setBodyAngVelocityGlobal( int index, const object& angvel );
 	void setBodyAngAccelerationGlobal( int index, const object& angacc );
 	void SetGround(int index, bool flag);
@@ -213,6 +215,7 @@ public:	// expose to python
 	int getTotalInternalJointDOF();
 
 	bp::list getJointDOFIndexes(int index);
+	bp::list getJointDOFInternalIndexes(int index);
 
 	void update(const object& posture);
 	void fixBody(int index);
@@ -273,6 +276,7 @@ public:	// expose to python
 	bp::list getBodyRootDOFAxeses();
 
 
+	void setDOFVelocities(const bp::list& dofvels);
 	void setDOFAccelerations(const bp::list& dofaccs);
 	void setDOFTorques(const bp::list& dofTorque);
 
@@ -323,6 +327,7 @@ public:	// expose to python
 	void setJointAngVelocityLocal( int index, const object& angvel );
 	void setJointAngAccelerationLocal(int index, const object& angacc);
 
+	void setJointVelocityGlobal( int index, const object& vel );
 	void setJointAccelerationGlobal( int index, const object& acc );
 	void setJointAngAccelerationGlobal(int index, const object& angacc);
 

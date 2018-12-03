@@ -79,6 +79,10 @@ public:
 	virtual void			 InverseDynamics(void);
 	virtual void			 HybridDynamics(void);
 
+	virtual int				 GetNumState(void);
+	virtual scalar 			 GetStateDisplacement(int);
+	virtual scalar			 GetStateVelocity(int);
+
 protected:
 							 vpSystem();
 

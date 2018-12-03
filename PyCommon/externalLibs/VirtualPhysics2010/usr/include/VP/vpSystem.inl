@@ -67,3 +67,8 @@ VP_INLINE void vpSystem::SetContactID(int n)
 {
 	for ( int i = 0; i < m_pBody.size(); i++ ) m_pBody[i]->m_iContactID = n;
 }
+
+VP_INLINE int vpSystem::GetNumState(void)
+{
+	return m_sState.size();
+}

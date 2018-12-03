@@ -36,7 +36,7 @@ install_dependencies_mac:
 	[ -e $(MODULE_INC_DIR) ] || mkdir -p $(MODULE_INC_DIR)
 	cd $(MODULE_INC_DIR);[ -e VP ] || ln -s ../../../../$(VP_DIR)/usr/include/VP ./ ;[ -e gear ] || ln -s ../../../../$(GEAR_DIR)/include ./gear;[ -e qpOASES ] || ln -s ../../../../$(qpOASES_DIR)/include ./qpOASES
 	cd PyCommon/modules/usr;[ -e lib ] || mkdir lib;cd lib;[ ! -e libvpLib.a ] || rm libvpLib.a
-	cd $(VP_DIR);[ -e build ] || mkdir build;cd build;cmake ..;make -j2
+	cd $(VP_DIR);[ -e build ] || mkdir build;cd build;cmake ..;make
 	cp $(VP_DIR)/build/libvpLib.a $(MODULE_LIB_DIR)/
 	cd $(qpOASES_DIR);[ -e bin ] || mkdir -p bin;make
 	cp $(qpOASES_DIR)/bin/libqpOASES.a $(MODULE_LIB_DIR)/

@@ -7,7 +7,7 @@ add_compile_options(-fPIC)
 
 #include_directories(${CMAKE_HOME_DIRECTORY}/usr/include)
 
-OPTION(USE_OpenMP "Use OpenMP" ON)
+OPTION(USE_OpenMP "Use OpenMP" OFF)
 IF(USE_OpenMP)
     FIND_PACKAGE(OpenMP)
     IF(OPENMP_FOUND)
@@ -27,6 +27,8 @@ ENDIF()
 file(GLOB srcs "*.cpp")
 
 add_library(vpLib ${srcs})
-if(APPLE)
+if(USE_OpenMP)
     target_link_libraries(vpLib ${OpenMP_omp_LIBRARY})
+else()
+    target_link_libraries(vpLib)
 endif()

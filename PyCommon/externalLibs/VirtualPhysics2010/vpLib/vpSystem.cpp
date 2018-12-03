@@ -106,6 +106,16 @@ void vpSystem::Reparameterize(void)
 	for ( int i = 0; i < m_pJoint.size(); i++ ) m_pJoint[i]->Reparameterize();
 }
 
+VP_INLINE scalar vpSystem::GetStateDisplacement(int idx)
+{
+	return m_sState[idx].GetDisplacement();
+}
+
+VP_INLINE scalar vpSystem::GetStateVelocity(int idx)
+{
+	return m_sState[idx].GetVelocity();
+}
+
 #ifdef VP_PROTECT_SRC
 	#include <VP/vpSystem.inl>
 #endif

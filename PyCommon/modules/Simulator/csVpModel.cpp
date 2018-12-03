@@ -100,7 +100,7 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getBodyAccelerationsGlobal", &VpModel::getBodyAccelerationsGlobal)
 		.def("getBodyAngVelocitiesGlobal", &VpModel::getBodyAngVelocitiesGlobal)
 		.def("getBodyAngAccelerationsGlobal", &VpModel::getBodyAngAccelerationsGlobal)
-		.def("getBodyOrientationsGlobal", &VpModel::getBodyOrientationGlobal)
+		.def("getBodyOrientationsGlobal", &VpModel::getBodyOrientationsGlobal)
 
 		.def("getBodyTransformGlobal", &VpModel::getBodyTransformGlobal)
 
@@ -132,6 +132,7 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getTotalInternalJointDOF", &VpControlModel::getTotalInternalJointDOF)
 
 		.def("getJointDOFIndexes", &VpControlModel::getJointDOFIndexes)
+		.def("getJointDOFInternalIndexes", &VpControlModel::getJointDOFInternalIndexes)
 
 		.def("update", &VpControlModel::update)
 		.def("fixBody", &VpControlModel::fixBody)
@@ -166,6 +167,8 @@ BOOST_PYTHON_MODULE(csVpModel)
 		.def("getBodyRootDOFVelocitiesLocal", &VpControlModel::getBodyRootDOFVelocitiesLocal)
 		.def("getBodyRootDOFAccelerationsLocal", &VpControlModel::getBodyRootDOFAccelerationsLocal)
 		.def("getBodyRootDOFAxeses", &VpControlModel::getBodyRootDOFAxeses)
+
+        .def("setDOFVelocities", &VpControlModel::setDOFVelocities)
 
 		.def("setDOFAccelerations", &VpControlModel::setDOFAccelerations)
 		.def("setDOFTorques", &VpControlModel::setDOFTorques)
@@ -1233,6 +1236,21 @@ void VpModel::setBodyPositionGlobal( int index, const Vec3& position )
 	_nodes[index]->body.SetFrame(bodyFrame);
 }
 
+void VpModel::setBodyVelocityGlobal( int index, const Vec3& vel, const Vec3* pPositionLocal)
+{
+//	if(pPositionLocal)
+//		cout << "pPositionLocal : not implemented functionality yet" << endl;
+
+	se3 genVel;
+	genVel = _nodes[index]->body.GetGenVelocity();
+	genVel[3] = vel[0];
+	genVel[4] = vel[1];
+	genVel[5] = vel[2];
+
+	_nodes[index]->body.SetGenVelocity(genVel);
+}
+
+
 void VpModel::setBodyAccelerationGlobal( int index, const Vec3& acc, const Vec3* pPositionLocal)
 {
 //	if(pPositionLocal)
@@ -1423,6 +1441,17 @@ bp::list VpControlModel::getJointDOFIndexes(int index)
     int dof_index = _nodes[index]->dof_start_index;
     for(int i=0; i<_nodes[index]->dof; i++)
         ls.append(dof_index++);
+    return ls;
+
+}
+
+bp::list VpControlModel::getJointDOFInternalIndexes(int index)
+{
+    assert(index > 0);
+    bp::list ls;
+    int dof_index = _nodes[index]->dof_start_index;
+    for(int i=0; i<_nodes[index]->dof; i++)
+        ls.append(dof_index++ - 6);
     return ls;
 
 }
@@ -1846,7 +1875,7 @@ bp::list VpControlModel::get_dq()
     for(int i=0; i<3; i++)
     {
 //        ls.append(rootJointDq);
-        ls.append(rootJointAngVelLocal);
+        ls.append(rootJointAngVelLocal[i]);
     }
 	for(std::vector<int>::size_type j=1; j<_nodes.size(); j++)
 	{
@@ -2202,6 +2231,21 @@ bp::list VpControlModel::getBodyRootDOFAxeses()
 	ls.insert(0, rootAxeses);
 	return ls;
 }
+
+void VpControlModel::setDOFVelocities( const bp::list& dofvels)
+{
+	ndarray O = np::array(bp::make_tuple(0.,0.,0.));
+
+    setJointVelocityGlobal(0, dofvels[0].slice(0,3));
+	setJointAngVelocityLocal(0, dofvels[0].slice(3,6));
+
+	for(std::vector<int>::size_type i=1; i<_nodes.size(); ++i)
+	{
+	    if (_nodes[i]->dof == 3)
+            _nodes[i]->joint.SetVelocity(pyVec3_2_Vec3(dofvels[i]));
+    }
+}
+
 
 void VpControlModel::setDOFAccelerations( const bp::list& dofaccs)
 {
@@ -2606,6 +2650,17 @@ void VpControlModel::setJointAngAccelerationLocal( int index, const object& anga
 	}
 	else
 		_nodes[index]->joint.SetAcceleration(pyVec3_2_Vec3(angacc));
+}
+
+void VpControlModel::setJointVelocityGlobal( int index, const object& vel )
+{
+	if(index == 0)
+	{
+		Vec3 pospos = Inv(_boneTs[index]).GetPosition();
+		setBodyVelocityGlobal(index, pyVec3_2_Vec3(vel), &(pospos));
+	}
+	else
+		cout << "setJointAccelerationGlobal() : not completely implemented" << endl;
 }
 
 void VpControlModel::setJointAccelerationGlobal( int index, const object& acc )

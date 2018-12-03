@@ -291,6 +291,7 @@ protected :
 	int									 m_iNumThreads;
 	int									 m_iMaxIterSolver;
 	scalar						 		 m_rTime;
+	scalar								 m_sTimeBackup;
 	scalar						 		 m_rContactEPS;
 	scalar						 		 m_rTimeStep;
 	scalar								 m_rGlobalDamping;
