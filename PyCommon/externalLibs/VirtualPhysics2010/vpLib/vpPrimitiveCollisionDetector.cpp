@@ -93,3 +93,8 @@ int vpPrimitiveCollisionDetector::GetMaxNumContact4Box(void)
 {
 	return m_iMaxNumContact4Box;
 }
+
+vpPrimitiveCollisionDetector::~vpPrimitiveCollisionDetector()
+{
+
+}

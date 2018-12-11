@@ -50,6 +50,7 @@ OF SUCH DAMAGE.
 class vpPrimitiveCollisionDetector : public vpCollisionDetector
 {
 public:
+	virtual					~vpPrimitiveCollisionDetector();
 
 	/*!
 		m_sCollidablePair, which is an array of pairs of collidable bodies, is built.

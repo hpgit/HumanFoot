@@ -1,4 +1,5 @@
 from fltk import Fl
+import os
 import torch
 from DartFootDeep.sh_v2.ppo_v2 import PPO
 from PyCommon.modules.GUI import hpSimpleViewer as hsv
@@ -10,14 +11,25 @@ import pydart2 as pydart
 
 def main():
     MOTION_ONLY = False
+    CURRENT_CHECK = False
 
     pydart.init()
 
     env_name = 'walk'
 
     ppo = PPO(env_name, 0, visualize_only=True)
-    # if not MOTION_ONLY:
-    #     ppo.LoadModel('model/' + env_name + '.pt')
+    if not MOTION_ONLY and not CURRENT_CHECK:
+        ppo.LoadModel('model/' + env_name + '.pt')
+    elif not MOTION_ONLY and CURRENT_CHECK:
+        env_model_dir = []
+        for dir_name in sorted(os.listdir()):
+            if 'walk' in dir_name:
+                env_model_dir.append(dir_name)
+
+        pt_names = os.listdir(env_model_dir[-1])
+        pt_names.pop(pt_names.index('log.txt'))
+        pt_names.sort(key=lambda f: int(os.path.splitext(f)[0]))
+        ppo.LoadModel(env_model_dir[-1]+'/'+pt_names[-1])
 
     ppo.env.Resets(False)
     ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(ppo.env.phase_frame))
@@ -34,6 +46,7 @@ def main():
 
     def postCallback(frame):
         ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(frame))
+        ppo.env.ref_motion.frame = frame-1
 
     def simulateCallback(frame):
         state = ppo.env.GetState(0)
@@ -45,9 +58,9 @@ def main():
         # print(frame, res[0][0])
         # if res[0][0] > 0.46:
         #     ppo.env.continue_from_now_by_phase(0.2)
-        # if res[2]:
-        #     print(frame, 'Done')
-        #     ppo.env.reset()
+        if res[2]:
+            print(frame, 'Done')
+            # ppo.env.reset()
 
         # contact rendering
         contacts = ppo.env.world.collision_result.contacts

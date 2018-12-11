@@ -79,12 +79,20 @@ BOOST_PYTHON_MODULE(csVpWorld)
 		.def("ReportStatistics", &VpWorld::ReportStatistics)
 		.def("ResetStatistics", &VpWorld::ResetStatistics)
 	;
+
+    def("vp_init", vp_init);
+	def("worlds_step", worlds_step);
+
+}
+
+void vp_init()
+{
+    boost::python::numpy::initialize();
 }
 
 
 VpWorld::VpWorld(const object& config)
 {
-    boost::python::numpy::initialize();
 	setOpenMP();
 
 	//std::cout << _world.GetGlobalDampling() << std::endl;
@@ -110,6 +118,7 @@ VpWorld::VpWorld(const object& config)
 	}
 	else
 	{
+	    _world.EnableCollision(false);
 	    this->plane_normal.push_back(Vec3(0., 1., 0.));
 	    this->plane_origin.push_back(Vec3(0., 0., 0.));
 	}
@@ -140,7 +149,7 @@ void VpWorld::setOpenMP()
 	_world.SetNumThreads(numThreads);
 	std::cout << "csVpWorld: parallelized with " << numThreads << " cores" << std::endl;
 #else
-    std::cout << "OpenMP is not supported in this environment." << std::endl;
+//    std::cout << "OpenMP is not supported in this environment." << std::endl;
 #endif
 
 }
@@ -1191,4 +1200,38 @@ void VpWorld::ReportStatistics()
 void VpWorld::ResetStatistics()
 {
 	_world.ResetStatistics();
+}
+
+// VpWorlds
+//void VpWorlds::AddWorld(VpWorld *_world)
+//{
+//    this->worlds.push_back(_world);
+//}
+//
+//void VpWorlds::Steps()
+//{
+//	#pragma omp parallel for
+//	for(std::vector<VpWorld *>::size_type i=0; i<this->worlds.size(); i++)
+//	{
+//	    this->worlds[i]->step();
+//	}
+//}
+//
+//void VpWorlds::Step(int j)
+//{
+//    assert(j < this->worlds.size());
+//    this->worlds[j]->step();
+//}
+
+void worlds_step(const bp::list &worlds, const bp::list &skels)
+{
+	int worlds_num = len(worlds);
+
+    #pragma omp parallel for
+    for(int i=0; i<worlds_num; i++)
+    {
+//        static_cast<VpWorld*>(&worlds[i])->step();
+        skels[i].attr("solveHybridDynamics")();
+        worlds[i].attr("step")();
+    }
 }

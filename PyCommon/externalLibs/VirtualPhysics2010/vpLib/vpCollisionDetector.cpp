@@ -101,6 +101,11 @@ void vpCollisionDetector::SetMaxNumSimulContact(int num)
 	m_iMaxNumSimulContact = num;
 }
 
+vpCollisionDetector::~vpCollisionDetector()
+{
+
+}
+
 /*
 const _array<vpCollisionList> &vpCollisionDetector::GetCollisionList(void) const
 {

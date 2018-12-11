@@ -181,7 +181,8 @@ class PPO(object):
         self.total_episodes = []
 
         self.model = Model(self.num_state, self.num_action).float()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
+        # self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=1E-4)
         self.w_entropy = 0.0
 
         self.sum_return = 0.

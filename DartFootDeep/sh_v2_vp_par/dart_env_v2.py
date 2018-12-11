@@ -26,38 +26,84 @@ def get_joint_dof_range(joint):
     return range(joint.dofs[0].index_in_skeleton(), joint.dofs[0].index_in_skeleton()+joint.num_dofs())
 
 
-def fix_motion_data_by_foot(motion, control_model, world):
+def fix_motion_data_by_foot(motion, skel, SEGMENT_FOOT_RAD):
     """
 
     :param motion:
     :type motion: ym.JointMotion
-    :param control_model:
-    :type control_model: cvm.VpControlModel
-    :param world:
-    :type world: cvw.VpWorld
+    :param skel:
+    :type skel: pydart.Skeleton
+    :param SEGMENT_FOOT_RAD:
+    :type SEGMENT_FOOT_RAD: float
     :return:
     """
     for i in range(len(motion)):
-        control_model.set_q(motion.get_q(i))
-        bodyIDsToCheck = list(range(world.getBodyNum()))
-        mus = [.5]*len(bodyIDsToCheck)
-        bodyIDs, contactPositions, contactPositionLocals, contactForces = world.calcPenaltyForce(bodyIDsToCheck, mus, 0., 0.)
-        min_joint_y = min([contactPosition[1] for contactPosition in contactPositions]) if contactPositions else 0.
-        if min_joint_y < 0.:
-            motion[i].translateByOffset(-min_joint_y * mm.unitY())
+        skel.set_positions(motion.get_q(i))
+        min_joint_y = np.inf
+        for body in skel.bodynodes:
+            for shapenode in body.shapenodes:
+                if shapenode.has_collision_aspect():
+                    joint_y = np.dot(body.world_transform(), shapenode.relative_transform())[1, 3]
+                    if min_joint_y > joint_y:
+                        min_joint_y = joint_y
+
+        if min_joint_y < SEGMENT_FOOT_RAD:
+            motion[i].translateByOffset((SEGMENT_FOOT_RAD-min_joint_y) * mm.unitY())
+
+
+class HpDartEnvs(gym.Env):
+    def __init__(self, env_name='walk', slave_num=1):
+        self.slave_num = slave_num
+        self.envs = [HpDartEnv(env_name) for _ in range(slave_num)]
+        self.step_per_frame = self.envs[0].step_per_frame
+        self.Ks, self.Ds = self.envs[0].Ks, self.envs[0].Ds
+
+    def Resets(self, rsi):
+        for env in self.envs:
+            env.rsi = rsi
+            env.reset()
+
+    def Reset(self, rsi, idx):
+        self.envs[idx].rsi = rsi
+        self.envs[idx].reset()
+
+    def GetStates(self):
+        return [env.state() for env in self.envs]
+
+    def Steps(self, actions):
+        ready_steps = []
+        for i in range(self.slave_num):
+            ready_steps.append(self.envs[i].set_action(actions[i]))
+
+        for _ in range(self.step_per_frame):
+            for i in range(self.slave_num):
+                ddth_des, bodyIDsToCheck, mus = ready_steps[i]
+                bodyIDs, contactPositions, contactPositionLocals, contactForces = self.envs[i].world.calcPenaltyForce(bodyIDsToCheck, mus, self.Ks, self.Ds)
+                self.envs[i].world.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
+                self.envs[i].skel.setDOFAccelerations(ddth_des)
+
+            cvw.worlds_step([env.world for env in self.envs], [env.skel for env in self.envs])
+
+        for i in range(self.slave_num):
+            self.envs[i].update_ref_skel(False)
+
+    def GetReward(self, idx):
+        return self.envs[idx].reward()
+
+    def IsTerminalState(self, idx):
+        return self.envs[idx].is_done()
 
 
 class HpDartEnv(gym.Env):
     def __init__(self, env_name='walk'):
         motionFile = '../data/wd2_tiptoe_zygote.bvh'
-        motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped(motionFile, SEGMENT_FOOT_MAG=0.01, SEGMENT_FOOT_RAD=0.008, motion_scale=.01)
+        motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped(motionFile, SEGMENT_FOOT_MAG=0.01, SEGMENT_FOOT_RAD=0.008)
         self.world = cvw.VpWorld(wcfg)
         self.world.SetGlobalDamping(0.999)
 
         self.skel = cvm.VpControlModel(self.world, motion[0], mcfg)
         self.world.initialize()
         self.skel.initializeHybridDynamics()
-
         self.Kp, self.Kd = 400., 40.
         self.Ks, self.Ds = config['Ks'], config['Ds']
 
@@ -108,8 +154,6 @@ class HpDartEnv(gym.Env):
         self.ref_skel.set_q(np.zeros_like(self.skel.get_q()))
 
         self.step_per_frame = stepsPerFrame
-
-        fix_motion_data_by_foot(self.ref_motion, self.ref_skel, self.ref_world)
 
         self.rsi = True
 
@@ -217,7 +261,7 @@ class HpDartEnv(gym.Env):
         return reward
 
     def is_done(self):
-        if self.skel.getCOM()[1] < 0.4 or self.skel.getCOM()[1] > 1.0:
+        if self.skel.getCOM()[1] < 0.4:
             # print('fallen')
             return True
         elif True in np.isnan(np.asarray(self.skel.get_q())) or True in np.isnan(np.asarray(self.skel.get_dq())):
@@ -228,6 +272,32 @@ class HpDartEnv(gym.Env):
             # print('timeout')
             return True
         return False
+
+    def set_action(self, _action):
+        action = np.hstack((np.zeros(6), _action/10.))
+        th_action = ype.makeNestedList(self.skel.getDOFs())
+        ype.nested(action, th_action)
+
+        th_r = self.ref_motion.getDOFPositions(self.phase_frame)
+        th_des = [th_r[0]]
+        for i in range(1, len(th_r)):
+            th_des.append(np.dot(th_r[i], mm.exp(th_action[i])))
+
+        th = self.skel.getDOFPositions()
+        dth_r = self.ref_motion.getDOFVelocities(self.phase_frame)
+        dth = self.skel.getDOFVelocities()
+        ddth_r = self.ref_motion.getDOFAccelerations(self.phase_frame)
+        ddth_des = yct.getDesiredDOFAccelerations(th_des, th, dth_r, dth, ddth_r, self.Kp, self.Kd)
+
+        bodyIDsToCheck = list(range(self.world.getBodyNum()))
+        mus = [.5]*len(bodyIDsToCheck)
+
+        return ddth_des, bodyIDsToCheck, mus
+
+    def get_after_step(self):
+        self.update_ref_skel(False)
+
+        return tuple([self.state(), self.reward(), self.is_done(), dict()])
 
     def step(self, _action):
         """Run one timestep of the environment's dynamics.
@@ -303,14 +373,7 @@ class HpDartEnv(gym.Env):
         # Returns
             observation (object): The initial observation of the space. Initial reward is assumed to be 0.
         """
-        motionFile = '../data/wd2_tiptoe_zygote.bvh'
-        motion, mcfg, wcfg, stepsPerFrame, config, frame_rate = mit.create_biped(motionFile, SEGMENT_FOOT_MAG=0.01, SEGMENT_FOOT_RAD=0.008, motion_scale=.01)
-        self.world = cvw.VpWorld(wcfg)
-        self.world.SetGlobalDamping(0.999)
-
-        self.skel = cvm.VpControlModel(self.world, motion[0], mcfg)
-        self.world.initialize()
-        self.skel.initializeHybridDynamics()
+        self.world.RollbackState()
 
         self.continue_from_now_by_phase(random() if self.rsi else 0.)
 

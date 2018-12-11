@@ -393,11 +393,11 @@ void vpWorld::StepAhead(void)
 	for ( int i = 0; i < m_pSystem.size(); i++ )
 		for ( int j = 0; j < m_pSystem[i]->m_sState.size(); j++ ) m_pSystem[i]->m_sState[j].SetTorque(SCALAR_0);
 
+	for ( int i = 0; i < m_pBody.size(); i++ )
+		m_pBody[i]->UpdateGeomFrame();
+
 	if ( m_bDetectCollision )
 	{
-		for ( int i = 0; i < m_pBody.size(); i++ )
-			m_pBody[i]->UpdateGeomFrame();
-	
 		VP_TIMER_ACTION(m_sColDetTimer, Resume);
 		m_pCollisionDetector->DetectCollision();
 		VP_TIMER_ACTION(m_sColDetTimer, Halt);

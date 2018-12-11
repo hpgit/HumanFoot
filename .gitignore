@@ -5,6 +5,7 @@
 *.o
 *.d
 *.a
+*.tmp
 pyenv
 /PyCommon/modules/modules.vcxproj.filters
 /PyCommon/modules/modules.vcxproj.user

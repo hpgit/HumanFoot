@@ -175,5 +175,7 @@ public:	// expose to python
 	void								 ResetStatistics(void);
 };
 
+void worlds_step(const bp::list &worlds, const bp::list &skels);
+void vp_init();
 
 #endif  // _CSVPWORLD_H_

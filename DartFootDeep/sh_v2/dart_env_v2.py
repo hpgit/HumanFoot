@@ -20,9 +20,34 @@ def get_joint_dof_range(joint):
     return range(joint.dofs[0].index_in_skeleton(), joint.dofs[0].index_in_skeleton()+joint.num_dofs())
 
 
+def fix_motion_data_by_foot(motion, skel, SEGMENT_FOOT_RAD):
+    """
+
+    :param motion:
+    :type motion: ym.JointMotion
+    :param skel:
+    :type skel: pydart.Skeleton
+    :param SEGMENT_FOOT_RAD:
+    :type SEGMENT_FOOT_RAD: float
+    :return:
+    """
+    for i in range(len(motion)):
+        skel.set_positions(motion.get_q(i))
+        min_joint_y = np.inf
+        for body in skel.bodynodes:
+            for shapenode in body.shapenodes:
+                if shapenode.has_collision_aspect():
+                    joint_y = np.dot(body.world_transform(), shapenode.relative_transform())[1, 3]
+                    if min_joint_y > joint_y:
+                        min_joint_y = joint_y
+
+        if min_joint_y < SEGMENT_FOOT_RAD:
+            motion[i].translateByOffset((SEGMENT_FOOT_RAD-min_joint_y) * mm.unitY())
+
+
 class HpDartEnv(gym.Env):
     def __init__(self, env_name='walk'):
-        self.world = pydart.World(1./1200., "../data/test.xml")
+        self.world = pydart.World(1./1200., "../data/wd2_seg.xml")
         self.world.control_skel = self.world.skeletons[1]
         self.skel = self.world.skeletons[1]
         self.Kp, self.Kd = 400., 40.
@@ -67,10 +92,12 @@ class HpDartEnv(gym.Env):
         elif env_name == 'walk_u_turn_whole':
             self.ref_motion.translateByOffset([0., 0.03, 0.])
 
-        self.ref_world = pydart.World(1./1200., "../data/test.xml")
+        self.ref_world = pydart.World(1./1200., "../data/wd2_seg.xml")
         self.ref_skel = self.ref_world.skeletons[1]
         # self.step_per_frame = round((1./self.world.time_step()) / self.ref_motion.fps)
         self.step_per_frame = 40
+
+        fix_motion_data_by_foot(self.ref_motion, self.ref_skel, SEGMENT_FOOT_RAD)
 
         self.rsi = True
 
@@ -139,6 +166,8 @@ class HpDartEnv(gym.Env):
         self.action_space = gym.spaces.Box(-action_high, action_high, dtype=np.float32)
         self.observation_space = gym.spaces.Box(-state_high, state_high, dtype=np.float32)
 
+        self.force_done = False
+
     def state(self):
         pelvis = self.skel.body(0)
         p_pelvis = pelvis.world_transform()[:3, 3]
@@ -177,6 +206,8 @@ class HpDartEnv(gym.Env):
         return reward
 
     def is_done(self):
+        if self.force_done:
+            return True
         if self.skel.com()[1] < 0.4:
             # print('fallen')
             return True
@@ -201,20 +232,27 @@ class HpDartEnv(gym.Env):
             done (boolean): Whether the episode has ended, in which case further step() calls will return undefined results.
             info (dict): Contains auxiliary diagnostic information (helpful for debugging, and sometimes learning).
         """
-        action = np.hstack((np.zeros(6), _action[:self.skel.ndofs-6]/10.))
-        Kp_vector = np.asarray([0.0] * 6 + [self.Kp] * (self.skel.ndofs - 6))
-        Kd_vector = np.asarray([0.0] * 6 + [self.Kd] * (self.skel.ndofs - 6))
-        for joint_idx in range(len(self.foot_joint)):
-            for dof_idx in get_joint_dof_range(self.skel.joint(self.foot_joint[joint_idx])):
-                Kp_vector[dof_idx] = self.Kd * exp(log(self.Kp) * _action[self.skel.ndofs-6 + joint_idx]/10.)
-                Kd_vector[dof_idx] = self.Kp * exp(log(self.Kd) * _action[self.skel.ndofs-6 + joint_idx]/20.)
+        try:
+            action = np.hstack((np.zeros(6), _action[:self.skel.ndofs-6]/10.))
+            Kp_vector = np.asarray([0.0] * 6 + [self.Kp] * (self.skel.ndofs - 6))
+            Kd_vector = np.asarray([0.0] * 6 + [self.Kd] * (self.skel.ndofs - 6))
+            for joint_idx in range(len(self.foot_joint)):
+                for dof_idx in get_joint_dof_range(self.skel.joint(self.foot_joint[joint_idx])):
+                    Kp_vector[dof_idx] = self.Kd * exp(log(self.Kp) * _action[self.skel.ndofs-6 + joint_idx]/10.)
+                    Kd_vector[dof_idx] = self.Kp * exp(log(self.Kd) * _action[self.skel.ndofs-6 + joint_idx]/20.)
 
-        for i in range(self.step_per_frame):
-            # self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
-            self.skel.set_forces(self.skel.get_spd_extended(self.ref_skel.q + action, self.world.time_step(), Kp_vector, Kd_vector))
-            self.world.step()
+            for i in range(self.step_per_frame):
+                # self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
+                self.skel.set_forces(self.skel.get_spd_extended(self.ref_skel.q + action, self.world.time_step(), Kp_vector, Kd_vector))
+                self.world.step()
 
-        self.update_ref_skel(False)
+            self.update_ref_skel(False)
+
+        except AssertionError as error:
+            f = open('error.log', 'w+')
+            f.write(str(error))
+            f.close()
+            self.force_done = True
 
         return tuple([self.state(), self.reward(), self.is_done(), dict()])
 
@@ -257,6 +295,8 @@ class HpDartEnv(gym.Env):
         self.skel.set_velocities(self.ref_motion.get_dq_dart(self.phase_frame))
 
         self.update_ref_skel(True)
+
+        self.force_done = False
 
         return self.state()
 

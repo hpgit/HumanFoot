@@ -23,7 +23,7 @@ def testtest():
     yf.writeBvhFile()
 
 
-def create_biped(motionName='wd2_n_kick.bvh', SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03, SEGMENT_FOOT_RAD=None, motion_scale=0.01):
+def create_biped(motionName='wd2_n_kick.bvh', SEGMENT_FOOT=True, SEGMENT_FOOT_MAG=.03, SEGMENT_FOOT_RAD=None):
     """
 
     :param motionName: motion file name
@@ -52,7 +52,7 @@ def create_biped(motionName='wd2_n_kick.bvh', SEGMENT_FOOT=True, SEGMENT_FOOT_MA
     # motionName = 'wd2_jump.bvh'
     # motionName = 'wd2_stand.bvh'
     bvh = yf.readBvhFileAsBvh(motionName)
-    bvh.set_scale(motion_scale)
+    bvh.set_scale(.01)
 
     if SEGMENT_FOOT:
         # partBvhFilePath = '../PyCommon/modules/samples/simpleJump_long_test2.bvh'

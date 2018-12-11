@@ -1,7 +1,8 @@
+# from rl.core import Agent
 import numpy as np
 
 from PyCommon.modules.Simulator import csVpWorld as cvw
-from DartFootDeep.sh_v2_vp.dart_env_v2 import HpDartEnv
+from DartFootDeep.sh_v2_vp_par.dart_env_v2 import HpDartEnvs
 
 from collections import namedtuple
 from collections import deque
@@ -9,8 +10,6 @@ from itertools import count
 import random
 import time
 import os
-
-from multiprocessing import Process, Pipe
 
 import torch
 from torch import nn, optim
@@ -30,8 +29,8 @@ class Model(nn.Module):
     def __init__(self, num_states, num_actions):
         super(Model, self).__init__()
 
-        hidden_layer_size1 = 256
-        hidden_layer_size2 = 128
+        hidden_layer_size1 = 128
+        hidden_layer_size2 = 64
 
         '''Policy Mean'''
         self.policy_fc1 = nn.Linear(num_states		  , hidden_layer_size1)
@@ -122,50 +121,14 @@ class ReplayBuffer(object):
         self.buffer.clear()
 
 
-def worker(rnn_len, proc_num, state_sender, result_sender, action_receiver, reset_receiver, motion_receiver):
-    """
-
-    :type rnn_len: int
-    :type proc_num: int
-    :type result_sender: Connection
-    :type state_sender: Connection
-    :type action_receiver: Connection
-    :type reset_receiver: Connection
-    :type motion_receiver: Connection
-    :return:
-    """
-
-    # reset variable
-    # 0 : go on (no reset)
-    # 1 : soft reset ( w/o motion change )
-    # 2 : hard reset ( with motion change )
-
-    env = HpDartEnv()
-
-    state = None
-    while True:
-        reset_flag = reset_receiver.recv()
-        if reset_flag == 1:
-            state = env.reset()
-        elif reset_flag == 2:
-            motion_num = motion_receiver.recv()
-            env.specify_motion_num(motion_num)
-            state = env.reset()
-
-        state_sender.send(state)
-        action = action_receiver.recv()
-        state, reward, is_done, _ = env.step(action)
-        result_sender.send((reward, is_done))
-
-
 class PPO(object):
     def __init__(self, env_name, num_slaves=1, eval_print=True, eval_log=True, visualize_only=False):
         np.random.seed(seed=int(time.time()))
         self.env_name = env_name
-        self.env = HpDartEnv(env_name)
+        self.env = HpDartEnvs(env_name, num_slaves)
         self.num_slaves = num_slaves
-        self.num_state = self.env.observation_space.shape[0]
-        self.num_action = self.env.action_space.shape[0]
+        self.num_state = self.env.envs[0].observation_space.shape[0]
+        self.num_action = self.env.envs[0].action_space.shape[0]
         self.num_epochs = 10
         self.num_evaluation = 0
         self.num_training = 0
@@ -184,9 +147,6 @@ class PPO(object):
         self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
         self.w_entropy = 0.0
 
-        self.sum_return = 0.
-        self.num_episode = 0
-
         self.saved = False
         self.save_directory = self.env_name + '_' + 'model_'+time.strftime("%m%d%H%M") + '/'
         if not self.saved and not os.path.exists(self.save_directory) and not visualize_only:
@@ -199,64 +159,8 @@ class PPO(object):
         self.eval_print = eval_print
         self.eval_log = eval_log
 
-        self.state_sender = []  # type: list[Connection]
-        self.result_sender = []  # type: list[Connection]
-        self.state_receiver = []  # type: list[Connection]
-        self.result_receiver = []  # type: list[Connection]
-        self.action_sender = []  # type: list[Connection]
-        self.reset_sender = []  # type: list[Connection]
-        self.motion_sender = []  # type: list[Connection]
-        self.envs = []  # type: list[Process]
-
-        self.init_envs()
-
-    def init_envs(self):
-        for slave_idx in range(self.num_slaves):
-            s_s, s_r = Pipe()
-            r_s, r_r = Pipe()
-            a_s, a_r = Pipe()
-            reset_s, reset_r = Pipe()
-            motion_s, motion_r = Pipe()
-            p = Process(target=worker, args=(-1, slave_idx, s_s, r_s, a_r, reset_r, motion_r))
-            self.state_sender.append(s_s)
-            self.result_sender.append(r_s)
-            self.state_receiver.append(s_r)
-            self.result_receiver.append(r_r)
-            self.action_sender.append(a_s)
-            self.reset_sender.append(reset_s)
-            self.motion_sender.append(motion_s)
-            self.envs.append(p)
-            p.start()
-
-    def envs_get_states(self, terminated):
-        states = []
-        for recv_idx in range(len(self.state_receiver)):
-            if terminated[recv_idx]:
-                states.append([0.] * self.num_state)
-            else:
-                states.append(self.state_receiver[recv_idx].recv())
-        return states
-
-    def envs_send_actions(self, actions, terminated):
-        for i in range(len(self.action_sender)):
-            if not terminated[i]:
-                self.action_sender[i].send(actions[i])
-
-    def envs_get_status(self, terminated):
-        status = []
-        for recv_idx in range(len(self.result_receiver)):
-            if terminated[recv_idx]:
-                status.append((0., True))
-            else:
-                status.append(self.result_receiver[recv_idx].recv())
-        return zip(*status)
-
-    def envs_resets(self, reset_flag):
-        for i in range(len(self.reset_sender)):
-            self.reset_sender[i].send(reset_flag)
-
-    def envs_reset(self, i, reset_flag):
-        self.reset_sender[i].send(reset_flag)
+        self.sum_return = 0.
+        self.num_episode = 0
 
     def SaveModel(self):
         torch.save(self.model.state_dict(), self.save_directory + str(self.num_evaluation) + '.pt')
@@ -270,12 +174,7 @@ class PPO(object):
         for epi in self.total_episodes:
             data = epi.get_data()
             size = len(data)
-            try:
-                states, actions, rewards, values, logprobs = zip(*data)
-            except ValueError as error:
-                print(error)
-                print(size)
-                raise ValueError
+            states, actions, rewards, values, logprobs = zip(*data)
 
             values = np.concatenate((values, np.zeros(1)), axis=0)
             advantages = np.zeros(size)
@@ -294,12 +193,17 @@ class PPO(object):
 
     def GenerateTransitions(self):
         del self.total_episodes[:]
+        states = [None] * self.num_slaves
+        actions = [None] * self.num_slaves
+        rewards = [None] * self.num_slaves
+        states_next = [None] * self.num_slaves
         episodes = [None] * self.num_slaves
         for j in range(self.num_slaves):
             episodes[j] = EpisodeBuffer()
 
-        self.envs_resets(1)
-        # self.env.Resets(False)
+        self.env.Resets(True)
+
+        states = self.env.GetStates()
 
         local_step = 0
         terminated = [False] * self.num_slaves
@@ -307,52 +211,53 @@ class PPO(object):
 
         percent = 0
         while True:
-            # print('local_step: ', local_step)
-            # update states
-            states = self.envs_get_states(terminated)
-            # states = self.env.GetStates()
-
+            # new_percent = local_step*10//self.buffer_size
+            # if (new_percent == percent) is not True:
+            # percent = new_percent
+            # print('{}0%'.format(percent))
             a_dist, v = self.model(torch.tensor(states).float())
             actions = a_dist.sample().detach().numpy()
             logprobs = a_dist.log_prob(torch.tensor(actions).float()).detach().numpy().reshape(-1)
             values = v.detach().numpy().reshape(-1)
 
-            self.envs_send_actions(actions, terminated)
-            rewards, is_done = self.envs_get_status(terminated)
-            # self.env.Steps(actions)
-            # rewards, is_done = self.env.GetRewards(), self.env.IsTerminalStates()
+            self.env.Steps(actions)
+
             for j in range(self.num_slaves):
                 if terminated[j]:
                     continue
 
-                nan_occur = np.any(np.isnan(states[j])) or np.any(np.isnan(actions[j]))
-                if not nan_occur:
+                nan_occur = False
+                if np.any(np.isnan(states[j])) or np.any(np.isnan(actions[j])):
+                    nan_occur = True
+                else:
+                    rewards[j] = self.env.GetReward(j)
                     episodes[j].push(states[j], actions[j], rewards[j], values[j], logprobs[j])
                     local_step += 1
 
                 # if episode is terminated
-                if is_done[j] or nan_occur:
-                    if not is_done[j] and nan_occur:
-                        self.print('!!!!!!!!!!!exception!!!!!!!!!!!1')
+                if self.env.IsTerminalState(j) or (nan_occur is True):
                     # push episodes
-                    if len(episodes[j].get_data()) > 0:
-                        self.total_episodes.append(episodes[j])
+                    self.total_episodes.append(episodes[j])
 
                     # if data limit is exceeded, stop simulations
                     if local_step < self.buffer_size:
                         episodes[j] = EpisodeBuffer()
-                        self.envs_reset(j, 1)
-                        # self.env.Reset(True, j)
+                        self.env.Reset(True, j)
                     else:
                         terminated[j] = True
-                else:
-                    self.envs_reset(j, 0)
-                    pass
-
             if local_step >= self.buffer_size:
-                if all(terminated):
+                all_terminated = True
+                for j in range(self.num_slaves):
+                    if terminated[j] is False:
+                        all_terminated = False
+
+                if all_terminated is True:
                     break
 
+            # update states
+            states = self.env.GetStates()
+
+    # print('Done!')
     def OptimizeModel(self):
         # print('Optimize Model...')
         self.ComputeTDandGAE()
@@ -437,11 +342,11 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         ppo = PPO('walk', 4)
     else:
-        ppo = PPO(sys.argv[1], int(sys.argv[2]))
+        ppo = PPO(sys.argv[1], 4)
 
-    if len(sys.argv) > 3:
-        print("load {}".format(sys.argv[3]))
-        ppo.LoadModel(sys.argv[3])
+    if len(sys.argv) > 2:
+        print("load {}".format(sys.argv[2]))
+        ppo.LoadModel(sys.argv[2])
 
     # parser = argparse.ArgumentParser()
     # parser.add_argument('-m','--model',help='actor model directory')
@@ -454,7 +359,6 @@ if __name__ == "__main__":
     # print('num states: {}, num actions: {}'.format(ppo.env.GetNumState(),ppo.env.GetNumAction()))
 
     max_avg_steps = 0
-    max_avg_reward = 0.
 
     for i in range(50000):
         ppo.Train()
@@ -463,12 +367,10 @@ if __name__ == "__main__":
         reward, step = ppo.Evaluate()
         rewards.append(reward)
         steps.append(step)
-        if i % 10 == 0 or max_avg_steps < step or max_avg_reward*1.05 < reward:
+        if i % 10 == 0 or max_avg_steps < step:
             ppo.SaveModel()
             if max_avg_steps < step:
                 max_avg_steps = step
-            if max_avg_reward * 1.05 < reward:
-                max_avg_reward = reward
 
         # Plot(np.asarray(rewards),'reward',1,False)
         print("Elapsed time : {:.2f}s".format(time.time() - tic))

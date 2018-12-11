@@ -55,6 +55,7 @@ class vpCollisionDetector
 public:
 
 							 vpCollisionDetector();
+	virtual					 ~vpCollisionDetector();
 	/*!
 		The method is called right after the world is initialized.
 	*/
