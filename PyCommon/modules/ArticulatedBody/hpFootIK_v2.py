@@ -21,15 +21,22 @@ def footAdjust(posture_ori, touch_body_indices, SEGMENT_FOOT_MAG, SEGMENT_FOOT_R
     """
     if len(touch_body_indices) == 0:
         return
+
+    # idDic: name to idx
     idDic = dict()
     for i in range(posture_ori.skeleton.getJointNum()):
         idDic[posture_ori.skeleton.getJointName(i)] = i
+
+    # nameDic: index to name
     nameDic = dict()
     for i in range(posture_ori.skeleton.getJointNum()):
         nameDic[i] = posture_ori.skeleton.getJointName(i)
+
     # specified
     foot_name = "LeftFoot"
+    # side_touch_body_indices: left or right foot touch body indices
     side_touch_body_indices = [touch_body_idx for touch_body_idx in touch_body_indices if foot_name in nameDic[touch_body_idx]]
+    # foot_joint_pos: ankle joint position
     foot_joint_pos = posture_ori.getJointPositionGlobal(idDic[foot_name])
     seg_joint_ori = [posture_ori.getJointOrientationGlobal(touch_body_idx) for touch_body_idx in side_touch_body_indices]
     seg_joint_pos = []
@@ -51,7 +58,7 @@ def footAdjust(posture_ori, touch_body_indices, SEGMENT_FOOT_MAG, SEGMENT_FOOT_R
         posture_ori.mulJointOrientationGlobal(idDic[foot_name], mm.exp(joint_vec_rot_axis, joint_y_to_zero_angle))
 
         ###############################################################
-        #TODO:
+        # TODO:
         ###############################################################
         # rotate seg to parallel ground
         seg_ori = posture_ori.getJointOrientationGlobal(seg_idx)
@@ -65,9 +72,6 @@ def footAdjust(posture_ori, touch_body_indices, SEGMENT_FOOT_MAG, SEGMENT_FOOT_R
         joint_vec_rot_axis, temp_angle = mm.getRotAxisAngleFromVectors(ankle_to_joint_vec, -mm.unitY())
         joint_y_to_zero_angle = temp_angle - math.acos((foot_joint_pos[1] - SEGMENT_FOOT_RAD - baseHeight)/np.linalg.norm(ankle_to_joint_vec))
         posture_ori.mulJointOrientationGlobal(idDic[foot_name], mm.exp(joint_vec_rot_axis, joint_y_to_zero_angle))
-
-
-
 
 
 

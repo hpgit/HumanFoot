@@ -1,6 +1,7 @@
 from fltk import Fl
 import os
 import torch
+from math import exp, log
 from DartFootDeep.sh_v2.ppo_v2 import PPO
 from PyCommon.modules.GUI import hpSimpleViewer as hsv
 from PyCommon.modules.Renderer import ysRenderer as yr
@@ -30,6 +31,7 @@ def main():
         pt_names.pop(pt_names.index('log.txt'))
         pt_names.sort(key=lambda f: int(os.path.splitext(f)[0]))
         ppo.LoadModel(env_model_dir[-1]+'/'+pt_names[-1])
+        print(pt_names[-1])
 
     ppo.env.Resets(False)
     ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(ppo.env.phase_frame))
@@ -58,9 +60,10 @@ def main():
         # print(frame, res[0][0])
         # if res[0][0] > 0.46:
         #     ppo.env.continue_from_now_by_phase(0.2)
+        # print(frame, ' '.join(["{:0.1f}".format(400. * exp(log(400.) * rate/10.)) for rate in action[0][ppo.env.skel.ndofs-6:]]))
         if res[2]:
             print(frame, 'Done')
-            # ppo.env.reset()
+            ppo.env.reset()
 
         # contact rendering
         contacts = ppo.env.world.collision_result.contacts

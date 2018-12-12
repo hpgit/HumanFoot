@@ -114,7 +114,6 @@ class HpDartEnv(gym.Env):
         self.body_num = self.skel.num_bodynodes()
         self.idx_e = [self.skel.bodynode_index('LeftFoot'), self.skel.bodynode_index('RightFoot'),
                       self.skel.bodynode_index('LeftForeArm'), self.skel.bodynode_index('RightForeArm')]
-        self.body_e = list(map(self.skel.body, self.idx_e))
         self.ref_body_e = list(map(self.ref_skel.body, self.idx_e))
         self.motion_len = len(self.ref_motion)
         self.motion_time = len(self.ref_motion) / self.ref_motion.fps
@@ -189,7 +188,9 @@ class HpDartEnv(gym.Env):
         return np.asarray(state).flatten()
 
     def reward(self):
-        p_e = np.asarray([body.world_transform()[:3, 3] for body in self.body_e]).flatten()
+        body_e = list(map(self.skel.body, self.idx_e))
+
+        p_e = np.asarray([body.world_transform()[:3, 3] for body in body_e]).flatten()
 
         q_diff = np.asarray(self.skel.position_differences(self.prev_ref_q, self.skel.q))
         dq_diff = np.asarray(self.skel.velocity_differences(self.prev_ref_dq, self.skel.dq))
@@ -212,7 +213,7 @@ class HpDartEnv(gym.Env):
             # print('fallen')
             return True
         elif True in np.isnan(np.asarray(self.skel.q)) or True in np.isnan(np.asarray(self.skel.dq)):
-            # print('nan')
+            print('nan')
             return True
         elif self.world.time() + self.time_offset > self.motion_time:
             # print('timeout')
@@ -299,6 +300,12 @@ class HpDartEnv(gym.Env):
         self.force_done = False
 
         return self.state()
+
+    def hard_reset(self):
+        self.world = pydart.World(1./1200., "../data/wd2_seg.xml")
+        self.world.control_skel = self.world.skeletons[1]
+        self.skel = self.world.skeletons[1]
+        self.reset()
 
     def render(self, mode='human', close=False):
         """Renders the environment.

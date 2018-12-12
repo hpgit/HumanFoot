@@ -137,8 +137,8 @@ def worker(rnn_len, proc_num, state_sender, result_sender, action_receiver, rese
 
     # reset variable
     # 0 : go on (no reset)
-    # 1 : soft reset ( w/o motion change )
-    # 2 : hard reset ( with motion change )
+    # 1 : soft reset ( reset world )
+    # 2 : hard reset ( new world )
 
     env = HpDartEnv()
 
@@ -148,9 +148,7 @@ def worker(rnn_len, proc_num, state_sender, result_sender, action_receiver, rese
         if reset_flag == 1:
             state = env.reset()
         elif reset_flag == 2:
-            motion_num = motion_receiver.recv()
-            env.specify_motion_num(motion_num)
-            state = env.reset()
+            state = env.hard_reset()
 
         state_sender.send(state)
         action = action_receiver.recv()
@@ -335,7 +333,10 @@ class PPO(object):
                     # if data limit is exceeded, stop simulations
                     if local_step < self.buffer_size:
                         episodes[j] = EpisodeBuffer()
-                        self.envs_reset(j, 1)
+                        if nan_occur:
+                            self.envs_reset(j, 2)
+                        else:
+                            self.envs_reset(j, 1)
                         # self.env.Reset(True, j)
                     else:
                         terminated[j] = True

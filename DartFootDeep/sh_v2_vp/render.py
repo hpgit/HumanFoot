@@ -11,7 +11,7 @@ from PyCommon.modules.Simulator import csVpWorld as cvw
 
 def main():
     MOTION_ONLY = False
-    CURRENT_CHECK = True
+    CURRENT_CHECK = False
 
     cvw.vp_init()
 
