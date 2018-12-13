@@ -53,6 +53,7 @@ SKELETON_ON = True
 
 
 def main():
+    cvw.vp_init()
     # np.set_printoptions(precision=4, linewidth=200)
     np.set_printoptions(precision=5, threshold=np.inf, suppress=True, linewidth=3000)
 

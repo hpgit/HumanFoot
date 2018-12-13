@@ -144,7 +144,7 @@ class HpDartEnv(gym.Env):
 
         # setting for reward
         self.reward_joint = list()
-        self.reward_joint.append('Hips')
+        # self.reward_joint.append('Hips')
         self.reward_joint.append('RightUpLeg')
         self.reward_joint.append('RightLeg')
         self.reward_joint.append('LeftUpLeg')

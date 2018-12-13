@@ -8,7 +8,7 @@ find_package(Boost 1.62.0 REQUIRED COMPONENTS python3 numpy3)
 find_package(OpenGL REQUIRED)
 find_package(VirtualPhysics REQUIRED)
 
-option(USE_OPENMP "Use OpenMP" ON)
+option(USE_OPENMP "Use OpenMP" OFF)
 if (USE_OPENMP)
     find_package(OpenMP)
 endif ()

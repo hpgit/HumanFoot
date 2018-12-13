@@ -139,13 +139,22 @@ class myHandler(BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    if True:
+    import sys
+    if sys.version_info[1] > 5:
         with HTTPServer(('', PORT_NUMBER), myHandler) as my_server:
             # Create a web server and define the handler to manage the incoming request
             print('Started httpserver on port ', PORT_NUMBER)
 
             # Wait forever for incoming htto requests
             my_server.serve_forever()
+    elif True:
+        my_server = HTTPServer(('', PORT_NUMBER), myHandler)
+        # Create a web server and define the handler to manage the incoming request
+        print('Started httpserver on port ', PORT_NUMBER)
+
+        # Wait forever for incoming htto requests
+        my_server.serve_forever()
+
     elif False:
         filenames = glob.glob('**/*_*/log.txt', recursive=True)
         filenames.sort(key=lambda x: int(x[-16:-8]), reverse=True)
