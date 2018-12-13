@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
-#include "../../../PyCommon/externalLibs/common/boostPythonUtil.h"
-#include "../../../PyCommon/externalLibs/common/VPUtil.h"
+#include "boostPythonUtil.h"
+#include "VPUtil.h"
 
 #include "csVpModel.h"
 #include "csVpWorld.h"

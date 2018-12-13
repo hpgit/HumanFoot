@@ -1,9 +1,9 @@
 #include "stdafx.h"
 
-#include "../../externalLibs/common/boostPythonUtil.h"
+#include "boostPythonUtil.h"
 #include "csMath.h"
 #include "EulerAngles.h"
-#include "../../externalLibs/common/VPUtil.h"
+#include "VPUtil.h"
 
 namespace bp = boost::python;
 namespace np = boost::python::numpy;

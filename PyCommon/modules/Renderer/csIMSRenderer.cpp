@@ -11,7 +11,7 @@
 #include <GL/glu.h>
 #endif
  
-#include "../../externalLibs/common/boostPythonUtil.h"
+#include "boostPythonUtil.h"
 #include "../../externalLibs/implicitMassSpringSolver2/Physics.h"
 
 #include "csIMSRenderer.h"
@@ -20,32 +20,32 @@
 BOOST_PYTHON_MODULE(csIMSRenderer)
 {
 	class_<IMSModelRenderer>("IMSModelRenderer", init<IMSModel*>())
-		.def(init<IMSModel*, const tuple&>())
-		.def(init<IMSModel*, const tuple&, bool>())
-		.def(init<IMSModel*, const tuple&, const dict&>())
+		.def(init<IMSModel*, const boost::python::tuple&>())
+		.def(init<IMSModel*, const boost::python::tuple&, bool>())
+		.def(init<IMSModel*, const boost::python::tuple&, const dict&>())
 		.def("render", &IMSModelRenderer::render)
 		;
 }
 
 IMSModelRenderer::IMSModelRenderer(IMSModel* pModel)
 {
-	_IMSModelRenderer(pModel, make_tuple(255,255,255), false, dict());
+	_IMSModelRenderer(pModel, boost::python::make_tuple(255,255,255), false, dict());
 }
 
-IMSModelRenderer::IMSModelRenderer( IMSModel* pModel, const tuple& color )
+IMSModelRenderer::IMSModelRenderer( IMSModel* pModel, const boost::python::tuple& color )
 {
 	_IMSModelRenderer(pModel, color, false, dict());
 }
 
-IMSModelRenderer::IMSModelRenderer( IMSModel* pModel, const tuple& color, bool drawParticles )
+IMSModelRenderer::IMSModelRenderer( IMSModel* pModel, const boost::python::tuple& color, bool drawParticles )
 {
 	_IMSModelRenderer(pModel, color, drawParticles, dict());
 }
-IMSModelRenderer::IMSModelRenderer( IMSModel* pModel, const tuple& color, const dict& colorMap )
+IMSModelRenderer::IMSModelRenderer( IMSModel* pModel, const boost::python::tuple& color, const dict& colorMap )
 {
 	_IMSModelRenderer(pModel, color, false, colorMap);
 }
-void IMSModelRenderer::_IMSModelRenderer(IMSModel* pModel, const tuple& color, bool drawParticles, const dict& colorMap)
+void IMSModelRenderer::_IMSModelRenderer(IMSModel* pModel, const boost::python::tuple& color, bool drawParticles, const dict& colorMap)
 {
 	_pModel = pModel;
 

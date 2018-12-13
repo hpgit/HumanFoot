@@ -1,6 +1,6 @@
 #ifndef _CSIMSMODEL_H_
 #define _CSIMSMODEL_H_
-#include "../../externalLibs/common/boostPythonUtil.h"
+#include "boostPythonUtil.h"
 
 class Physics_ParticleSystem;
 class Physics_SpringForce;

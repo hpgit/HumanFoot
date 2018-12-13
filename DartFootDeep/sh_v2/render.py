@@ -30,7 +30,8 @@ def main():
         pt_names = os.listdir(env_model_dir[-1])
         pt_names.pop(pt_names.index('log.txt'))
         pt_names.sort(key=lambda f: int(os.path.splitext(f)[0]))
-        ppo.LoadModel(env_model_dir[-1]+'/'+pt_names[-1])
+        # ppo.LoadModel(env_model_dir[-1]+'/'+pt_names[-1])
+        ppo.LoadModel(env_model_dir[-1]+'/'+'403.pt')
         print(pt_names[-1])
 
     ppo.env.Resets(False)

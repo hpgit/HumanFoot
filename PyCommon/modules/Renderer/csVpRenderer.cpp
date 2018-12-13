@@ -12,7 +12,7 @@
 #endif
 //#include <gl/glut.h>
  
-#include "../../../PyCommon/externalLibs/common/boostPythonUtil.h"
+#include "boostPythonUtil.h"
 #include <VP/vphysics.h>
 
 #include "csVpRenderer.h"

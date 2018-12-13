@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include <algorithm>
 
-#include "../../../PyCommon/externalLibs/common/boostPythonUtil.h"
-#include "../../../PyCommon/externalLibs/common/VPUtil.h"
+#include "boostPythonUtil.h"
+#include "VPUtil.h"
 
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>

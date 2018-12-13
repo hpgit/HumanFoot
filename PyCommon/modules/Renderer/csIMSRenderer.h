@@ -17,12 +17,12 @@ public:
 	GLubyte _color[3];
 	bool _drawParticles;
 	dict _colorMap;
-	void _IMSModelRenderer(IMSModel* pModel, const tuple& color, bool drawParticles, const dict& colorMap);
+	void _IMSModelRenderer(IMSModel* pModel, const boost::python::tuple& color, bool drawParticles, const dict& colorMap);
 
 public:	// expose to python
 	IMSModelRenderer(IMSModel* pModel);
-	IMSModelRenderer(IMSModel* pModel, const tuple& color);
-	IMSModelRenderer(IMSModel* pModel, const tuple& color, bool drawParticles);
-	IMSModelRenderer(IMSModel* pModel, const tuple& color, const dict& colorMap);
+	IMSModelRenderer(IMSModel* pModel, const boost::python::tuple& color);
+	IMSModelRenderer(IMSModel* pModel, const boost::python::tuple& color, bool drawParticles);
+	IMSModelRenderer(IMSModel* pModel, const boost::python::tuple& color, const dict& colorMap);
 	void render();
 };
