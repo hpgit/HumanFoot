@@ -5,6 +5,10 @@ file(GLOB vp_srcs "csVpRenderer.cpp" "csVpRenderer.h" "stdafx.cpp" "stdafx.h")
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/Renderer)
 
 include_directories(${OPENGL_INCLUDE_DIRS})
+if (UNIX)
+    # for glDeleteBuffers
+    add_compile_definitions(GL_GLEXT_PROTOTYPES)
+endif ()
 
 add_library(csRenderer ${SHARED_TYPE} ${srcs})
 target_link_libraries(csRenderer ${Python3_LIBRARIES} ${Boost_LIBRARIES} ${OPENGL_LIBRARIES})
@@ -17,3 +21,4 @@ set_target_properties(csIMSRenderer PROPERTIES PREFIX "")
 add_library(csVpRenderer ${SHARED_TYPE} ${vp_srcs})
 target_link_libraries(csVpRenderer ${Python3_LIBRARIES} ${Boost_LIBRARIES} ${OPENGL_LIBRARIES} ${VIRTUALPHYSICS_LIBRARIES})
 set_target_properties(csVpRenderer PROPERTIES PREFIX "")
+

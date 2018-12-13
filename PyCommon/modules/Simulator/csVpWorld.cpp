@@ -7,6 +7,9 @@
 #include "csVpWorld.h"
 #include "myGeom.h"
 #include <VP/PrimColDet.h>
+#ifdef USE_OPENMP
+#include <omp.h>
+#endif
 
 //using boost::python::make_tuple;
 namespace bp = boost::python;
@@ -139,15 +142,15 @@ void VpWorld::initialize()
 
 void VpWorld::setOpenMP()
 {
-#if !defined(__APPLE__) || defined(__APPLE_OMP__)
+#ifdef USE_OPENMP
 	int numThreads = 1;
 	//#pragma omp parallel
-	std::cout << "OpenMP versions: " << _OPENMP << std::endl;
-	std::cout << "OpenMP max threads: " << omp_get_max_threads() << std::endl;
+//	std::cout << "OpenMP versions: " << _OPENMP << std::endl;
+//	std::cout << "OpenMP max threads: " << omp_get_max_threads() << std::endl;
 	numThreads = omp_get_max_threads();
 	if (numThreads <= 0) numThreads = 1;
 	_world.SetNumThreads(numThreads);
-	std::cout << "csVpWorld: parallelized with " << numThreads << " cores" << std::endl;
+//	std::cout << "csVpWorld: parallelized with " << numThreads << " cores" << std::endl;
 #else
 //    std::cout << "OpenMP is not supported in this environment." << std::endl;
 #endif

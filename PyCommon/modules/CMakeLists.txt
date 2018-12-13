@@ -8,6 +8,11 @@ find_package(Boost 1.62.0 REQUIRED COMPONENTS python3 numpy3)
 find_package(OpenGL REQUIRED)
 find_package(VirtualPhysics REQUIRED)
 
+option(USE_OPENMP "Use OpenMP" ON)
+if (USE_OPENMP)
+    find_package(OpenMP)
+endif ()
+
 include_directories(usr/include)
 include_directories(${Python3_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
