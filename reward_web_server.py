@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from os import curdir, sep
+from os import curdir, sep, uname
 
 PORT_NUMBER = 8000
 
@@ -71,7 +71,8 @@ class myHandler(BaseHTTPRequestHandler):
 <head>\
 <title>Reward Watcher</title>\
 </head>\
-<body><br><br>\n'
+<body>'+uname()[1].encode()+b'\
+<br><br>\n'
             for filename in filenames:
                 html_str += b'<a href="'+filename.encode()+b'">'+filename[:-5].encode()+b'</a><br><br>\n'
             html_str += b'\
@@ -85,7 +86,8 @@ class myHandler(BaseHTTPRequestHandler):
 <head>\
 <title>Reward Watcher</title>\
 </head>\
-<body><br><br>\
+<body>'+uname()[1].encode()+b'<br>'+str(self.path).split('/')[-1][:-5].encode()+b'\
+<br><br>\
 <a href="'+str(self.path).split('/')[-1][:-5].encode()+b'/param.pt">pt_file</a><br><br>\
 <img src="'+str(self.path).split('/')[-1][:-5].encode()+b'/reward.png"/><br><br>\
 <img src="'+str(self.path).split('/')[-1][:-5].encode()+b'/noise.png"/>\
