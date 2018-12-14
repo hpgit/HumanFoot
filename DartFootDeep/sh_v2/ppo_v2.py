@@ -154,8 +154,7 @@ def worker(rnn_len, proc_num, state_sender, result_sender, action_receiver, rese
         state_sender.send(state)
         action = action_receiver.recv()
         state, reward, is_done, _ = env.step(action)
-        if proc_num == 1:
-            result_sender.send((reward, is_done, proc_num))
+        result_sender.send((reward, is_done, proc_num))
 
 
 class PPO(object):
