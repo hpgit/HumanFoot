@@ -86,7 +86,7 @@ class myHandler(BaseHTTPRequestHandler):
 <head>\
 <title>Reward Watcher</title>\
 </head>\
-<body>'+uname()[1].encode()+b'<br>'+str(self.path).split('/')[-1][:-5].encode()+b'\
+<body>'+uname()[1].encode()+b'<br>'+'/'.join(str(self.path).split('/')[1:])[:-5].encode()+b'\
 <br><br>\
 <a href="'+str(self.path).split('/')[-1][:-5].encode()+b'/param.pt">pt_file</a><br><br>\
 <img src="'+str(self.path).split('/')[-1][:-5].encode()+b'/reward.png"/><br><br>\
