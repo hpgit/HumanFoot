@@ -305,7 +305,7 @@ class HpDartEnv(gym.Env):
         self.world = pydart.World(1./1200., "../data/wd2_seg.xml")
         self.world.control_skel = self.world.skeletons[1]
         self.skel = self.world.skeletons[1]
-        self.reset()
+        return self.reset()
 
     def render(self, mode='human', close=False):
         """Renders the environment.

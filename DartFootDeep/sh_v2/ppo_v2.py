@@ -11,6 +11,7 @@ import time
 import os
 
 from multiprocessing import Process, Pipe
+from multiprocessing.connection import wait
 
 import torch
 from torch import nn, optim
@@ -153,7 +154,8 @@ def worker(rnn_len, proc_num, state_sender, result_sender, action_receiver, rese
         state_sender.send(state)
         action = action_receiver.recv()
         state, reward, is_done, _ = env.step(action)
-        result_sender.send((reward, is_done))
+        if proc_num == 1:
+            result_sender.send((reward, is_done, proc_num))
 
 
 class PPO(object):
@@ -227,6 +229,26 @@ class PPO(object):
             self.envs.append(p)
             p.start()
 
+    def reinit_env(self, slave_idx):
+        print('reinit_env: ', slave_idx)
+        if self.envs[slave_idx].is_alive():
+            self.envs[slave_idx].terminate()
+        s_s, s_r = Pipe()
+        r_s, r_r = Pipe()
+        a_s, a_r = Pipe()
+        reset_s, reset_r = Pipe()
+        motion_s, motion_r = Pipe()
+        p = Process(target=worker, args=(-1, slave_idx, s_s, r_s, a_r, reset_r, motion_r))
+        self.state_sender[slave_idx] = s_s
+        self.result_sender[slave_idx] = r_s
+        self.state_receiver[slave_idx] = s_r
+        self.result_receiver[slave_idx] = r_r
+        self.action_sender[slave_idx] = a_s
+        self.reset_sender[slave_idx] = reset_s
+        self.motion_sender[slave_idx] = motion_s
+        self.envs[slave_idx] = p
+        p.start()
+
     def envs_get_states(self, terminated):
         states = []
         for recv_idx in range(len(self.state_receiver)):
@@ -242,12 +264,28 @@ class PPO(object):
                 self.action_sender[i].send(actions[i])
 
     def envs_get_status(self, terminated):
-        status = []
-        for recv_idx in range(len(self.result_receiver)):
-            if terminated[recv_idx]:
-                status.append((0., True))
-            else:
-                status.append(self.result_receiver[recv_idx].recv())
+        status = [None for _ in range(self.num_slaves)]  # type: list[tuple[float|None, bool]]
+
+        alive_receivers = [self.result_receiver[recv_idx] for recv_idx, x in enumerate(terminated) if not x]
+
+        for receiver in alive_receivers:
+            if receiver.poll(20):
+                recv_data = receiver.recv()
+                status[recv_data[2]] = (recv_data[0], recv_data[1])
+
+        for j in range(len(status)):
+            if terminated[j]:
+                status[j] = (0., True)
+            elif status[j] is None:
+                # assertion error, reinit in GenerateTransition
+                status[j] = (None, True)
+
+        # status = []
+        # for recv_idx in range(len(self.result_receiver)):
+        #     if terminated[recv_idx]:
+        #         status.append((0., True))
+        #     else:
+        #         status.append(self.result_receiver[recv_idx].recv())
         return zip(*status)
 
     def envs_resets(self, reset_flag):
@@ -318,15 +356,20 @@ class PPO(object):
                 if terminated[j]:
                     continue
 
-                nan_occur = np.any(np.isnan(states[j])) or np.any(np.isnan(actions[j]))
-                if not nan_occur:
+                assertion_occur = rewards[j] is None
+                nan_occur = np.any(np.isnan(states[j])) or np.any(np.isnan(actions[j])) or (rewards[j] is not None and np.isnan(rewards[j]))
+                if not nan_occur and not assertion_occur:
                     episodes[j].push(states[j], actions[j], rewards[j], values[j], logprobs[j])
                     local_step += 1
+
+                if assertion_occur:
+                    self.reinit_env(j)
 
                 # if episode is terminated
                 if is_done[j] or nan_occur:
                     if not is_done[j] and nan_occur:
-                        self.print('!!!!!!!!!!!exception!!!!!!!!!!!1')
+                        self.print('network parameter nan')
+
                     # push episodes
                     self.total_episodes.append(episodes[j])
 
