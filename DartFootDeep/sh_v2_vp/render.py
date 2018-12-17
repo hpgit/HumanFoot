@@ -11,7 +11,7 @@ from PyCommon.modules.Simulator import csVpWorld as cvw
 
 def main():
     MOTION_ONLY = False
-    CURRENT_CHECK = True
+    CURRENT_CHECK = False
 
     cvw.vp_init()
 
@@ -20,7 +20,8 @@ def main():
     ppo = PPO(env_name, 0, visualize_only=True)
 
     if not MOTION_ONLY and not CURRENT_CHECK:
-        ppo.LoadModel('model/' + env_name + '.pt')
+        # ppo.LoadModel('model/' + env_name + '.pt')
+        ppo.LoadModel('model/' + 'param' + '.pt')
     elif not MOTION_ONLY and CURRENT_CHECK:
         env_model_dir = []
         for dir_name in sorted(os.listdir()):

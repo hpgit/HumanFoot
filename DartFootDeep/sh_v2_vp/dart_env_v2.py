@@ -207,7 +207,7 @@ class HpDartEnv(gym.Env):
 
         q_reward = exp_reward_term(self.w_p, self.exp_p,
                                    np.concatenate(list(q_diff[self.skel.getJointDOFInternalIndexes(self.skel.name2index(joint_name))] for joint_name in self.reward_joint)))
-        dq_reward = exp_reward_term(self.w_p, self.exp_p,
+        dq_reward = exp_reward_term(self.w_v, self.exp_v,
                                    np.concatenate(list(dq_diff[self.skel.getJointDOFInternalIndexes(self.skel.name2index(joint_name))] for joint_name in self.reward_joint)))
         ee_reward = exp_reward_term(self.w_e, self.exp_e, p_e - self.prev_ref_p_e_hat)
         com_reward = exp_reward_term(self.w_c, self.exp_c, self.skel.getCOM() - self.prev_ref_com)
