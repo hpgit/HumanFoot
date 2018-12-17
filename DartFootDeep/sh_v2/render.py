@@ -20,7 +20,8 @@ def main():
 
     ppo = PPO(env_name, 0, visualize_only=True)
     if not MOTION_ONLY and not CURRENT_CHECK:
-        ppo.LoadModel('model/' + env_name + '.pt')
+        # ppo.LoadModel('model/' + env_name + '.pt')
+        ppo.LoadModel('model/' + 'param' + '.pt')
     elif not MOTION_ONLY and CURRENT_CHECK:
         env_model_dir = []
         for dir_name in sorted(os.listdir()):
@@ -30,8 +31,8 @@ def main():
         pt_names = os.listdir(env_model_dir[-1])
         pt_names.pop(pt_names.index('log.txt'))
         pt_names.sort(key=lambda f: int(os.path.splitext(f)[0]))
-        # ppo.LoadModel(env_model_dir[-1]+'/'+pt_names[-1])
-        ppo.LoadModel(env_model_dir[-1]+'/'+'918.pt')
+        ppo.LoadModel(env_model_dir[-1]+'/'+pt_names[-1])
+        # ppo.LoadModel(env_model_dir[-1]+'/'+'918.pt')
         print(pt_names[-1])
 
     ppo.env.Resets(False)

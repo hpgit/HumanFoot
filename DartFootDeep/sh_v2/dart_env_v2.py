@@ -111,6 +111,21 @@ class HpDartEnv(gym.Env):
         self.exp_e = 40.
         self.exp_c = 10.
 
+        # soohwan style
+        # self.w_p = 0.15
+        # self.w_v = 0.05
+        # self.w_c = 0.4
+        # self.w_c_v = 0.05
+        # self.w_e = 0.2
+        # self.w_e_ori = 0.05
+        #
+        # self.exp_p = 2.
+        # self.exp_v = 20.
+        # self.exp_c = .3
+        # self.exp_c_v = 2.
+        # self.exp_e = 2.
+        # self.exp_e_ori = 2.
+
         self.body_num = self.skel.num_bodynodes()
         self.idx_e = [self.skel.bodynode_index('LeftFoot'), self.skel.bodynode_index('RightFoot'),
                       self.skel.bodynode_index('LeftForeArm'), self.skel.bodynode_index('RightForeArm')]
@@ -127,7 +142,9 @@ class HpDartEnv(gym.Env):
         self.prev_ref_q = np.zeros(self.ref_skel.num_dofs())
         self.prev_ref_dq = np.zeros(self.ref_skel.num_dofs())
         self.prev_ref_p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
+        self.prev_ref_p_e_ori_hat = [body.world_transform()[:3, :3] for body in self.ref_body_e]
         self.prev_ref_com = self.ref_skel.com()
+        self.prev_ref_com_vel = self.ref_skel.com_velocity()
 
         # setting for reward
         self.reward_joint = list()
@@ -192,19 +209,33 @@ class HpDartEnv(gym.Env):
 
         p_e = np.asarray([body.world_transform()[:3, 3] for body in body_e]).flatten()
 
+        p_e_ori = [body.world_transform()[:3, :3] for body in body_e]
+        p_e_ori_diff = np.asarray([mm.logSO3(np.dot(p_e_ori[idx].T, self.prev_ref_p_e_ori_hat[idx])) for idx in range(len(p_e_ori))]).flatten()
+
         q_diff = np.asarray(self.skel.position_differences(self.prev_ref_q, self.skel.q))
         dq_diff = np.asarray(self.skel.velocity_differences(self.prev_ref_dq, self.skel.dq))
 
-        q_reward = exp_reward_term(self.w_p, self.exp_p,
-                                   np.concatenate(list(q_diff[get_joint_dof_range(self.skel.joint(joint_name))] for joint_name in self.reward_joint)))
-        dq_reward = exp_reward_term(self.w_p, self.exp_p,
-                                    np.concatenate(list(dq_diff[get_joint_dof_range(self.skel.joint(joint_name))] for joint_name in self.reward_joint)))
-        ee_reward = exp_reward_term(self.w_e, self.exp_e, p_e - self.prev_ref_p_e_hat)
-        com_reward = exp_reward_term(self.w_c, self.exp_c, self.skel.com() - self.prev_ref_com)
+        rewards = list()
 
-        reward = q_reward + dq_reward + ee_reward + com_reward
+        # q reward
+        rewards.append(exp_reward_term(self.w_p, self.exp_p,
+                                   np.concatenate(list(q_diff[get_joint_dof_range(self.skel.joint(joint_name))] for joint_name in self.reward_joint))))
+        # dq reward
+        rewards.append(exp_reward_term(self.w_v, self.exp_v,
+                                    np.concatenate(list(dq_diff[get_joint_dof_range(self.skel.joint(joint_name))] for joint_name in self.reward_joint))))
+        # end effector reward
+        rewards.append(exp_reward_term(self.w_e, self.exp_e, p_e - self.prev_ref_p_e_hat))
 
-        return reward
+        # end effector orientation reward
+        # rewards.append(exp_reward_term(self.w_e_ori, self.exp_e_ori, p_e_ori_diff))
+
+        # com reward
+        rewards.append(exp_reward_term(self.w_c, self.exp_c, self.skel.com() - self.prev_ref_com))
+
+        # com_vel reward
+        # rewards.append(exp_reward_term(self.w_c_v, self.exp_c_v, self.skel.com_velocity() - self.prev_ref_com_vel))
+
+        return sum(rewards)
 
     def is_done(self):
         if self.force_done:
@@ -262,7 +293,9 @@ class HpDartEnv(gym.Env):
             self.prev_ref_q = self.ref_skel.positions()
             self.prev_ref_dq = self.ref_skel.velocities()
             self.prev_ref_p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
+            self.prev_ref_p_e_ori_hat = [body.world_transform()[:3, :3] for body in self.ref_body_e]
             self.prev_ref_com = self.ref_skel.com()
+            self.prev_ref_com_vel = self.ref_skel.com_velocity()
 
         next_frame_time = self.world.time() + self.time_offset + self.world.time_step() * self.step_per_frame
         self.ref_skel.set_positions(self.ref_motion.get_q_by_time(next_frame_time))
@@ -272,7 +305,9 @@ class HpDartEnv(gym.Env):
             self.prev_ref_q = self.ref_skel.positions()
             self.prev_ref_dq = self.ref_skel.velocities()
             self.prev_ref_p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
+            self.prev_ref_p_e_ori_hat = [body.world_transform()[:3, :3] for body in self.ref_body_e]
             self.prev_ref_com = self.ref_skel.com()
+            self.prev_ref_com_vel = self.ref_skel.com_velocity()
 
     def continue_from_now_by_phase(self, phase):
         self.phase_frame = round(phase * (self.motion_len-1))
