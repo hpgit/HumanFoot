@@ -112,19 +112,19 @@ class HpDartEnv(gym.Env):
         self.exp_c = 10.
 
         # soohwan style
-        # self.w_p = 0.15
-        # self.w_v = 0.05
-        # self.w_c = 0.4
-        # self.w_c_v = 0.05
-        # self.w_e = 0.2
-        # self.w_e_ori = 0.05
-        #
-        # self.exp_p = 2.
-        # self.exp_v = 20.
-        # self.exp_c = .3
-        # self.exp_c_v = 2.
-        # self.exp_e = 2.
-        # self.exp_e_ori = 2.
+        self.w_p = 0.15
+        self.w_v = 0.05
+        self.w_c = 0.4
+        self.w_c_v = 0.05
+        self.w_e = 0.2
+        self.w_e_ori = 0.05
+
+        self.exp_p = 2.
+        self.exp_v = 20.
+        self.exp_c = .3
+        self.exp_c_v = 2.
+        self.exp_e = 2.
+        self.exp_e_ori = 2.
 
         self.body_num = self.skel.num_bodynodes()
         self.idx_e = [self.skel.bodynode_index('LeftFoot'), self.skel.bodynode_index('RightFoot'),
@@ -233,7 +233,7 @@ class HpDartEnv(gym.Env):
         rewards.append(exp_reward_term(self.w_c, self.exp_c, self.skel.com() - self.prev_ref_com))
 
         # com_vel reward
-        # rewards.append(exp_reward_term(self.w_c_v, self.exp_c_v, self.skel.com_velocity() - self.prev_ref_com_vel))
+        rewards.append(exp_reward_term(self.w_c_v, self.exp_c_v, self.skel.com_velocity() - self.prev_ref_com_vel))
 
         return sum(rewards)
 
