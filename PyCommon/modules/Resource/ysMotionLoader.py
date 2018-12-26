@@ -657,57 +657,68 @@ class Bvh:
             joint.offset *= scale
 
     def swap_joint(self, joint_name0, joint_name1):
-        # fine each joint
-        joints_idx = list()
-        joints_idx.append(self.getJointFromJointName(joint_name0).jointIndex)
-        joints_idx.append(self.getJointFromJointName(joint_name1).jointIndex)
-        joints_idx.sort()
-        joints = [self.joints[joint_idx] for joint_idx in joints_idx]
+        # assumes that index of joint tree is continuous for joints and channels
 
-        assert(self.find_parent_joint(self.joints[joints_idx[0]]) is self.find_parent_joint(self.joints[joints_idx[1]]))
+        # swap joint in parent's children list
+        joint0 = self.getJointFromJointName(joint_name0)
+        joint1 = self.getJointFromJointName(joint_name1)
+        if self.joints.index(joint0) > self.joints.index(joint1):
+            joint0, joint1 = joint1, joint0
+        parent = self.find_parent_joint(joint0)
+        assert(parent is self.find_parent_joint(joint1))
+        joint0_child_idx = parent.children.index(joint0)
+        joint1_child_idx = parent.children.index(joint1)
+        parent.children[joint0_child_idx], parent.children[joint1_child_idx] = \
+            parent.children[joint1_child_idx], parent.children[joint0_child_idx]
 
-        temp_bvh = copy.deepcopy(self)
-
-        # remove
-        self.remove_joint(joint_name0)
-        self.remove_joint(joint_name1)
-
-        # copy
-        # TODO:
-        # add joint
-
-
-
-        # add motions
-
-        # modify channel index
-
-        # modify joint index
-        for joint in self.joints:
-            joint.jointIndex = self.joints.index(joint)
-
-        # modify children of parent
-        # TODO:
-        parent = self.find_parent_joint(self.joints[joints_idx[0]])
-
-
-
-
-
+        # find joint tree idx range
         joint_idx_minmax = [[], []]
-        joint_idx_minmax[0].append(self.getJointFromJointName(joint_name0))
-        joint_idx_minmax[1].append(self.getJointFromJointName(joint_name1))
+        joint_idx_minmax[0].append(self.joints.index(joint0))
+        joint_idx_minmax[1].append(self.joints.index(joint1))
 
         for i in range(2):
             trav_max = joint_idx_minmax[i][0]
             while self.joints[trav_max].children:
-                trav_max = max(self.joints[trav_max])
-            joint_idx_minmax[i][1] = trav_max
+                trav_max = max(self.joints.index(joint) for joint in self.joints[trav_max].children)
+            joint_idx_minmax[i].append(trav_max)
 
+        # find channel idx range of joint tree
+        channel_idx_minmax = [[], []]
+        channel_idx_minmax[0].append(numpy.inf)
+        channel_idx_minmax[0].append(-1)
+        channel_idx_minmax[1].append(numpy.inf)
+        channel_idx_minmax[1].append(-1)
+
+        for i in range(2):
+            for j in range(joint_idx_minmax[i][0], joint_idx_minmax[i][1]+1):
+                if self.joints[j].channels:
+                    channel_idx_minmax[i][0] = min(channel_idx_minmax[i][0], min(channel.channelIndex for channel in self.joints[j].channels))
+                    channel_idx_minmax[i][1] = max(channel_idx_minmax[i][1], max(channel.channelIndex for channel in self.joints[j].channels))
+
+        channels = []
+        for joint in self.joints:
+            channels.extend(joint.channels)
+
+        # swap joint tree in bvh joints list
         self.joints[joint_idx_minmax[1][0]:joint_idx_minmax[1][1]+1], self.joints[joint_idx_minmax[0][0]:joint_idx_minmax[0][1]+1] = \
             self.joints[joint_idx_minmax[0][0]:joint_idx_minmax[0][1]+1], self.joints[joint_idx_minmax[1][0]:joint_idx_minmax[1][1]+1]
 
+        # swap channels in channels list
+        channels[channel_idx_minmax[1][0]:channel_idx_minmax[1][1]+1], channels[channel_idx_minmax[0][0]:channel_idx_minmax[0][1]+1] = \
+            channels[channel_idx_minmax[0][0]:channel_idx_minmax[0][1]+1], channels[channel_idx_minmax[1][0]:channel_idx_minmax[1][1]+1]
 
+        # modify motionList
+        for motionList in self.motionList:
+            motionList[channel_idx_minmax[1][0]:channel_idx_minmax[1][1]+1], motionList[channel_idx_minmax[0][0]:channel_idx_minmax[0][1]+1] = \
+                motionList[channel_idx_minmax[0][0]:channel_idx_minmax[0][1]+1], motionList[channel_idx_minmax[1][0]:channel_idx_minmax[1][1]+1]
+
+        # modify channel index
+        for channel in channels:
+            channel.channelIndex = channels.index(channel)
+
+        # modify joint index
+        for joint in self.joints:
+            joint.jointIndex = self.joints.index(joint)
 
     # ===========================================================================
     # util function
@@ -718,7 +729,14 @@ class Bvh:
                 return joint
         return None
 
-    def remove_joint(self, joint_name):
+    def remove_joint_tree(self, joint_name):
+        """
+        remove a joint and all descendants
+
+        :param joint_name:
+        :type joint_name: str
+        :return:
+        """
         joint = self.getJointFromJointName(joint_name)
         # remove
         removeJointList = self.findJointDescendentIdxs(joint)
@@ -727,7 +745,7 @@ class Bvh:
         for jointIdx in range(len(self.joints)):
             jointChannelNum = len(self.joints[jointIdx].channels)
             if jointIdx in removeJointList:
-                removeJointList.extend(list(range(removeMotionIdx, removeMotionIdx+jointChannelNum)))
+                removeMotionList.extend(list(range(removeMotionIdx, removeMotionIdx+jointChannelNum)))
             removeMotionIdx += jointChannelNum
 
         def multi_delete(list_, args):
@@ -752,7 +770,70 @@ class Bvh:
             for channel in joint.channels:
                 channel.channelIndex -= sum([k < channel.channelIndex for k in removeMotionList])
 
+        # modify joint index
+        for joint in self.joints:
+            joint.jointIndex = self.joints.index(joint)
 
+        self.totalChannelCount = 0
+        for joint in self.joints:
+            self.totalChannelCount += len(joint.channels)
+
+    def remove_joint_element(self, joint_name, preseve_child_offset=False):
+        """
+        remove joint and all descendants
+
+        :param joint_name:
+        :type joint_name: str
+        :return:
+        """
+        joint = self.getJointFromJointName(joint_name)
+        # remove
+        removeJointList = [self.joints.index(joint)]
+        removeMotionList = []
+        removeMotionIdx = 0
+        for jointIdx in range(len(self.joints)):
+            jointChannelNum = len(self.joints[jointIdx].channels)
+            if jointIdx in removeJointList:
+                removeMotionList.extend(list(range(removeMotionIdx, removeMotionIdx+jointChannelNum)))
+                break
+            removeMotionIdx += jointChannelNum
+
+        def multi_delete(list_, args):
+            args.sort(reverse=True)
+            for index in args:
+                list_.pop(index)
+            return list_
+
+        # delete joints
+        multi_delete(self.joints, removeJointList)
+
+        # delete channel motions
+        for _motion in self.motionList:
+            multi_delete(_motion, removeMotionList)
+
+        # delete joints from parent's children and insert joint's children into parent's children
+        parent = self.find_parent_joint(joint)
+        joint_idx_in_parent = parent.children.index(joint)
+        parent.children.pop(joint_idx_in_parent)
+        for child_idx in range(len(joint.children)):
+            parent.children.insert(joint_idx_in_parent+child_idx, joint.children[child_idx])
+
+        if not preseve_child_offset:
+            for child in joint.children:
+                child.offset = numpy.asarray(joint.offset)
+
+        # modify other joints channel indices
+        for joint in self.joints:
+            for channel in joint.channels:
+                channel.channelIndex -= sum([k < channel.channelIndex for k in removeMotionList])
+
+        # modify joint index
+        for joint in self.joints:
+            joint.jointIndex = self.joints.index(joint)
+
+        self.totalChannelCount = 0
+        for joint in self.joints:
+            self.totalChannelCount += len(joint.channels)
 
     # ===========================================================================
     # other motion file type import

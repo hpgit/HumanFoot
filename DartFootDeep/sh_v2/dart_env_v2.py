@@ -63,6 +63,20 @@ class HpDartEnv(gym.Env):
             motion_name = "../data/segfoot_wd2_WalkForwardVFast00.bvh"
         elif env_name == 'walk_sukiko':
             motion_name = '../data/segfoot_wd2_WalkSukiko00.bvh'
+        elif env_name == '1foot_contact_run':
+            motion_name = '../data/segfoot_wd2_1foot_contact_run2_edit.bvh'
+        elif env_name == 'round_girl':
+            motion_name = '../data/segfoot_wd2_boxing_round_round_girl1_edit.bvh'
+        elif env_name == 'fast_2foot_hop':
+            motion_name = '../data/segfoot_wd2_fast_2foot_hop_edit.bvh'
+        elif env_name == 'slow_2foot_hop':
+            motion_name = '../data/segfoot_wd2_slow_2foot_hop_edit.bvh'
+        elif env_name == 'long_broad_jump':
+            motion_name = '../data/segfoot_wd2_long_broad_jump_edit.bvh'
+        elif env_name == 'short_broad_jump':
+            motion_name = '../data/segfoot_wd2_short_broad_jump_edit.bvh'
+        elif env_name == 'n_kick':
+            motion_name = '../data/segfoot_wd2_n_kick_edit.bvh'
 
         SEGMENT_FOOT_MAG = 0.01
         SEGMENT_FOOT_RAD = 0.008
@@ -92,6 +106,24 @@ class HpDartEnv(gym.Env):
         elif env_name == 'walk_u_turn_whole':
             self.ref_motion.translateByOffset([0., 0.03, 0.])
 
+        elif env_name == '1foot_contact_run':
+            self.ref_motion.translateByOffset([0., -0.07, 0.])
+
+        elif env_name == 'round_girl':
+            self.ref_motion = self.ref_motion[505:658]
+            self.ref_motion.translateByOffset([0., -0.01, 0.])
+
+        elif env_name == 'fast_2foot_hop':
+            self.ref_motion.translateByOffset([0., -0.09, 0.])
+        elif env_name == 'slow_2foot_hop':
+            self.ref_motion.translateByOffset([0., -0.08, 0.])
+        elif env_name == 'long_broad_jump':
+            self.ref_motion.translateByOffset([0., -0.08, 0.])
+        elif env_name == 'short_broad_jump':
+            self.ref_motion.translateByOffset([0., -0.08, 0.])
+        elif env_name == 'n_kick':
+            self.ref_motion.translateByOffset([0., -0.08, 0.])
+
         self.ref_world = pydart.World(1./1200., "../data/wd2_seg.xml")
         self.ref_skel = self.ref_world.skeletons[1]
         # self.step_per_frame = round((1./self.world.time_step()) / self.ref_motion.fps)
@@ -112,19 +144,19 @@ class HpDartEnv(gym.Env):
         self.exp_c = 10.
 
         # soohwan style
-        self.w_p = 0.15
-        self.w_v = 0.05
-        self.w_c = 0.4
-        self.w_c_v = 0.05
-        self.w_e = 0.2
-        self.w_e_ori = 0.05
-
-        self.exp_p = 2.
-        self.exp_v = 20.
-        self.exp_c = .3
-        self.exp_c_v = 2.
-        self.exp_e = 2.
-        self.exp_e_ori = 2.
+        # self.w_p = 0.15
+        # self.w_v = 0.05
+        # self.w_c = 0.4
+        # self.w_c_v = 0.05
+        # self.w_e = 0.2
+        # self.w_e_ori = 0.05
+        #
+        # self.exp_p = 2.
+        # self.exp_v = 20.
+        # self.exp_c = .3
+        # self.exp_c_v = 2.
+        # self.exp_e = 2.
+        # self.exp_e_ori = 2.
 
         self.body_num = self.skel.num_bodynodes()
         self.idx_e = [self.skel.bodynode_index('LeftFoot'), self.skel.bodynode_index('RightFoot'),
@@ -233,7 +265,7 @@ class HpDartEnv(gym.Env):
         rewards.append(exp_reward_term(self.w_c, self.exp_c, self.skel.com() - self.prev_ref_com))
 
         # com_vel reward
-        rewards.append(exp_reward_term(self.w_c_v, self.exp_c_v, self.skel.com_velocity() - self.prev_ref_com_vel))
+        # rewards.append(exp_reward_term(self.w_c_v, self.exp_c_v, self.skel.com_velocity() - self.prev_ref_com_vel))
 
         return sum(rewards)
 

@@ -11,18 +11,19 @@ import pydart2 as pydart
 
 
 def main():
-    MOTION_ONLY = False
+    MOTION_ONLY = True
     CURRENT_CHECK = False
     SKELETON_ON = False
 
     pydart.init()
 
-    env_name = 'walk_fast'
+    env_name = 'n_kick'
 
     ppo = PPO(env_name, 0, visualize_only=True)
     if not MOTION_ONLY and not CURRENT_CHECK:
-        # ppo.LoadModel('model/' + env_name + '.pt')
-        ppo.LoadModel('model/' + 'param' + '.pt')
+        ppo.LoadModel('model/' + env_name + '.pt')
+        # ppo.LoadModel('model_test/' + env_name + '.pt')
+        # ppo.LoadModel('model/' + 'param' + '.pt')
     elif not MOTION_ONLY and CURRENT_CHECK:
         env_model_dir = []
         for dir_name in sorted(os.listdir()):

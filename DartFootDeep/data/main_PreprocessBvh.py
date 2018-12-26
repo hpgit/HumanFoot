@@ -1,0 +1,246 @@
+from fltk import *
+import os.path
+import glob
+try:
+    import pickle
+except ImportError:
+    import cPickle as pickle
+import numpy as np
+
+import sys
+if ".." not in sys.path:
+    sys.path.append("..")
+
+
+import PyCommon.modules.Math.mmMath as mm
+import PyCommon.modules.Resource.ysMotionLoader as yf
+import PyCommon.modules.Motion.mmAnalyticIK as aik
+import PyCommon.modules.Motion.ysSkeletonEdit as yse
+import PyCommon.modules.Motion.ysTrajectoryEdit as yte
+import PyCommon.modules.GUI.ysSimpleViewer as ysv
+import PyCommon.modules.Renderer.ysRenderer as yr
+import PyCommon.modules.Motion.ysMotionAnalysis as yma
+import PyCommon.modules.Motion.ysBipedAnalysis as yba
+import PyCommon.modules.Motion.ysMotionExtend as ymt
+import PyCommon.modules.Simulator.ysPhysConfig as ypc
+import PyCommon.modules.Renderer.csVpRenderer as cvr
+import PyCommon.modules.Simulator.csVpWorld as cvw
+import PyCommon.modules.Simulator.csVpModel as cvm
+import PyCommon.modules.ArticulatedBody.ysControl as yct
+
+def normalizeSkeleton(motion, config):
+    motion.scale(config['scale'], False)
+
+    if config['type']=='woody2':
+        yse.removeJoint(motion, 'Head', False)
+        yse.removeJoint(motion, 'RightShoulder', False)
+        yse.removeJoint(motion, 'LeftShoulder1', False)
+        yse.removeJoint(motion, 'RightToes_Effector', False)
+        yse.removeJoint(motion, 'LeftToes_Effector', False)
+        yse.removeJoint(motion, 'RightHand_Effector', False)
+        yse.removeJoint(motion, 'LeftHand_Effector', False)
+        yse.offsetJointLocal(motion, 'RightArm', (.03,-.05,0), False)
+        yse.offsetJointLocal(motion, 'LeftArm', (-.03,-.05,0), False)
+    elif config['type']=='woody2_new':
+        yse.removeJoint(motion, 'HEad', False)
+        yse.removeJoint(motion, 'RightShoulder', False)
+        yse.removeJoint(motion, 'LeftShoulder1', False)
+        yse.removeJoint(motion, 'RightToes_Effector', False)
+        yse.removeJoint(motion, 'LeftToes_Effector', False)
+        yse.removeJoint(motion, 'RightHand_Effector', False)
+        yse.removeJoint(motion, 'LeftHand_Effector', False)
+        yse.offsetJointLocal(motion, 'RightArm', (.03,-.05,0), False)
+        yse.offsetJointLocal(motion, 'LeftArm', (-.03,-.05,0), False)
+    elif config['type']=='woody2amc':
+        yse.removeJoint(motion, 'RightUpLegDummy', False)
+        yse.removeJoint(motion, 'SpineDummy', False)
+        yse.removeJoint(motion, 'HEadDummy', False)
+        yse.removeJoint(motion, 'LeftShoulder1Dummy', False)
+        yse.removeJoint(motion, 'RightShoulderDummy', False)
+        yse.removeJoint(motion, 'LeftUpLegDummy', False)
+        yse.removeJoint(motion, 'Head', False)
+        yse.removeJoint(motion, 'RightShoulder', False)
+        yse.removeJoint(motion, 'LeftShoulder1', False)
+        yse.removeJoint(motion, 'RightToes_Effector', False)
+        yse.removeJoint(motion, 'LeftToes_Effector', False)
+        yse.removeJoint(motion, 'RightHand_Effector', False)
+        yse.removeJoint(motion, 'LeftHand_Effector', False)
+        yse.offsetJointLocal(motion, 'RightArm', (.03,-.05,0), False)
+        yse.offsetJointLocal(motion, 'LeftArm', (-.03,-.05,0), False)
+
+    yse.rotateJointLocal(motion, 'LeftFoot', config['footRot'], False)
+    yse.rotateJointLocal(motion, 'RightFoot', config['footRot'], False)
+    if 'leftFootR' in config:
+        yse.rotateJointLocal(motion, 'LeftFoot', config['leftFootR'], False)
+#    motion.translateByOffset((0, config['yOffset'], 0))
+    
+    if 'rootRot' in config:
+        motion.rotateByOffset(config['rootRot'])
+    
+    yse.updateGlobalT(motion)
+    
+def adjustHeight(motion, halfFootHeight):
+    lFoot = motion[0].skeleton.getJointIndex('LeftFoot')
+    rFoot = motion[0].skeleton.getJointIndex('RightFoot')
+    groundHeight = min([motion[0].getJointPositionGlobal(lFoot)[1], \
+                        motion[0].getJointPositionGlobal(rFoot)[1]])
+    motion.translateByOffset((0, halfFootHeight-groundHeight, 0))
+    
+def additionalEdit(motion, path):
+    if 'wd2_left_turn.bvh' in path or 'wd2_right_turn.bvh' in path:
+        lFoot = motion[0].skeleton.getJointIndex('LeftFoot')
+        yte.setPositionTarget(motion, lFoot, motion[0].getJointPositionGlobal(lFoot)+(-.1,0,-.1)\
+                              , [0,58], 150)
+        
+    if 'extended' in path:
+        hRef = .15; vRef = .2
+        lc = yma.getElementContactStates(motion, 'LeftFoot', hRef, vRef)
+        interval = yba.getWalkingCycle(motion, lc)
+        motion[:] = ymt.repeatCycle(motion, interval, 50, 10)
+
+
+def preprocess(SEGMENT_FOOT=False):
+    tasks = []
+    
+    outputDir = './ppmotion/'
+    if SEGMENT_FOOT:
+        outputDir = './ppmotion_segfoot/'
+
+    dir = './ori_motion/'
+    config = None
+    if SEGMENT_FOOT:
+        # segmented foot
+        config = {'repeat':False, 'footRot': mm.rotX(.07), 'yOffset':0., 'halfFootHeight': 0.0944444444444, 'scale':.01, 'type':'woody2'}
+    else:
+        # box foot
+        config = {'repeat':False, 'footRot': mm.rotX(-.4), 'yOffset':0., 'halfFootHeight': 0.0444444444444, 'scale':.01, 'type':'woody2'}
+
+    paths = []
+    # paths.append(dir+'wd2_1foot_contact_run2_edit.bvh')
+    paths.append(dir+'wd2_boxing_round_round_girl1_edit.bvh')
+    # paths.append(dir+'wd2_fast_2foot_hop_edit.bvh')
+    # paths.append(dir+'wd2_long_broad_jump_edit.bvh')
+    # paths.append(dir+'wd2_n_kick_edit.bvh')
+    # paths.append(dir+'wd2_short_broad_jump_edit.bvh')
+    # paths.append(dir+'wd2_slow_2foot_hop_edit.bvh')
+    tasks.append({'config':config, 'paths':paths})
+
+    VISUALIZE = False
+    
+    for task in tasks:
+        config = task['config']
+        paths = task['paths']
+        for path in paths:
+            motion = yf.readBvhFile(path)
+            normalizeSkeleton(motion, config)
+            adjustHeight(motion, config['halfFootHeight'])
+            additionalEdit(motion, path)
+            
+            outputPath = outputDir + os.path.basename(path)
+            if SEGMENT_FOOT:
+                outputPath = outputDir + "segfoot_" + os.path.basename(path)
+            yf.writeBvhFile(outputPath, motion)
+            print(outputPath, 'done')
+            
+            if 'repeat' in config and config['repeat']:
+                hRef = .1; vRef = .3
+                lc = yma.getElementContactStates(motion, 'LeftFoot', hRef, vRef)
+                interval = yba.getWalkingCycle2(motion, lc)
+                
+                transitionLength = 20 if 'wd2_WalkAzuma01.bvh' in path else 10
+                motion = ymt.repeatCycle(motion, interval, 50, transitionLength)
+
+                outputName = os.path.splitext(os.path.basename(path))[0]+'_REPEATED.bvh'
+                outputPath = outputDir + outputName
+                if SEGMENT_FOOT:
+                    outputPath = outputDir + 'segfoot_' + outputName
+                yf.writeBvhFile(outputPath, motion)
+                print(outputPath, 'done')
+                
+            if VISUALIZE:
+                viewer = ysv.SimpleViewer()
+                viewer.record(False)
+                viewer.doc.addRenderer('motion', yr.JointMotionRenderer(motion, (0,100,255), yr.LINK_LINE))
+                viewer.doc.addObject('motion', motion)
+                
+                viewer.startTimer(1/30.)
+                viewer.show()
+                Fl.run()
+    
+    print('FINISHED')
+
+
+def simulation_test():
+    Kt = 20.;       Dt = 2*(Kt**.5)
+    Ks = 2000.;    Ds = 2*(Ks**.5)
+    mu = 1.
+
+    dir = './icmotion_last/'
+    filename = 'stop_left_normal.temp'
+#    filename = 'left_left_normal.temp'
+#    filename = 'right_left_fast.temp'
+    
+    motion_ori = yf.readBvhFile(dir+filename)
+    frameTime = 1/motion_ori.fps
+    
+    motion_ori[0:0] = [motion_ori[0]]*20
+
+    mcfgfile = open(dir + 'mcfg', 'rb')
+    mcfg = pickle.load(mcfgfile)
+    mcfgfile.close()
+    
+    wcfg = ypc.WorldConfig()
+    wcfg.planeHeight = 0.
+    wcfg.useDefaultContactModel = False
+#    wcfg.lockingVel = c_locking_vel
+    stepsPerFrame = 30
+    wcfg.timeStep = (frameTime)/stepsPerFrame
+    
+    vpWorld = cvw.VpWorld(wcfg)
+    motionModel = cvm.VpMotionModel(vpWorld, motion_ori[0], mcfg)
+    controlModel = cvm.VpControlModel(vpWorld, motion_ori[0], mcfg)
+    vpWorld.initialize()
+    print(controlModel)
+    
+    controlModel.initializeHybridDynamics()
+
+    bodyIDsToCheck = range(vpWorld.getBodyNum())
+    mus = [mu]*len(bodyIDsToCheck)
+    
+    viewer = ysv.SimpleViewer()
+#    viewer.record(False)
+#    viewer.doc.addRenderer('motion_ori', yr.JointMotionRenderer(motion_ori, (0,100,255), yr.LINK_BONE))
+    viewer.doc.addObject('motion_ori', motion_ori)
+    viewer.doc.addRenderer('motionModel', cvr.VpModelRenderer(motionModel, (0,150,255), yr.POLYGON_LINE))
+    viewer.doc.addRenderer('controlModel', cvr.VpModelRenderer(controlModel, (200,200,200), yr.POLYGON_LINE))
+    
+    def simulateCallback(frame):
+        th_r = motion_ori.getDOFPositions(frame)
+        th = controlModel.getDOFPositions()
+        dth_r = motion_ori.getDOFVelocities(frame)
+        dth = controlModel.getDOFVelocities()
+        ddth_r = motion_ori.getDOFAccelerations(frame)
+        ddth_des = yct.getDesiredDOFAccelerations(th_r, th, dth_r, dth, ddth_r, Kt, Dt)
+        
+        for i in range(stepsPerFrame):
+            bodyIDs, contactPositions, contactPositionLocals, contactForces = vpWorld.calcPenaltyForce(bodyIDsToCheck, mus, Ks, Ds)
+            vpWorld.applyPenaltyForce(bodyIDs, contactPositionLocals, contactForces)
+            
+            controlModel.setDOFAccelerations(ddth_des)
+            controlModel.solveHybridDynamics()
+            
+            vpWorld.step()
+            
+        motionModel.update(motion_ori[frame])
+                
+    viewer.setSimulateCallback(simulateCallback)
+    
+    viewer.startTimer(frameTime / 1.4)
+    viewer.show()
+    
+    Fl.run()
+
+
+if __name__ == '__main__':
+   preprocess(SEGMENT_FOOT=True)
+    # simulation_test()
