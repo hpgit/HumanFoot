@@ -17,7 +17,7 @@ def main():
 
     pydart.init()
 
-    env_name = 'n_kick'
+    env_name = 'walk_u_turn'
 
     ppo = PPO(env_name, 0, visualize_only=True)
     if not MOTION_ONLY and not CURRENT_CHECK:
@@ -47,6 +47,8 @@ def main():
     skel = dart_world.skeletons[1]
     viewer = hsv.hpSimpleViewer(rect=(0, 0, 1200, 800), viewForceWnd=False)
     viewer.doc.addRenderer('MotionModel', yr.DartRenderer(ppo.env.ref_world, (150,150,255), yr.POLYGON_FILL))
+    viewer.doc.addRenderer('motion', yr.JointMotionRenderer(ppo.env.ref_motion, (150,150,255), yr.POLYGON_FILL))
+
     if not MOTION_ONLY:
         viewer.doc.addRenderer('controlModel', yr.DartRenderer(dart_world, (255,240,255), yr.POLYGON_FILL))
         viewer.doc.addRenderer('contact', yr.VectorsRenderer(rd_contact_forces, rd_contact_positions, (255,0,0)))

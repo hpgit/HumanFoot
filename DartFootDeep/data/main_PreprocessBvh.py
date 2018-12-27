@@ -117,7 +117,8 @@ def preprocess(SEGMENT_FOOT=False):
 
     paths = []
     # paths.append(dir+'wd2_1foot_contact_run2_edit.bvh')
-    paths.append(dir+'wd2_boxing_round_round_girl1_edit.bvh')
+    # paths.append(dir+'wd2_boxing_round_round_girl1_edit.bvh')
+    # paths.append(dir+'wd2_u-turn_edit.bvh')
     # paths.append(dir+'wd2_fast_2foot_hop_edit.bvh')
     # paths.append(dir+'wd2_long_broad_jump_edit.bvh')
     # paths.append(dir+'wd2_n_kick_edit.bvh')

@@ -29,3 +29,4 @@ if __name__ == '__main__':
     editing1('./ori_motion/wd2_short_broad_jump.bvh')
     editing1('./ori_motion/wd2_n_kick.bvh')
     editing1('./ori_motion/wd2_boxing_round_round_girl1.bvh', 2.54)
+    editing1('./ori_motion/wd2_u-turn.bvh', 2.54)

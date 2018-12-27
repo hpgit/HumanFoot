@@ -34,7 +34,8 @@ def main(filenames):
 
 if __name__ == '__main__':
     # main(['wd2_1foot_contact_run2.bvh', 'wd2_1foot_contact_run2_edit.bvh'])
-    main(['wd2_1foot_contact_run2_edit.bvh', 'wd2_fast_2foot_hop_edit.bvh', 'wd2_slow_2foot_hop_edit.bvh', 'wd2_long_broad_jump_edit.bvh', 'wd2_short_broad_jump_edit.bvh', 'wd2_n_kick_edit.bvh', 'wd2_boxing_round_round_girl1_edit.bvh'])
+    # main(['wd2_1foot_contact_run2_edit.bvh', 'wd2_fast_2foot_hop_edit.bvh', 'wd2_slow_2foot_hop_edit.bvh', 'wd2_long_broad_jump_edit.bvh', 'wd2_short_broad_jump_edit.bvh', 'wd2_n_kick_edit.bvh', 'wd2_boxing_round_round_girl1_edit.bvh'])
+    main(['segfoot_wd2_n_kick_edit.bvh'])
 
     # main('../../data/woody2/Motion/Balancing/wd2_1foot_contact_run2.bvh')
     # main('../../data/woody2/Motion/Balancing/wd2_fast_2foot_hop.bvh')

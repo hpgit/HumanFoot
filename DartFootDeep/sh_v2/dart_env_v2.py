@@ -63,6 +63,8 @@ class HpDartEnv(gym.Env):
             motion_name = "../data/segfoot_wd2_WalkForwardVFast00.bvh"
         elif env_name == 'walk_sukiko':
             motion_name = '../data/segfoot_wd2_WalkSukiko00.bvh'
+        elif env_name == 'walk_u_turn':
+            motion_name = '../data/segfoot_wd2_u-turn_edit.bvh'
         elif env_name == '1foot_contact_run':
             motion_name = '../data/segfoot_wd2_1foot_contact_run2_edit.bvh'
         elif env_name == 'round_girl':
@@ -100,7 +102,7 @@ class HpDartEnv(gym.Env):
             self.ref_motion = self.ref_motion[164:280]
         elif env_name == 'walk_u_turn':
             self.ref_motion = self.ref_motion[25:214]
-            self.ref_motion.translateByOffset([0., 0.03, 0.])
+            self.ref_motion.translateByOffset([0., -0.07, 0.])
         elif env_name == 'jump_whole':
             self.ref_motion = self.ref_motion[315:966]
         elif env_name == 'walk_u_turn_whole':
