@@ -110,20 +110,24 @@ def preprocess(SEGMENT_FOOT=False):
     config = None
     if SEGMENT_FOOT:
         # segmented foot
-        config = {'repeat':False, 'footRot': mm.rotX(.07), 'yOffset':0., 'halfFootHeight': 0.0944444444444, 'scale':.01, 'type':'woody2'}
+        # config = {'repeat':False, 'footRot': mm.rotX(.07), 'yOffset':0., 'halfFootHeight': 0.0944444444444, 'scale':.01, 'type':'woody2'}
+        config = {'repeat':False, 'footRot': mm.rotX(-.07), 'yOffset':0., 'halfFootHeight': 0.0944444444444, 'scale':.01, 'type':'woody2'}
     else:
         # box foot
         config = {'repeat':False, 'footRot': mm.rotX(-.4), 'yOffset':0., 'halfFootHeight': 0.0444444444444, 'scale':.01, 'type':'woody2'}
 
     paths = []
-    # paths.append(dir+'wd2_1foot_contact_run2_edit.bvh')
+
+    # rotX = -0.07
+    paths.append(dir+'wd2_1foot_contact_run2_edit.bvh')
+    paths.append(dir+'wd2_fast_2foot_hop_edit.bvh')
+    paths.append(dir+'wd2_long_broad_jump_edit.bvh')
+    paths.append(dir+'wd2_n_kick_edit.bvh')
+    paths.append(dir+'wd2_short_broad_jump_edit.bvh')
+    paths.append(dir+'wd2_slow_2foot_hop_edit.bvh')
+    # rotX = 0.07
     # paths.append(dir+'wd2_boxing_round_round_girl1_edit.bvh')
     # paths.append(dir+'wd2_u-turn_edit.bvh')
-    # paths.append(dir+'wd2_fast_2foot_hop_edit.bvh')
-    # paths.append(dir+'wd2_long_broad_jump_edit.bvh')
-    # paths.append(dir+'wd2_n_kick_edit.bvh')
-    # paths.append(dir+'wd2_short_broad_jump_edit.bvh')
-    # paths.append(dir+'wd2_slow_2foot_hop_edit.bvh')
     tasks.append({'config':config, 'paths':paths})
 
     VISUALIZE = False

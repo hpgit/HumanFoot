@@ -11,19 +11,33 @@ import pydart2 as pydart
 
 
 def main():
-    MOTION_ONLY = True
+    MOTION_ONLY = False
     CURRENT_CHECK = False
     SKELETON_ON = False
+    RSI = True
 
     pydart.init()
 
+    env_name = 'walk'
+    env_name = 'walk_fast'
+    env_name = 'walk_sukiko'
     env_name = 'walk_u_turn'
+    env_name = '1foot_contact_run'
+    env_name = 'round_girl'
+    env_name = 'fast_2foot_hop'
+    env_name = 'slow_2foot_hop'
+    env_name = 'long_broad_jump'
+    env_name = 'short_broad_jump'
+    env_name = 'n_kick'
+
+    env_name = 'n_kick'
 
     ppo = PPO(env_name, 0, visualize_only=True)
     if not MOTION_ONLY and not CURRENT_CHECK:
-        ppo.LoadModel('model/' + env_name + '.pt')
+        # ppo.LoadModel('model/' + env_name + '.pt')
         # ppo.LoadModel('model_test/' + env_name + '.pt')
         # ppo.LoadModel('model/' + 'param' + '.pt')
+        pass
     elif not MOTION_ONLY and CURRENT_CHECK:
         env_model_dir = []
         for dir_name in sorted(os.listdir()):
@@ -37,7 +51,7 @@ def main():
         # ppo.LoadModel(env_model_dir[-1]+'/'+'918.pt')
         print(pt_names[-1])
 
-    ppo.env.Resets(False)
+    ppo.env.Resets(RSI)
     ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(ppo.env.phase_frame))
 
     # viewer settings
@@ -47,7 +61,6 @@ def main():
     skel = dart_world.skeletons[1]
     viewer = hsv.hpSimpleViewer(rect=(0, 0, 1200, 800), viewForceWnd=False)
     viewer.doc.addRenderer('MotionModel', yr.DartRenderer(ppo.env.ref_world, (150,150,255), yr.POLYGON_FILL))
-    viewer.doc.addRenderer('motion', yr.JointMotionRenderer(ppo.env.ref_motion, (150,150,255), yr.POLYGON_FILL))
 
     if not MOTION_ONLY:
         viewer.doc.addRenderer('controlModel', yr.DartRenderer(dart_world, (255,240,255), yr.POLYGON_FILL))

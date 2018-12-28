@@ -58,27 +58,27 @@ class HpDartEnv(gym.Env):
         motion_name = None
 
         if env_name == 'walk':
-            motion_name = "../data/segfoot_wd2_WalkForwardNormal00.bvh"
+            motion_name = "../data/segfoot_wd2_WalkForwardNormal00_REPEATED.bvh"
         elif env_name == 'walk_fast':
             motion_name = "../data/segfoot_wd2_WalkForwardVFast00.bvh"
         elif env_name == 'walk_sukiko':
             motion_name = '../data/segfoot_wd2_WalkSukiko00.bvh'
         elif env_name == 'walk_u_turn':
-            motion_name = '../data/segfoot_wd2_u-turn_edit.bvh'
+            motion_name = '../data/ppmotion_segfoot/segfoot_wd2_u-turn_edit.bvh'
         elif env_name == '1foot_contact_run':
-            motion_name = '../data/segfoot_wd2_1foot_contact_run2_edit.bvh'
+            motion_name = '../data/ppmotion_segfoot/segfoot_wd2_1foot_contact_run2_edit.bvh'
         elif env_name == 'round_girl':
             motion_name = '../data/segfoot_wd2_boxing_round_round_girl1_edit.bvh'
         elif env_name == 'fast_2foot_hop':
-            motion_name = '../data/segfoot_wd2_fast_2foot_hop_edit.bvh'
+            motion_name = '../data/ppmotion_segfoot/segfoot_wd2_fast_2foot_hop_edit.bvh'
         elif env_name == 'slow_2foot_hop':
-            motion_name = '../data/segfoot_wd2_slow_2foot_hop_edit.bvh'
+            motion_name = '../data/ppmotion_segfoot/segfoot_wd2_slow_2foot_hop_edit.bvh'
         elif env_name == 'long_broad_jump':
-            motion_name = '../data/segfoot_wd2_long_broad_jump_edit.bvh'
+            motion_name = '../data/ppmotion_segfoot/segfoot_wd2_long_broad_jump_edit.bvh'
         elif env_name == 'short_broad_jump':
-            motion_name = '../data/segfoot_wd2_short_broad_jump_edit.bvh'
+            motion_name = '../data/ppmotion_segfoot/segfoot_wd2_short_broad_jump_edit.bvh'
         elif env_name == 'n_kick':
-            motion_name = '../data/segfoot_wd2_n_kick_edit.bvh'
+            motion_name = '../data/ppmotion_segfoot/segfoot_wd2_n_kick_edit.bvh'
 
         SEGMENT_FOOT_MAG = 0.01
         SEGMENT_FOOT_RAD = 0.008
@@ -102,14 +102,14 @@ class HpDartEnv(gym.Env):
             self.ref_motion = self.ref_motion[164:280]
         elif env_name == 'walk_u_turn':
             self.ref_motion = self.ref_motion[25:214]
-            self.ref_motion.translateByOffset([0., -0.07, 0.])
+            self.ref_motion.translateByOffset([0., -0.09, 0.])
         elif env_name == 'jump_whole':
             self.ref_motion = self.ref_motion[315:966]
         elif env_name == 'walk_u_turn_whole':
             self.ref_motion.translateByOffset([0., 0.03, 0.])
 
         elif env_name == '1foot_contact_run':
-            self.ref_motion.translateByOffset([0., -0.07, 0.])
+            self.ref_motion.translateByOffset([0., -0.09, 0.])
 
         elif env_name == 'round_girl':
             self.ref_motion = self.ref_motion[505:658]
@@ -118,13 +118,13 @@ class HpDartEnv(gym.Env):
         elif env_name == 'fast_2foot_hop':
             self.ref_motion.translateByOffset([0., -0.09, 0.])
         elif env_name == 'slow_2foot_hop':
-            self.ref_motion.translateByOffset([0., -0.08, 0.])
+            self.ref_motion.translateByOffset([0., -0.09, 0.])
         elif env_name == 'long_broad_jump':
-            self.ref_motion.translateByOffset([0., -0.08, 0.])
+            self.ref_motion.translateByOffset([0., -0.09, 0.])
         elif env_name == 'short_broad_jump':
-            self.ref_motion.translateByOffset([0., -0.08, 0.])
+            self.ref_motion.translateByOffset([0., -0.09, 0.])
         elif env_name == 'n_kick':
-            self.ref_motion.translateByOffset([0., -0.08, 0.])
+            self.ref_motion.translateByOffset([0., -0.09, 0.])
 
         self.ref_world = pydart.World(1./1200., "../data/wd2_seg.xml")
         self.ref_skel = self.ref_world.skeletons[1]
@@ -282,6 +282,8 @@ class HpDartEnv(gym.Env):
             return True
         elif self.world.time() + self.time_offset > self.motion_time:
             # print('timeout')
+            return True
+        elif self.world.time() > 10.:
             return True
         return False
 
