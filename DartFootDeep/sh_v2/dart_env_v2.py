@@ -64,21 +64,21 @@ class HpDartEnv(gym.Env):
         elif env_name == 'walk_sukiko':
             motion_name = '../data/segfoot_wd2_WalkSukiko00.bvh'
         elif env_name == 'walk_u_turn':
-            motion_name = '../data/ppmotion_segfoot/segfoot_wd2_u-turn_edit.bvh'
+            motion_name = '../data/segfoot_wd2_u-turn_edit.bvh'
         elif env_name == '1foot_contact_run':
-            motion_name = '../data/ppmotion_segfoot/segfoot_wd2_1foot_contact_run2_edit.bvh'
+            motion_name = '../data/segfoot_wd2_1foot_contact_run2_edit.bvh'
         elif env_name == 'round_girl':
             motion_name = '../data/segfoot_wd2_boxing_round_round_girl1_edit.bvh'
         elif env_name == 'fast_2foot_hop':
-            motion_name = '../data/ppmotion_segfoot/segfoot_wd2_fast_2foot_hop_edit.bvh'
+            motion_name = '../data/segfoot_wd2_fast_2foot_hop_edit.bvh'
         elif env_name == 'slow_2foot_hop':
-            motion_name = '../data/ppmotion_segfoot/segfoot_wd2_slow_2foot_hop_edit.bvh'
+            motion_name = '../data/segfoot_wd2_slow_2foot_hop_edit.bvh'
         elif env_name == 'long_broad_jump':
-            motion_name = '../data/ppmotion_segfoot/segfoot_wd2_long_broad_jump_edit.bvh'
+            motion_name = '../data/segfoot_wd2_long_broad_jump_edit.bvh'
         elif env_name == 'short_broad_jump':
-            motion_name = '../data/ppmotion_segfoot/segfoot_wd2_short_broad_jump_edit.bvh'
+            motion_name = '../data/segfoot_wd2_short_broad_jump_edit.bvh'
         elif env_name == 'n_kick':
-            motion_name = '../data/ppmotion_segfoot/segfoot_wd2_n_kick_edit.bvh'
+            motion_name = '../data/segfoot_wd2_n_kick_edit.bvh'
 
         SEGMENT_FOOT_MAG = 0.01
         SEGMENT_FOOT_RAD = 0.008
