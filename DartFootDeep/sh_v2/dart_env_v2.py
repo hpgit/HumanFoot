@@ -286,7 +286,7 @@ class HpDartEnv(gym.Env):
         elif True in np.isnan(np.asarray(self.skel.q)) or True in np.isnan(np.asarray(self.skel.dq)):
             print('nan')
             return True
-        elif self.world.time() + self.time_offset > self.motion_time:
+        elif self.world.time() + self.time_offset > self.motion_time + 1.:
             # print('timeout')
             return True
         return False
