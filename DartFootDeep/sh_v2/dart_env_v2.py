@@ -49,6 +49,8 @@ class HpDartEnv(gym.Env):
     def __init__(self, env_name='walk'):
         self.world = pydart.World(1./1200., "../data/wd2_seg.xml")
         self.world.control_skel = self.world.skeletons[1]
+        self.world.disable_recording()
+        self.world.collision_auto_update = False
         self.skel = self.world.skeletons[1]
         self.Kp, self.Kd = 400., 40.
 
@@ -58,7 +60,7 @@ class HpDartEnv(gym.Env):
         motion_name = None
 
         if env_name == 'walk':
-            motion_name = "../data/segfoot_wd2_WalkForwardNormal00_REPEATED.bvh"
+            motion_name = "../data/segfoot_wd2_WalkForwardNormal00.bvh"
         elif env_name == 'walk_fast':
             motion_name = "../data/segfoot_wd2_WalkForwardVFast00.bvh"
         elif env_name == 'walk_sukiko':
@@ -252,11 +254,15 @@ class HpDartEnv(gym.Env):
         rewards = list()
 
         # q reward
-        rewards.append(exp_reward_term(self.w_p, self.exp_p,
-                                   np.concatenate(list(q_diff[get_joint_dof_range(self.skel.joint(joint_name))] for joint_name in self.reward_joint))))
+        # rewards.append(exp_reward_term(self.w_p, self.exp_p,
+        #                            np.concatenate(list(q_diff[get_joint_dof_range(self.skel.joint(joint_name))] for joint_name in self.reward_joint))))
+        rewards.append(exp_reward_term(self.w_p, self.exp_p, q_diff))
+
         # dq reward
-        rewards.append(exp_reward_term(self.w_v, self.exp_v,
-                                    np.concatenate(list(dq_diff[get_joint_dof_range(self.skel.joint(joint_name))] for joint_name in self.reward_joint))))
+        # rewards.append(exp_reward_term(self.w_v, self.exp_v,
+        #                             np.concatenate(list(dq_diff[get_joint_dof_range(self.skel.joint(joint_name))] for joint_name in self.reward_joint))))
+        rewards.append(exp_reward_term(self.w_v, self.exp_v, dq_diff))
+
         # end effector reward
         rewards.append(exp_reward_term(self.w_e, self.exp_e, p_e - self.prev_ref_p_e_hat))
 
@@ -283,8 +289,6 @@ class HpDartEnv(gym.Env):
         elif self.world.time() + self.time_offset > self.motion_time:
             # print('timeout')
             return True
-        elif self.world.time() > 10.:
-            return True
         return False
 
     def step(self, _action):
@@ -300,6 +304,22 @@ class HpDartEnv(gym.Env):
             done (boolean): Whether the episode has ended, in which case further step() calls will return undefined results.
             info (dict): Contains auxiliary diagnostic information (helpful for debugging, and sometimes learning).
         """
+        action = np.hstack((np.zeros(6), _action[:self.skel.ndofs-6]/10.))
+        Kp_vector = np.asarray([0.0] * 6 + [self.Kp] * (self.skel.ndofs - 6))
+        Kd_vector = np.asarray([0.0] * 6 + [self.Kd] * (self.skel.ndofs - 6))
+        for joint_idx in range(len(self.foot_joint)):
+            for dof_idx in get_joint_dof_range(self.skel.joint(self.foot_joint[joint_idx])):
+                Kp_vector[dof_idx] = self.Kd * exp(log(self.Kp) * _action[self.skel.ndofs-6 + joint_idx]/10.)
+                Kd_vector[dof_idx] = self.Kp * exp(log(self.Kd) * _action[self.skel.ndofs-6 + joint_idx]/20.)
+
+        for i in range(self.step_per_frame):
+            # self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
+            self.skel.set_forces(self.skel.get_spd_extended(self.ref_skel.q + action, self.world.time_step(), Kp_vector, Kd_vector))
+            # self.skel.set_forces(self.skel.get_simple_spd_extended(self.ref_skel.q + action, self.world.time_step(), mass_mat_eig, Kp_vector, Kd_vector))
+            self.world.step()
+
+        self.update_ref_skel(False)
+        '''
         try:
             action = np.hstack((np.zeros(6), _action[:self.skel.ndofs-6]/10.))
             Kp_vector = np.asarray([0.0] * 6 + [self.Kp] * (self.skel.ndofs - 6))
@@ -321,6 +341,7 @@ class HpDartEnv(gym.Env):
             f.write(str(error))
             f.close()
             self.force_done = True
+        '''
 
         return tuple([self.state(), self.reward(), self.is_done(), dict()])
 
