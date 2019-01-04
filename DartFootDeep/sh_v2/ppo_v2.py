@@ -188,7 +188,7 @@ class PPO(object):
         self.num_episode = 0
 
         self.saved = False
-        self.save_directory = self.env_name + '_' + 'model_'+time.strftime("%m%d%H%M") + '/'
+        self.save_directory = self.env_name + '_' + 'model_'+time.strftime("%Y%m%d%H%M") + '/'
         if not self.saved and not os.path.exists(self.save_directory) and not visualize_only:
             os.makedirs(self.save_directory)
             self.saved = True

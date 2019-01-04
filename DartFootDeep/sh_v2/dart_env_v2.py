@@ -181,6 +181,7 @@ class HpDartEnv(gym.Env):
         self.prev_ref_p_e_ori_hat = [body.world_transform()[:3, :3] for body in self.ref_body_e]
         self.prev_ref_com = self.ref_skel.com()
         self.prev_ref_com_vel = self.ref_skel.com_velocity()
+        self.prev_ref_com_spatial_vel = self.ref_skel.com_spatial_velocity()
 
         # setting for reward
         self.reward_joint = list()
@@ -274,6 +275,7 @@ class HpDartEnv(gym.Env):
 
         # com_vel reward
         # rewards.append(exp_reward_term(self.w_c_v, self.exp_c_v, self.skel.com_velocity() - self.prev_ref_com_vel))
+        # rewards.append(exp_reward_term(self.w_c_v, self.exp_c_v, self.skel.com_spatial_velocity() - self.prev_ref_com_spatial_vel))
 
         return sum(rewards)
 
@@ -313,35 +315,13 @@ class HpDartEnv(gym.Env):
                 Kd_vector[dof_idx] = self.Kp * exp(log(self.Kd) * _action[self.skel.ndofs-6 + joint_idx]/20.)
 
         for i in range(self.step_per_frame):
-            # self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
-            self.skel.set_forces(self.skel.get_spd_extended(self.ref_skel.q + action, self.world.time_step(), Kp_vector, Kd_vector))
-            # self.skel.set_forces(self.skel.get_simple_spd_extended(self.ref_skel.q + action, self.world.time_step(), mass_mat_eig, Kp_vector, Kd_vector))
+            # tau = self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd)
+            tau = self.skel.get_spd_extended(self.ref_skel.q + action, self.world.time_step(), Kp_vector, Kd_vector)
+            # tau = self.skel.get_simple_spd_extended(self.ref_skel.q + action, self.world.time_step(), mass_mat_eig, Kp_vector, Kd_vector)
+            self.skel.set_forces(tau)
             self.world.step()
 
         self.update_ref_skel(False)
-        '''
-        try:
-            action = np.hstack((np.zeros(6), _action[:self.skel.ndofs-6]/10.))
-            Kp_vector = np.asarray([0.0] * 6 + [self.Kp] * (self.skel.ndofs - 6))
-            Kd_vector = np.asarray([0.0] * 6 + [self.Kd] * (self.skel.ndofs - 6))
-            for joint_idx in range(len(self.foot_joint)):
-                for dof_idx in get_joint_dof_range(self.skel.joint(self.foot_joint[joint_idx])):
-                    Kp_vector[dof_idx] = self.Kd * exp(log(self.Kp) * _action[self.skel.ndofs-6 + joint_idx]/10.)
-                    Kd_vector[dof_idx] = self.Kp * exp(log(self.Kd) * _action[self.skel.ndofs-6 + joint_idx]/20.)
-
-            for i in range(self.step_per_frame):
-                # self.skel.set_forces(self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd))
-                self.skel.set_forces(self.skel.get_spd_extended(self.ref_skel.q + action, self.world.time_step(), Kp_vector, Kd_vector))
-                self.world.step()
-
-            self.update_ref_skel(False)
-
-        except AssertionError as error:
-            f = open('error.log', 'w+')
-            f.write(str(error))
-            f.close()
-            self.force_done = True
-        '''
 
         return tuple([self.state(), self.reward(), self.is_done(), dict()])
 
@@ -353,6 +333,7 @@ class HpDartEnv(gym.Env):
             self.prev_ref_p_e_ori_hat = [body.world_transform()[:3, :3] for body in self.ref_body_e]
             self.prev_ref_com = self.ref_skel.com()
             self.prev_ref_com_vel = self.ref_skel.com_velocity()
+            self.prev_ref_com_spatial_vel = self.ref_skel.com_spatial_velocity()
 
         next_frame_time = self.world.time() + self.time_offset + self.world.time_step() * self.step_per_frame
         self.ref_skel.set_positions(self.ref_motion.get_q_by_time(next_frame_time))
@@ -365,6 +346,7 @@ class HpDartEnv(gym.Env):
             self.prev_ref_p_e_ori_hat = [body.world_transform()[:3, :3] for body in self.ref_body_e]
             self.prev_ref_com = self.ref_skel.com()
             self.prev_ref_com_vel = self.ref_skel.com_velocity()
+            self.prev_ref_com_spatial_vel = self.ref_skel.com_spatial_velocity()
 
     def continue_from_now_by_phase(self, phase):
         self.phase_frame = round(phase * (self.motion_len-1))

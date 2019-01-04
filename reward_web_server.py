@@ -132,7 +132,7 @@ class myHandler(BaseHTTPRequestHandler):
 
     def get_log_list(self):
         filenames = glob.glob('**/*_*/log.txt', recursive=True)
-        filenames.sort(key=lambda x: int(x[-16:-8]), reverse=True)
+        filenames.sort(key=lambda x: int(x[-20:-8]), reverse=True)
         for i in range(len(filenames)):
             # filenames[i] = filenames[i][:-8] + '.png'
             filenames[i] = filenames[i][:-8] + '.info'
