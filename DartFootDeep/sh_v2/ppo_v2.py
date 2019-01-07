@@ -27,7 +27,7 @@ MultiVariateNormal.entropy = lambda self: temp2(self).sum(-1)
 MultiVariateNormal.mode = lambda self: self.mean
 
 
-class Model(nn.Module):
+class ModelOld(nn.Module):
     def __init__(self, num_states, num_actions):
         super(Model, self).__init__()
 
@@ -85,6 +85,78 @@ class Model(nn.Module):
         v = F.relu(self.value_fc1(x))
         v = F.relu(self.value_fc2(v))
         v = self.value_fc3(v)
+
+        return p,v
+
+
+class Model(nn.Module):
+    def __init__(self, num_states, num_actions):
+        super(Model, self).__init__()
+
+        hidden_layer_size1 = 256
+        hidden_layer_size2 = 128
+        hidden_layer_size3 = 128
+
+        '''Policy Mean'''
+        self.policy_fc1 = nn.Linear(num_states		  , hidden_layer_size1)
+        self.policy_fc2 = nn.Linear(hidden_layer_size1, hidden_layer_size2)
+        self.policy_fc3 = nn.Linear(hidden_layer_size2, hidden_layer_size3)
+        self.policy_fc4 = nn.Linear(hidden_layer_size3, num_actions)
+        '''Policy Distributions'''
+        self.log_std = nn.Parameter(torch.zeros(num_actions))
+
+        '''Value'''
+        self.value_fc1 = nn.Linear(num_states		 , hidden_layer_size1)
+        self.value_fc2 = nn.Linear(hidden_layer_size1, hidden_layer_size2)
+        self.value_fc3 = nn.Linear(hidden_layer_size2, hidden_layer_size3)
+        self.value_fc4 = nn.Linear(hidden_layer_size3, 1)
+
+        self.initParameters()
+
+    def initParameters(self):
+        '''Policy'''
+        if self.policy_fc1.bias is not None:
+            self.policy_fc1.bias.data.zero_()
+        if self.policy_fc2.bias is not None:
+            self.policy_fc2.bias.data.zero_()
+        if self.policy_fc3.bias is not None:
+            self.policy_fc3.bias.data.zero_()
+        if self.policy_fc4.bias is not None:
+            self.policy_fc4.bias.data.zero_()
+        torch.nn.init.xavier_uniform_(self.policy_fc1.weight)
+        torch.nn.init.xavier_uniform_(self.policy_fc2.weight)
+        torch.nn.init.xavier_uniform_(self.policy_fc3.weight)
+        torch.nn.init.xavier_uniform_(self.policy_fc4.weight)
+        '''Value'''
+        if self.value_fc1.bias is not None:
+            self.value_fc1.bias.data.zero_()
+
+        if self.value_fc2.bias is not None:
+            self.value_fc2.bias.data.zero_()
+
+        if self.value_fc3.bias is not None:
+            self.value_fc3.bias.data.zero_()
+
+        if self.value_fc4.bias is not None:
+            self.value_fc4.bias.data.zero_()
+        torch.nn.init.xavier_uniform_(self.value_fc1.weight)
+        torch.nn.init.xavier_uniform_(self.value_fc2.weight)
+        torch.nn.init.xavier_uniform_(self.value_fc3.weight)
+        torch.nn.init.xavier_uniform_(self.value_fc4.weight)
+
+    def forward(self, x):
+        '''Policy'''
+        p_mean = F.relu(self.policy_fc1(x))
+        p_mean = F.relu(self.policy_fc2(p_mean))
+        p_mean = F.relu(self.policy_fc3(p_mean))
+        p_mean = self.policy_fc4(p_mean)
+
+        p = MultiVariateNormal(p_mean, self.log_std.exp())
+        '''Value'''
+        v = F.relu(self.value_fc1(x))
+        v = F.relu(self.value_fc2(v))
+        v = F.relu(self.value_fc3(v))
+        v = self.value_fc4(v)
 
         return p,v
 
@@ -173,15 +245,19 @@ class PPO(object):
         self.lb = 0.95
         self.clip_ratio = 0.2
 
-        self.buffer_size = 2048
-        self.batch_size = 128
-        self.replay_buffer = ReplayBuffer(10000)
+        self.buffer_size_old = 2048
+        self.batch_size_old = 128
+        self.replay_buffer_old = ReplayBuffer(10000)
+
+        self.buffer_size = 4096
+        self.batch_size = 256
+        self.replay_buffer = ReplayBuffer(100000)
 
         self.total_episodes = []
 
         self.model = Model(self.num_state, self.num_action).float()
-        # self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
-        self.optimizer = optim.Adam(self.model.parameters(), lr=1E-4)
+        # self.optimizer_old = optim.Adam(self.model.parameters(), lr=1E-4)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=7E-4)
         self.w_entropy = 0.0
 
         self.sum_return = 0.
