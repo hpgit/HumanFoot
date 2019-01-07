@@ -59,7 +59,7 @@
         <body name="LeftUpLeg">
             <transformation> 0.08934 -0.23301  0.01692  1.57508  0.00027  0.     </transformation>
             <inertia>
-                <mass>4.999999999999999</mass>
+                <mass>7.0</mass>
                 <offset>0. 0. 0.</offset>
             </inertia>
             <visualization_shape name="LeftUpLeg - visual shape 0">
@@ -82,7 +82,7 @@
         <body name="LeftLeg">
             <transformation> 0.08197 -0.66512  0.00404  1.6221  -0.05224  0.     </transformation>
             <inertia>
-                <mass>5.0</mass>
+                <mass>7.0</mass>
                 <offset>0. 0. 0.</offset>
             </inertia>
             <visualization_shape name="LeftLeg - visual shape 0">
@@ -550,7 +550,7 @@
         <body name="RightUpLeg">
             <transformation>-0.08934 -0.23301  0.01692  1.57508 -0.00027  0.     </transformation>
             <inertia>
-                <mass>4.999999999999999</mass>
+                <mass>7.0</mass>
                 <offset>0. 0. 0.</offset>
             </inertia>
             <visualization_shape name="RightUpLeg - visual shape 0">
@@ -573,7 +573,7 @@
         <body name="RightLeg">
             <transformation>-0.08197 -0.66512  0.00404  1.6221   0.05224  0.     </transformation>
             <inertia>
-                <mass>5.0</mass>
+                <mass>7.0</mass>
                 <offset>0. 0. 0.</offset>
             </inertia>
             <visualization_shape name="RightLeg - visual shape 0">
