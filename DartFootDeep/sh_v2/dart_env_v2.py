@@ -138,14 +138,17 @@ class HpDartEnv(gym.Env):
         self.rsi = True
 
         self.w_p = 0.65
+        # self.w_p = 0.55
         self.w_v = 0.1
         self.w_e = 0.15
         self.w_c = 0.1
+        self.w_t = 0.1
 
         self.exp_p = 2.
         self.exp_v = 0.1
         self.exp_e = 40.
         self.exp_c = 10.
+        self.exp_t = 5.
 
         # soohwan style
         # self.w_p = 0.15
@@ -182,6 +185,7 @@ class HpDartEnv(gym.Env):
         self.prev_ref_com = self.ref_skel.com()
         self.prev_ref_com_vel = self.ref_skel.com_velocity()
         self.prev_ref_com_spatial_vel = self.ref_skel.com_spatial_velocity()
+        self.prev_ref_torso_ori = self.ref_skel.body('Spine').world_transform()[:3, :3]
 
         # setting for reward
         self.reward_joint = list()
@@ -277,6 +281,11 @@ class HpDartEnv(gym.Env):
         # rewards.append(exp_reward_term(self.w_c_v, self.exp_c_v, self.skel.com_velocity() - self.prev_ref_com_vel))
         # rewards.append(exp_reward_term(self.w_c_v, self.exp_c_v, self.skel.com_spatial_velocity() - self.prev_ref_com_spatial_vel))
 
+        # torso reward
+        torso_ori = self.skel.body('Spine').world_transform()[:3, :3]
+        torso_ori_diff = np.asarray(mm.logSO3(np.dot(torso_ori.T, self.prev_ref_torso_ori)))
+        rewards.append(exp_reward_term(self.w_t, self.exp_t, torso_ori_diff))
+
         return sum(rewards)
 
     def is_done(self):
@@ -334,6 +343,7 @@ class HpDartEnv(gym.Env):
             self.prev_ref_com = self.ref_skel.com()
             self.prev_ref_com_vel = self.ref_skel.com_velocity()
             self.prev_ref_com_spatial_vel = self.ref_skel.com_spatial_velocity()
+            self.prev_ref_torso_ori = self.ref_skel.body('Spine').world_transform()[:3, :3]
 
         next_frame_time = self.world.time() + self.time_offset + self.world.time_step() * self.step_per_frame
         self.ref_skel.set_positions(self.ref_motion.get_q_by_time(next_frame_time))
@@ -347,6 +357,7 @@ class HpDartEnv(gym.Env):
             self.prev_ref_com = self.ref_skel.com()
             self.prev_ref_com_vel = self.ref_skel.com_velocity()
             self.prev_ref_com_spatial_vel = self.ref_skel.com_spatial_velocity()
+            self.prev_ref_torso_ori = self.ref_skel.body('Spine').world_transform()[:3, :3]
 
     def continue_from_now_by_phase(self, phase):
         self.phase_frame = round(phase * (self.motion_len-1))
