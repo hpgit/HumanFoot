@@ -16,7 +16,7 @@ def plot(y,title,num_fig=1,ylim=True):
     output = BytesIO()
 
     mavg = np.zeros_like(y)
-    MOVING_AVERAGE_WEIGHT = len(y)//20
+    MOVING_AVERAGE_WEIGHT = max(1, len(y)//20)
     if 're' in title:
         for i in range(MOVING_AVERAGE_WEIGHT):
             mavg[i] = sum(y[0:i+1])/len(y[0:i+1])
