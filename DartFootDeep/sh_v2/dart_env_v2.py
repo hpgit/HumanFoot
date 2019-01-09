@@ -81,6 +81,8 @@ class HpDartEnv(gym.Env):
             motion_name = '../data/segfoot_wd2_short_broad_jump_edit.bvh'
         elif env_name == 'n_kick':
             motion_name = '../data/segfoot_wd2_n_kick_edit.bvh'
+        elif env_name == 'jump':
+            motion_name = '../data/wd2_jump0_edited.bvh'
 
         SEGMENT_FOOT_MAG = 0.01
         SEGMENT_FOOT_RAD = 0.008
@@ -102,6 +104,7 @@ class HpDartEnv(gym.Env):
             self.ref_motion.translateByOffset([0., -0.03, 0.])
         elif env_name == 'jump':
             self.ref_motion = self.ref_motion[164:280]
+            self.ref_motion.translateByOffset([0., -0.06, 0.])
         elif env_name == 'walk_u_turn':
             self.ref_motion = self.ref_motion[25:214]
             self.ref_motion.translateByOffset([0., -0.09, 0.])
