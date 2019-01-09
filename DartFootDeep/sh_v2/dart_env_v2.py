@@ -288,7 +288,6 @@ class HpDartEnv(gym.Env):
         torso_ori = self.skel.body('Spine').world_transform()[:3, :3]
         torso_ori_diff = np.asarray(mm.logSO3(np.dot(torso_ori.T, self.prev_ref_torso_ori)))
         rewards.append(exp_reward_term(self.w_t, self.exp_t, torso_ori_diff))
-        print(rewards)
 
         return sum(rewards)
 
