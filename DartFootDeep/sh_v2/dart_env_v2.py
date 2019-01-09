@@ -140,8 +140,8 @@ class HpDartEnv(gym.Env):
 
         self.rsi = True
 
-        self.w_p = 0.65
-        # self.w_p = 0.55
+        # self.w_p = 0.65
+        self.w_p = 0.55
         self.w_v = 0.1
         self.w_e = 0.15
         self.w_c = 0.1
@@ -151,7 +151,7 @@ class HpDartEnv(gym.Env):
         self.exp_v = 0.1
         self.exp_e = 40.
         self.exp_c = 10.
-        self.exp_t = 5.
+        self.exp_t = 20.
 
         # soohwan style
         # self.w_p = 0.15
@@ -288,6 +288,7 @@ class HpDartEnv(gym.Env):
         torso_ori = self.skel.body('Spine').world_transform()[:3, :3]
         torso_ori_diff = np.asarray(mm.logSO3(np.dot(torso_ori.T, self.prev_ref_torso_ori)))
         rewards.append(exp_reward_term(self.w_t, self.exp_t, torso_ori_diff))
+        print(rewards)
 
         return sum(rewards)
 
