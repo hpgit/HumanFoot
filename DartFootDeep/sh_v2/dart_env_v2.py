@@ -133,8 +133,8 @@ class HpDartEnv(gym.Env):
 
         self.ref_world = pydart.World(1./1200., "../data/wd2_seg.xml")
         self.ref_skel = self.ref_world.skeletons[1]
-        # self.step_per_frame = round((1./self.world.time_step()) / self.ref_motion.fps)
-        self.step_per_frame = 40
+        self.step_per_frame = round((1./self.world.time_step()) / self.ref_motion.fps)
+        # self.step_per_frame = 40
 
         fix_motion_data_by_foot(self.ref_motion, self.ref_skel, SEGMENT_FOOT_RAD)
 
@@ -289,7 +289,7 @@ class HpDartEnv(gym.Env):
         torso_ori_diff = np.asarray(mm.logSO3(np.dot(torso_ori.T, self.prev_ref_torso_ori)))
         rewards.append(exp_reward_term(self.w_t, self.exp_t, torso_ori_diff))
 
-        return sum(rewards)
+        return sum(rewards)/(len(self.ref_motion) + self.ref_motion.fps)
 
     def is_done(self):
         if self.force_done:
