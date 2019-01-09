@@ -514,8 +514,8 @@ class PPO(object):
 
     def Evaluate(self):
         self.num_evaluation += 1
-        self.print('noise : {:.3f}'.format(self.model.log_std.exp().mean()))
-        self.print('Avg return : {:.2f}'.format(self.sum_return / self.num_episode))
+        self.print('noise : {:.4f}'.format(self.model.log_std.exp().mean()))
+        self.print('Avg return : {:.4f}'.format(self.sum_return / self.num_episode))
         return self.sum_return/self.num_episode, 0
 
     def print(self, s):
