@@ -19,37 +19,36 @@ def main():
     pydart.init()
 
     env_name = 'walk'
-    env_name = 'walk_fast'
-    env_name = 'walk_sukiko'
-    env_name = 'walk_u_turn'
-    env_name = '1foot_contact_run'
-    env_name = 'round_girl'
-    env_name = 'fast_2foot_hop'
-    env_name = 'slow_2foot_hop'
-    env_name = 'long_broad_jump'
-    env_name = 'short_broad_jump'
-    env_name = 'n_kick'
-
-    env_name = 'n_kick'
+    # env_name = 'walk_fast'
+    # env_name = 'walk_sukiko'
+    # env_name = 'walk_u_turn'
+    # env_name = '1foot_contact_run'
+    # env_name = 'round_girl'
+    # env_name = 'fast_2foot_hop'
+    # env_name = 'slow_2foot_hop'
+    # env_name = 'long_broad_jump'
+    # env_name = 'short_broad_jump'
+    # env_name = 'n_kick'
+    # env_name = 'jump'
 
     ppo = PPO(env_name, 0, visualize_only=True)
     if not MOTION_ONLY and not CURRENT_CHECK:
         # ppo.LoadModel('model/' + env_name + '.pt')
-        # ppo.LoadModel('model_test/' + env_name + '.pt')
         # ppo.LoadModel('model/' + 'param' + '.pt')
-        pass
+        # ppo.LoadModel('model_test/' + env_name + '.pt')
+        ppo.LoadModel('model_test/' + 'param' + '.pt')
     elif not MOTION_ONLY and CURRENT_CHECK:
         env_model_dir = []
         for dir_name in sorted(os.listdir()):
-            if 'walk' in dir_name:
+            if env_name in dir_name:
                 env_model_dir.append(dir_name)
 
         pt_names = os.listdir(env_model_dir[-1])
         pt_names.pop(pt_names.index('log.txt'))
         pt_names.sort(key=lambda f: int(os.path.splitext(f)[0]))
         ppo.LoadModel(env_model_dir[-1]+'/'+pt_names[-1])
-        # ppo.LoadModel(env_model_dir[-1]+'/'+'918.pt')
-        print(pt_names[-1])
+        # ppo.LoadModel(env_model_dir[-1]+'/'+'2501.pt')
+        print(env_model_dir[-1]+'/'+pt_names[-1])
 
     ppo.env.Resets(RSI)
     ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(ppo.env.phase_frame))
@@ -104,15 +103,17 @@ def main():
             viewer.doc.addRenderer('skeleton', skeleton_renderer)
 
     def postCallback(frame):
-        ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(frame))
+        ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(frame-1))
         ppo.env.ref_motion.frame = frame-1
 
     def simulateCallback(frame):
         state = ppo.env.GetState(0)
-        action_dist, _ = ppo.model(torch.tensor(state.reshape(1, -1)).float())
+        action_dist, v = ppo.model(torch.tensor(state.reshape(1, -1)).float())
         action = action_dist.loc.detach().numpy()
+        value = v.detach().numpy()
         res = ppo.env.Steps(action)
         # res = ppo.env.Steps(np.zeros_like(action))
+        ppo.env.world.collision_result.update()
         # print(frame, ppo.env.Ref_skel.current_frame, ppo.env.world.time()*ppo.env.ref_motion.fps)
         # print(frame, res[0][0])
         # if res[0][0] > 0.46:

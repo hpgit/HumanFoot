@@ -15,11 +15,23 @@ PORT_NUMBER = 8000
 def plot(y,title,num_fig=1,ylim=True):
     output = BytesIO()
 
+    mavg = np.zeros_like(y)
+    MOVING_AVERAGE_WEIGHT = len(y)//20
+    if 're' in title:
+        for i in range(MOVING_AVERAGE_WEIGHT):
+            mavg[i] = sum(y[0:i+1])/len(y[0:i+1])
+        for i in range(MOVING_AVERAGE_WEIGHT, len(mavg)):
+            mavg[i] = sum(y[i-MOVING_AVERAGE_WEIGHT+1:i+1])/MOVING_AVERAGE_WEIGHT
+
     plt.figure(num_fig)
     plt.clf()
     plt.grid()
     plt.title(title)
-    plt.plot(y)
+    if 're' in title:
+        plt.plot(y, color='#c0c0ff')
+        plt.plot(mavg, color='#4080c0')
+    else:
+        plt.plot(y)
     plt.ylim([0, max(y)*1.1])
     plt.gcf().savefig(output)
     return output
@@ -131,7 +143,7 @@ class myHandler(BaseHTTPRequestHandler):
         return log_parse(filename, 1, r'\d+\.\d+', 'noise')
 
     def get_log_list(self):
-        filenames = glob.glob('**/*_*/log.txt', recursive=True)
+        filenames = glob.glob('**/*_201*/log.txt', recursive=True)
         filenames.sort(key=lambda x: int(x[-20:-8]), reverse=True)
         for i in range(len(filenames)):
             # filenames[i] = filenames[i][:-8] + '.png'
