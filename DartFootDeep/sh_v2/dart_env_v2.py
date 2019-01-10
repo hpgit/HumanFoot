@@ -141,17 +141,19 @@ class HpDartEnv(gym.Env):
         self.rsi = True
 
         # self.w_p = 0.65
-        self.w_p = 0.55
+        self.w_p = 0.50
         self.w_v = 0.1
-        self.w_e = 0.15
+        self.w_e = 0.10
         self.w_c = 0.1
         self.w_t = 0.1
+        self.w_y_ankle = 0.1
 
         self.exp_p = 2.
         self.exp_v = 0.1
         self.exp_e = 40.
         self.exp_c = 10.
         self.exp_t = 20.
+        self.exp_y_ankle = 5.
 
         # soohwan style
         # self.w_p = 0.15
@@ -172,6 +174,7 @@ class HpDartEnv(gym.Env):
         self.idx_e = [self.skel.bodynode_index('LeftFoot'), self.skel.bodynode_index('RightFoot'),
                       self.skel.bodynode_index('LeftForeArm'), self.skel.bodynode_index('RightForeArm')]
         self.ref_body_e = list(map(self.ref_skel.body, self.idx_e))
+        self.ankle_joint_names = ['j_LeftFoot', 'j_RightFoot']
         self.motion_len = len(self.ref_motion)
         self.motion_time = len(self.ref_motion) / self.ref_motion.fps
 
@@ -189,6 +192,7 @@ class HpDartEnv(gym.Env):
         self.prev_ref_com_vel = self.ref_skel.com_velocity()
         self.prev_ref_com_spatial_vel = self.ref_skel.com_spatial_velocity()
         self.prev_ref_torso_ori = self.ref_skel.body('Spine').world_transform()[:3, :3]
+        self.prev_ref_ankle_joint_y_pos = np.asarray([joint.get_world_frame_after_transform()[1, 3] for joint in [self.ref_skel.joint(joint_name) for joint_name in self.ankle_joint_names]]).flatten()
 
         # setting for reward
         self.reward_joint = list()
@@ -254,7 +258,7 @@ class HpDartEnv(gym.Env):
         p_e = np.asarray([body.world_transform()[:3, 3] for body in body_e]).flatten()
 
         p_e_ori = [body.world_transform()[:3, :3] for body in body_e]
-        p_e_ori_diff = np.asarray([mm.logSO3(np.dot(p_e_ori[idx].T, self.prev_ref_p_e_ori_hat[idx])) for idx in range(len(p_e_ori))]).flatten()
+        # p_e_ori_diff = np.asarray([mm.logSO3(np.dot(p_e_ori[idx].T, self.prev_ref_p_e_ori_hat[idx])) for idx in range(len(p_e_ori))]).flatten()
 
         q_diff = np.asarray(self.skel.position_differences(self.prev_ref_q, self.skel.q))
         dq_diff = np.asarray(self.skel.velocity_differences(self.prev_ref_dq, self.skel.dq))
@@ -289,12 +293,19 @@ class HpDartEnv(gym.Env):
         torso_ori_diff = np.asarray(mm.logSO3(np.dot(torso_ori.T, self.prev_ref_torso_ori)))
         rewards.append(exp_reward_term(self.w_t, self.exp_t, torso_ori_diff))
 
+        # ankle y position reward
+        ankle_joint_y_pos = np.asarray([joint.get_world_frame_after_transform()[1, 3] for joint in [self.skel.joint(joint_name) for joint_name in self.ankle_joint_names]]).flatten()
+        rewards.append(exp_reward_term(self.w_y_ankle, self.exp_y_ankle, ankle_joint_y_pos - self.prev_ref_ankle_joint_y_pos))
+
         return sum(rewards)/(len(self.ref_motion) + self.ref_motion.fps)
 
     def is_done(self):
         if self.force_done:
             return True
-        if self.skel.com()[1] < 0.4:
+        if self.env_name == 'walk' and self.skel.com()[1] < 0.55:
+            # print('fallen')
+            return True
+        elif self.skel.com()[1] < 0.4:
             # print('fallen')
             return True
         elif True in np.isnan(np.asarray(self.skel.q)) or True in np.isnan(np.asarray(self.skel.dq)):
@@ -342,11 +353,12 @@ class HpDartEnv(gym.Env):
             self.prev_ref_q = self.ref_skel.positions()
             self.prev_ref_dq = self.ref_skel.velocities()
             self.prev_ref_p_e_hat = np.asarray([body.world_transform()[:3, 3] for body in self.ref_body_e]).flatten()
-            self.prev_ref_p_e_ori_hat = [body.world_transform()[:3, :3] for body in self.ref_body_e]
+            self.prev_ref_p_e_ori_hat = [body.world_transform()[1, :3] for body in self.ref_body_e]
             self.prev_ref_com = self.ref_skel.com()
             self.prev_ref_com_vel = self.ref_skel.com_velocity()
             self.prev_ref_com_spatial_vel = self.ref_skel.com_spatial_velocity()
             self.prev_ref_torso_ori = self.ref_skel.body('Spine').world_transform()[:3, :3]
+            self.prev_ref_ankle_joint_y_pos = np.asarray([joint.get_world_frame_after_transform()[1, 3] for joint in [self.ref_skel.joint(joint_name) for joint_name in self.ankle_joint_names]]).flatten()
 
         next_frame_time = self.world.time() + self.time_offset + self.world.time_step() * self.step_per_frame
         self.ref_skel.set_positions(self.ref_motion.get_q_by_time(next_frame_time))
@@ -361,6 +373,7 @@ class HpDartEnv(gym.Env):
             self.prev_ref_com_vel = self.ref_skel.com_velocity()
             self.prev_ref_com_spatial_vel = self.ref_skel.com_spatial_velocity()
             self.prev_ref_torso_ori = self.ref_skel.body('Spine').world_transform()[:3, :3]
+            self.prev_ref_ankle_joint_y_pos = np.asarray([joint.get_world_frame_after_transform()[1, 3] for joint in [self.ref_skel.joint(joint_name) for joint_name in self.ankle_joint_names]]).flatten()
 
     def continue_from_now_by_phase(self, phase):
         self.phase_frame = round(phase * (self.motion_len-1))
