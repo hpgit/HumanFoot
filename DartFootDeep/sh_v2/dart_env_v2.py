@@ -305,8 +305,8 @@ class HpDartEnv(gym.Env):
         rewards.append(exp_reward_term(self.w_t, self.exp_t, torso_ori_diff))
 
         # ankle y position reward
-        ankle_joint_y_pos = np.asarray([joint.get_world_frame_after_transform()[1, 3] for joint in [self.skel.joint(joint_name) for joint_name in self.ankle_joint_names]]).flatten()
-        rewards.append(exp_reward_term(self.w_y_ankle, self.exp_y_ankle, ankle_joint_y_pos - self.prev_ref_ankle_joint_y_pos))
+        # ankle_joint_y_pos = np.asarray([joint.get_world_frame_after_transform()[1, 3] for joint in [self.skel.joint(joint_name) for joint_name in self.ankle_joint_names]]).flatten()
+        # rewards.append(exp_reward_term(self.w_y_ankle, self.exp_y_ankle, ankle_joint_y_pos - self.prev_ref_ankle_joint_y_pos))
 
         return sum(rewards)/(len(self.ref_motion) + self.ref_motion.fps)
 
