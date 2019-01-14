@@ -10,7 +10,7 @@
             <mobile>false</mobile>
             <body name="ground">
                 <transformation>0 -0.025 0 0 0 0</transformation>
-                <visualization_shape name=" - visual - 0">
+                <visualization_shape name="ground - visual - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -18,7 +18,7 @@
                         </box>
                     </geometry>
                 </visualization_shape>
-                <collision_shape name=" - collision - 0">
+                <collision_shape name="ground - collision - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -39,7 +39,7 @@
                     <mass>6.0</mass>
                     <offset>0.0 0 0.0</offset>
                 </inertia>
-                <visualization_shape name=" - visual - 0">
+                <visualization_shape name="Hips - visual - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -47,7 +47,7 @@
                         </box>
                     </geometry>
                 </visualization_shape>
-                <collision_shape name=" - collision - 0">
+                <collision_shape name="Hips - collision - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -62,7 +62,7 @@
                     <mass>5.0</mass>
                     <offset>0.0 0 0.0</offset>
                 </inertia>
-                <visualization_shape name=" - visual - 0">
+                <visualization_shape name="LeftUpLeg - visual - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -70,7 +70,7 @@
                         </box>
                     </geometry>
                 </visualization_shape>
-                <collision_shape name=" - collision - 0">
+                <collision_shape name="LeftUpLeg - collision - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -85,7 +85,7 @@
                     <mass>5.0</mass>
                     <offset>0.0 0 0.0</offset>
                 </inertia>
-                <visualization_shape name=" - visual - 0">
+                <visualization_shape name="LeftLeg - visual - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -93,7 +93,7 @@
                         </box>
                     </geometry>
                 </visualization_shape>
-                <collision_shape name=" - collision - 0">
+                <collision_shape name="LeftLeg - collision - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -108,7 +108,7 @@
                     <mass>2.0</mass>
                     <offset>0.0 0 0.0</offset>
                 </inertia>
-                <visualization_shape name=" - visual - 0">
+                <visualization_shape name="LeftFoot - visual - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -116,7 +116,7 @@
                         </box>
                     </geometry>
                 </visualization_shape>
-                <collision_shape name=" - collision - 0">
+                <collision_shape name="LeftFoot - collision - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -131,7 +131,7 @@
                     <mass>8.0</mass>
                     <offset>0.0 0 0.0</offset>
                 </inertia>
-                <visualization_shape name=" - visual - 0">
+                <visualization_shape name="Spine - visual - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -139,7 +139,7 @@
                         </box>
                     </geometry>
                 </visualization_shape>
-                <collision_shape name=" - collision - 0">
+                <collision_shape name="Spine - collision - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -154,7 +154,7 @@
                     <mass>3.0</mass>
                     <offset>0.0 0 0.0</offset>
                 </inertia>
-                <visualization_shape name=" - visual - 0">
+                <visualization_shape name="Spine1 - visual - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -162,7 +162,7 @@
                         </box>
                     </geometry>
                 </visualization_shape>
-                <collision_shape name=" - collision - 0">
+                <collision_shape name="Spine1 - collision - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -177,7 +177,7 @@
                     <mass>2.0</mass>
                     <offset>0.0 0 0.0</offset>
                 </inertia>
-                <visualization_shape name=" - visual - 0">
+                <visualization_shape name="RightArm - visual - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -185,7 +185,7 @@
                         </box>
                     </geometry>
                 </visualization_shape>
-                <collision_shape name=" - collision - 0">
+                <collision_shape name="RightArm - collision - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -200,7 +200,7 @@
                     <mass>1.0</mass>
                     <offset>0.0 0 0.0</offset>
                 </inertia>
-                <visualization_shape name=" - visual - 0">
+                <visualization_shape name="RightForeArm - visual - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -208,7 +208,7 @@
                         </box>
                     </geometry>
                 </visualization_shape>
-                <collision_shape name=" - collision - 0">
+                <collision_shape name="RightForeArm - collision - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -223,7 +223,7 @@
                     <mass>2.0</mass>
                     <offset>0.0 0 0.0</offset>
                 </inertia>
-                <visualization_shape name=" - visual - 0">
+                <visualization_shape name="LeftArm - visual - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -231,7 +231,7 @@
                         </box>
                     </geometry>
                 </visualization_shape>
-                <collision_shape name=" - collision - 0">
+                <collision_shape name="LeftArm - collision - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -246,7 +246,7 @@
                     <mass>1.0</mass>
                     <offset>0.0 0 0.0</offset>
                 </inertia>
-                <visualization_shape name=" - visual - 0">
+                <visualization_shape name="LeftForeArm - visual - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -254,7 +254,7 @@
                         </box>
                     </geometry>
                 </visualization_shape>
-                <collision_shape name=" - collision - 0">
+                <collision_shape name="LeftForeArm - collision - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -269,7 +269,7 @@
                     <mass>5.0</mass>
                     <offset>0.0 0 0.0</offset>
                 </inertia>
-                <visualization_shape name=" - visual - 0">
+                <visualization_shape name="RightUpLeg - visual - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -277,7 +277,7 @@
                         </box>
                     </geometry>
                 </visualization_shape>
-                <collision_shape name=" - collision - 0">
+                <collision_shape name="RightUpLeg - collision - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -292,7 +292,7 @@
                     <mass>5.0</mass>
                     <offset>0.0 0 0.0</offset>
                 </inertia>
-                <visualization_shape name=" - visual - 0">
+                <visualization_shape name="RightLeg - visual - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -300,7 +300,7 @@
                         </box>
                     </geometry>
                 </visualization_shape>
-                <collision_shape name=" - collision - 0">
+                <collision_shape name="RightLeg - collision - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -315,7 +315,7 @@
                     <mass>2.0</mass>
                     <offset>0.0 0 0.0</offset>
                 </inertia>
-                <visualization_shape name=" - visual - 0">
+                <visualization_shape name="RightFoot - visual - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>
@@ -323,7 +323,7 @@
                         </box>
                     </geometry>
                 </visualization_shape>
-                <collision_shape name=" - collision - 0">
+                <collision_shape name="RightFoot - collision - 0">
                     <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                     <geometry>
                         <box>

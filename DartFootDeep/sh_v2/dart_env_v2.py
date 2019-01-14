@@ -61,6 +61,8 @@ class HpDartEnv(gym.Env):
 
         if env_name == 'walk':
             motion_name = "../data/segfoot_wd2_WalkForwardNormal00.bvh"
+        elif env_name == 'walk_repeated':
+            motion_name = "../data/segfoot_wd2_WalkForwardNormal00_REPEATED.bvh"
         elif env_name == 'walk_fast':
             motion_name = "../data/segfoot_wd2_WalkForwardVFast00.bvh"
         elif env_name == 'walk_sukiko':
@@ -100,6 +102,9 @@ class HpDartEnv(gym.Env):
         self.ref_motion = bvh.toJointMotion(1., False)  # type: ym.JointMotion
 
         if env_name == 'walk':
+            # self.ref_motion = self.ref_motion[20:]
+            self.ref_motion.translateByOffset([0., -0.03, 0.])
+        if env_name == 'walk_repeated':
             # self.ref_motion = self.ref_motion[20:]
             self.ref_motion.translateByOffset([0., -0.03, 0.])
         elif env_name == 'jump':
@@ -238,6 +243,12 @@ class HpDartEnv(gym.Env):
         R_pelvis = pelvis.world_transform()[:3, :3]
 
         phase = min(1., (self.world.time() + self.time_offset)/self.motion_time)
+        if self.env_name == 'walk_repeated':
+            if self.phase_frame <= 156:
+                phase = self.phase_frame / 156.
+            else:
+                phase = ((self.phase_frame - 113) % 43 + 113)/156.
+
         state = [phase]
 
         p = np.array([np.dot(R_pelvis.T, body.to_world() - p_pelvis) for body in self.skel.bodynodes]).flatten()
@@ -302,7 +313,7 @@ class HpDartEnv(gym.Env):
     def is_done(self):
         if self.force_done:
             return True
-        if self.env_name == 'walk' and self.skel.com()[1] < 0.55:
+        if (self.env_name == 'walk' or self.env_name == 'walk_repeated') and self.skel.com()[1] < 0.55:
             # print('fallen')
             return True
         elif self.skel.com()[1] < 0.4:
@@ -313,6 +324,8 @@ class HpDartEnv(gym.Env):
             return True
         elif self.world.time() + self.time_offset > self.motion_time + 1.:
             # print('timeout')
+            return True
+        elif self.world.time() > 10.:
             return True
         return False
 
@@ -345,6 +358,7 @@ class HpDartEnv(gym.Env):
             self.world.step()
 
         self.update_ref_skel(False)
+        self.phase_frame += 1
 
         return tuple([self.state(), self.reward(), self.is_done(), dict()])
 
@@ -376,7 +390,15 @@ class HpDartEnv(gym.Env):
             self.prev_ref_ankle_joint_y_pos = np.asarray([joint.get_world_frame_after_transform()[1, 3] for joint in [self.ref_skel.joint(joint_name) for joint_name in self.ankle_joint_names]]).flatten()
 
     def continue_from_now_by_phase(self, phase):
-        self.phase_frame = round(phase * (self.motion_len-1))
+        self.continue_from_frame(round(phase*(self.motion_len-1)))
+        # self.phase_frame = round(phase * (self.motion_len-1))
+        # skel_pelvis_offset = self.skel.joint(0).position_in_world_frame() - self.ref_motion[self.phase_frame].getJointPositionGlobal(0)
+        # skel_pelvis_offset[1] = 0.
+        # self.ref_motion.translateByOffset(skel_pelvis_offset)
+        # self.time_offset = - self.world.time() + (self.phase_frame / self.ref_motion.fps)
+
+    def continue_from_frame(self, frame):
+        self.phase_frame = frame
         skel_pelvis_offset = self.skel.joint(0).position_in_world_frame() - self.ref_motion[self.phase_frame].getJointPositionGlobal(0)
         skel_pelvis_offset[1] = 0.
         self.ref_motion.translateByOffset(skel_pelvis_offset)
@@ -391,7 +413,8 @@ class HpDartEnv(gym.Env):
         """
         self.world.reset()
 
-        self.continue_from_now_by_phase(random() if self.rsi else 0.)
+        # self.continue_from_now_by_phase(random() if self.rsi else 0.)
+        self.continue_from_frame(randrange(self.motion_len) if self.rsi else 0)
 
         self.skel.set_positions(self.ref_motion.get_q(self.phase_frame))
         self.skel.set_velocities(self.ref_motion.get_dq_dart(self.phase_frame))
