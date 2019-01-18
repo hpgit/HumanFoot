@@ -320,7 +320,7 @@ class HpDartEnv(gym.Env):
             # print('fallen')
             return True
         elif True in np.isnan(np.asarray(self.skel.q)) or True in np.isnan(np.asarray(self.skel.dq)):
-            print('nan')
+            # print('nan')
             return True
         elif self.world.time() + self.time_offset > self.motion_time + 1.:
             # print('timeout')
@@ -347,8 +347,8 @@ class HpDartEnv(gym.Env):
         Kd_vector = np.asarray([0.0] * 6 + [self.Kd] * (self.skel.ndofs - 6))
         for joint_idx in range(len(self.foot_joint)):
             for dof_idx in get_joint_dof_range(self.skel.joint(self.foot_joint[joint_idx])):
-                Kp_vector[dof_idx] = self.Kd * exp(log(self.Kp) * _action[self.skel.ndofs-6 + joint_idx]/10.)
-                Kd_vector[dof_idx] = self.Kp * exp(log(self.Kd) * _action[self.skel.ndofs-6 + joint_idx]/20.)
+                Kp_vector[dof_idx] = self.Kp * exp(log(self.Kp) * _action[self.skel.ndofs-6 + joint_idx]/10.)
+                Kd_vector[dof_idx] = self.Kd * exp(log(self.Kd) * _action[self.skel.ndofs-6 + joint_idx]/20.)
 
         for i in range(self.step_per_frame):
             # tau = self.skel.get_spd(self.ref_skel.q + action, self.world.time_step(), self.Kp, self.Kd)
@@ -360,7 +360,7 @@ class HpDartEnv(gym.Env):
         self.update_ref_skel(False)
         self.phase_frame += 1
 
-        return tuple([self.state(), self.reward(), self.is_done(), dict()])
+        return tuple([self.state(), self.reward(), self.is_done(), {'kp': Kp_vector, 'kd': Kd_vector}])
 
     def update_ref_skel(self, reset=False):
         if not reset:
