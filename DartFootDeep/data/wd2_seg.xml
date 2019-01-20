@@ -22,7 +22,7 @@
                 <transformation>0.0 0.0 0.0 0.0 0.0 0.0 </transformation>
                 <geometry>
                     <box>
-                        <size>100.0 0.05 100.0</size>
+                        <size>10000.0 0.05 10000.0</size>
                     </box>
                 </geometry>
             </collision_shape>
