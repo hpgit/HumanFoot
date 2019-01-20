@@ -1,24 +1,29 @@
 from fltk import Fl
 import os
 import torch
-from math import exp, log
+from math import exp, log, pi
 from DartFootDeep.sh_v2.ppo_v2 import PPO
 from PyCommon.modules.GUI import hpSimpleViewer as hsv
 from PyCommon.modules.Renderer import ysRenderer as yr
 import numpy as np
 
 import pydart2 as pydart
+from PyCommon.modules.Math import mmMath as mm
+from matplotlib import pyplot as plt
 
 
 def main():
     MOTION_ONLY = False
     CURRENT_CHECK = False
     SKELETON_ON = False
-    RSI = True
+    RSI = False
+
+    CAMERA_TRACKING = True
 
     pydart.init()
 
     env_name = 'walk'
+    env_name = 'walk_repeated'
     # env_name = 'walk_fast'
     # env_name = 'walk_sukiko'
     # env_name = 'walk_u_turn'
@@ -30,6 +35,13 @@ def main():
     # env_name = 'short_broad_jump'
     # env_name = 'n_kick'
     # env_name = 'jump'
+
+    gain_p0 = []
+    gain_p1 = []
+    gain_p2 = []
+    gain_p3 = []
+    gain_p4 = []
+    gain_d = []
 
     ppo = PPO(env_name, 0, visualize_only=True)
     if not MOTION_ONLY and not CURRENT_CHECK:
@@ -58,7 +70,7 @@ def main():
     rd_contact_forces = [None]
     dart_world = ppo.env.world
     skel = dart_world.skeletons[1]
-    viewer = hsv.hpSimpleViewer(rect=(0, 0, 1200, 800), viewForceWnd=False)
+    viewer = hsv.hpSimpleViewer(rect=(0, 0, 960+300, 1+1080+55), viewForceWnd=False)
     viewer.doc.addRenderer('MotionModel', yr.DartRenderer(ppo.env.ref_world, (150,150,255), yr.POLYGON_FILL))
 
     if not MOTION_ONLY:
@@ -112,16 +124,23 @@ def main():
         action = action_dist.loc.detach().numpy()
         value = v.detach().numpy()
         res = ppo.env.Steps(action)
+        gain_p0.append(res[3]['kp'][ppo.env.skel.dof_index('j_LeftFoot_foot_0_0_0_x')])
         # res = ppo.env.Steps(np.zeros_like(action))
         ppo.env.world.collision_result.update()
         # print(frame, ppo.env.Ref_skel.current_frame, ppo.env.world.time()*ppo.env.ref_motion.fps)
-        # print(frame, res[0][0])
+        print(frame, res[0][0])
         # if res[0][0] > 0.46:
         #     ppo.env.continue_from_now_by_phase(0.2)
         # print(frame, ' '.join(["{:0.1f}".format(400. * exp(log(400.) * rate/10.)) for rate in action[0][ppo.env.skel.ndofs-6:]]))
         if res[2]:
             print(frame, 'Done')
             ppo.env.reset()
+
+        plt.figure(1)
+        plt.clf()
+        plt.plot(gain_p0)
+        plt.show()
+        plt.pause(0.001)
 
         # contact rendering
         contacts = ppo.env.world.collision_result.contacts
@@ -148,7 +167,9 @@ def main():
             Ts['spine_ribs'] = skel.joint('j_Spine').get_local_transform()
             Ts['head'] = skel.joint('j_Spine1').get_local_transform()
             Ts['upper_limb_R'] = skel.joint('j_RightArm').get_local_transform()
+            # Ts['upper_limb_R'] = np.dot(skel.joint('j_RightArm').get_local_transform(), mm.SO3ToSE3(mm.rotX(pi/6.)))
             Ts['lower_limb_R'] = skel.joint('j_RightForeArm').get_local_transform()
+            # Ts['lower_limb_R'] = np.dot(skel.joint('j_RightForeArm').get_local_transform(), mm.SO3ToSE3(mm.rotY(-pi/6.)))
             Ts['thigh_L'] = skel.joint('j_LeftUpLeg').get_local_transform()
             Ts['shin_L'] = skel.joint('j_LeftLeg').get_local_transform()
             Ts['foot_L'] = skel.joint('j_LeftFoot').get_local_transform()
@@ -160,7 +181,9 @@ def main():
             Ts['inside_metatarsal_L'] = np.eye(4)
             Ts['inside_phalanges_L'] = skel.joint('j_LeftFoot_foot_0_1_0').get_local_transform()
             Ts['upper_limb_L'] = skel.joint('j_LeftArm').get_local_transform()
+            # Ts['upper_limb_L'] = np.dot(skel.joint('j_LeftArm').get_local_transform(), mm.SO3ToSE3(mm.rotX(pi/6.)))
             Ts['lower_limb_L'] = skel.joint('j_LeftForeArm').get_local_transform()
+            # Ts['lower_limb_L'] = np.dot(skel.joint('j_LeftForeArm').get_local_transform(), mm.SO3ToSE3(mm.rotY(pi/6.)))
 
             skeleton_renderer.appendFrameState(Ts)
 
@@ -170,6 +193,18 @@ def main():
     else:
         viewer.setSimulateCallback(simulateCallback)
         viewer.setMaxFrame(3000)
+
+        if CAMERA_TRACKING:
+            cameraTargets = [None] * (viewer.getMaxFrame()+1)
+
+        def postFrameCallback_Always(frame):
+            if CAMERA_TRACKING:
+                if cameraTargets[frame] is None:
+                    cameraTargets[frame] = ppo.env.skel.body(0).com()
+                viewer.setCameraTarget(cameraTargets[frame])
+
+        viewer.setPostFrameCallback_Always(postFrameCallback_Always)
+
     viewer.startTimer(1./30.)
     viewer.show()
 
