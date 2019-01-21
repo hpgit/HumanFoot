@@ -14,7 +14,7 @@ from matplotlib import pyplot as plt
 
 def main():
     MOTION_ONLY = False
-    CURRENT_CHECK = False
+    CURRENT_CHECK = True
     SKELETON_ON = False
     RSI = False
 
@@ -41,7 +41,15 @@ def main():
     gain_p2 = []
     gain_p3 = []
     gain_p4 = []
-    gain_d = []
+    MA_DUR = 5
+    ma_gain_p0 = []
+    ma_gain_p1 = []
+    ma_gain_p2 = []
+    ma_gain_p3 = []
+    ma_gain_p4 = []
+
+    rfoot_contact_ranges = []
+    lfoot_contact_ranges = []
 
     ppo = PPO(env_name, 0, visualize_only=True)
     if not MOTION_ONLY and not CURRENT_CHECK:
@@ -58,8 +66,8 @@ def main():
         pt_names = os.listdir(env_model_dir[-1])
         pt_names.pop(pt_names.index('log.txt'))
         pt_names.sort(key=lambda f: int(os.path.splitext(f)[0]))
+        pt_names.append('1171.pt')
         ppo.LoadModel(env_model_dir[-1]+'/'+pt_names[-1])
-        # ppo.LoadModel(env_model_dir[-1]+'/'+'2501.pt')
         print(env_model_dir[-1]+'/'+pt_names[-1])
 
     ppo.env.Resets(RSI)
@@ -70,7 +78,7 @@ def main():
     rd_contact_forces = [None]
     dart_world = ppo.env.world
     skel = dart_world.skeletons[1]
-    viewer_w, viewer_h = 512, 768
+    viewer_w, viewer_h = 960, 1080
     viewer = hsv.hpSimpleViewer(rect=(0, 0, viewer_w+300, 1+viewer_h+55), viewForceWnd=False)
     viewer.doc.addRenderer('MotionModel', yr.DartRenderer(ppo.env.ref_world, (150,150,255), yr.POLYGON_FILL))
 
@@ -125,15 +133,30 @@ def main():
         action = action_dist.loc.detach().numpy()
         value = v.detach().numpy()
         res = ppo.env.Steps(action)
-        gain_p0.append(res[3]['kp'][ppo.env.skel.dof_index('j_LeftFoot_x')])
-        gain_p1.append(res[3]['kp'][ppo.env.skel.dof_index('j_LeftFoot_foot_0_0_x')])
-        gain_p2.append(res[3]['kp'][ppo.env.skel.dof_index('j_LeftFoot_foot_0_0_0_x')])
-        gain_p3.append(res[3]['kp'][ppo.env.skel.dof_index('j_LeftFoot_foot_0_1_0_x')])
-        gain_p4.append(res[3]['kp'][ppo.env.skel.dof_index('j_LeftFoot_foot_1_0_x')])
+
+        # for gain plotting
+        gain_p0.append(res[3]['kp'][ppo.env.skel.dof_index('j_RightFoot_x')])
+        gain_p1.append(res[3]['kp'][ppo.env.skel.dof_index('j_RightFoot_foot_0_0_x')])
+        gain_p2.append(res[3]['kp'][ppo.env.skel.dof_index('j_RightFoot_foot_0_0_0_x')])
+        gain_p3.append(res[3]['kp'][ppo.env.skel.dof_index('j_RightFoot_foot_0_1_0_x')])
+        gain_p4.append(res[3]['kp'][ppo.env.skel.dof_index('j_RightFoot_foot_1_0_x')])
+        ma_gain_p0.append(sum(gain_p0[-MA_DUR:])/MA_DUR if len(gain_p0) >= MA_DUR else sum(gain_p0)/len(gain_p0))
+        ma_gain_p1.append(sum(gain_p1[-MA_DUR:])/MA_DUR if len(gain_p1) >= MA_DUR else sum(gain_p1)/len(gain_p1))
+        ma_gain_p2.append(sum(gain_p2[-MA_DUR:])/MA_DUR if len(gain_p2) >= MA_DUR else sum(gain_p2)/len(gain_p2))
+        ma_gain_p3.append(sum(gain_p3[-MA_DUR:])/MA_DUR if len(gain_p3) >= MA_DUR else sum(gain_p3)/len(gain_p3))
+        ma_gain_p4.append(sum(gain_p4[-MA_DUR:])/MA_DUR if len(gain_p4) >= MA_DUR else sum(gain_p4)/len(gain_p4))
+
+        contacts = ppo.env.world.collision_result.contacts
+        if any(['RightFoot' in body.name for body in ppo.env.world.collision_result.contacted_bodies]):
+            if rfoot_contact_ranges and rfoot_contact_ranges[-1][1] == frame-1:
+                rfoot_contact_ranges[-1][1] = frame
+            else:
+                rfoot_contact_ranges.append([frame, frame])
+
         # res = ppo.env.Steps(np.zeros_like(action))
         ppo.env.world.collision_result.update()
         # print(frame, ppo.env.Ref_skel.current_frame, ppo.env.world.time()*ppo.env.ref_motion.fps)
-        print(frame, res[0][0])
+        # print(frame, res[0][0])
         # if res[0][0] > 0.46:
         #     ppo.env.continue_from_now_by_phase(0.2)
         # print(frame, ' '.join(["{:0.1f}".format(400. * exp(log(400.) * rate/10.)) for rate in action[0][ppo.env.skel.ndofs-6:]]))
@@ -141,13 +164,33 @@ def main():
             print(frame, 'Done')
             ppo.env.reset()
 
-        plt.figure(1)
+        fig = plt.figure(1)
         plt.clf()
-        plt.plot(gain_p0)
-        plt.plot(gain_p1)
-        plt.plot(gain_p2)
-        plt.plot(gain_p3)
-        plt.plot(gain_p4)
+        fig.add_subplot(5, 1, 1)
+        for rfoot_contact_range in rfoot_contact_ranges:
+            plt.axvspan(rfoot_contact_range[0], rfoot_contact_range[1], facecolor='0.5', alpha=0.3)
+        plt.ylabel('ankle')
+        plt.plot(range(len(ma_gain_p0)), ma_gain_p0)
+        fig.add_subplot(5, 1, 2)
+        for rfoot_contact_range in rfoot_contact_ranges:
+            plt.axvspan(rfoot_contact_range[0], rfoot_contact_range[1], facecolor='0.5', alpha=0.3)
+        plt.ylabel('talus')
+        plt.plot(range(len(ma_gain_p1)), ma_gain_p1)
+        fig.add_subplot(5, 1, 3)
+        for rfoot_contact_range in rfoot_contact_ranges:
+            plt.axvspan(rfoot_contact_range[0], rfoot_contact_range[1], facecolor='0.5', alpha=0.3)
+        plt.ylabel('thumb')
+        plt.plot(range(len(ma_gain_p2)), ma_gain_p2)
+        fig.add_subplot(5, 1, 4)
+        for rfoot_contact_range in rfoot_contact_ranges:
+            plt.axvspan(rfoot_contact_range[0], rfoot_contact_range[1], facecolor='0.5', alpha=0.3)
+        plt.ylabel('phalange')
+        plt.plot(range(len(ma_gain_p3)), ma_gain_p3)
+        fig.add_subplot(5, 1, 5)
+        for rfoot_contact_range in rfoot_contact_ranges:
+            plt.axvspan(rfoot_contact_range[0], rfoot_contact_range[1], facecolor='0.5', alpha=0.3)
+        plt.ylabel('heel')
+        plt.plot(range(len(ma_gain_p4)), ma_gain_p4)
         plt.show()
         plt.pause(0.001)
 
