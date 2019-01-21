@@ -70,7 +70,8 @@ def main():
     rd_contact_forces = [None]
     dart_world = ppo.env.world
     skel = dart_world.skeletons[1]
-    viewer = hsv.hpSimpleViewer(rect=(0, 0, 960+300, 1+1080+55), viewForceWnd=False)
+    viewer_w, viewer_h = 512, 768
+    viewer = hsv.hpSimpleViewer(rect=(0, 0, viewer_w+300, 1+viewer_h+55), viewForceWnd=False)
     viewer.doc.addRenderer('MotionModel', yr.DartRenderer(ppo.env.ref_world, (150,150,255), yr.POLYGON_FILL))
 
     if not MOTION_ONLY:
@@ -124,7 +125,11 @@ def main():
         action = action_dist.loc.detach().numpy()
         value = v.detach().numpy()
         res = ppo.env.Steps(action)
-        gain_p0.append(res[3]['kp'][ppo.env.skel.dof_index('j_LeftFoot_foot_0_0_0_x')])
+        gain_p0.append(res[3]['kp'][ppo.env.skel.dof_index('j_LeftFoot_x')])
+        gain_p1.append(res[3]['kp'][ppo.env.skel.dof_index('j_LeftFoot_foot_0_0_x')])
+        gain_p2.append(res[3]['kp'][ppo.env.skel.dof_index('j_LeftFoot_foot_0_0_0_x')])
+        gain_p3.append(res[3]['kp'][ppo.env.skel.dof_index('j_LeftFoot_foot_0_1_0_x')])
+        gain_p4.append(res[3]['kp'][ppo.env.skel.dof_index('j_LeftFoot_foot_1_0_x')])
         # res = ppo.env.Steps(np.zeros_like(action))
         ppo.env.world.collision_result.update()
         # print(frame, ppo.env.Ref_skel.current_frame, ppo.env.world.time()*ppo.env.ref_motion.fps)
@@ -139,6 +144,10 @@ def main():
         plt.figure(1)
         plt.clf()
         plt.plot(gain_p0)
+        plt.plot(gain_p1)
+        plt.plot(gain_p2)
+        plt.plot(gain_p3)
+        plt.plot(gain_p4)
         plt.show()
         plt.pause(0.001)
 
