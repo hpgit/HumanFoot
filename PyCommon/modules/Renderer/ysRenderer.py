@@ -463,6 +463,7 @@ class DartRenderer(Renderer):
         self.rc.setPolygonStyle(polygonStyle)
         self._lineWidth = lineWidth
         self.savable = save_state
+        self.geom_colors = [[[None for _ in range(self.world.skeletons[skel_idx].body(body_idx).num_shapenodes())] for body_idx in range(self.world.skeletons[skel_idx].num_bodynodes())] for skel_idx in range(self.world.num_skeletons())]
 
     def render(self, renderType=RENDER_OBJECT):
         glLineWidth(self._lineWidth)
@@ -554,14 +555,19 @@ class DartRenderer(Renderer):
 
     def getState(self):
         state = []
-        for skeleton in self.world.skeletons:
-            for body in skeleton.bodynodes:
+        for skel_idx in range(self.world.num_skeletons()):
+            skeleton = self.world.skeletons[skel_idx]
+            for body_idx in range(skeleton.num_bodynodes()):
+                body = skeleton.bodynodes[body_idx]
                 body_name = body.name
                 bodyFrame = body.world_transform()
-                for shapeNode in body.shapenodes:
+                for shapeNode_idx in range(body.num_shapenodes()):
+                    shapeNode = body.shapenodes[shapeNode_idx]
                     if shapeNode.has_visual_aspect():
-                        color = None
-                        if sum(self.totalColor) == 765:
+                        color = self.geom_colors[skel_idx][body_idx][shapeNode_idx]
+                        if color is not None:
+                            pass
+                        elif sum(self.totalColor) == 765:
                             c = numpy.array(shapeNode.visual_aspect_rgba())*255
                             color = [ int(c[0]), int(c[1]), int(c[2])]
                         else:

@@ -14,9 +14,10 @@ from matplotlib import pyplot as plt
 
 def main():
     MOTION_ONLY = False
-    CURRENT_CHECK = True
+    CURRENT_CHECK = False
     SKELETON_ON = False
     RSI = False
+    PD_PLOT = False
 
     CAMERA_TRACKING = True
 
@@ -53,10 +54,10 @@ def main():
 
     ppo = PPO(env_name, 0, visualize_only=True)
     if not MOTION_ONLY and not CURRENT_CHECK:
-        # ppo.LoadModel('model/' + env_name + '.pt')
+        ppo.LoadModel('model/' + env_name + '.pt')
         # ppo.LoadModel('model/' + 'param' + '.pt')
         # ppo.LoadModel('model_test/' + env_name + '.pt')
-        ppo.LoadModel('model_test/' + 'param' + '.pt')
+        # ppo.LoadModel('model_test/' + 'param' + '.pt')
     elif not MOTION_ONLY and CURRENT_CHECK:
         env_model_dir = []
         for dir_name in sorted(os.listdir()):
@@ -78,13 +79,15 @@ def main():
     rd_contact_forces = [None]
     dart_world = ppo.env.world
     skel = dart_world.skeletons[1]
-    viewer_w, viewer_h = 960, 1080
+    viewer_w, viewer_h = 512, 768
     viewer = hsv.hpSimpleViewer(rect=(0, 0, viewer_w+300, 1+viewer_h+55), viewForceWnd=False)
     viewer.doc.addRenderer('MotionModel', yr.DartRenderer(ppo.env.ref_world, (150,150,255), yr.POLYGON_FILL))
+    control_model_renderer = None
 
     if not MOTION_ONLY:
-        viewer.doc.addRenderer('controlModel', yr.DartRenderer(dart_world, (255,240,255), yr.POLYGON_FILL))
-        viewer.doc.addRenderer('contact', yr.VectorsRenderer(rd_contact_forces, rd_contact_positions, (255,0,0)))
+        control_model_renderer = yr.DartRenderer(dart_world, (255,240,255), yr.POLYGON_FILL)
+        viewer.doc.addRenderer('controlModel', control_model_renderer)
+        # viewer.doc.addRenderer('contact', yr.VectorsRenderer(rd_contact_forces, rd_contact_positions, (255,0,0)))
 
         def makeEmptyBasicSkeletonTransformDict(init=None):
             Ts = dict()
@@ -146,7 +149,6 @@ def main():
         ma_gain_p3.append(sum(gain_p3[-MA_DUR:])/MA_DUR if len(gain_p3) >= MA_DUR else sum(gain_p3)/len(gain_p3))
         ma_gain_p4.append(sum(gain_p4[-MA_DUR:])/MA_DUR if len(gain_p4) >= MA_DUR else sum(gain_p4)/len(gain_p4))
 
-        contacts = ppo.env.world.collision_result.contacts
         if any(['RightFoot' in body.name for body in ppo.env.world.collision_result.contacted_bodies]):
             if rfoot_contact_ranges and rfoot_contact_ranges[-1][1] == frame-1:
                 rfoot_contact_ranges[-1][1] = frame
@@ -164,35 +166,54 @@ def main():
             print(frame, 'Done')
             ppo.env.reset()
 
-        fig = plt.figure(1)
-        plt.clf()
-        fig.add_subplot(5, 1, 1)
-        for rfoot_contact_range in rfoot_contact_ranges:
-            plt.axvspan(rfoot_contact_range[0], rfoot_contact_range[1], facecolor='0.5', alpha=0.3)
-        plt.ylabel('ankle')
-        plt.plot(range(len(ma_gain_p0)), ma_gain_p0)
-        fig.add_subplot(5, 1, 2)
-        for rfoot_contact_range in rfoot_contact_ranges:
-            plt.axvspan(rfoot_contact_range[0], rfoot_contact_range[1], facecolor='0.5', alpha=0.3)
-        plt.ylabel('talus')
-        plt.plot(range(len(ma_gain_p1)), ma_gain_p1)
-        fig.add_subplot(5, 1, 3)
-        for rfoot_contact_range in rfoot_contact_ranges:
-            plt.axvspan(rfoot_contact_range[0], rfoot_contact_range[1], facecolor='0.5', alpha=0.3)
-        plt.ylabel('thumb')
-        plt.plot(range(len(ma_gain_p2)), ma_gain_p2)
-        fig.add_subplot(5, 1, 4)
-        for rfoot_contact_range in rfoot_contact_ranges:
-            plt.axvspan(rfoot_contact_range[0], rfoot_contact_range[1], facecolor='0.5', alpha=0.3)
-        plt.ylabel('phalange')
-        plt.plot(range(len(ma_gain_p3)), ma_gain_p3)
-        fig.add_subplot(5, 1, 5)
-        for rfoot_contact_range in rfoot_contact_ranges:
-            plt.axvspan(rfoot_contact_range[0], rfoot_contact_range[1], facecolor='0.5', alpha=0.3)
-        plt.ylabel('heel')
-        plt.plot(range(len(ma_gain_p4)), ma_gain_p4)
-        plt.show()
-        plt.pause(0.001)
+        contacts = ppo.env.world.collision_result.contacts
+        # contact body rendering
+        if control_model_renderer is not None:
+            skel_idx = dart_world.skel.id
+            for body_idx in range(dart_world.skeletons[skel_idx].num_bodynodes()):
+                for shape_idx in range(dart_world.skeletons[skel_idx].body(body_idx).num_shapenodes()):
+                    control_model_renderer.geom_colors[skel_idx][body_idx][shape_idx] = control_model_renderer.totalColor
+
+            for contact in contacts:
+                body_idx, geom_idx = (contact.bodynode_id1, contact.shape_id1) if dart_world.skeletons[contact.skel_id1].body(contact.bodynode_id1).name != 'ground' else (contact.bodynode_id2, contact.shape_id2)
+                body = dart_world.skeletons[skel_idx].body(body_idx)
+                visual = sum(shapenode.has_visual_aspect() for shapenode in body.shapenodes)
+                collision = sum(shapenode.has_collision_aspect() for shapenode in body.shapenodes)
+                if visual == collision:
+                    control_model_renderer.geom_colors[skel_idx][body_idx][geom_idx-visual] = (255, 0, 0)
+                else:
+                    control_model_renderer.geom_colors[skel_idx][body_idx][(geom_idx-visual)//2] = (255, 0, 0)
+
+        if PD_PLOT:
+            fig = plt.figure(1)
+            plt.clf()
+            fig.add_subplot(5, 1, 1)
+            for rfoot_contact_range in rfoot_contact_ranges:
+                plt.axvspan(rfoot_contact_range[0], rfoot_contact_range[1], facecolor='0.5', alpha=0.3)
+            plt.ylabel('ankle')
+            plt.plot(range(len(ma_gain_p0)), ma_gain_p0)
+            fig.add_subplot(5, 1, 2)
+            for rfoot_contact_range in rfoot_contact_ranges:
+                plt.axvspan(rfoot_contact_range[0], rfoot_contact_range[1], facecolor='0.5', alpha=0.3)
+            plt.ylabel('talus')
+            plt.plot(range(len(ma_gain_p1)), ma_gain_p1)
+            fig.add_subplot(5, 1, 3)
+            for rfoot_contact_range in rfoot_contact_ranges:
+                plt.axvspan(rfoot_contact_range[0], rfoot_contact_range[1], facecolor='0.5', alpha=0.3)
+            plt.ylabel('thumb')
+            plt.plot(range(len(ma_gain_p2)), ma_gain_p2)
+            fig.add_subplot(5, 1, 4)
+            for rfoot_contact_range in rfoot_contact_ranges:
+                plt.axvspan(rfoot_contact_range[0], rfoot_contact_range[1], facecolor='0.5', alpha=0.3)
+            plt.ylabel('phalange')
+            plt.plot(range(len(ma_gain_p3)), ma_gain_p3)
+            fig.add_subplot(5, 1, 5)
+            for rfoot_contact_range in rfoot_contact_ranges:
+                plt.axvspan(rfoot_contact_range[0], rfoot_contact_range[1], facecolor='0.5', alpha=0.3)
+            plt.ylabel('heel')
+            plt.plot(range(len(ma_gain_p4)), ma_gain_p4)
+            plt.show()
+            plt.pause(0.001)
 
         # contact rendering
         contacts = ppo.env.world.collision_result.contacts
