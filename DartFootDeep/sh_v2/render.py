@@ -13,13 +13,13 @@ from matplotlib import pyplot as plt
 
 
 def main():
-    MOTION_ONLY = False
     CURRENT_CHECK = False
-    SKELETON_ON = False
     RSI = False
-    PD_PLOT = False
 
+    MOTION_ONLY = False
+    SKELETON_ON = False
     CAMERA_TRACKING = True
+    PD_PLOT = False
 
     pydart.init()
 
@@ -79,7 +79,7 @@ def main():
     rd_contact_forces = [None]
     dart_world = ppo.env.world
     skel = dart_world.skeletons[1]
-    viewer_w, viewer_h = 512, 768
+    viewer_w, viewer_h = 1920, 1080
     viewer = hsv.hpSimpleViewer(rect=(0, 0, viewer_w+300, 1+viewer_h+55), viewForceWnd=False)
     viewer.doc.addRenderer('MotionModel', yr.DartRenderer(ppo.env.ref_world, (150,150,255), yr.POLYGON_FILL))
     control_model_renderer = None
@@ -126,9 +126,7 @@ def main():
             skeleton_renderer = yr.BasicSkeletonRenderer(makeEmptyBasicSkeletonTransformDict(np.eye(4)), color=(230, 230, 230), offset_draw=(0., -0.0, 0.))
             viewer.doc.addRenderer('skeleton', skeleton_renderer)
 
-    def postCallback(frame):
-        ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(frame-1))
-        ppo.env.ref_motion.frame = frame-1
+
 
     def simulateCallback(frame):
         state = ppo.env.GetState(0)
@@ -261,8 +259,19 @@ def main():
             skeleton_renderer.appendFrameState(Ts)
 
     if MOTION_ONLY:
-        viewer.setPostFrameCallback_Always(postCallback)
         viewer.setMaxFrame(len(ppo.env.ref_motion)-1)
+        if CAMERA_TRACKING:
+            cameraTargets = [None] * (viewer.getMaxFrame()+1)
+
+        def postCallback(frame):
+            ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(frame-1))
+            ppo.env.ref_motion.frame = frame-1
+            if CAMERA_TRACKING:
+                if cameraTargets[frame] is None:
+                    cameraTargets[frame] = ppo.env.ref_skel.body(0).com()
+                viewer.setCameraTarget(cameraTargets[frame])
+
+        viewer.setPostFrameCallback_Always(postCallback)
     else:
         viewer.setSimulateCallback(simulateCallback)
         viewer.setMaxFrame(3000)
