@@ -54,8 +54,8 @@ def main():
 
     ppo = PPO(env_name, 0, visualize_only=True)
     if not MOTION_ONLY and not CURRENT_CHECK:
-        ppo.LoadModel('model/' + env_name + '.pt')
-        # ppo.LoadModel('model/' + 'param' + '.pt')
+        # ppo.LoadModel('model/' + env_name + '.pt')
+        ppo.LoadModel('model/' + 'param' + '.pt')
         # ppo.LoadModel('model_test/' + env_name + '.pt')
         # ppo.LoadModel('model_test/' + 'param' + '.pt')
     elif not MOTION_ONLY and CURRENT_CHECK:
@@ -79,12 +79,13 @@ def main():
     rd_contact_forces = [None]
     dart_world = ppo.env.world
     skel = dart_world.skeletons[1]
-    viewer_w, viewer_h = 512, 768
+    viewer_w, viewer_h = 960, 1080
     viewer = hsv.hpSimpleViewer(rect=(0, 0, viewer_w+300, 1+viewer_h+55), viewForceWnd=False)
     viewer.doc.addRenderer('MotionModel', yr.DartRenderer(ppo.env.ref_world, (150,150,255), yr.POLYGON_FILL))
 
     if not MOTION_ONLY:
-        viewer.doc.addRenderer('controlModel', yr.DartRenderer(dart_world, (255,240,255), yr.POLYGON_FILL))
+        control_model_renderer = yr.DartRenderer(dart_world, (255,240,255), yr.POLYGON_FILL)
+        viewer.doc.addRenderer('controlModel', control_model_renderer)
         viewer.doc.addRenderer('contact', yr.VectorsRenderer(rd_contact_forces, rd_contact_positions, (255,0,0)))
 
         def makeEmptyBasicSkeletonTransformDict(init=None):
@@ -161,9 +162,28 @@ def main():
         # if res[0][0] > 0.46:
         #     ppo.env.continue_from_now_by_phase(0.2)
         # print(frame, ' '.join(["{:0.1f}".format(400. * exp(log(400.) * rate/10.)) for rate in action[0][ppo.env.skel.ndofs-6:]]))
-        if res[2]:
-            print(frame, 'Done')
-            ppo.env.reset()
+
+        # if res[2]:
+        #     print(frame, 'Done')
+        #     ppo.env.reset()
+
+        contacts = ppo.env.world.collision_result.contacts
+        # contact body rendering
+        if control_model_renderer is not None:
+            skel_idx = dart_world.skel.id
+            for body_idx in range(dart_world.skeletons[skel_idx].num_bodynodes()):
+                for shape_idx in range(dart_world.skeletons[skel_idx].body(body_idx).num_shapenodes()):
+                    control_model_renderer.geom_colors[skel_idx][body_idx][shape_idx] = control_model_renderer.totalColor
+
+            for contact in contacts:
+                body_idx, geom_idx = (contact.bodynode_id1, contact.shape_id1) if dart_world.skeletons[contact.skel_id1].body(contact.bodynode_id1).name != 'ground' else (contact.bodynode_id2, contact.shape_id2)
+                body = dart_world.skeletons[skel_idx].body(body_idx)
+                visual = sum(shapenode.has_visual_aspect() for shapenode in body.shapenodes)
+                collision = sum(shapenode.has_collision_aspect() for shapenode in body.shapenodes)
+                if visual == collision:
+                    control_model_renderer.geom_colors[skel_idx][body_idx][geom_idx-visual] = (255, 0, 0)
+                else:
+                    control_model_renderer.geom_colors[skel_idx][body_idx][(geom_idx-visual)//2] = (255, 0, 0)
 
         if PD_PLOT:
             fig = plt.figure(1)

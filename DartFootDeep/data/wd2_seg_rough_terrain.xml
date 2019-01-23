@@ -9,7 +9,7 @@
     <skeleton name="grount skeleton">
         <mobile>false</mobile>
         <body name="ground">
-            <transformation>0 0 0 0 0 0</transformation>
+            <transformation>-0.5 0 0 0 0 0</transformation>
             <visualization_shape name=" - visual - 0">
                 <transformation>0.0 -0.025 0.0 0.0 0.0 0.0 </transformation>
                 <geometry>
@@ -18,12 +18,563 @@
                     </box>
                 </geometry>
             </visualization_shape>
+
+            <visualization_shape>
+                <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-1.0 0.0 0.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-2.0 0.0 0.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-3.0 0.0 0.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-4.0 0.0 0.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-5.0 0.0 0.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>0.0 0.0 1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-1.0 0.0 1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-2.0 0.0 1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-3.0 0.0 1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-4.0 0.0 1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-5.0 0.0 1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>0.0 0.0 -1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-1.0 0.0 -1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-2.0 0.0 -1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-3.0 0.0 -1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-4.0 0.0 -1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-5.0 0.0 -1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>0.0 0.0 2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-1.0 0.0 2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-2.0 0.0 2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-3.0 0.0 2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-4.0 0.0 2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-5.0 0.0 2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>0.0 0.0 -2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-1.0 0.0 -2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-2.0 0.0 -2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-3.0 0.0 -2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-4.0 0.0 -2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+            <visualization_shape>
+                <transformation>-5.0 0.0 -2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </visualization_shape>
+
             <collision_shape name=" - collision - 0">
-                <transformation>0.0 -0.025 0.0 0.0 0.0 0.0 </transformation>
+                <transformation>5000.5 -0.025 0.0 0.0 0.0 0.0 </transformation>
                 <geometry>
                     <box>
                         <size>10000.0 0.05 10000.0</size>
                     </box>
+                </geometry>
+            </collision_shape>
+            <collision_shape name=" - collision - 0">
+                <transformation>-5005.5 -0.025 0.0 0.0 0.0 0.0 </transformation>
+                <geometry>
+                    <box>
+                        <size>10000.0 0.05 10000.0</size>
+                    </box>
+                </geometry>
+            </collision_shape>
+
+            <collision_shape>
+                <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-1.0 0.0 0.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-2.0 0.0 0.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-3.0 0.0 0.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-4.0 0.0 0.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-5.0 0.0 0.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>0.0 0.0 1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-1.0 0.0 1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-2.0 0.0 1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-3.0 0.0 1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-4.0 0.0 1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-5.0 0.0 1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>0.0 0.0 -1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-1.0 0.0 -1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-2.0 0.0 -1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-3.0 0.0 -1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-4.0 0.0 -1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-5.0 0.0 -1.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>0.0 0.0 2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-1.0 0.0 2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-2.0 0.0 2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-3.0 0.0 2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-4.0 0.0 2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-5.0 0.0 2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>0.0 0.0 -2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-1.0 0.0 -2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-2.0 0.0 -2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-3.0 0.0 -2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-4.0 0.0 -2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
+                </geometry>
+            </collision_shape>
+            <collision_shape>
+                <transformation>-5.0 0.0 -2.0 0.0 0.0 0.0</transformation>
+                <geometry>
+                    <mesh>
+                        <file_name>terrain.obj</file_name>
+                        <scale>1.0 0.2 1.0</scale>
+                    </mesh>
                 </geometry>
             </collision_shape>
         </body>

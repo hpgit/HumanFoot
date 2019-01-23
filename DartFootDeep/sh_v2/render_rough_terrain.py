@@ -14,7 +14,7 @@ from matplotlib import pyplot as plt
 
 def main():
     CURRENT_CHECK = False
-    RSI = False
+    RSI = True
 
     MOTION_ONLY = False
     SKELETON_ON = False
@@ -72,6 +72,9 @@ def main():
         ppo.LoadModel(env_model_dir[-1]+'/'+pt_names[-1])
         print(env_model_dir[-1]+'/'+pt_names[-1])
 
+    ppo.env.dart_skel_file = '../data/wd2_seg_rough_terrain.xml'
+    ppo.env.rsi_num = 560
+    ppo.env.hard_reset()
     ppo.env.Resets(RSI)
     ppo.env.ref_skel.set_positions(ppo.env.ref_motion.get_q(ppo.env.phase_frame))
 
@@ -82,7 +85,7 @@ def main():
     rd_exf_pos = [None]
     dart_world = ppo.env.world
     skel = dart_world.skeletons[1]
-    viewer_w, viewer_h = 1920, 1080
+    viewer_w, viewer_h = 960, 1080
     viewer = hsv.hpSimpleViewer(rect=(0, 0, viewer_w+300, 1+viewer_h+55), viewForceWnd=False)
     # viewer.doc.addRenderer('MotionModel', yr.DartRenderer(ppo.env.ref_world, (150,150,255), yr.POLYGON_FILL))
     control_model_renderer = None

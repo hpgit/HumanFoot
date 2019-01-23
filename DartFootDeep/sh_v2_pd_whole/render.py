@@ -54,8 +54,8 @@ def main():
 
     ppo = PPO(env_name, 0, visualize_only=True)
     if not MOTION_ONLY and not CURRENT_CHECK:
-        ppo.LoadModel('model/' + env_name + '.pt')
-        # ppo.LoadModel('model/' + 'param' + '.pt')
+        # ppo.LoadModel('model/' + env_name + '.pt')
+        ppo.LoadModel('model/' + 'param' + '.pt')
         # ppo.LoadModel('model_test/' + env_name + '.pt')
         # ppo.LoadModel('model_test/' + 'param' + '.pt')
     elif not MOTION_ONLY and CURRENT_CHECK:

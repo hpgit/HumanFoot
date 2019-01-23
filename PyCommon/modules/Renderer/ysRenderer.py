@@ -464,6 +464,7 @@ class DartRenderer(Renderer):
         self._lineWidth = lineWidth
         self.savable = save_state
         self.geom_colors = [[[None for _ in range(self.world.skeletons[skel_idx].body(body_idx).num_shapenodes())] for body_idx in range(self.world.skeletons[skel_idx].num_bodynodes())] for skel_idx in range(self.world.num_skeletons())]
+        self.objs = dict()  # type: dict[str, ObjImporter]
 
     def render(self, renderType=RENDER_OBJECT):
         glLineWidth(self._lineWidth)
@@ -586,6 +587,8 @@ class DartRenderer(Renderer):
                             data = shape.size()
                         elif geomType[0] == 'S':
                             data = shape.radius()
+                        elif geomType == 'MeshShape':
+                            data = [shape.path(), shape.scale()]
                         state.append((body_name, geomType, geomT, data, color))
         return state
 
@@ -602,7 +605,7 @@ class DartRenderer(Renderer):
             glPushMatrix()
             glMultMatrixd(geomT.transpose())
 
-            if body_name == 'ground':
+            if body_name == 'ground' and geomType != 'MeshShape':
                 glPopMatrix()
                 continue
 
@@ -624,7 +627,12 @@ class DartRenderer(Renderer):
             elif geomType[0] == 'S':
                 glScalef(data, data, data)
                 self.rc.drawSphere(1.)
-
+            elif geomType == 'MeshShape':
+                glScalef(data[1][0], data[1][1], data[1][2])
+                if not(data[0] in self.objs.keys()):
+                    self.objs[data[0]] = ObjImporter()
+                    self.objs[data[0]].import_obj(data[0], 1.0)
+                self.objs[data[0]].draw()
             glPopMatrix()
 
 

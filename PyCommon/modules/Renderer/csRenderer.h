@@ -24,6 +24,13 @@ public:
     GLsizei vbo_count;
     GLuint vboID[3];
 
+    bool tri_texture_on;
+    bool tri_normal_on;
+    bool quad_texture_on;
+    bool quad_normal_on;
+    bool penta_texture_on;
+    bool penta_normal_on;
+
     void import_obj(char* filename, float scale);
     void init();
     void draw();

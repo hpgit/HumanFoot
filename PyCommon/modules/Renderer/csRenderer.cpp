@@ -103,20 +103,26 @@ void ObjImporter::import_obj(char* filename, float scale)
                 if(line_string.size() == 4)
                 {
                     m_iTriIndexVertices.push_back(atoi(segment_string[0].c_str())-1);
-                    m_iTriIndexTexture.push_back(atoi(segment_string[1].c_str())-1);
-                    m_iTriIndexNormal.push_back(atoi(segment_string[2].c_str())-1);
+                    if(segment_string.size() > 1)
+                        m_iTriIndexTexture.push_back(atoi(segment_string[1].c_str())-1);
+                    if(segment_string.size() > 2)
+                        m_iTriIndexNormal.push_back(atoi(segment_string[2].c_str())-1);
                 }
                 else if(line_string.size() == 5)
                 {
                     m_iQuadIndexVertices.push_back(atoi(segment_string[0].c_str())-1);
-                    m_iQuadIndexTexture.push_back(atoi(segment_string[1].c_str())-1);
-                    m_iQuadIndexNormal.push_back(atoi(segment_string[2].c_str())-1);
+                    if(segment_string.size() > 1)
+                        m_iQuadIndexTexture.push_back(atoi(segment_string[1].c_str())-1);
+                    if(segment_string.size() > 2)
+                        m_iQuadIndexNormal.push_back(atoi(segment_string[2].c_str())-1);
                 }
                 else if(line_string.size() == 6)
                 {
                     m_iPentaIndexVertices.push_back(atoi(segment_string[0].c_str())-1);
-                    m_iPentaIndexTexture.push_back(atoi(segment_string[1].c_str())-1);
-                    m_iPentaIndexNormal.push_back(atoi(segment_string[2].c_str())-1);
+                    if(segment_string.size() > 1)
+                        m_iPentaIndexTexture.push_back(atoi(segment_string[1].c_str())-1);
+                    if(segment_string.size() > 2)
+                        m_iPentaIndexNormal.push_back(atoi(segment_string[2].c_str())-1);
                 }
                 else
                 {
@@ -148,35 +154,60 @@ void ObjImporter::import_obj(char* filename, float scale)
 
     fin.close();
 
+    tri_texture_on = (m_iTriIndexTexture.size() > 0);
+    tri_normal_on = (m_iTriIndexNormal.size() > 0);
+    quad_texture_on = (m_iQuadIndexTexture.size() > 0);
+    quad_normal_on = (m_iQuadIndexNormal.size() > 0);
+    penta_texture_on = (m_iPentaIndexTexture.size() > 0);
+    penta_normal_on = (m_iPentaIndexNormal.size() > 0);
+
+    // temporary
+    tri_texture_on = false;
+    quad_texture_on = false;
+    penta_texture_on = false;
+
     for(std::vector<int>::size_type i=0; i<m_iTriIndexVertices.size(); i++)
     {
-        this->data_tri.push_back(m_vTexture[2*m_iTriIndexTexture[i] + 0]);
-        this->data_tri.push_back(m_vTexture[2*m_iTriIndexTexture[i] + 1]);
-        this->data_tri.push_back(m_vNormal[3*m_iTriIndexNormal[i] + 0]);
-        this->data_tri.push_back(m_vNormal[3*m_iTriIndexNormal[i] + 1]);
-        this->data_tri.push_back(m_vNormal[3*m_iTriIndexNormal[i] + 2]);
+        if (tri_texture_on) {
+            this->data_tri.push_back(m_vTexture[2 * m_iTriIndexTexture[i] + 0]);
+            this->data_tri.push_back(m_vTexture[2 * m_iTriIndexTexture[i] + 1]);
+        }
+        if (tri_normal_on){
+            this->data_tri.push_back(m_vNormal[3*m_iTriIndexNormal[i] + 0]);
+            this->data_tri.push_back(m_vNormal[3*m_iTriIndexNormal[i] + 1]);
+            this->data_tri.push_back(m_vNormal[3*m_iTriIndexNormal[i] + 2]);
+        }
+
         this->data_tri.push_back(m_vVertices[3*m_iTriIndexVertices[i] + 0]);
         this->data_tri.push_back(m_vVertices[3*m_iTriIndexVertices[i] + 1]);
         this->data_tri.push_back(m_vVertices[3*m_iTriIndexVertices[i] + 2]);
     }
     for(std::vector<int>::size_type i=0; i<m_iQuadIndexVertices.size(); i++)
     {
-        this->data_quad.push_back(m_vTexture[2*m_iQuadIndexTexture[i] + 0]);
-        this->data_quad.push_back(m_vTexture[2*m_iQuadIndexTexture[i] + 1]);
-        this->data_quad.push_back(m_vNormal[3*m_iQuadIndexNormal[i] + 0]);
-        this->data_quad.push_back(m_vNormal[3*m_iQuadIndexNormal[i] + 1]);
-        this->data_quad.push_back(m_vNormal[3*m_iQuadIndexNormal[i] + 2]);
+        if (quad_texture_on) {
+            this->data_quad.push_back(m_vTexture[2 * m_iQuadIndexTexture[i] + 0]);
+            this->data_quad.push_back(m_vTexture[2 * m_iQuadIndexTexture[i] + 1]);
+        }
+        if (quad_normal_on) {
+            this->data_quad.push_back(m_vNormal[3 * m_iQuadIndexNormal[i] + 0]);
+            this->data_quad.push_back(m_vNormal[3 * m_iQuadIndexNormal[i] + 1]);
+            this->data_quad.push_back(m_vNormal[3 * m_iQuadIndexNormal[i] + 2]);
+        }
         this->data_quad.push_back(m_vVertices[3*m_iQuadIndexVertices[i] + 0]);
         this->data_quad.push_back(m_vVertices[3*m_iQuadIndexVertices[i] + 1]);
         this->data_quad.push_back(m_vVertices[3*m_iQuadIndexVertices[i] + 2]);
     }
     for(std::vector<int>::size_type i=0; i<m_iPentaIndexVertices.size(); i++)
     {
-        this->data_penta.push_back(m_vTexture[2*m_iPentaIndexTexture[i] + 0]);
-        this->data_penta.push_back(m_vTexture[2*m_iPentaIndexTexture[i] + 1]);
-        this->data_penta.push_back(m_vNormal[3*m_iPentaIndexNormal[i] + 0]);
-        this->data_penta.push_back(m_vNormal[3*m_iPentaIndexNormal[i] + 1]);
-        this->data_penta.push_back(m_vNormal[3*m_iPentaIndexNormal[i] + 2]);
+        if (penta_texture_on) {
+            this->data_penta.push_back(m_vTexture[2 * m_iPentaIndexTexture[i] + 0]);
+            this->data_penta.push_back(m_vTexture[2 * m_iPentaIndexTexture[i] + 1]);
+        }
+        if (penta_normal_on) {
+            this->data_penta.push_back(m_vNormal[3 * m_iPentaIndexNormal[i] + 0]);
+            this->data_penta.push_back(m_vNormal[3 * m_iPentaIndexNormal[i] + 1]);
+            this->data_penta.push_back(m_vNormal[3 * m_iPentaIndexNormal[i] + 2]);
+        }
         this->data_penta.push_back(m_vVertices[3*m_iPentaIndexVertices[i] + 0]);
         this->data_penta.push_back(m_vVertices[3*m_iPentaIndexVertices[i] + 1]);
         this->data_penta.push_back(m_vVertices[3*m_iPentaIndexVertices[i] + 2]);
@@ -217,22 +248,78 @@ void ObjImporter::init()
 void ObjImporter::draw()
 {
     // glInterleavedArrays example
-
     if(data_tri.size() > 0)
     {
-        glInterleavedArrays(GL_T2F_N3F_V3F, 0, this->data_tri.data());
-        glDrawArrays(GL_TRIANGLES, 0, this->data_tri.size()/8);
+        if (tri_texture_on && tri_normal_on)
+        {
+            glInterleavedArrays(GL_T2F_N3F_V3F, 0, this->data_tri.data());
+            glDrawArrays(GL_TRIANGLES, 0, this->data_tri.size()/8);
+        }
+        else if (tri_texture_on)
+        {
+            glInterleavedArrays(GL_T2F_V3F, 0, this->data_tri.data());
+            glDrawArrays(GL_TRIANGLES, 0, this->data_tri.size()/5);
+        }
+        else if (tri_normal_on)
+        {
+            glInterleavedArrays(GL_N3F_V3F, 0, this->data_tri.data());
+            glDrawArrays(GL_TRIANGLES, 0, this->data_tri.size()/6);
+        }
+        else
+        {
+            glInterleavedArrays(GL_V3F, 0, this->data_tri.data());
+            glDrawArrays(GL_TRIANGLES, 0, this->data_tri.size()/3);
+        }
     }
+
     if(data_quad.size() > 0)
     {
-        glInterleavedArrays(GL_T2F_N3F_V3F, 0, this->data_quad.data());
-        glDrawArrays(GL_QUADS, 0, this->data_quad.size()/8);
+        if (quad_texture_on && quad_normal_on)
+        {
+            glInterleavedArrays(GL_T2F_N3F_V3F, 0, this->data_quad.data());
+            glDrawArrays(GL_QUADS, 0, this->data_quad.size()/8);
+        }
+        else if (quad_texture_on)
+        {
+            glInterleavedArrays(GL_T2F_V3F, 0, this->data_quad.data());
+            glDrawArrays(GL_QUADS, 0, this->data_quad.size()/5);
+        }
+        else if (quad_normal_on)
+        {
+            glInterleavedArrays(GL_N3F_V3F, 0, this->data_quad.data());
+            glDrawArrays(GL_QUADS, 0, this->data_quad.size()/6);
+        }
+        else
+        {
+            glInterleavedArrays(GL_V3F, 0, this->data_quad.data());
+            glDrawArrays(GL_QUADS, 0, this->data_quad.size()/3);
+        }
     }
+
     if(data_penta.size() > 0)
     {
-        glInterleavedArrays(GL_T2F_N3F_V3F, 0, this->data_penta.data());
-        glDrawArrays(GL_POLYGON, 0, this->data_penta.size()/8);
+        if (penta_texture_on && penta_normal_on)
+        {
+            glInterleavedArrays(GL_T2F_N3F_V3F, 0, this->data_penta.data());
+            glDrawArrays(GL_POLYGON, 0, this->data_penta.size()/8);
+        }
+        else if (penta_texture_on)
+        {
+            glInterleavedArrays(GL_T2F_V3F, 0, this->data_penta.data());
+            glDrawArrays(GL_POLYGON, 0, this->data_penta.size()/5);
+        }
+        else if (penta_normal_on)
+        {
+            glInterleavedArrays(GL_N3F_V3F, 0, this->data_penta.data());
+            glDrawArrays(GL_POLYGON, 0, this->data_penta.size()/6);
+        }
+        else
+        {
+            glInterleavedArrays(GL_V3F, 0, this->data_penta.data());
+            glDrawArrays(GL_POLYGON, 0, this->data_penta.size()/3);
+        }
     }
+
 /*
     if (data_tri.size() > 0)
     {

@@ -46,8 +46,9 @@ def fix_motion_data_by_foot(motion, skel, SEGMENT_FOOT_RAD):
 
 
 class HpDartEnv(gym.Env):
-    def __init__(self, env_name='walk'):
-        self.world = pydart.World(1./1200., "../data/wd2_seg.xml")
+    def __init__(self, env_name='walk', dart_skel_file='../data/wd2_seg.xml'):
+        self.dart_skel_file = dart_skel_file
+        self.world = pydart.World(1./1200., self.dart_skel_file)
         self.world.control_skel = self.world.skeletons[1]
         self.world.disable_recording()
         self.world.collision_auto_update = False
@@ -144,6 +145,7 @@ class HpDartEnv(gym.Env):
         fix_motion_data_by_foot(self.ref_motion, self.ref_skel, SEGMENT_FOOT_RAD)
 
         self.rsi = True
+        self.rsi_num = None
 
         # self.w_p = 0.65
         self.w_p = 0.50
@@ -236,6 +238,10 @@ class HpDartEnv(gym.Env):
         self.observation_space = gym.spaces.Box(-state_high, state_high, dtype=np.float32)
 
         self.force_done = False
+
+        self.applied_force = np.zeros(3)
+        self.applied_force_offset = np.zeros(3)
+        # 0.22, 0.15747, 0.23092
 
     def state(self):
         pelvis = self.skel.body(0)
@@ -355,6 +361,7 @@ class HpDartEnv(gym.Env):
             tau = self.skel.get_spd_extended(self.ref_skel.q + action, self.world.time_step(), Kp_vector, Kd_vector)
             # tau = self.skel.get_simple_spd_extended(self.ref_skel.q + action, self.world.time_step(), mass_mat_eig, Kp_vector, Kd_vector)
             self.skel.set_forces(tau)
+            self.skel.body('Spine').add_ext_force(self.applied_force, self.applied_force_offset)
             self.world.step()
 
         self.update_ref_skel(False)
@@ -414,7 +421,8 @@ class HpDartEnv(gym.Env):
         self.world.reset()
 
         # self.continue_from_now_by_phase(random() if self.rsi else 0.)
-        self.continue_from_frame(randrange(self.motion_len) if self.rsi else 0)
+        rsi = randrange(self.motion_len) if self.rsi_num is None else self.rsi_num
+        self.continue_from_frame(rsi if self.rsi else 0)
 
         self.skel.set_positions(self.ref_motion.get_q(self.phase_frame))
         self.skel.set_velocities(self.ref_motion.get_dq_dart(self.phase_frame))
@@ -426,7 +434,7 @@ class HpDartEnv(gym.Env):
         return self.state()
 
     def hard_reset(self):
-        self.world = pydart.World(1./1200., "../data/wd2_seg.xml")
+        self.world = pydart.World(1./1200., self.dart_skel_file)
         self.world.control_skel = self.world.skeletons[1]
         self.skel = self.world.skeletons[1]
         return self.reset()
@@ -440,35 +448,7 @@ class HpDartEnv(gym.Env):
             mode (str): The mode to render with.
             close (bool): Close all open renderings.
         """
-        if self.viewer is None:
-            from gym.envs.classic_control import rendering
-            self.viewer = rendering.Viewer(500,500)
-            self.viewer.set_bounds(-2.2, 2.2, -2.2, 2.2)
-            # rod = rendering.make_capsule(1, .2)
-            # rod.set_color(.8, .3, .3)
-            # rod.add_attr(self.pole_transform)
-            # self.viewer.add_geom(rod)
-            self.body_transform = list()
-            self.ref_body_transform = list()
-            for i in range(self.body_num):
-                axle = rendering.make_circle(.05)
-                axle.set_color(0, 0, 0)
-                self.body_transform.append(rendering.Transform())
-                axle.add_attr(self.body_transform[i])
-                self.viewer.add_geom(axle)
-
-            for i in range(self.body_num):
-                axle = rendering.make_circle(.05)
-                axle.set_color(1, 0, 0)
-                self.ref_body_transform.append(rendering.Transform())
-                axle.add_attr(self.ref_body_transform[i])
-                self.viewer.add_geom(axle)
-
-        for i in range(self.body_num):
-            self.body_transform[i].set_translation(self.skel.body(i).world_transform()[:3, 3][0]-1., self.skel.body(i).world_transform()[:3, 3][1])
-            self.ref_body_transform[i].set_translation(self.ref_skel.body(i).world_transform()[:3, 3][0]-1., self.ref_skel.body(i).world_transform()[:3, 3][1])
-
-        return self.viewer.render(return_rgb_array = mode=='rgb_array')
+        return None
 
     def close(self):
         """Override in your subclass to perform any necessary cleanup.

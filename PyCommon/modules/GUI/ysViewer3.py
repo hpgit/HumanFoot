@@ -31,7 +31,7 @@ VIEW_TOP = 2
 VIEW_PERSPECTIVE = 3
 
 # Define
-FLAG_SHADOW = 1
+FLAG_SHADOW = 0
 
 #class StateObject:
 #    def getState(self):
@@ -367,7 +367,8 @@ class GlWindow(Fl_Gl_Window):
                     # glColor4f(0.9, 0.9, 0.9, 0.5)
                     glColor4f(0.5, 0.5, 0.5, 0.5)
                     # glColor4f(0.3, 0.3, 0.3, 0.5)
-                if True or not (nSquares//2-2 <= x <=nSquares/2+1 and nSquares//2-2 <= y <= nSquares//2+1):
+                # if True or not (nSquares//2-2 <= x <=nSquares//2+1 and nSquares//2-2 <= y <= nSquares//2+1):
+                if not (nSquares//2-6 <= x <= nSquares//2-1):
                     glVertex3d(xp,      self.planeHeight-h, yp)
                     glVertex3d(xp,      self.planeHeight-h, yp + yd)
                     glVertex3d(xp + xd, self.planeHeight-h, yp + yd)
@@ -512,7 +513,7 @@ class GlWindow(Fl_Gl_Window):
                 
         glLineWidth(1.)
         # self.drawGround()
-        self.drawAxis()
+        # self.drawAxis()
         # self.drawCoordinate((0, 0, 0))
         self.drawGround_color()
         # self.drawGround()
